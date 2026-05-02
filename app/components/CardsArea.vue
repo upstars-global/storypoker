@@ -12,26 +12,29 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-6 w-full">
-    <div class="grid grid-cols-6 gap-3 w-full">
-      <button
+  <div class="flex flex-col items-center w-full">
+    <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 w-full">
+      <div
         v-for="card in activeCards"
         :key="card"
-        class="aspect-[2/3] rounded-lg text-xl font-semibold transition-colors flex items-center justify-center"
-        :class="selectedVote === card
-          ? 'bg-[#4a6572] text-white'
-          : 'bg-[#3a3a3a] hover:bg-[#444] text-white'"
-        @click="emit('vote', card)"
+        class="relative w-full"
+        style="padding-top: 150%;"
       >
-        {{ card }}
-      </button>
+        <button
+          v-wave
+          type="button"
+          class="mui-card"
+          :class="{ 'is-selected': selectedVote === card }"
+          :style="selectedVote === card ? '' : 'box-shadow: var(--shadow-2);'"
+          @click="emit('vote', card)"
+        >
+          <span class="mui-card-value">{{ card }}</span>
+        </button>
+      </div>
     </div>
-    <button
-      v-if="isModerator"
-      class="bg-[#4a6572] hover:bg-[#5a7582] text-white font-semibold py-3 px-8 rounded-full uppercase tracking-widest transition-colors"
-      @click="emit('reveal')"
-    >
-      Reveal Estimates
-    </button>
+
+    <div v-if="isModerator" class="flex justify-center pt-8">
+      <button class="mui-btn" @click="emit('reveal')">Reveal Estimates</button>
+    </div>
   </div>
 </template>

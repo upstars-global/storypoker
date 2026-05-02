@@ -105,7 +105,7 @@ async function handleSaveCardDeck(cards: string[]) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#1a1a1a] text-white flex flex-col">
+  <div class="min-h-screen flex flex-col">
     <AppHeader
       :online-count="onlineCount"
       :is-moderator="isModerator"
@@ -116,8 +116,8 @@ async function handleSaveCardDeck(cards: string[]) {
       @sign-out="authSignOut"
     />
 
-    <div class="flex flex-1 gap-4 p-4">
-      <div class="w-64 flex-shrink-0 flex flex-col">
+    <div class="flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto">
+      <div class="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-6">
         <PlayersList
           :players="players"
           :phase="roomState?.phase ?? 'voting'"
@@ -134,7 +134,7 @@ async function handleSaveCardDeck(cards: string[]) {
         />
       </div>
 
-      <div class="flex-1 flex items-start justify-center pt-4">
+      <div class="flex-1 flex flex-col items-center justify-start">
         <CardsArea
           v-if="roomState?.phase === 'voting'"
           :active-cards="roomState.active_cards ?? []"
@@ -168,17 +168,17 @@ async function handleSaveCardDeck(cards: string[]) {
       @save="handleSaveCardDeck"
     />
 
-    <div v-if="renameTarget" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div class="bg-[#2a2a2a] rounded-xl p-6 w-full max-w-sm flex flex-col gap-4">
-        <h2 class="text-lg font-semibold">Rename</h2>
+    <div v-if="renameTarget" class="mui-modal-overlay" @click.self="renameTarget = null">
+      <div class="mui-modal-paper">
+        <h2 class="mui-h5 mb-4">Rename Player</h2>
         <input
           v-model="renameValue"
-          class="bg-transparent border border-gray-600 rounded px-4 py-3 text-sm outline-none focus:border-gray-400 text-white"
+          class="mui-input"
           @keyup.enter="submitRename"
         />
-        <div class="flex gap-2 justify-end">
-          <button class="px-4 py-2 text-sm text-gray-400 hover:text-white" @click="renameTarget = null">Cancel</button>
-          <button class="bg-[#4a6572] px-4 py-2 text-sm rounded text-white" @click="submitRename">Save</button>
+        <div class="flex gap-2 justify-end mt-6">
+          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="renameTarget = null">Cancel</button>
+          <button class="mui-btn" style="min-width: 120px;" @click="submitRename">Save</button>
         </div>
       </div>
     </div>

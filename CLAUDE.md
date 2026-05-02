@@ -14,6 +14,10 @@ This file provides guidance to Claude Code when working with this repository.
 * **Уникнення** "групового мислення": оцінка відбувається приховано, тому думка керівника чи експерта не тисне на інших.
 * **Швидкість**: дозволяє оцінити великий беклог за короткий час.
 
+Security
+- Never print secrets or full environment variable values.
+- Use placeholders for secrets in examples.
+
 ## Tech Stack
 
 - **Framework:** Nuxt 4.4.2 (Vue 3, Composition API `<script setup>`)

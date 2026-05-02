@@ -10,11 +10,11 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-6">
-    <PieChart :votes="votes" />
+  <div class="flex flex-col items-center gap-8 w-full">
+    <PieChart :votes="votes" class="w-full" />
     <button
       v-if="isModerator"
-      class="bg-[#4a6572] hover:bg-[#5a7582] text-white font-semibold py-3 px-8 rounded-full uppercase tracking-widest transition-colors"
+      class="mui-btn"
       @click="emit('startNewRound')"
     >
       Start New Estimation Round

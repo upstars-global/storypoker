@@ -24,36 +24,40 @@ function toggle(card: string) {
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-[#2a2a2a] rounded-xl p-6 w-full max-w-md relative">
-      <button class="absolute top-4 right-4 text-gray-400 hover:text-white" @click="emit('close')">
-        <Icon name="mdi:close" class="w-5 h-5" />
+  <div class="mui-modal-overlay" @click.self="emit('close')">
+    <div class="mui-modal-paper" style="max-width: 32rem;">
+      <button
+        class="mui-icon-btn absolute"
+        style="top: 8px; right: 8px;"
+        aria-label="Close"
+        @click="emit('close')"
+      >
+        <IconClose style="font-size: 1.25rem;" />
       </button>
-      <h2 class="text-lg font-semibold mb-4">Configure Card Deck</h2>
-      <select class="w-full bg-[#3a3a3a] border border-gray-600 rounded px-3 py-2 mb-4 text-sm text-white">
-        <option>Fibonacci scale</option>
-      </select>
-      <div class="grid grid-cols-3 gap-2 mb-6">
+      <h2 class="mui-h5">Configure Card Deck</h2>
+      <p class="mui-caption mt-2" style="color: var(--text-muted);">
+        Pick the cards available for this room.
+      </p>
+      <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-6 mb-2">
         <label
           v-for="card in ALL_CARDS"
           :key="card"
-          class="flex items-center gap-2 text-sm cursor-pointer"
+          class="flex items-center gap-2 px-2 py-2 rounded cursor-pointer"
+          style="border: 1px solid var(--border);"
         >
           <input
             type="checkbox"
             :checked="selected.includes(card)"
-            class="accent-[#4a6572]"
+            class="accent-current"
+            style="accent-color: var(--primary); width: 18px; height: 18px;"
             @change="toggle(card)"
           />
-          {{ card }}
+          <span style="color: var(--text-primary);">{{ card }}</span>
         </label>
       </div>
-      <button
-        class="w-full bg-[#4a6572] hover:bg-[#5a7582] text-white font-semibold py-3 rounded-full uppercase tracking-widest transition-colors"
-        @click="emit('save', selected)"
-      >
-        Save Card Deck
-      </button>
+      <div class="flex justify-center mt-6">
+        <button class="mui-btn" @click="emit('save', selected)">Save Card Deck</button>
+      </div>
     </div>
   </div>
 </template>

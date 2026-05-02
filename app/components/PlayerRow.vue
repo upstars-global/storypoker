@@ -29,58 +29,110 @@ function close() { showMenu.value = false }
 </script>
 
 <template>
-  <div class="flex items-center gap-2 py-1 px-2 rounded hover:bg-white/5 relative">
+  <div
+    class="grid items-center gap-2 px-2 py-2 rounded relative"
+    style="grid-template-columns: 32px 1fr auto auto auto;"
+  >
     <img
       :src="avatarDataUri(player.name, !player.is_online)"
       :alt="player.name"
-      class="w-7 h-7 rounded-full flex-shrink-0"
+      class="rounded-full"
+      style="width: 26px; height: 26px;"
     />
     <span
-      class="flex-1 text-sm truncate"
-      :class="player.is_online ? 'text-white' : 'text-gray-500'"
+      class="truncate text-base"
+      :style="{ color: player.is_online ? 'var(--text-primary)' : 'var(--text-muted)' }"
     >
       {{ player.name }}
     </span>
-    <Icon v-if="player.is_moderator" name="mdi:gamepad-variant" class="text-gray-400 w-4 h-4 flex-shrink-0" />
+    <IconModerator
+      v-if="player.is_moderator"
+      style="font-size: 1.25rem; color: var(--text-primary);"
+      aria-label="moderator"
+    />
+    <span v-else />
 
     <template v-if="player.is_online">
       <template v-if="phase === 'voting'">
-        <Icon
+        <IconCheckCircle
           v-if="player.vote !== null"
-          name="mdi:check-circle"
-          class="text-green-500 w-4 h-4 flex-shrink-0"
+          style="font-size: 1.25rem; color: var(--text-primary);"
+          aria-label="estimate given"
+        />
+        <IconDeciding
+          v-else
+          style="font-size: 1.25rem; color: var(--text-disabled);"
+          aria-label="player deciding"
         />
       </template>
-      <span v-else class="text-sm text-gray-300 flex-shrink-0">{{ player.vote ?? '—' }}</span>
+      <template v-else>
+        <span
+          v-if="player.vote !== null"
+          class="text-base font-medium"
+          style="color: var(--text-primary);"
+        >{{ player.vote }}</span>
+        <IconCancel
+          v-else
+          style="font-size: 1.25rem; color: var(--text-disabled);"
+        />
+      </template>
     </template>
-    <Icon v-else name="mdi:wifi-off" class="text-gray-600 w-4 h-4 flex-shrink-0" />
+    <IconOffline
+      v-else
+      style="font-size: 1.25rem; color: var(--text-disabled);"
+      aria-label="inactive"
+    />
 
     <div v-if="isOwn || currentUserIsAuthorizedModerator" class="relative">
-      <button class="p-1 hover:bg-white/10 rounded" @click="showMenu = !showMenu">
-        <Icon name="mdi:dots-vertical" class="w-4 h-4" />
+      <button
+        class="mui-icon-btn"
+        style="padding: 4px;"
+        @click.stop="showMenu = !showMenu"
+      >
+        <IconMoreVert style="font-size: 1.125rem;" />
       </button>
-      <div
+      <ul
         v-if="showMenu"
         v-click-outside="close"
-        class="absolute right-0 top-6 bg-[#2a2a2a] border border-gray-700 rounded shadow-lg z-10 min-w-36"
+        class="mui-menu absolute right-0 top-8 z-20"
       >
         <template v-if="isOwn">
-          <button class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" @click="emit('rename', player.id); close()">
-            Rename
-          </button>
-          <button class="w-full text-left px-4 py-2 text-sm hover:bg-white/10" @click="emit('toggleModerator', player.id, !player.is_moderator); close()">
-            {{ player.is_moderator ? 'Leave moderator role' : 'Become moderator' }}
-          </button>
-          <button class="w-full text-left px-4 py-2 text-sm hover:bg-white/10 text-red-400" @click="emit('leave', player.id); close()">
-            Leave room
-          </button>
+          <li>
+            <button
+              class="mui-menu-item"
+              role="menuitemcheckbox"
+              :aria-checked="String(player.is_moderator)"
+              @click="emit('toggleModerator', player.id, !player.is_moderator); close()"
+            >
+              <IconModerator class="mui-menu-icon" />
+              <span class="flex-1">Is Moderator</span>
+              <span class="mui-switch">
+                <input type="checkbox" :checked="player.is_moderator" tabindex="-1" readonly />
+                <span class="track" />
+                <span class="thumb" />
+              </span>
+            </button>
+          </li>
+          <li>
+            <button class="mui-menu-item" @click="emit('rename', player.id); close()">
+              <IconEdit class="mui-menu-icon" /> Rename Player
+            </button>
+          </li>
+          <li>
+            <button class="mui-menu-item" @click="emit('leave', player.id); close()">
+              <IconLeaveRoom class="mui-menu-icon" /> Leave Room
+            </button>
+          </li>
         </template>
         <template v-else-if="currentUserIsAuthorizedModerator">
-          <button class="w-full text-left px-4 py-2 text-sm hover:bg-white/10 text-red-400" @click="emit('kick', player.id); close()">
-            Kick Player
-          </button>
+          <li>
+            <button class="mui-menu-item is-danger" @click="emit('kick', player.id); close()">
+              <IconPersonRemove class="mui-menu-icon" /> Kick Player
+            </button>
+          </li>
         </template>
-      </div>
+      </ul>
     </div>
+    <span v-else />
   </div>
 </template>

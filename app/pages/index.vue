@@ -30,24 +30,34 @@ async function createRoom() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen px-4">
-    <h1 class="text-2xl font-semibold mb-2 text-center">Create a planning poker room</h1>
-    <p class="text-gray-400 mb-8 text-center">and start estimating with your team right away</p>
-    <div class="w-full max-w-sm flex flex-col gap-4">
-      <input
-        v-model="name"
-        type="text"
-        placeholder="Please enter your name"
-        class="bg-transparent border rounded px-4 py-3 outline-none transition-colors"
-        :class="hasError ? 'border-red-500' : 'border-gray-600 focus:border-gray-400'"
-        @keyup.enter="createRoom"
-      />
-      <button
-        class="bg-[#4a6572] hover:bg-[#5a7582] text-white font-semibold py-3 rounded-full uppercase tracking-widest transition-colors"
-        @click="createRoom"
-      >
-        Create Room
-      </button>
-    </div>
+  <div class="min-h-screen flex flex-col">
+    <header
+      class="sticky top-0 z-40 w-full flex items-center px-4 sm:px-6"
+      style="background-color: var(--bg-appbar); color: #fff; min-height: 56px; box-shadow: var(--shadow-4);"
+    >
+      <h1 class="mui-h6 flex-1" style="color: #fff;">Story Point Poker</h1>
+    </header>
+
+    <main class="flex-1 flex items-center justify-center px-4 py-12">
+      <div class="mui-paper w-full max-w-md" style="padding: 24px;">
+        <h2 class="mui-h5 text-center">Create a planning poker room</h2>
+        <p class="mui-caption text-center mt-2" style="color: var(--text-muted);">
+          and start estimating with your team right away
+        </p>
+        <div class="flex flex-col gap-4 mt-6">
+          <input
+            v-model="name"
+            type="text"
+            placeholder="Please enter your name"
+            class="mui-input"
+            :class="{ 'is-error': hasError }"
+            @keyup.enter="createRoom"
+          />
+          <div class="flex justify-center">
+            <button class="mui-btn" @click="createRoom">Create Room</button>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 </template>

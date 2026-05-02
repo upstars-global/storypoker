@@ -1,18 +1,13 @@
 import { createAvatar } from '@dicebear/core'
-import { dylan } from '@dicebear/collection'
+import { bottts } from '@dicebear/collection'
 
 export function useDylanAvatar() {
-  function getAvatar(seed: string, grayscale = false): string {
-    const avatar = createAvatar(dylan, {
-      seed,
-      ...(grayscale ? { colorful: false } : {}),
-    })
-    return avatar.toString()
-  }
-
   function avatarDataUri(seed: string, grayscale = false): string {
-    const svg = getAvatar(seed, grayscale)
-    return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`
+    const avatar = createAvatar(bottts, {
+      seed,
+      ...(grayscale ? { baseColor: ['909090'], eyes: ['dizzy'], mouth: ['grill01'] } : {}),
+    })
+    return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(avatar.toString())))}`
   }
 
   return { avatarDataUri }

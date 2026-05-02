@@ -22,19 +22,23 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="bg-[#2a2a2a] rounded-lg p-3">
-    <h2 class="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">Players</h2>
-    <PlayerRow
-      v-for="player in players"
-      :key="player.id"
-      :player="player"
-      :phase="phase"
-      :current-player-id="currentPlayerId"
-      :current-user-is-authorized-moderator="currentUserIsAuthorizedModerator"
-      @rename="emit('rename', $event)"
-      @toggle-moderator="(id, val) => emit('toggleModerator', id, val)"
-      @leave="emit('leave', $event)"
-      @kick="emit('kick', $event)"
-    />
+  <div class="mui-paper" style="box-shadow: var(--shadow-2);">
+    <div class="mui-paper-header" style="justify-content: center;">
+      <span>Players</span>
+    </div>
+    <div class="px-2 py-2 flex flex-col">
+      <PlayerRow
+        v-for="player in players"
+        :key="player.id"
+        :player="player"
+        :phase="phase"
+        :current-player-id="currentPlayerId"
+        :current-user-is-authorized-moderator="currentUserIsAuthorizedModerator"
+        @rename="emit('rename', $event)"
+        @toggle-moderator="(id, val) => emit('toggleModerator', id, val)"
+        @leave="emit('leave', $event)"
+        @kick="emit('kick', $event)"
+      />
+    </div>
   </div>
 </template>

@@ -16,8 +16,10 @@ watch(() => props.roundStartedAt, update)
 </script>
 
 <template>
-  <div class="bg-[#2a2a2a] rounded-lg p-3 mt-3">
-    <h2 class="text-sm font-semibold text-gray-400 mb-1 uppercase tracking-wider">Moderator Insights</h2>
-    <p class="text-sm text-gray-300">{{ text }}</p>
+  <div class="mui-paper" style="box-shadow: var(--shadow-2);">
+    <div class="mui-paper-header" style="justify-content: center;">
+      <span>Moderator Insights</span>
+    </div>
+    <p class="mui-body px-4 py-3" style="color: var(--text-body);">{{ text }}</p>
   </div>
 </template>

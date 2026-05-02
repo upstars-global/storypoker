@@ -71,7 +71,10 @@ export function usePlayer(roomId: string) {
 
   async function leaveRoom(playerId: string) {
     clearSession()
-    await $supabase.from('players').delete().eq('id', playerId)
+    await $supabase
+      .from('players')
+      .update({ left_at: new Date().toISOString(), is_online: false })
+      .eq('id', playerId)
   }
 
   async function linkUser(playerId: string, userId: string) {

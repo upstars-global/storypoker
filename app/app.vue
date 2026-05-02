@@ -1,5 +1,10 @@
+<script setup lang="ts">
+const { init } = useTheme()
+onMounted(() => init())
+</script>
+
 <template>
-  <div class="min-h-screen bg-[#1a1a1a] text-white">
+  <div class="min-h-screen" style="background-color: var(--bg-app); color: var(--text-body);">
     <NuxtPage />
   </div>
 </template>

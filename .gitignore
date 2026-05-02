@@ -1,27 +1,23 @@
-# Nuxt dev/build outputs
-.output
-.data
-.nuxt
-.nitro
-.cache
-dist
-
-# Node dependencies
-node_modules
-
-# Logs
-logs
-*.log
-
-# Misc
+Thumbs.db
 .DS_Store
-.fleet
-.idea
+.idea/
 
-# Local env files
+node_modules/
+.nuxt/
+.output
+dist/
+
 .env
-.env.*
-!.env.example
+.env.local
 
+supabase/
+!supabase/migrations/
+
+example/
 examples/
-supabase/.temp/cli-latest
+
+.agents/
+.claude/*/*
+!.claude/settings.json
+!.claude/statusline.sh
+!.claude/output-styles/balanced.md

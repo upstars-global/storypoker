@@ -7,6 +7,7 @@ interface Player {
   is_online: boolean
   user_id: string | null
   created_at: string
+  left_at: string | null
 }
 
 interface RoomState {
@@ -25,7 +26,7 @@ export function useRoom(roomId: string) {
 
   async function fetchInitialData() {
     const [{ data: pData }, { data: sData }] = await Promise.all([
-      $supabase.from('players').select('*').eq('room_id', roomId).order('created_at'),
+      $supabase.from('players').select('*').eq('room_id', roomId).is('left_at', null).order('created_at'),
       $supabase.from('room_state').select('*').eq('room_id', roomId).single(),
     ])
     players.value = pData ?? []
@@ -37,7 +38,7 @@ export function useRoom(roomId: string) {
       .channel(`players:${roomId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${roomId}` },
         async () => {
-          const { data } = await $supabase.from('players').select('*').eq('room_id', roomId).order('created_at')
+          const { data } = await $supabase.from('players').select('*').eq('room_id', roomId).is('left_at', null).order('created_at')
           players.value = data ?? []
         }
       )

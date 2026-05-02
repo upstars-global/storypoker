@@ -17,7 +17,7 @@
     "@dicebear/core": "^9.4.2",
     "@nuxt/icon": "^2.2.1",
     "@supabase/supabase-js": "^2.105.1",
-    "nuxt": "^4.4.2",
+    "nuxt": "^4.4.4",
     "v-wave": "^3.0.4",
     "vue": "^3.5.33",
     "vue-router": "^5.0.6"
