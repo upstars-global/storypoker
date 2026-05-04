@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   players: Array<{
     id: string
     name: string
@@ -19,12 +19,18 @@ const emit = defineEmits<{
   leave: [id: string]
   kick: [id: string]
 }>()
+
+const onlineCount = computed(() => props.players.filter(p => p.is_online).length)
+const totalCount = computed(() => props.players.length)
 </script>
 
 <template>
   <div class="mui-paper" style="box-shadow: var(--shadow-2);">
-    <div class="mui-paper-header" style="justify-content: center;">
+    <div class="mui-paper-header flex items-center justify-center gap-2">
       <span>Players</span>
+      <span class="text-sm font-normal" style="color: var(--text-muted);">
+        {{ onlineCount }} / {{ totalCount }}
+      </span>
     </div>
     <div class="px-2 py-2 flex flex-col">
       <PlayerRow

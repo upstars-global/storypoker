@@ -1,5 +1,10 @@
 <script setup lang="ts">
-const ALL_CARDS = ['0.5', '1', '2', '3', '5', '8', '13', '21', '?', 'Pass', '☕']
+const ALL_CARDS = ['0', '1/2', '1', '2', '3', '5', '8', '13', '20', '40', '100', '?', '☕']
+const PRESETS: Record<string, string[]> = {
+  'Scrum scale': ['1/2', '1', '2', '3', '5', '8', '13', '20', '?', '☕'],
+  'Fibonacci': ['1', '2', '3', '5', '8', '13', '20', '40', '100', '?'],
+  'T-shirt': ['1', '2', '5', '13', '20', '?'],
+}
 
 const props = defineProps<{
   activeCards: string[]
@@ -11,6 +16,7 @@ const emit = defineEmits<{
 }>()
 
 const selected = ref<string[]>([...props.activeCards])
+const preset = ref<string>('Scrum scale')
 
 function toggle(card: string) {
   if (selected.value.includes(card)) {
@@ -21,42 +27,59 @@ function toggle(card: string) {
     )
   }
 }
+
+function applyPreset(name: string) {
+  preset.value = name
+  if (PRESETS[name]) selected.value = [...PRESETS[name]]
+}
 </script>
 
 <template>
   <div class="mui-modal-overlay" @click.self="emit('close')">
-    <div class="mui-modal-paper" style="max-width: 32rem;">
+    <div class="mui-modal-paper relative" style="max-width: 560px; padding: 32px 40px 40px;">
       <button
+        v-wave
         class="mui-icon-btn absolute"
-        style="top: 8px; right: 8px;"
+        style="top: 12px; right: 12px;"
         aria-label="Close"
         @click="emit('close')"
       >
         <IconClose style="font-size: 1.25rem;" />
       </button>
-      <h2 class="mui-h5">Configure Card Deck</h2>
-      <p class="mui-caption mt-2" style="color: var(--text-muted);">
-        Pick the cards available for this room.
-      </p>
-      <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-6 mb-2">
+      <h2 class="text-center text-[22px] font-bold tracking-[0.00735em]" style="color: var(--text-primary);">
+        Configure Card Deck
+      </h2>
+
+      <div class="mt-7 flex justify-center">
+        <select
+          v-model="preset"
+          class="rounded border bg-transparent px-3 py-2 text-[15px] focus:outline-none focus:ring-1 focus:ring-[#546e7a]"
+          style="border-color: var(--border); color: var(--text-primary); min-width: 240px;"
+          @change="applyPreset(preset)"
+        >
+          <option v-for="name in Object.keys(PRESETS)" :key="name" :value="name">{{ name }}</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-3 gap-x-8 gap-y-3 mt-8 mb-2 mx-auto" style="max-width: 380px;">
         <label
           v-for="card in ALL_CARDS"
           :key="card"
-          class="flex items-center gap-2 px-2 py-2 rounded cursor-pointer"
-          style="border: 1px solid var(--border);"
+          class="flex items-center gap-3 cursor-pointer text-[15px]"
+          style="color: var(--text-primary);"
         >
           <input
             type="checkbox"
             :checked="selected.includes(card)"
-            class="accent-current"
             style="accent-color: var(--primary); width: 18px; height: 18px;"
             @change="toggle(card)"
           />
-          <span style="color: var(--text-primary);">{{ card }}</span>
+          <span>{{ card }}</span>
         </label>
       </div>
-      <div class="flex justify-center mt-6">
-        <button class="mui-btn" @click="emit('save', selected)">Save Card Deck</button>
+
+      <div class="flex justify-center mt-8">
+        <button v-wave class="mui-btn" @click="emit('save', selected)">Save Card Deck</button>
       </div>
     </div>
   </div>

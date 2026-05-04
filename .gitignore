@@ -1,23 +1,20 @@
 Thumbs.db
 .DS_Store
-.idea/
+/.idea
 
-node_modules/
-.nuxt/
-.output
-dist/
+/node_modules
+/.nuxt
+/.output
+/dist
 
 .env
+.env*.local
 .env.local
 
-supabase/
-!supabase/migrations/
+/supabase
+!/supabase/migrations
 
-example/
-examples/
+/examples
 
-.agents/
-.claude/*/*
-!.claude/settings.json
-!.claude/statusline.sh
-!.claude/output-styles/balanced.md
+/.agents
+/.claude

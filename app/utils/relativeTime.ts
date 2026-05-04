@@ -5,6 +5,10 @@ export function relativeTime(date: string | Date): string {
     const m = Math.floor(diff / 60)
     return `${m} minute${m === 1 ? '' : 's'} ago`
   }
-  const h = Math.floor(diff / 3600)
-  return `${h} hour${h === 1 ? '' : 's'} ago`
+  if (diff < 86400) {
+    const h = Math.floor(diff / 3600)
+    return `${h} hour${h === 1 ? '' : 's'} ago`
+  }
+  const d = Math.floor(diff / 86400)
+  return `${d} day${d === 1 ? '' : 's'} ago`
 }

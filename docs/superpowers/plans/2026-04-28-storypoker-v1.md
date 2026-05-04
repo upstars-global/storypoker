@@ -112,8 +112,8 @@ export default defineNuxtConfig({
 - [ ] **Step 5: Створити `.env.example`**
 
 ```
-NUXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NUXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_URL=<SUBSTITUTE_SUPABASE_URL>
+SUPABASE_PUBLISHABLE_KEY=<SUBSTITUTE_SUPABASE_PUBLISHABLE_KEY>
 ```
 
 - [ ] **Step 6: Створити `.env` (локально, не комітити)**
@@ -242,8 +242,8 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     public: {
-      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseKey: process.env.SUPABASE_KEY,
     },
   },
   app: {

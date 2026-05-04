@@ -8,7 +8,8 @@ const emit = defineEmits<{
   success: []
 }>()
 
-const { signIn, signUp } = useAuth()
+import { useAuthStore } from '~/stores/auth'
+const { signIn, signUp } = useAuthStore()
 const email = ref('')
 const password = ref('')
 const error = ref('')

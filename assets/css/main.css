@@ -222,8 +222,7 @@ body {
   }
 
   .mui-card {
-    background-color: var(--bg-paper);
-    background-image: var(--paper-overlay);
+    background-color: #424242;
     color: var(--text-body);
     border-radius: 4px;
     cursor: pointer;
@@ -236,6 +235,7 @@ body {
     transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
   }
   .mui-card:hover {
+    background-color: #525252;
     transform: scale(1.05);
   }
   .mui-card.is-selected {
@@ -251,23 +251,23 @@ body {
     margin: 0;
     font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
     font-weight: 400;
-    font-size: 2rem;
+    font-size: 1.5rem;
     line-height: 1.167;
-    color: var(--text-muted);
+    color: #e0e0e0;
   }
   @media (min-width: 600px) {
     .mui-card-value {
-      font-size: 2.5707rem;
+      font-size: 1.9rem;
     }
   }
   @media (min-width: 900px) {
     .mui-card-value {
-      font-size: 2.7849rem;
+      font-size: 2.1rem;
     }
   }
   @media (min-width: 1200px) {
     .mui-card-value {
-      font-size: 2.9991rem;
+      font-size: 2.25rem;
     }
   }
 

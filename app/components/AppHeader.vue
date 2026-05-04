@@ -9,10 +9,14 @@ const emit = defineEmits<{
   openSignIn: []
   openSignUp: []
   openCardDeck: []
+  openTrends: []
+  openRecent: []
   signOut: []
 }>()
 
-const { user } = useAuth()
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '~/stores/auth'
+const { user } = storeToRefs(useAuthStore())
 const { avatarDataUri } = useDylanAvatar()
 const { isLight, toggle: toggleTheme } = useTheme()
 const showMenu = ref(false)
@@ -23,11 +27,15 @@ const showMenu = ref(false)
     class="sticky top-0 z-40 w-full flex items-center px-4 sm:px-6"
     style="background-color: var(--bg-appbar); color: #fff; min-height: 56px; box-shadow: var(--shadow-4);"
   >
-    <NuxtLink to="/" class="mui-h6 flex-1" style="color: #fff;">Story Point Poker</NuxtLink>
+    <NuxtLink v-wave to="/" class="mui-h6 inline-flex items-center px-2 py-1 -mx-2 rounded" style="color: #fff;">
+      Story Poker
+    </NuxtLink>
+    <div class="flex-1" />
 
     <div class="flex items-center gap-2 relative">
       <span class="text-sm" style="color: rgba(255,255,255,0.85);">{{ onlineCount }}</span>
       <button
+        v-wave
         class="mui-icon-btn"
         style="--hover-bg: rgba(255,255,255,0.08); color: #fff;"
         aria-label="account of current user"
@@ -47,10 +55,28 @@ const showMenu = ref(false)
         v-if="showMenu"
         v-click-outside="() => showMenu = false"
         class="mui-menu absolute right-0 top-12 z-50"
+        style="min-width: 240px;"
       >
+        <li v-if="isModerator">
+          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showMenu = false">
+            <IconSettings class="mui-menu-icon" /> Configure Card Deck
+          </button>
+        </li>
+        <li>
+          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openTrends'); showMenu = false">
+            <IconTrendingUp class="mui-menu-icon" /> Alignment Trends
+          </button>
+        </li>
+        <li>
+          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRecent'); showMenu = false">
+            <IconHistory class="mui-menu-icon" /> Recent Rooms
+          </button>
+        </li>
+        <li><hr class="mui-divider" /></li>
         <li>
           <button
-            class="mui-menu-item"
+            v-wave
+            class="mui-menu-item whitespace-nowrap"
             role="menuitemcheckbox"
             :aria-checked="String(isLight)"
             @click="toggleTheme"
@@ -64,21 +90,15 @@ const showMenu = ref(false)
             </span>
           </button>
         </li>
-        <li v-if="isModerator">
-          <hr class="mui-divider" />
-          <button class="mui-menu-item" @click="emit('openCardDeck'); showMenu = false">
-            <IconSettings class="mui-menu-icon" /> Configure Card Deck
-          </button>
-        </li>
         <template v-if="!user">
           <li><hr class="mui-divider" /></li>
           <li>
-            <button class="mui-menu-item" @click="emit('openSignIn'); showMenu = false">
+            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openSignIn'); showMenu = false">
               <IconLogin class="mui-menu-icon" /> Sign In
             </button>
           </li>
           <li>
-            <button class="mui-menu-item" @click="emit('openSignUp'); showMenu = false">
+            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openSignUp'); showMenu = false">
               <IconPersonAdd class="mui-menu-icon" /> Sign Up
             </button>
           </li>
@@ -86,7 +106,7 @@ const showMenu = ref(false)
         <template v-else>
           <li><hr class="mui-divider" /></li>
           <li>
-            <button class="mui-menu-item" @click="emit('signOut'); showMenu = false">
+            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('signOut'); showMenu = false">
               <IconLogout class="mui-menu-icon" /> Sign Out
             </button>
           </li>

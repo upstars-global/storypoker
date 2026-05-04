@@ -24,14 +24,26 @@ export default defineNuxtConfig({
     }
   },
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
   tailwindcss: {
     cssPath: resolve(__dirname, 'assets/css/main.css'),
   },
   runtimeConfig: {
     public: {
-      supabaseUrl: '',
-      supabaseKey: '',
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseKey: process.env.SUPABASE_PUBLISHABLE_KEY,
+    },
+    vite: {
+      optimizeDeps: {
+        include: [
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        '@supabase/supabase-js',
+        'v-wave',
+        '@dicebear/core',
+        '@dicebear/collection',
+        ]
+      }
     },
   },
 })

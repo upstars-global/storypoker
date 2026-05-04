@@ -1,0 +1,123 @@
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { getSupabase } from '~/lib/supabase-instance'
+import type { Player } from './types'
+
+type RealtimePayload = {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE'
+  new: Player
+  old: Partial<Player>
+}
+
+export const usePlayersStore = defineStore('players', () => {
+  const players = ref<Player[]>([])
+  const pendingVotes = ref<Record<string, string>>({})
+  const roomId = ref<string | null>(null)
+
+  const visiblePlayers = computed(() => players.value.filter(p => p.left_at === null))
+
+  function applyChange(payload: RealtimePayload) {
+    switch (payload.eventType) {
+      case 'INSERT':
+        if (!players.value.find(p => p.id === payload.new.id)) {
+          players.value.push(payload.new)
+        }
+        break
+      case 'UPDATE': {
+        const idx = players.value.findIndex(p => p.id === payload.new.id)
+        if (idx >= 0) players.value[idx] = payload.new
+        if (pendingVotes.value[payload.new.id] === payload.new.vote) {
+          delete pendingVotes.value[payload.new.id]
+        }
+        break
+      }
+      case 'DELETE':
+        players.value = players.value.filter(p => p.id !== (payload.old as any).id)
+        break
+    }
+  }
+
+  function voteOf(playerId: string): string | null {
+    if (pendingVotes.value[playerId] !== undefined) return pendingVotes.value[playerId]
+    return players.value.find(p => p.id === playerId)?.vote ?? null
+  }
+
+  async function castVote(playerId: string, card: string) {
+    pendingVotes.value[playerId] = card
+    try {
+      const { error } = await getSupabase()
+        .from('players')
+        .update({ vote: card })
+        .eq('id', playerId)
+      if (error) throw error
+    } catch (e) {
+      delete pendingVotes.value[playerId]
+      throw e
+    }
+  }
+
+  function clearPendingVotes() {
+    pendingVotes.value = {}
+  }
+
+  async function rename(playerId: string, name: string) {
+    await getSupabase().from('players').update({ name }).eq('id', playerId)
+  }
+
+  async function toggleModerator(playerId: string, value: boolean) {
+    await getSupabase().from('players').update({ is_moderator: value }).eq('id', playerId)
+  }
+
+  async function kick(playerId: string) {
+    await getSupabase().from('players').delete().eq('id', playerId)
+  }
+
+  async function leave(playerId: string) {
+    if (roomId.value) localStorage.removeItem(`storypoker_session_${roomId.value}`)
+    await getSupabase()
+      .from('players')
+      .update({ left_at: new Date().toISOString() })
+      .eq('id', playerId)
+  }
+
+  async function join(name: string, userId: string | null = null): Promise<Player> {
+    if (!roomId.value) throw new Error('roomId not set')
+    const { data, error } = await getSupabase()
+      .from('players')
+      .insert({ room_id: roomId.value, name, user_id: userId, is_moderator: false })
+      .select()
+      .single()
+    if (error) throw error
+    return data as Player
+  }
+
+  async function rejoin(playerId: string): Promise<Player> {
+    const { data, error } = await getSupabase()
+      .from('players')
+      .update({ left_at: null })
+      .eq('id', playerId)
+      .select()
+      .single()
+    if (error) throw error
+    return data as Player
+  }
+
+  async function linkUser(playerId: string, userId: string) {
+    await getSupabase().from('players').update({ user_id: userId }).eq('id', playerId)
+  }
+
+  async function fetchAll(roomIdArg: string): Promise<void> {
+    const { data } = await getSupabase()
+      .from('players')
+      .select('*')
+      .eq('room_id', roomIdArg)
+      .order('created_at')
+    players.value = (data ?? []) as Player[]
+  }
+
+  return {
+    roomId, players, pendingVotes, visiblePlayers,
+    applyChange, voteOf, castVote, clearPendingVotes,
+    rename, toggleModerator, kick, leave, join, rejoin, linkUser, fetchAll,
+  }
+})

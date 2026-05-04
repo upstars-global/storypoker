@@ -11,7 +11,7 @@ const emit = defineEmits<{
 
 <template>
   <div class="flex flex-col items-center gap-8 w-full">
-    <PieChart :votes="votes" class="w-full" />
+    <PieChart :votes="votes" />
     <button
       v-if="isModerator"
       class="mui-btn"

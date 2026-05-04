@@ -42,10 +42,10 @@ const data = computed(() => {
 </script>
 
 <template>
-  <svg viewBox="0 0 100 100" class="w-full max-w-[460px] mx-auto">
+  <svg viewBox="0 0 100 100" class="block mx-auto" style="width: 100%; max-width: 500px;">
     <!-- Єдиний голос — повне коло -->
     <template v-if="data.single">
-      <circle cx="50" cy="50" r="40" :fill="data.single.color" />
+      <circle cx="50" cy="50" r="49" :fill="data.single.color" />
       <text
         x="50" y="50"
         text-anchor="middle"
