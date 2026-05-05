@@ -28,9 +28,19 @@ export const useAuthStore = defineStore('auth', () => {
     if (error) throw error
   }
 
+  async function requestPasswordReset(email: string, redirectTo: string) {
+    const { error } = await getSupabase().auth.resetPasswordForEmail(email, { redirectTo })
+    if (error) throw error
+  }
+
+  async function updatePassword(password: string) {
+    const { error } = await getSupabase().auth.updateUser({ password })
+    if (error) throw error
+  }
+
   async function signOut() {
     await getSupabase().auth.signOut()
   }
 
-  return { user, init, signIn, signUp, signOut }
+  return { user, init, signIn, signUp, requestPasswordReset, updatePassword, signOut }
 })

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build --dotenv .env.local",
-    "dev": "nuxt dev --dotenv .env.local",
+    "dev": "nuxt dev --dotenv .env.local --host",
     "generate": "nuxt generate --dotenv .env.local",
     "preview": "nuxt preview --dotenv .env.local",
     "postinstall": "nuxt prepare",

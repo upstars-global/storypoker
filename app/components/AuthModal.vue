@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useAuthStore } from '~/stores/auth'
+import { validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
+
 const props = defineProps<{
   mode: 'signin' | 'signup'
 }>()
@@ -8,15 +11,26 @@ const emit = defineEmits<{
   success: []
 }>()
 
-import { useAuthStore } from '~/stores/auth'
 const { signIn, signUp } = useAuthStore()
 const email = ref('')
 const password = ref('')
-const error = ref('')
+const confirm = ref('')
+const errors = reactive<{ email?: string; password?: string; confirm?: string; server?: string }>({})
 const loading = ref(false)
 
+function validate() {
+  errors.email = validateEmail(email.value)
+  errors.password = validateRequiredPassword(password.value)
+  errors.confirm = props.mode === 'signup'
+    ? validatePasswordConfirmation(password.value, confirm.value)
+    : undefined
+  return !errors.email && !errors.password && !errors.confirm
+}
+
 async function submit() {
-  error.value = ''
+  errors.server = undefined
+  if (!validate()) return
+
   loading.value = true
   try {
     if (props.mode === 'signin') {
@@ -27,7 +41,7 @@ async function submit() {
     emit('success')
     emit('close')
   } catch (e: any) {
-    error.value = e.message ?? 'Something went wrong'
+    errors.server = e.message ?? 'Something went wrong'
   } finally {
     loading.value = false
   }
@@ -56,22 +70,55 @@ async function submit() {
         and gain moderator powers
       </p>
       <div class="flex flex-col gap-3 mt-6">
-        <input
-          v-model="email"
-          type="email"
-          placeholder="Please enter business email"
-          class="mui-input"
-        />
-        <input
-          v-model="password"
-          type="password"
-          placeholder="Please enter password"
-          class="mui-input"
-        />
-        <p v-if="error" class="text-sm" style="color: var(--danger);">{{ error }}</p>
+        <div>
+          <input
+            v-model.trim="email"
+            type="email"
+            placeholder="Please enter business email"
+            autocomplete="email"
+            class="mui-input"
+            :class="{ 'is-error': errors.email }"
+            @keyup.enter="submit"
+          />
+          <p v-if="errors.email" class="text-sm mt-1" style="color: var(--danger);">{{ errors.email }}</p>
+        </div>
+
+        <div>
+          <div v-if="mode === 'signin'" class="flex items-center justify-between gap-3 mb-1">
+            <span class="mui-caption">Password</span>
+            <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline" style="color: var(--primary);" @click="emit('close')">
+              Forgot password?
+            </NuxtLink>
+          </div>
+          <input
+            v-model="password"
+            type="password"
+            :autocomplete="mode === 'signin' ? 'current-password' : 'new-password'"
+            placeholder="Please enter password"
+            class="mui-input"
+            :class="{ 'is-error': errors.password }"
+            @keyup.enter="submit"
+          />
+          <p v-if="errors.password" class="text-sm mt-1" style="color: var(--danger);">{{ errors.password }}</p>
+        </div>
+
+        <div v-if="mode === 'signup'">
+          <input
+            v-model="confirm"
+            type="password"
+            autocomplete="new-password"
+            placeholder="Confirm password"
+            class="mui-input"
+            :class="{ 'is-error': errors.confirm }"
+            @keyup.enter="submit"
+          />
+          <p v-if="errors.confirm" class="text-sm mt-1" style="color: var(--danger);">{{ errors.confirm }}</p>
+        </div>
+
+        <p v-if="errors.server" class="text-sm" style="color: var(--danger);">{{ errors.server }}</p>
         <div class="flex justify-center mt-2">
           <button class="mui-btn" :disabled="loading" @click="submit">
-            {{ mode === 'signin' ? 'Sign In' : 'Sign Up' }}
+            {{ loading ? (mode === 'signin' ? 'Signing In...' : 'Signing Up...') : (mode === 'signin' ? 'Sign In' : 'Sign Up') }}
           </button>
         </div>
       </div>

@@ -69,7 +69,10 @@ export const usePlayersStore = defineStore('players', () => {
   }
 
   async function kick(playerId: string) {
-    await getSupabase().from('players').delete().eq('id', playerId)
+    await getSupabase()
+      .from('players')
+      .update({ left_at: new Date().toISOString() })
+      .eq('id', playerId)
   }
 
   async function leave(playerId: string) {

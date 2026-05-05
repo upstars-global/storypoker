@@ -91,7 +91,7 @@ function close() { showMenu.value = false }
         >{{ player.vote }}</span>
         <IconCancel
           v-else
-          style="font-size: 1.5rem; color: var(--text-disabled);"
+          :style="{ fontSize: '1.5rem', color: isLight ? 'rgb(69, 90, 100)' : 'rgb(250, 250, 250)' }"
         />
       </template>
     </template>
