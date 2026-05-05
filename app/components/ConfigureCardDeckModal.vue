@@ -44,7 +44,7 @@ function applyPreset(name: string) {
         aria-label="Close"
         @click="emit('close')"
       >
-        <IconClose style="font-size: 1.25rem;" />
+        <IconClose style="font-size: 1.5rem;" />
       </button>
       <h2 class="text-center text-[22px] font-bold tracking-[0.00735em]" style="color: var(--text-primary);">
         Configure Card Deck

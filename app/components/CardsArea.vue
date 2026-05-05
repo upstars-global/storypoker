@@ -3,6 +3,7 @@ defineProps<{
   activeCards: string[]
   selectedVote: string | null
   isModerator: boolean
+  hasVotes: boolean
 }>()
 
 const emit = defineEmits<{
@@ -17,14 +18,13 @@ const emit = defineEmits<{
       <div
         v-for="card in activeCards"
         :key="card"
-        class="relative w-[140px] h-[190px] flex-none"
+        class="relative w-[151.66px] aspect-[2/3] flex-none"
       >
         <button
           v-wave
           type="button"
           class="mui-card"
           :class="{ 'is-selected': selectedVote === card }"
-          :style="selectedVote === card ? '' : 'box-shadow: var(--shadow-2);'"
           @click="emit('vote', card)"
         >
           <span class="mui-card-value">{{ card }}</span>
@@ -33,7 +33,7 @@ const emit = defineEmits<{
     </div>
 
     <div v-if="isModerator" class="flex justify-center pt-8">
-      <button v-wave class="mui-btn" @click="emit('reveal')">Reveal Estimates</button>
+      <button v-wave class="mui-btn" :disabled="!hasVotes" @click="emit('reveal')">Reveal Estimates</button>
     </div>
   </div>
 </template>

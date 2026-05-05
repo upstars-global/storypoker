@@ -43,7 +43,7 @@ async function submit() {
         aria-label="Close"
         @click="emit('close')"
       >
-        <IconClose style="font-size: 1.25rem;" />
+        <IconClose style="font-size: 1.5rem;" />
       </button>
       <h2 class="mui-h5 text-center">
         {{ mode === 'signin' ? 'Sign In' : 'Sign Up' }}

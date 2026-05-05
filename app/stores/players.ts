@@ -11,7 +11,7 @@ type RealtimePayload = {
 
 export const usePlayersStore = defineStore('players', () => {
   const players = ref<Player[]>([])
-  const pendingVotes = ref<Record<string, string>>({})
+  const pendingVotes = ref<Record<string, string | null>>({})
   const roomId = ref<string | null>(null)
 
   const visiblePlayers = computed(() => players.value.filter(p => p.left_at === null))
@@ -42,7 +42,7 @@ export const usePlayersStore = defineStore('players', () => {
     return players.value.find(p => p.id === playerId)?.vote ?? null
   }
 
-  async function castVote(playerId: string, card: string) {
+  async function castVote(playerId: string, card: string | null) {
     pendingVotes.value[playerId] = card
     try {
       const { error } = await getSupabase()

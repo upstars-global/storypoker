@@ -1,5 +1,6 @@
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.directive('click-outside', {
+    getSSRProps: () => ({}),
     mounted(el, binding) {
       if (!import.meta.client) return
       el._clickOutside = (e: MouseEvent) => {

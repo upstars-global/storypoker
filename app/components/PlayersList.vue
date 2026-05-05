@@ -25,10 +25,10 @@ const totalCount = computed(() => props.players.length)
 </script>
 
 <template>
-  <div class="mui-paper" style="box-shadow: var(--shadow-2);">
+  <div class="mui-paper">
     <div class="mui-paper-header flex items-center justify-center gap-2">
       <span>Players</span>
-      <span class="text-sm font-normal" style="color: var(--text-muted);">
+      <span class="text-sm font-normal" style="color: #ffffff;">
         {{ onlineCount }} / {{ totalCount }}
       </span>
     </div>

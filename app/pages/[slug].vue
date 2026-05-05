@@ -40,6 +40,8 @@ const playersForUi = computed(() =>
   }))
 )
 
+const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
+
 const voteCounts = computed(() => {
   if (!roomState.value) return {}
   return visiblePlayers.value.reduce((acc, p) => {
@@ -135,8 +137,9 @@ async function handleJoin(name: string) {
 
 async function handleVote(card: string) {
   if (!currentPlayerId.value) return
+  const next = playersStore.voteOf(currentPlayerId.value) === card ? null : card
   try {
-    await playersStore.castVote(currentPlayerId.value, card)
+    await playersStore.castVote(currentPlayerId.value, next)
   } catch {
   }
 }
@@ -203,9 +206,10 @@ async function handleSaveCardDeck(cards: string[]) {
           @leave="handleLeave"
           @kick="handleKick"
         />
-        <ModeratorInsights
-          v-if="isModerator && roomState"
+        <Timer
+          v-if="roomState"
           :round-started-at="roomState.round_started_at"
+          :phase="roomState.phase ?? 'voting'"
         />
       </div>
 
@@ -215,6 +219,7 @@ async function handleSaveCardDeck(cards: string[]) {
           :active-cards="roomState.active_cards ?? []"
           :selected-vote="currentPlayer ? playersStore.voteOf(currentPlayer.id) : null"
           :is-moderator="isModerator"
+          :has-votes="hasVotes"
           @vote="handleVote"
           @reveal="roomStore.reveal()"
         />

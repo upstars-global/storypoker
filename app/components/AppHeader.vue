@@ -27,13 +27,13 @@ const showMenu = ref(false)
     class="sticky top-0 z-40 w-full flex items-center px-4 sm:px-6"
     style="background-color: var(--bg-appbar); color: #fff; min-height: 56px; box-shadow: var(--shadow-4);"
   >
-    <NuxtLink v-wave to="/" class="mui-h6 inline-flex items-center px-2 py-1 -mx-2 rounded" style="color: #fff;">
+    <NuxtLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded" style="color: #fff;">
       Story Poker
     </NuxtLink>
     <div class="flex-1" />
 
     <div class="flex items-center gap-2 relative">
-      <span class="text-sm" style="color: rgba(255,255,255,0.85);">{{ onlineCount }}</span>
+      <span v-if="playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">{{ playerName }}</span>
       <button
         v-wave
         class="mui-icon-btn"
@@ -54,8 +54,8 @@ const showMenu = ref(false)
       <ul
         v-if="showMenu"
         v-click-outside="() => showMenu = false"
-        class="mui-menu absolute right-0 top-12 z-50"
-        style="min-width: 240px;"
+        class="mui-menu absolute z-50"
+        style="min-width: 240px; right: 32px; top: 12px; margin-right: 8px;"
       >
         <li v-if="isModerator">
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showMenu = false">
