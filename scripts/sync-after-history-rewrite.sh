@@ -49,7 +49,7 @@ fi
 echo "==> Fetching $REMOTE"
 git fetch "$REMOTE"
 
-LOCAL_AHEAD_COUNT="$(git rev-list --count "$REMOTE/$BRANCH..HEAD" || echo 0)"
+UNIQUE_COMMITS="$(git cherry "$REMOTE/$BRANCH" HEAD 2>/dev/null | grep -c '^+' || true)"
 
 echo "==> Resetting $BRANCH to $REMOTE/$BRANCH"
 git reset --hard "$REMOTE/$BRANCH"
@@ -71,12 +71,13 @@ fi
 echo
 echo "Done. Local repo is in sync with the rewritten history."
 
-if [ "$LOCAL_AHEAD_COUNT" -gt 0 ]; then
+if [ "$UNIQUE_COMMITS" -gt 0 ]; then
   echo
-  echo "Heads up: you had $LOCAL_AHEAD_COUNT local commit(s) ahead of the old origin/$BRANCH."
-  echo "They are preserved on branch '$BACKUP_BRANCH'. Replay them onto the new main, e.g.:"
-  echo "  git log $BACKUP_BRANCH --not $REMOTE/$BRANCH --oneline"
-  echo "  git cherry-pick <commit-hash>   # for each commit, oldest first"
+  echo "Heads up: $UNIQUE_COMMITS commit(s) on '$BACKUP_BRANCH' have no content-equivalent on the new $REMOTE/$BRANCH."
+  echo "Inspect with:"
+  echo "  git cherry -v $REMOTE/$BRANCH $BACKUP_BRANCH"
+  echo "  git diff $REMOTE/$BRANCH $BACKUP_BRANCH"
+  echo "If the only diff is the cleaned-up files, ignore. Otherwise cherry-pick the unique ones."
 fi
 
 echo
