@@ -22,6 +22,8 @@ const emit = defineEmits<{
 
 const onlineCount = computed(() => props.players.filter(p => p.is_online).length)
 const totalCount = computed(() => props.players.length)
+
+const openMenuId = ref<string | null>(null)
 </script>
 
 <template>
@@ -40,10 +42,13 @@ const totalCount = computed(() => props.players.length)
         :phase="phase"
         :current-player-id="currentPlayerId"
         :current-user-is-authorized-moderator="currentUserIsAuthorizedModerator"
+        :open-menu-id="openMenuId"
         @rename="emit('rename', $event)"
         @toggle-moderator="(id, val) => emit('toggleModerator', id, val)"
         @leave="emit('leave', $event)"
         @kick="emit('kick', $event)"
+        @menu-open="openMenuId = $event"
+        @menu-close="openMenuId = null"
       />
     </div>
   </div>

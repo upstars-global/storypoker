@@ -11,6 +11,7 @@ const props = defineProps<{
   phase: 'voting' | 'revealed'
   currentPlayerId: string | null
   currentUserIsAuthorizedModerator: boolean
+  openMenuId: string | null
 }>()
 
 const emit = defineEmits<{
@@ -18,30 +19,36 @@ const emit = defineEmits<{
   toggleModerator: [id: string, value: boolean]
   leave: [id: string]
   kick: [id: string]
+  menuOpen: [id: string]
+  menuClose: []
 }>()
 
 const { avatarDataUri } = useDylanAvatar()
 const { isLight } = useTheme()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
-const showMenu = ref(false)
+const showMenu = computed(() => props.openMenuId === props.player.id)
 const triggerEl = ref<HTMLButtonElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 
 function toggleMenu() {
-  showMenu.value = !showMenu.value
-  if (showMenu.value && triggerEl.value) {
-    const rect = triggerEl.value.getBoundingClientRect()
-    menuStyle.value = {
-      position: 'fixed',
-      top: `${rect.top}px`,
-      left: `${rect.left - 200 - 8}px`,
-      minWidth: '200px',
+  if (showMenu.value) {
+    emit('menuClose')
+  } else {
+    if (triggerEl.value) {
+      const rect = triggerEl.value.getBoundingClientRect()
+      menuStyle.value = {
+        position: 'fixed',
+        top: `${rect.top}px`,
+        left: `${rect.left - 200 - 8}px`,
+        minWidth: '200px',
+      }
     }
+    emit('menuOpen', props.player.id)
   }
 }
 
-function close() { showMenu.value = false }
+function close() { emit('menuClose') }
 </script>
 
 <template>
