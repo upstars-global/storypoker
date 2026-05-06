@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getSupabase } from '~/lib/supabase-instance'
-import type { RoomState } from './types'
+import { getDeck, type DeckPresetId } from '~/utils/cardDecks'
+import { usePlayersStore } from './players'
+import type { RoomState, RoundHistoryVote } from './types'
 
 type RealtimePayload = {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE'
@@ -20,8 +22,23 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   async function reveal() {
-    if (!roomId.value) return
-    await getSupabase().from('room_state').update({ phase: 'revealed' }).eq('room_id', roomId.value)
+    if (!roomId.value || !roomState.value) return
+    const supabase = getSupabase()
+    const playersStore = usePlayersStore()
+    const votes: RoundHistoryVote[] = playersStore.visiblePlayers
+      .filter(p => p.vote !== null)
+      .map(p => ({ player_id: p.id, name: p.name, vote: p.vote as string }))
+
+    await supabase.from('room_state').update({ phase: 'revealed' }).eq('room_id', roomId.value)
+
+    if (votes.length >= 2) {
+      await supabase.from('round_history').insert({
+        room_id: roomId.value,
+        started_at: roomState.value.round_started_at,
+        revealed_at: new Date().toISOString(),
+        votes,
+      })
+    }
   }
 
   async function startNewRound() {
@@ -41,6 +58,15 @@ export const useRoomStore = defineStore('room', () => {
     await getSupabase().from('room_state').update({ active_cards: cards }).eq('room_id', roomId.value)
   }
 
+  async function setDeckPreset(presetId: DeckPresetId) {
+    if (!roomId.value) return
+    const preset = getDeck(presetId)
+    await getSupabase()
+      .from('room_state')
+      .update({ deck_preset: presetId, active_cards: preset.defaultActive })
+      .eq('room_id', roomId.value)
+  }
+
   function generateRoomId(): string {
     const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
     return Array.from({ length: 8 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('')
@@ -56,5 +82,29 @@ export const useRoomStore = defineStore('room', () => {
     return id
   }
 
-  return { roomId, roomState, applyChange, reveal, startNewRound, saveCardDeck, create }
+  async function resolveRoom(input: string): Promise<{ id: string; slug: string | null } | null> {
+    const supabase = getSupabase()
+    const { data } = await supabase
+      .from('rooms')
+      .select('id, slug')
+      .or(`id.eq.${input},slug.eq.${input}`)
+      .maybeSingle()
+    return data ?? null
+  }
+
+  async function setSlug(slug: string | null): Promise<void> {
+    if (!roomId.value) return
+    const supabase = getSupabase()
+    const { error } = await supabase.from('rooms').update({ slug }).eq('id', roomId.value)
+    if (error) {
+      if ((error as any).code === '23505') {
+        const e = new Error('room_slug_taken') as Error & { code?: string }
+        e.code = 'room_slug_taken'
+        throw e
+      }
+      throw error
+    }
+  }
+
+  return { roomId, roomState, applyChange, reveal, startNewRound, saveCardDeck, setDeckPreset, create, resolveRoom, setSlug }
 })

@@ -5,10 +5,13 @@ import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
 import { touchRecentRoom } from '~/utils/recentRooms'
+import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
+import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
 
 const route = useRoute()
 const router = useRouter()
-const roomId = route.params.slug as string
+const urlParam = route.params.slug as string
+let roomId = ''
 
 const authStore = useAuthStore()
 const roomStore = useRoomStore()
@@ -26,6 +29,10 @@ const showAuth = ref<'signin' | 'signup' | null>(null)
 const showCardDeck = ref(false)
 const renameTarget = ref<string | null>(null)
 const renameValue = ref('')
+const showRenameRoom = ref(false)
+const roomSlugInput = ref('')
+const roomSlugError = ref<string | null>(null)
+const currentSlug = ref<string | null>(null)
 
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
 const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
@@ -55,6 +62,16 @@ let stateChannel: any = null
 
 onMounted(async () => {
   await authStore.init()
+  const resolved = await roomStore.resolveRoom(urlParam)
+  if (!resolved) {
+    router.push('/')
+    return
+  }
+  if (resolved.slug && urlParam === resolved.id) {
+    router.replace(`/${resolved.slug}`)
+  }
+  currentSlug.value = resolved.slug
+  roomId = resolved.id
   roomStore.roomId = roomId
   playersStore.roomId = roomId
   await fetchInitialData()
@@ -176,9 +193,47 @@ async function handleAuthSuccess() {
   }
 }
 
-async function handleSaveCardDeck(cards: string[]) {
-  await roomStore.saveCardDeck(cards)
+async function handleSaveCardDeck(payload: { deckPreset: DeckPresetId; cards: string[] }) {
+  if (payload.deckPreset !== roomState.value?.deck_preset) {
+    await roomStore.setDeckPreset(payload.deckPreset)
+  }
+  await roomStore.saveCardDeck(payload.cards)
   showCardDeck.value = false
+}
+
+function openRenameRoom() {
+  roomSlugInput.value = currentSlug.value ?? ''
+  roomSlugError.value = null
+  showRenameRoom.value = true
+}
+
+async function submitRenameRoom() {
+  roomSlugError.value = null
+  const raw = roomSlugInput.value.trim()
+  if (!raw) {
+    await roomStore.setSlug(null)
+    currentSlug.value = null
+    showRenameRoom.value = false
+    router.replace(`/${roomId}`)
+    return
+  }
+  const normalized = normalizeRoomSlug(raw)
+  if (!isValidRoomSlug(normalized)) {
+    roomSlugError.value = 'Use 2–32 chars: letters, numbers, dashes'
+    return
+  }
+  try {
+    await roomStore.setSlug(normalized)
+  } catch (e: any) {
+    if (e?.code === 'room_slug_taken') {
+      roomSlugError.value = 'This name is already taken'
+      return
+    }
+    throw e
+  }
+  currentSlug.value = normalized
+  showRenameRoom.value = false
+  router.replace(`/${normalized}`)
 }
 </script>
 
@@ -191,6 +246,7 @@ async function handleSaveCardDeck(cards: string[]) {
       @open-sign-in="showAuth = 'signin'"
       @open-sign-up="showAuth = 'signup'"
       @open-card-deck="showCardDeck = true"
+      @open-rename-room="openRenameRoom"
       @sign-out="authStore.signOut()"
     />
 
@@ -243,6 +299,7 @@ async function handleSaveCardDeck(cards: string[]) {
 
     <ConfigureCardDeckModal
       v-if="showCardDeck && roomState"
+      :deck-preset="roomState.deck_preset ?? DEFAULT_PRESET_ID"
       :active-cards="roomState.active_cards"
       @close="showCardDeck = false"
       @save="handleSaveCardDeck"
@@ -259,6 +316,26 @@ async function handleSaveCardDeck(cards: string[]) {
         <div class="flex gap-2 justify-end mt-6">
           <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="renameTarget = null">Cancel</button>
           <button class="mui-btn" style="min-width: 120px;" @click="submitRename">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showRenameRoom" class="mui-modal-overlay" @click.self="showRenameRoom = false">
+      <div class="mui-modal-paper">
+        <h2 class="mui-h5 mb-4">Rename Room</h2>
+        <input
+          v-model="roomSlugInput"
+          class="mui-input"
+          placeholder="e.g. backoffice"
+          @keyup.enter="submitRenameRoom"
+        />
+        <p v-if="roomSlugError" class="text-[13px] mt-2" style="color: #d32f2f;">{{ roomSlugError }}</p>
+        <p v-else class="text-[13px] mt-2" style="color: var(--text-muted);">
+          Leave empty to remove the custom name.
+        </p>
+        <div class="flex gap-2 justify-end mt-6">
+          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="showRenameRoom = false">Cancel</button>
+          <button class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">Save</button>
         </div>
       </div>
     </div>

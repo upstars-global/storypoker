@@ -9,17 +9,22 @@ const emit = defineEmits<{
   openSignIn: []
   openSignUp: []
   openCardDeck: []
-  openTrends: []
-  openRecent: []
+  openRenameRoom: []
   signOut: []
 }>()
 
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
+const router = useRouter()
 const { user } = storeToRefs(useAuthStore())
 const { avatarDataUri } = useDylanAvatar()
 const { isLight, toggle: toggleTheme } = useTheme()
 const showMenu = ref(false)
+
+function goRecent() {
+  showMenu.value = false
+  router.push('/')
+}
 </script>
 
 <template>
@@ -28,7 +33,7 @@ const showMenu = ref(false)
     style="background-color: var(--bg-appbar); color: #fff; min-height: 56px; box-shadow: var(--shadow-4);"
   >
     <NuxtLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded" style="color: #fff;">
-      Story Poker
+      Story Poking
     </NuxtLink>
     <div class="flex-1" />
 
@@ -58,17 +63,17 @@ const showMenu = ref(false)
         style="min-width: 240px; right: 32px; top: 12px; margin-right: 8px;"
       >
         <li v-if="isModerator">
+          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showMenu = false">
+            <IconEdit class="mui-menu-icon" /> Rename Room
+          </button>
+        </li>
+        <li v-if="isModerator">
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showMenu = false">
             <IconSettings class="mui-menu-icon" /> Configure Card Deck
           </button>
         </li>
         <li>
-          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openTrends'); showMenu = false">
-            <IconTrendingUp class="mui-menu-icon" /> Alignment Trends
-          </button>
-        </li>
-        <li>
-          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRecent'); showMenu = false">
+          <button v-wave class="mui-menu-item whitespace-nowrap" @click="goRecent">
             <IconHistory class="mui-menu-icon" /> Recent Rooms
           </button>
         </li>

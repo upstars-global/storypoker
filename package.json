@@ -19,9 +19,9 @@
   "dependencies": {
     "@dicebear/collection": "^9.4.2",
     "@dicebear/core": "^9.4.2",
-    "@nuxt/icon": "^2.2.1",
+    "@nuxt/icon": "^2.2.2",
     "@pinia/nuxt": "^0.11.3",
-    "@supabase/supabase-js": "^2.105.1",
+    "@supabase/supabase-js": "^2.105.3",
     "nuxt": "^4.4.4",
     "pinia": "^3.0.4",
     "v-wave": "^3.0.4",

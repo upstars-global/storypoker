@@ -1,36 +1,43 @@
 <script setup lang="ts">
-const ALL_CARDS = ['0', '1/2', '1', '2', '3', '5', '8', '13', '20', '40', '100', '?', '☕']
-const PRESETS: Record<string, string[]> = {
-  'Scrum scale': ['1/2', '1', '2', '3', '5', '8', '13', '20', '?', '☕'],
-  'Fibonacci': ['1', '2', '3', '5', '8', '13', '20', '40', '100', '?'],
-  'T-shirt': ['1', '2', '5', '13', '20', '?'],
-}
+import { ref, computed, watch } from 'vue'
+import { DECK_PRESETS, getDeck, type DeckPresetId } from '~/utils/cardDecks'
 
 const props = defineProps<{
+  deckPreset: DeckPresetId
   activeCards: string[]
 }>()
 
 const emit = defineEmits<{
-  save: [cards: string[]]
+  save: [payload: { deckPreset: DeckPresetId; cards: string[] }]
   close: []
 }>()
 
+const presetId = ref<DeckPresetId>(props.deckPreset)
 const selected = ref<string[]>([...props.activeCards])
-const preset = ref<string>('Scrum scale')
+
+const currentDeck = computed(() => getDeck(presetId.value))
+
+watch(() => props.deckPreset, (next) => { presetId.value = next })
+watch(() => props.activeCards, (next) => { selected.value = [...next] })
 
 function toggle(card: string) {
   if (selected.value.includes(card)) {
     selected.value = selected.value.filter(c => c !== card)
   } else {
+    const order = currentDeck.value.cards
     selected.value = [...selected.value, card].sort(
-      (a, b) => ALL_CARDS.indexOf(a) - ALL_CARDS.indexOf(b)
+      (a, b) => order.indexOf(a) - order.indexOf(b)
     )
   }
 }
 
-function applyPreset(name: string) {
-  preset.value = name
-  if (PRESETS[name]) selected.value = [...PRESETS[name]]
+function applyPreset(id: DeckPresetId) {
+  presetId.value = id
+  selected.value = [...getDeck(id).defaultActive]
+}
+
+function save() {
+  emit('save', { deckPreset: presetId.value, cards: selected.value })
 }
 </script>
 
@@ -52,18 +59,18 @@ function applyPreset(name: string) {
 
       <div class="mt-7 flex justify-center">
         <select
-          v-model="preset"
+          :value="presetId"
           class="rounded border bg-transparent px-3 py-2 text-[15px] focus:outline-none focus:ring-1 focus:ring-[#546e7a]"
           style="border-color: var(--border); color: var(--text-primary); min-width: 240px;"
-          @change="applyPreset(preset)"
+          @change="applyPreset(($event.target as HTMLSelectElement).value as DeckPresetId)"
         >
-          <option v-for="name in Object.keys(PRESETS)" :key="name" :value="name">{{ name }}</option>
+          <option v-for="p in DECK_PRESETS" :key="p.id" :value="p.id">{{ p.name }}</option>
         </select>
       </div>
 
       <div class="grid grid-cols-3 gap-x-8 gap-y-3 mt-8 mb-2 mx-auto" style="max-width: 380px;">
         <label
-          v-for="card in ALL_CARDS"
+          v-for="card in currentDeck.cards"
           :key="card"
           class="flex items-center gap-3 cursor-pointer text-[15px]"
           style="color: var(--text-primary);"
@@ -79,7 +86,7 @@ function applyPreset(name: string) {
       </div>
 
       <div class="flex justify-center mt-8">
-        <button v-wave class="mui-btn" @click="emit('save', selected)">Save Card Deck</button>
+        <button v-wave class="mui-btn" @click="save">Save Card Deck</button>
       </div>
     </div>
   </div>

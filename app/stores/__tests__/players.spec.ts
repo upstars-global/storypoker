@@ -151,11 +151,12 @@ describe('playersStore actions', () => {
     expect(b.update).toHaveBeenCalledWith({ is_moderator: true })
   })
 
-  it('kick(id) sends DELETE', async () => {
+  it('kick(id) sets left_at (soft-delete)', async () => {
     const b = makeBuilder()
-    setSupabase({ from: () => ({ delete: b.del }) } as any)
+    setSupabase({ from: () => ({ update: b.update }) } as any)
     await usePlayersStore().kick('p1')
-    expect(b.del).toHaveBeenCalled()
+    const arg = b.update.mock.calls[0][0]
+    expect(typeof arg.left_at).toBe('string')
   })
 
   it('leave(id) sets left_at and clears localStorage session', async () => {

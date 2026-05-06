@@ -160,7 +160,12 @@ function close() { showMenu.value = false }
             </template>
             <template v-else-if="currentUserIsAuthorizedModerator">
               <li>
-                <button class="mui-menu-item is-danger" @click="emit('kick', player.id); close()">
+                <button class="mui-menu-item" @click="emit('rename', player.id); close()">
+                  <IconEdit class="mui-menu-icon" /> Rename Player
+                </button>
+              </li>
+              <li>
+                <button class="mui-menu-item" @click="emit('kick', player.id); close()">
                   <IconPersonRemove class="mui-menu-icon" /> Kick Player
                 </button>
               </li>
