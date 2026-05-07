@@ -11,7 +11,7 @@ Thumbs.db
 .env*.local
 .env.local
 
-/supabase
+/supabase/*
 !/supabase/migrations
 
 /examples

@@ -62,7 +62,7 @@ function goRecent() {
         class="mui-menu absolute z-50"
         style="min-width: 240px; right: 32px; top: 12px; margin-right: 8px;"
       >
-        <li v-if="isModerator">
+        <li v-if="isModerator && user">
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showMenu = false">
             <IconEdit class="mui-menu-icon" /> Rename Room
           </button>
