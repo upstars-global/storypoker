@@ -15,6 +15,8 @@ const authStore = useAuthStore()
 
 interface RecentRoomDisplay extends RecentRoomEntry {
   playerNames: string[]
+  slug: string | null
+  name: string | null
 }
 
 const recentRooms = ref<RecentRoomDisplay[]>([])
@@ -29,21 +31,27 @@ onMounted(async () => {
 
   const supabase = getSupabase()
   const ids = local.map(r => r.roomId)
-  const { data } = await supabase
-    .from('players')
-    .select('room_id, name')
-    .in('room_id', ids)
-    .is('left_at', null)
+  const [{ data: playersData }, { data: roomsData }] = await Promise.all([
+    supabase.from('players').select('room_id, name').in('room_id', ids).is('left_at', null),
+    supabase.from('rooms').select('id, slug, name').in('id', ids),
+  ])
 
   const namesByRoom: Record<string, string[]> = {}
-  for (const row of data ?? []) {
+  for (const row of playersData ?? []) {
     namesByRoom[row.room_id] = namesByRoom[row.room_id] ?? []
     namesByRoom[row.room_id].push(row.name)
+  }
+
+  const slugByRoom: Record<string, { slug: string | null; name: string | null }> = {}
+  for (const row of roomsData ?? []) {
+    slugByRoom[row.id] = { slug: row.slug ?? null, name: row.name ?? null }
   }
 
   recentRooms.value = local.map(r => ({
     ...r,
     playerNames: namesByRoom[r.roomId] ?? [],
+    slug: slugByRoom[r.roomId]?.slug ?? null,
+    name: slugByRoom[r.roomId]?.name ?? null,
   }))
 })
 
@@ -125,8 +133,8 @@ async function createRoom() {
               style="border-color: var(--border);"
             >
               <td class="px-3 py-3 align-top">
-                <NuxtLink :to="`/${room.roomId}`" class="underline hover:no-underline" style="color: var(--primary);">
-                  {{ origin }}/{{ room.roomId }}
+                <NuxtLink :to="`/${room.slug ?? room.roomId}`" class="underline hover:no-underline" style="color: var(--primary);">
+                  {{ room.name ?? room.slug ?? room.roomId }}
                 </NuxtLink>
               </td>
               <td class="px-3 py-3 align-top">

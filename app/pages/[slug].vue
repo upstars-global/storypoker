@@ -30,9 +30,20 @@ const showCardDeck = ref(false)
 const renameTarget = ref<string | null>(null)
 const renameValue = ref('')
 const showRenameRoom = ref(false)
-const roomSlugInput = ref('')
-const roomSlugError = ref<string | null>(null)
+const roomNameInput = ref('')
+const roomNameError = ref<string | null>(null)
 const currentSlug = ref<string | null>(null)
+const currentRoomName = ref<string | null>(null)
+const origin = ref('')
+const kickTargetId = ref<string | null>(null)
+const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === kickTargetId.value)?.name ?? '')
+
+const renameSaveBtn = ref<HTMLButtonElement | null>(null)
+const renameCancelBtn = ref<HTMLButtonElement | null>(null)
+const roomSaveBtn = ref<HTMLButtonElement | null>(null)
+const roomCancelBtn = ref<HTMLButtonElement | null>(null)
+const kickConfirmBtn = ref<HTMLButtonElement | null>(null)
+const kickCancelBtn = ref<HTMLButtonElement | null>(null)
 
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
 const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
@@ -61,6 +72,7 @@ let playersChannel: any = null
 let stateChannel: any = null
 
 onMounted(async () => {
+  origin.value = window.location.origin
   await authStore.init()
   const resolved = await roomStore.resolveRoom(urlParam)
   if (!resolved) {
@@ -71,6 +83,7 @@ onMounted(async () => {
     router.replace(`/${resolved.slug}`)
   }
   currentSlug.value = resolved.slug
+  currentRoomName.value = resolved.name
   roomId = resolved.id
   roomStore.roomId = roomId
   playersStore.roomId = roomId
@@ -183,8 +196,14 @@ async function handleLeave(id: string) {
   router.push('/')
 }
 
-async function handleKick(id: string) {
-  await playersStore.kick(id)
+function handleKick(id: string) {
+  kickTargetId.value = id
+}
+
+async function confirmKick() {
+  if (!kickTargetId.value) return
+  await playersStore.kick(kickTargetId.value)
+  kickTargetId.value = null
 }
 
 async function handleAuthSuccess() {
@@ -202,38 +221,40 @@ async function handleSaveCardDeck(payload: { deckPreset: DeckPresetId; cards: st
 }
 
 function openRenameRoom() {
-  roomSlugInput.value = currentSlug.value ?? ''
-  roomSlugError.value = null
+  roomNameInput.value = currentRoomName.value ?? currentSlug.value ?? ''
+  roomNameError.value = null
   showRenameRoom.value = true
 }
 
 async function submitRenameRoom() {
-  roomSlugError.value = null
-  const raw = roomSlugInput.value.trim()
-  if (!raw) {
-    await roomStore.setSlug(null)
+  roomNameError.value = null
+  const name = roomNameInput.value.trim()
+  if (!name) {
+    await roomStore.setRoomName(null, null)
+    currentRoomName.value = null
     currentSlug.value = null
     showRenameRoom.value = false
     router.replace(`/${roomId}`)
     return
   }
-  const normalized = normalizeRoomSlug(raw)
-  if (!isValidRoomSlug(normalized)) {
-    roomSlugError.value = 'Use 2–32 chars: letters, numbers, dashes'
+  const slug = normalizeRoomSlug(name)
+  if (!isValidRoomSlug(slug)) {
+    roomNameError.value = 'Name must be 2–32 alphanumeric characters'
     return
   }
   try {
-    await roomStore.setSlug(normalized)
+    await roomStore.setRoomName(name, slug)
   } catch (e: any) {
     if (e?.code === 'room_slug_taken') {
-      roomSlugError.value = 'This name is already taken'
+      roomNameError.value = 'This name is already taken'
       return
     }
     throw e
   }
-  currentSlug.value = normalized
+  currentRoomName.value = name
+  currentSlug.value = slug
   showRenameRoom.value = false
-  router.replace(`/${normalized}`)
+  router.replace(`/${slug}`)
 }
 </script>
 
@@ -243,6 +264,7 @@ async function submitRenameRoom() {
       :online-count="onlineCount"
       :is-moderator="isModerator"
       :player-name="currentPlayer?.name ?? ''"
+      :room-name="currentRoomName ?? currentSlug ?? roomId"
       @open-sign-in="showAuth = 'signin'"
       @open-sign-up="showAuth = 'signup'"
       @open-card-deck="showCardDeck = true"
@@ -305,37 +327,49 @@ async function submitRenameRoom() {
       @save="handleSaveCardDeck"
     />
 
-    <div v-if="renameTarget" class="mui-modal-overlay" @click.self="renameTarget = null">
+    <div v-if="renameTarget" class="mui-modal-overlay" @click.self="renameTarget = null" @keydown.esc="renameCancelBtn?.click()" @keydown.enter.prevent="renameSaveBtn?.click()">
       <div class="mui-modal-paper">
         <h2 class="mui-h5 mb-4">Rename Player</h2>
         <input
           v-model="renameValue"
           class="mui-input"
-          @keyup.enter="submitRename"
+          autofocus
         />
         <div class="flex gap-2 justify-end mt-6">
-          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="renameTarget = null">Cancel</button>
-          <button class="mui-btn" style="min-width: 120px;" @click="submitRename">Save</button>
+          <button ref="renameCancelBtn" v-wave class="mui-btn mui-btn-secondary" style="min-width: 120px;" @click="renameTarget = null">Cancel</button>
+          <button ref="renameSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">Save</button>
         </div>
       </div>
     </div>
 
-    <div v-if="showRenameRoom" class="mui-modal-overlay" @click.self="showRenameRoom = false">
+    <div v-if="showRenameRoom" class="mui-modal-overlay" @click.self="showRenameRoom = false" @keydown.esc="roomCancelBtn?.click()" @keydown.enter.prevent="roomSaveBtn?.click()">
       <div class="mui-modal-paper">
         <h2 class="mui-h5 mb-4">Rename Room</h2>
         <input
-          v-model="roomSlugInput"
+          v-model="roomNameInput"
           class="mui-input"
-          placeholder="e.g. backoffice"
-          @keyup.enter="submitRenameRoom"
+          placeholder="e.g. Backend Team"
+          autofocus
         />
-        <p v-if="roomSlugError" class="text-[13px] mt-2" style="color: #d32f2f;">{{ roomSlugError }}</p>
-        <p v-else class="text-[13px] mt-2" style="color: var(--text-muted);">
-          Leave empty to remove the custom name.
-        </p>
+        <p v-if="roomNameError" class="text-[13px] mt-2" style="color: #d32f2f;">{{ roomNameError }}</p>
+        <div v-else class="text-[13px] mt-2 flex flex-col gap-[2px]" style="color: var(--text-muted);">
+          <span v-if="roomNameInput.trim()">URL: {{ origin }}/{{ normalizeRoomSlug(roomNameInput) }}</span>
+          <span>URL: {{ origin }}/{{ roomId }}</span>
+        </div>
         <div class="flex gap-2 justify-end mt-6">
-          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="showRenameRoom = false">Cancel</button>
-          <button class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">Save</button>
+          <button ref="roomCancelBtn" v-wave class="mui-btn mui-btn-secondary" style="min-width: 120px;" @click="showRenameRoom = false">Cancel</button>
+          <button ref="roomSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="kickTargetId" class="mui-modal-overlay" @click.self="kickTargetId = null" @keydown.esc="kickCancelBtn?.click()" @keydown.enter.prevent="kickConfirmBtn?.click()">
+      <div class="mui-modal-paper">
+        <h2 class="mui-h5 mb-4">Kick Player</h2>
+        <p style="color: var(--text-body);">Remove <strong>{{ kickTargetName }}</strong> from the room?</p>
+        <div class="flex gap-2 justify-end mt-6">
+          <button ref="kickCancelBtn" v-wave class="mui-btn mui-btn-secondary" style="min-width: 120px;" @click="kickTargetId = null">Cancel</button>
+          <button ref="kickConfirmBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">Kick</button>
         </div>
       </div>
     </div>

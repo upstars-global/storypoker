@@ -3,6 +3,7 @@ defineProps<{
   onlineCount: number
   isModerator: boolean
   playerName: string
+  roomName?: string
 }>()
 
 const emit = defineEmits<{
@@ -20,6 +21,7 @@ const { user } = storeToRefs(useAuthStore())
 const { avatarDataUri } = useDylanAvatar()
 const { isLight, toggle: toggleTheme } = useTheme()
 const showMenu = ref(false)
+const showRoomMenu = ref(false)
 
 function goRecent() {
   showMenu.value = false
@@ -35,10 +37,44 @@ function goRecent() {
     <NuxtLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded" style="color: #fff;">
       Story Poking
     </NuxtLink>
+    <template v-if="roomName">
+      <span style="color: rgba(255,255,255,0.4); margin: 0 6px;">/</span>
+      <span class="mui-h6 text-lg" style="color: rgba(255,255,255,0.85);">{{ roomName }}</span>
+      <div v-if="isModerator" class="relative ml-1">
+        <button
+          v-wave
+          class="mui-icon-btn"
+          style="--hover-bg: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);"
+          aria-label="Room settings"
+          @click.stop="showRoomMenu = !showRoomMenu"
+        >
+          <IconSettings style="font-size: 1.2rem;" />
+        </button>
+        <ul
+          v-if="showRoomMenu"
+          v-click-outside="() => showRoomMenu = false"
+          class="mui-menu absolute z-50"
+          style="min-width: 220px; left: 0; top: calc(100% + 4px);"
+        >
+          <li v-if="user">
+            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showRoomMenu = false">
+              <IconEdit class="mui-menu-icon" /> Rename Room
+            </button>
+          </li>
+          <li>
+            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showRoomMenu = false">
+              <IconSettings class="mui-menu-icon" /> Configure Card Deck
+            </button>
+          </li>
+        </ul>
+      </div>
+    </template>
     <div class="flex-1" />
 
     <div class="flex items-center gap-2 relative">
-      <span v-if="playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">{{ playerName }}</span>
+      <span v-if="playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">
+        {{ playerName }}<template v-if="user && user.email"> ({{ user.email }})</template>
+      </span>
       <button
         v-wave
         class="mui-icon-btn"
@@ -62,16 +98,6 @@ function goRecent() {
         class="mui-menu absolute z-50"
         style="min-width: 240px; right: 32px; top: 12px; margin-right: 8px;"
       >
-        <li v-if="isModerator && user">
-          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showMenu = false">
-            <IconEdit class="mui-menu-icon" /> Rename Room
-          </button>
-        </li>
-        <li v-if="isModerator">
-          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showMenu = false">
-            <IconSettings class="mui-menu-icon" /> Configure Card Deck
-          </button>
-        </li>
         <li>
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="goRecent">
             <IconHistory class="mui-menu-icon" /> Recent Rooms
