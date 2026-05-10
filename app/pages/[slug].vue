@@ -39,17 +39,13 @@ const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
 const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 const onlineCount = computed(() => visiblePlayers.value.filter(p => online.value.has(p.id)).length)
 
-const playersForUi = computed(() => {
-  const mapped = visiblePlayers.value.map(p => ({
+const playersForUi = computed(() =>
+  visiblePlayers.value.map(p => ({
     ...p,
     is_online: online.value.has(p.id),
     vote: playersStore.voteOf(p.id),
   }))
-  return [
-    ...mapped.filter(p => p.is_online),
-    ...mapped.filter(p => !p.is_online),
-  ]
-})
+)
 
 const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
