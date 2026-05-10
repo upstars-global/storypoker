@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const emit = defineEmits<{
   join: [name: string]
+  close: []
 }>()
 
 const name = ref('')
@@ -17,8 +18,22 @@ function submit() {
 
 <template>
   <div class="mui-modal-overlay">
+<<<<<<< HEAD
     <div class="mui-modal-paper">
       <h2 class="mui-h5 text-center">{{ $t('join.title') }}</h2>
+=======
+    <div class="mui-modal-paper relative">
+      <button
+        v-wave
+        class="mui-icon-btn absolute"
+        style="top: 8px; right: 8px;"
+        aria-label="Close"
+        @click="emit('close')"
+      >
+        <IconClose style="font-size: 1.5rem;" />
+      </button>
+      <h2 class="mui-h5 text-center">Join the room</h2>
+>>>>>>> 52096d1692f0cace616e68ab9bd260cfbf11aba3
       <p class="mui-caption text-center mt-2" style="color: var(--text-muted);">
         {{ $t('join.subtitle') }}
       </p>

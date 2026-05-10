@@ -2,6 +2,8 @@
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { useAuthStore } from '~/stores/auth'
+import { useProfilesStore } from '~/stores/profiles'
+import { storeToRefs } from 'pinia'
 import { listRecentRooms, touchRecentRoom, type RecentRoomEntry } from '~/utils/recentRooms'
 import { relativeTime } from '~/utils/relativeTime'
 import { getSupabase } from '~/lib/supabase-instance'
@@ -15,35 +17,48 @@ const authStore = useAuthStore()
 
 interface RecentRoomDisplay extends RecentRoomEntry {
   playerNames: string[]
+  slug: string | null
+  name: string | null
 }
 
 const recentRooms = ref<RecentRoomDisplay[]>([])
 const origin = ref('')
 const showAuth = ref<'signin' | 'signup' | null>(null)
+const showAccountSettings = ref(false)
+const profilesStore = useProfilesStore()
+const { user } = storeToRefs(authStore)
 const headerPlayerName = computed(() => recentRooms.value[0]?.playerName ?? '')
 
 onMounted(async () => {
   origin.value = window.location.origin
+  await authStore.init()
+  if (user.value?.id) await profilesStore.fetchOne(user.value.id)
   const local = listRecentRooms()
   if (local.length === 0) return
 
   const supabase = getSupabase()
   const ids = local.map(r => r.roomId)
-  const { data } = await supabase
-    .from('players')
-    .select('room_id, name')
-    .in('room_id', ids)
-    .is('left_at', null)
+  const [{ data: playersData }, { data: roomsData }] = await Promise.all([
+    supabase.from('players').select('room_id, name').in('room_id', ids).is('left_at', null),
+    supabase.from('rooms').select('id, slug, name').in('id', ids),
+  ])
 
   const namesByRoom: Record<string, string[]> = {}
-  for (const row of data ?? []) {
+  for (const row of playersData ?? []) {
     namesByRoom[row.room_id] = namesByRoom[row.room_id] ?? []
     namesByRoom[row.room_id].push(row.name)
+  }
+
+  const slugByRoom: Record<string, { slug: string | null; name: string | null }> = {}
+  for (const row of roomsData ?? []) {
+    slugByRoom[row.id] = { slug: row.slug ?? null, name: row.name ?? null }
   }
 
   recentRooms.value = local.map(r => ({
     ...r,
     playerNames: namesByRoom[r.roomId] ?? [],
+    slug: slugByRoom[r.roomId]?.slug ?? null,
+    name: slugByRoom[r.roomId]?.name ?? null,
   }))
 })
 
@@ -71,6 +86,7 @@ async function createRoom() {
       :player-name="headerPlayerName"
       @open-sign-in="showAuth = 'signin'"
       @open-sign-up="showAuth = 'signup'"
+      @open-account-settings="showAccountSettings = true"
       @sign-out="authStore.signOut()"
     />
 
@@ -79,6 +95,11 @@ async function createRoom() {
       :mode="showAuth"
       @close="showAuth = null"
       @success="showAuth = null"
+    />
+
+    <UserSettingsModal
+      v-if="showAccountSettings && user"
+      @close="showAccountSettings = false"
     />
 
     <main class="flex flex-1 flex-col items-center px-4 pt-[26px] pb-[40px]">
@@ -125,8 +146,8 @@ async function createRoom() {
               style="border-color: var(--border);"
             >
               <td class="px-3 py-3 align-top">
-                <NuxtLink :to="`/${room.roomId}`" class="underline hover:no-underline" style="color: var(--primary);">
-                  {{ origin }}/{{ room.roomId }}
+                <NuxtLink :to="`/${room.slug ?? room.roomId}`" class="underline hover:no-underline" style="color: var(--primary);">
+                  {{ room.name ?? room.slug ?? room.roomId }}
                 </NuxtLink>
               </td>
               <td class="px-3 py-3 align-top">
