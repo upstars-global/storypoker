@@ -82,20 +82,20 @@ export const useRoomStore = defineStore('room', () => {
     return id
   }
 
-  async function resolveRoom(input: string): Promise<{ id: string; slug: string | null } | null> {
+  async function resolveRoom(input: string): Promise<{ id: string; slug: string | null; name: string | null } | null> {
     const supabase = getSupabase()
     const { data } = await supabase
       .from('rooms')
-      .select('id, slug')
+      .select('id, slug, name')
       .or(`id.eq.${input},slug.eq.${input}`)
       .maybeSingle()
     return data ?? null
   }
 
-  async function setSlug(slug: string | null): Promise<void> {
+  async function setRoomName(name: string | null, slug: string | null): Promise<void> {
     if (!roomId.value) return
     const supabase = getSupabase()
-    const { error } = await supabase.from('rooms').update({ slug }).eq('id', roomId.value)
+    const { error } = await supabase.from('rooms').update({ name, slug }).eq('id', roomId.value)
     if (error) {
       if ((error as any).code === '23505') {
         const e = new Error('room_slug_taken') as Error & { code?: string }
@@ -106,5 +106,5 @@ export const useRoomStore = defineStore('room', () => {
     }
   }
 
-  return { roomId, roomState, applyChange, reveal, startNewRound, saveCardDeck, setDeckPreset, create, resolveRoom, setSlug }
+  return { roomId, roomState, applyChange, reveal, startNewRound, saveCardDeck, setDeckPreset, create, resolveRoom, setRoomName }
 })

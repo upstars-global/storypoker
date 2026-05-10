@@ -15,7 +15,7 @@
 - DB міграції 002 (drop is_online), 003 (Pass→прибрано, 0.5→1/2, 21→20)
 - UI: redesign модалки Configure Card Deck (3-кол + preset dropdown), збільшені карти 180×270, restructured header menu, Recent Rooms таблиця на головній, Light theme toggle, перейменовано `Story Point Poker → Story Poker`
 - Vitest suite (29 passed) для усіх stores
-- Дрібні: `--dotenv .env.local` у скриптах, `lastVisitedAt` у session, центровані pie chart і карти
+- Дрібні: завантаження env з `/.env/.env` + `/.env/.env.local` через `dotenv.config()` у `nuxt.config.ts`, `lastVisitedAt` у session, центровані pie chart і карти
 
 ## Iteration 2 — Auth & Account
 

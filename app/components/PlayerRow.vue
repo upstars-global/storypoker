@@ -23,11 +23,18 @@ const emit = defineEmits<{
   menuClose: []
 }>()
 
+import { useProfilesStore } from '~/stores/profiles'
+const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 const { isLight } = useTheme()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
 const showMenu = computed(() => props.openMenuId === props.player.id)
+const playerAvatar = computed(() => {
+  const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
+  if (profile) return avatarDataUri(profile.avatar_seed, !props.player.is_online, profile.avatar_style)
+  return avatarDataUri(props.player.name, !props.player.is_online, 'bottts')
+})
 const triggerEl = ref<HTMLButtonElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 
@@ -39,8 +46,8 @@ function toggleMenu() {
       const rect = triggerEl.value.getBoundingClientRect()
       menuStyle.value = {
         position: 'fixed',
-        top: `${rect.top}px`,
-        left: `${rect.left - 200 - 8}px`,
+        top: `${rect.bottom + 4}px`,
+        left: `${rect.left}px`,
         minWidth: '200px',
       }
     }
@@ -53,14 +60,14 @@ function close() { emit('menuClose') }
 
 <template>
   <div
-    class="grid items-center gap-2 px-2 py-2 rounded relative"
-    style="grid-template-columns: 32px 1fr auto auto;"
+    class="grid items-center gap-2 rounded relative"
+    style="grid-template-columns: 32px 1fr auto 36px;"
   >
     <img
-      :src="avatarDataUri(player.name, !player.is_online)"
+      :src="playerAvatar"
       :alt="player.name"
       class="rounded-full"
-      style="width: 26px; height: 26px;"
+      style="width: 28px; height: 28px;"
     />
     <div class="flex items-center gap-1.5 min-w-0">
       <span
@@ -120,10 +127,11 @@ function close() { emit('menuClose') }
       />
     </template>
 
-    <template v-if="isOwn || currentUserIsAuthorizedModerator">
-      <div class="relative">
+    <div class="flex items-center justify-center" style="width: 36px; height: 36px;">
+      <template v-if="isOwn || currentUserIsAuthorizedModerator">
         <button
           ref="triggerEl"
+          v-wave
           class="mui-icon-btn"
           style="padding: 4px;"
           @click.stop="toggleMenu"
@@ -140,6 +148,7 @@ function close() { emit('menuClose') }
             <template v-if="isOwn">
               <li>
                 <button
+                  v-wave
                   class="mui-menu-item"
                   role="menuitemcheckbox"
                   :aria-checked="String(player.is_moderator)"
@@ -155,32 +164,31 @@ function close() { emit('menuClose') }
                 </button>
               </li>
               <li>
-                <button class="mui-menu-item" @click="emit('rename', player.id); close()">
+                <button v-wave class="mui-menu-item" @click="emit('rename', player.id); close()">
                   <IconEdit class="mui-menu-icon" /> Rename Player
                 </button>
               </li>
               <li>
-                <button class="mui-menu-item" @click="emit('leave', player.id); close()">
+                <button v-wave class="mui-menu-item" @click="emit('leave', player.id); close()">
                   <IconLeaveRoom class="mui-menu-icon" /> Leave Room
                 </button>
               </li>
             </template>
             <template v-else-if="currentUserIsAuthorizedModerator">
               <li>
-                <button class="mui-menu-item" @click="emit('rename', player.id); close()">
+                <button v-wave class="mui-menu-item" @click="emit('rename', player.id); close()">
                   <IconEdit class="mui-menu-icon" /> Rename Player
                 </button>
               </li>
               <li>
-                <button class="mui-menu-item" @click="emit('kick', player.id); close()">
+                <button v-wave class="mui-menu-item" @click="emit('kick', player.id); close()">
                   <IconPersonRemove class="mui-menu-icon" /> Kick Player
                 </button>
               </li>
             </template>
           </ul>
         </Teleport>
-      </div>
-    </template>
-    <span v-else style="width: 32px;" />
+      </template>
+    </div>
   </div>
 </template>
