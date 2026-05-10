@@ -1,4 +1,8 @@
 import { resolve } from 'path'
+import { config as loadDotenv } from 'dotenv'
+
+loadDotenv({ path: resolve(__dirname, '.env/.env.local') })
+loadDotenv({ path: resolve(__dirname, '.env/.env') })
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
@@ -36,12 +40,12 @@ export default defineNuxtConfig({
     vite: {
       optimizeDeps: {
         include: [
-        '@vue/devtools-core',
-        '@vue/devtools-kit',
-        '@supabase/supabase-js',
-        'v-wave',
-        '@dicebear/core',
-        '@dicebear/collection',
+          '@vue/devtools-core',
+          '@vue/devtools-kit',
+          '@supabase/supabase-js',
+          'v-wave',
+          '@dicebear/core',
+          '@dicebear/collection',
         ]
       }
     },

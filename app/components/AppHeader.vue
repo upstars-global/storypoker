@@ -1,8 +1,9 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   onlineCount: number
   isModerator: boolean
   playerName: string
+  playerUserId?: string | null
   roomName?: string
 }>()
 
@@ -11,17 +12,31 @@ const emit = defineEmits<{
   openSignUp: []
   openCardDeck: []
   openRenameRoom: []
+  openAccountSettings: []
   signOut: []
 }>()
 
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
+import { useProfilesStore } from '~/stores/profiles'
 const router = useRouter()
 const { user } = storeToRefs(useAuthStore())
+const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 const { isLight, toggle: toggleTheme } = useTheme()
 const showMenu = ref(false)
 const showRoomMenu = ref(false)
+
+const myAvatarUri = computed(() => {
+  const userIdForProfile = props.playerUserId ?? user.value?.id ?? null
+  if (userIdForProfile) {
+    const profile = profilesStore.get(userIdForProfile)
+    if (profile) return avatarDataUri(profile.avatar_seed, false, profile.avatar_style)
+  }
+  if (props.playerName) return avatarDataUri(props.playerName, false, 'bottts')
+  if (user.value?.email) return avatarDataUri(user.value.email, false, 'bottts')
+  return ''
+})
 
 function goRecent() {
   showMenu.value = false
@@ -71,33 +86,42 @@ function goRecent() {
     </template>
     <div class="flex-1" />
 
-    <div class="flex items-center gap-2 relative">
+    <div class="flex items-center gap-2">
       <span v-if="playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">
         {{ playerName }}<template v-if="user && user.email"> ({{ user.email }})</template>
       </span>
-      <button
-        v-wave
-        class="mui-icon-btn"
-        style="--hover-bg: rgba(255,255,255,0.08); color: #fff;"
-        aria-label="account of current user"
-        aria-haspopup="true"
-        @click.stop="showMenu = !showMenu"
-      >
-        <img
-          v-if="user"
-          :src="avatarDataUri(playerName)"
-          class="w-7 h-7 rounded-full"
-          :alt="playerName"
-        />
-        <IconAccount v-else style="font-size: 1.5rem;" />
-      </button>
+      <div class="relative">
+        <button
+          v-wave
+          class="mui-icon-btn"
+          style="--hover-bg: rgba(255,255,255,0.08); color: #fff;"
+          aria-label="account of current user"
+          aria-haspopup="true"
+          @click.stop="showMenu = !showMenu"
+        >
+          <img
+            v-if="myAvatarUri"
+            :src="myAvatarUri"
+            class="w-7 h-7 rounded-full"
+            :alt="playerName"
+          />
+          <IconAccount v-else style="font-size: 1.5rem;" />
+        </button>
 
-      <ul
-        v-if="showMenu"
-        v-click-outside="() => showMenu = false"
-        class="mui-menu absolute z-50"
-        style="min-width: 240px; right: 32px; top: 12px; margin-right: 8px;"
-      >
+        <ul
+          v-if="showMenu"
+          v-click-outside="() => showMenu = false"
+          class="mui-menu absolute z-50"
+          style="min-width: 240px; right: 0; top: calc(100% + 4px);"
+        >
+        <template v-if="user">
+          <li>
+            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openAccountSettings'); showMenu = false">
+              <IconSettings class="mui-menu-icon" /> Account Settings
+            </button>
+          </li>
+          <li><hr class="mui-divider" /></li>
+        </template>
         <li>
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="goRecent">
             <IconHistory class="mui-menu-icon" /> Recent Rooms
@@ -142,7 +166,8 @@ function goRecent() {
             </button>
           </li>
         </template>
-      </ul>
+        </ul>
+      </div>
     </div>
   </header>
 </template>

@@ -19,7 +19,7 @@ npm i
 ```
 
 ### Run
-Add .env.local
+Створи `/.env/.env` (Supabase, спільне для команди) та `/.env/.env.local` (персональне, наприклад Jira) на основі `/.env/.env.example`.
 ```sh
 npm run dev
 ```
@@ -31,6 +31,7 @@ claude --dangerously-skip-permissions
 
 ### Skills
 ```sh
+npx skills add anthropics/claude-plugins-official@claude-md-improver -a claude-code -y
 npx skills add obra/superpowers@brainstorming -a claude-code -y
 npx skills add obra/superpowers@executing-plans -a claude-code -y
 npx skills add netlify/context-and-tools@netlify-cli-and-deploy -a claude-code -y

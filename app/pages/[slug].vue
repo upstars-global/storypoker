@@ -4,9 +4,11 @@ import { useAuthStore } from '~/stores/auth'
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
+import { useProfilesStore } from '~/stores/profiles'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
+import { detectRoleGroup } from '~/utils/playerRoles'
 
 const route = useRoute()
 const router = useRouter()
@@ -17,6 +19,7 @@ const authStore = useAuthStore()
 const roomStore = useRoomStore()
 const playersStore = usePlayersStore()
 const presenceStore = usePresenceStore()
+const profilesStore = useProfilesStore()
 
 const { user } = storeToRefs(authStore)
 const { roomState } = storeToRefs(roomStore)
@@ -27,6 +30,7 @@ const currentPlayerId = ref<string | null>(null)
 const showJoin = ref(false)
 const showAuth = ref<'signin' | 'signup' | null>(null)
 const showCardDeck = ref(false)
+const showAccountSettings = ref(false)
 const renameTarget = ref<string | null>(null)
 const renameValue = ref('')
 const showRenameRoom = ref(false)
@@ -39,11 +43,8 @@ const kickTargetId = ref<string | null>(null)
 const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === kickTargetId.value)?.name ?? '')
 
 const renameSaveBtn = ref<HTMLButtonElement | null>(null)
-const renameCancelBtn = ref<HTMLButtonElement | null>(null)
 const roomSaveBtn = ref<HTMLButtonElement | null>(null)
-const roomCancelBtn = ref<HTMLButtonElement | null>(null)
 const kickConfirmBtn = ref<HTMLButtonElement | null>(null)
-const kickCancelBtn = ref<HTMLButtonElement | null>(null)
 
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
 const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
@@ -68,8 +69,26 @@ const voteCounts = computed(() => {
   }, {} as Record<string, number>)
 })
 
+const groupedVoteCounts = computed(() => {
+  if (!roomState.value) return null
+  const dev: Record<string, number> = {}
+  const qa: Record<string, number> = {}
+  let hasGroups = false
+  for (const p of visiblePlayers.value) {
+    if (!p.vote) continue
+    const group = detectRoleGroup(p.name)
+    if (!group) continue
+    hasGroups = true
+    const target = group === 'DEV' ? dev : qa
+    target[p.vote] = (target[p.vote] ?? 0) + 1
+  }
+  return hasGroups ? { dev, qa } : null
+})
+
 let playersChannel: any = null
 let stateChannel: any = null
+let roomChannel: any = null
+let profilesChannel: any = null
 
 onMounted(async () => {
   origin.value = window.location.origin
@@ -90,15 +109,26 @@ onMounted(async () => {
   await fetchInitialData()
 
   const session = getStoredSession()
+  let restored: { id: string; name: string } | null = null
   if (session) {
     try {
-      await playersStore.rejoin(session.playerId)
-      currentPlayerId.value = session.playerId
-      touchRecentRoom(roomId, session.playerId, session.playerName)
-      await presenceStore.start(roomId, session.playerId)
-    } catch {
-      showJoin.value = true
+      const player = await playersStore.rejoin(session.playerId)
+      restored = { id: player.id, name: player.name }
+    } catch {}
+  }
+  if (!restored) {
+    const existing = await playersStore.findExistingPlayer(roomId, user.value?.id ?? null)
+    if (existing) {
+      try {
+        const player = await playersStore.rejoin(existing.id)
+        restored = { id: player.id, name: player.name }
+      } catch {}
     }
+  }
+  if (restored) {
+    currentPlayerId.value = restored.id
+    touchRecentRoom(roomId, restored.id, restored.name)
+    await presenceStore.start(roomId, restored.id)
   } else {
     showJoin.value = true
   }
@@ -116,6 +146,11 @@ watch(() => roomState.value?.phase, (phase) => {
   if (phase === 'revealed') playersStore.clearPendingVotes()
 })
 
+watch(visiblePlayers, async (next) => {
+  const ids = next.map(p => p.user_id).filter(Boolean) as string[]
+  if (ids.length) await profilesStore.fetchMany(ids)
+}, { deep: true })
+
 onUnmounted(async () => {
   unsubscribe()
   await presenceStore.stop()
@@ -129,6 +164,9 @@ async function fetchInitialData() {
   ])
   playersStore.players = pData ?? []
   roomStore.roomState = sData ?? null
+  const ids = (pData ?? []).map((p: any) => p.user_id).filter(Boolean) as string[]
+  if (user.value?.id) ids.push(user.value.id)
+  if (ids.length) await profilesStore.fetchMany(ids)
 }
 
 function subscribeRealtime() {
@@ -143,11 +181,32 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'room_state', filter: `room_id=eq.${roomId}` },
       (payload) => roomStore.applyChange(payload as any))
     .subscribe()
+  roomChannel = $supabase
+    .channel(`rooms:${roomId}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+      (payload: any) => {
+        const row = payload.new as { slug: string | null; name: string | null }
+        currentSlug.value = row.slug
+        currentRoomName.value = row.name
+        if (row.slug && route.params.slug !== row.slug) {
+          router.replace(`/${row.slug}`)
+        } else if (!row.slug && route.params.slug !== roomId) {
+          router.replace(`/${roomId}`)
+        }
+      })
+    .subscribe()
+  profilesChannel = $supabase
+    .channel(`user_profiles:${roomId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'user_profiles' },
+      (payload) => profilesStore.applyChange(payload as any))
+    .subscribe()
 }
 
 function unsubscribe() {
   playersChannel?.unsubscribe()
   stateChannel?.unsubscribe()
+  roomChannel?.unsubscribe()
+  profilesChannel?.unsubscribe()
 }
 
 function getStoredSession(): { playerId: string; playerName: string } | null {
@@ -264,11 +323,13 @@ async function submitRenameRoom() {
       :online-count="onlineCount"
       :is-moderator="isModerator"
       :player-name="currentPlayer?.name ?? ''"
+      :player-user-id="currentPlayer?.user_id ?? null"
       :room-name="currentRoomName ?? currentSlug ?? roomId"
       @open-sign-in="showAuth = 'signin'"
       @open-sign-up="showAuth = 'signup'"
       @open-card-deck="showCardDeck = true"
       @open-rename-room="openRenameRoom"
+      @open-account-settings="showAccountSettings = true"
       @sign-out="authStore.signOut()"
     />
 
@@ -304,13 +365,14 @@ async function submitRenameRoom() {
         <ResultsArea
           v-else-if="roomState?.phase === 'revealed'"
           :votes="voteCounts"
+          :grouped-votes="groupedVoteCounts"
           :is-moderator="isModerator"
           @start-new-round="roomStore.startNewRound()"
         />
       </div>
     </div>
 
-    <JoinOverlay v-if="showJoin" @join="handleJoin" />
+    <JoinOverlay v-if="showJoin" @join="handleJoin" @close="router.push('/')" />
 
     <AuthModal
       v-if="showAuth"
@@ -327,23 +389,45 @@ async function submitRenameRoom() {
       @save="handleSaveCardDeck"
     />
 
-    <div v-if="renameTarget" class="mui-modal-overlay" @click.self="renameTarget = null" @keydown.esc="renameCancelBtn?.click()" @keydown.enter.prevent="renameSaveBtn?.click()">
-      <div class="mui-modal-paper">
+    <UserSettingsModal
+      v-if="showAccountSettings && user"
+      @close="showAccountSettings = false"
+    />
+
+    <div v-if="renameTarget" class="mui-modal-overlay" @click.self="renameTarget = null" @keydown.esc="renameTarget = null" @keydown.enter.prevent="renameSaveBtn?.click()">
+      <div class="mui-modal-paper relative">
+        <button
+          v-wave
+          class="mui-icon-btn absolute"
+          style="top: 8px; right: 8px;"
+          aria-label="Close"
+          @click="renameTarget = null"
+        >
+          <IconClose style="font-size: 1.5rem;" />
+        </button>
         <h2 class="mui-h5 mb-4">Rename Player</h2>
         <input
           v-model="renameValue"
           class="mui-input"
           autofocus
         />
-        <div class="flex gap-2 justify-end mt-6">
-          <button ref="renameCancelBtn" v-wave class="mui-btn mui-btn-secondary" style="min-width: 120px;" @click="renameTarget = null">Cancel</button>
+        <div class="flex justify-end mt-6">
           <button ref="renameSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">Save</button>
         </div>
       </div>
     </div>
 
-    <div v-if="showRenameRoom" class="mui-modal-overlay" @click.self="showRenameRoom = false" @keydown.esc="roomCancelBtn?.click()" @keydown.enter.prevent="roomSaveBtn?.click()">
-      <div class="mui-modal-paper">
+    <div v-if="showRenameRoom" class="mui-modal-overlay" @click.self="showRenameRoom = false" @keydown.esc="showRenameRoom = false" @keydown.enter.prevent="roomSaveBtn?.click()">
+      <div class="mui-modal-paper relative">
+        <button
+          v-wave
+          class="mui-icon-btn absolute"
+          style="top: 8px; right: 8px;"
+          aria-label="Close"
+          @click="showRenameRoom = false"
+        >
+          <IconClose style="font-size: 1.5rem;" />
+        </button>
         <h2 class="mui-h5 mb-4">Rename Room</h2>
         <input
           v-model="roomNameInput"
@@ -356,19 +440,26 @@ async function submitRenameRoom() {
           <span v-if="roomNameInput.trim()">URL: {{ origin }}/{{ normalizeRoomSlug(roomNameInput) }}</span>
           <span>URL: {{ origin }}/{{ roomId }}</span>
         </div>
-        <div class="flex gap-2 justify-end mt-6">
-          <button ref="roomCancelBtn" v-wave class="mui-btn mui-btn-secondary" style="min-width: 120px;" @click="showRenameRoom = false">Cancel</button>
+        <div class="flex justify-end mt-6">
           <button ref="roomSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">Save</button>
         </div>
       </div>
     </div>
 
-    <div v-if="kickTargetId" class="mui-modal-overlay" @click.self="kickTargetId = null" @keydown.esc="kickCancelBtn?.click()" @keydown.enter.prevent="kickConfirmBtn?.click()">
-      <div class="mui-modal-paper">
+    <div v-if="kickTargetId" class="mui-modal-overlay" @click.self="kickTargetId = null" @keydown.esc="kickTargetId = null" @keydown.enter.prevent="kickConfirmBtn?.click()">
+      <div class="mui-modal-paper relative">
+        <button
+          v-wave
+          class="mui-icon-btn absolute"
+          style="top: 8px; right: 8px;"
+          aria-label="Close"
+          @click="kickTargetId = null"
+        >
+          <IconClose style="font-size: 1.5rem;" />
+        </button>
         <h2 class="mui-h5 mb-4">Kick Player</h2>
         <p style="color: var(--text-body);">Remove <strong>{{ kickTargetName }}</strong> from the room?</p>
-        <div class="flex gap-2 justify-end mt-6">
-          <button ref="kickCancelBtn" v-wave class="mui-btn mui-btn-secondary" style="min-width: 120px;" @click="kickTargetId = null">Cancel</button>
+        <div class="flex justify-end mt-6">
           <button ref="kickConfirmBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">Kick</button>
         </div>
       </div>

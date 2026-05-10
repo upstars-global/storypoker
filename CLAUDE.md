@@ -31,19 +31,23 @@ npm run preview
 npm test          # vitest run
 ```
 
-Усі скрипти Nuxt передають `--dotenv .env.local` — Nuxt 4 за замовчуванням читає лише `.env`.
-
 ## Environment Setup
 
-`.env.example` → `.env.local`:
+Усі env-файли — у директорії `/.env/` (вся папка в `.gitignore`, окрім `.env.example`):
+
+- `/.env/.env` — спільні змінні команди (Supabase, у майбутньому Netlify)
+- `/.env/.env.local` — персональні змінні користувача (Jira corporate тощо)
+- `/.env/.env.example` — шаблон (трекається в git)
+
+`nuxt.config.ts` викликає `dotenv.config()` для обох файлів: спочатку `.env.local` (override), потім `.env` (defaults). `runtimeConfig.public` пробрасує `SUPABASE_URL`/`SUPABASE_KEY` у клієнт.
+
+Шаблон значень:
 
 ```
 SUPABASE_URL=...
 SUPABASE_KEY=...            # publishable (sb_publishable_...) — клієнтський
 # SUPABASE_SECRET_KEY=...   # server-side only, наразі не використовується
 ```
-
-Підв'язано в `nuxt.config.ts` через `runtimeConfig.public`.
 
 ## Database
 

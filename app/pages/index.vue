@@ -2,6 +2,8 @@
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { useAuthStore } from '~/stores/auth'
+import { useProfilesStore } from '~/stores/profiles'
+import { storeToRefs } from 'pinia'
 import { listRecentRooms, touchRecentRoom, type RecentRoomEntry } from '~/utils/recentRooms'
 import { relativeTime } from '~/utils/relativeTime'
 import { getSupabase } from '~/lib/supabase-instance'
@@ -22,10 +24,15 @@ interface RecentRoomDisplay extends RecentRoomEntry {
 const recentRooms = ref<RecentRoomDisplay[]>([])
 const origin = ref('')
 const showAuth = ref<'signin' | 'signup' | null>(null)
+const showAccountSettings = ref(false)
+const profilesStore = useProfilesStore()
+const { user } = storeToRefs(authStore)
 const headerPlayerName = computed(() => recentRooms.value[0]?.playerName ?? '')
 
 onMounted(async () => {
   origin.value = window.location.origin
+  await authStore.init()
+  if (user.value?.id) await profilesStore.fetchOne(user.value.id)
   const local = listRecentRooms()
   if (local.length === 0) return
 
@@ -79,6 +86,7 @@ async function createRoom() {
       :player-name="headerPlayerName"
       @open-sign-in="showAuth = 'signin'"
       @open-sign-up="showAuth = 'signup'"
+      @open-account-settings="showAccountSettings = true"
       @sign-out="authStore.signOut()"
     />
 
@@ -87,6 +95,11 @@ async function createRoom() {
       :mode="showAuth"
       @close="showAuth = null"
       @success="showAuth = null"
+    />
+
+    <UserSettingsModal
+      v-if="showAccountSettings && user"
+      @close="showAccountSettings = false"
     />
 
     <main class="flex flex-1 flex-col items-center px-4 pt-[26px] pb-[40px]">
