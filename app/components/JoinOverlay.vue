@@ -18,21 +18,21 @@ function submit() {
 <template>
   <div class="mui-modal-overlay">
     <div class="mui-modal-paper">
-      <h2 class="mui-h5 text-center">Join the room</h2>
+      <h2 class="mui-h5 text-center">{{ $t('join.title') }}</h2>
       <p class="mui-caption text-center mt-2" style="color: var(--text-muted);">
-        Enter your name to join your team
+        {{ $t('join.subtitle') }}
       </p>
       <div class="flex flex-col gap-4 mt-6">
         <input
           v-model="name"
           type="text"
-          placeholder="Please enter your name"
+          :placeholder="$t('join.namePlaceholder')"
           class="mui-input"
           :class="{ 'is-error': hasError }"
           @keyup.enter="submit"
         />
         <div class="flex justify-center">
-          <button class="mui-btn" @click="submit">Join Room</button>
+          <button class="mui-btn" @click="submit">{{ $t('join.joinRoom') }}</button>
         </div>
       </div>
     </div>

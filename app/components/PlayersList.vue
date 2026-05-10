@@ -29,7 +29,7 @@ const openMenuId = ref<string | null>(null)
 <template>
   <div class="mui-paper">
     <div class="mui-paper-header flex items-center justify-center gap-2">
-      <span>Players</span>
+      <span>{{ $t('players.title') }}</span>
       <span class="text-sm font-normal" style="color: #ffffff;">
         {{ onlineCount }} / {{ totalCount }}
       </span>

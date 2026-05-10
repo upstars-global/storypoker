@@ -34,6 +34,7 @@ const roomSlugInput = ref('')
 const roomSlugError = ref<string | null>(null)
 const currentSlug = ref<string | null>(null)
 
+const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
 const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
 const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
@@ -219,14 +220,14 @@ async function submitRenameRoom() {
   }
   const normalized = normalizeRoomSlug(raw)
   if (!isValidRoomSlug(normalized)) {
-    roomSlugError.value = 'Use 2–32 chars: letters, numbers, dashes'
+    roomSlugError.value = t('room.slugError')
     return
   }
   try {
     await roomStore.setSlug(normalized)
   } catch (e: any) {
     if (e?.code === 'room_slug_taken') {
-      roomSlugError.value = 'This name is already taken'
+      roomSlugError.value = t('room.slugTaken')
       return
     }
     throw e
@@ -307,35 +308,35 @@ async function submitRenameRoom() {
 
     <div v-if="renameTarget" class="mui-modal-overlay" @click.self="renameTarget = null">
       <div class="mui-modal-paper">
-        <h2 class="mui-h5 mb-4">Rename Player</h2>
+        <h2 class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</h2>
         <input
           v-model="renameValue"
           class="mui-input"
           @keyup.enter="submitRename"
         />
         <div class="flex gap-2 justify-end mt-6">
-          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="renameTarget = null">Cancel</button>
-          <button class="mui-btn" style="min-width: 120px;" @click="submitRename">Save</button>
+          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="renameTarget = null">{{ $t('common.cancel') }}</button>
+          <button class="mui-btn" style="min-width: 120px;" @click="submitRename">{{ $t('common.save') }}</button>
         </div>
       </div>
     </div>
 
     <div v-if="showRenameRoom" class="mui-modal-overlay" @click.self="showRenameRoom = false">
       <div class="mui-modal-paper">
-        <h2 class="mui-h5 mb-4">Rename Room</h2>
+        <h2 class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</h2>
         <input
           v-model="roomSlugInput"
           class="mui-input"
-          placeholder="e.g. backoffice"
+          :placeholder="$t('room.renamePlaceholder')"
           @keyup.enter="submitRenameRoom"
         />
         <p v-if="roomSlugError" class="text-[13px] mt-2" style="color: #d32f2f;">{{ roomSlugError }}</p>
         <p v-else class="text-[13px] mt-2" style="color: var(--text-muted);">
-          Leave empty to remove the custom name.
+          {{ $t('room.renameHint') }}
         </p>
         <div class="flex gap-2 justify-end mt-6">
-          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="showRenameRoom = false">Cancel</button>
-          <button class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">Save</button>
+          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="showRenameRoom = false">{{ $t('common.cancel') }}</button>
+          <button class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">{{ $t('common.save') }}</button>
         </div>
       </div>
     </div>

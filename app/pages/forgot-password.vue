@@ -3,7 +3,8 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { validateEmail } from '~/utils/authValidation'
 
-useHead({ title: 'Reset Password' })
+const { t } = useI18n()
+useHead({ title: t('forgotPassword.pageTitle') })
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
@@ -57,17 +58,17 @@ async function onSubmit() {
 
     <main class="flex flex-1 items-center justify-center px-4 py-10">
       <section class="mui-modal-paper max-w-md">
-        <h1 class="mui-h5 text-center">Reset Password</h1>
-        <p class="mui-caption text-center mt-2">Enter your email and we will send password reset instructions.</p>
+        <h1 class="mui-h5 text-center">{{ $t('forgotPassword.title') }}</h1>
+        <p class="mui-caption text-center mt-2">{{ $t('forgotPassword.description') }}</p>
 
         <div v-if="success" class="text-center mt-6">
-          <p class="mui-body">Check your email for a password reset link.</p>
-          <NuxtLink to="/login" class="mui-caption underline hover:no-underline" style="color: var(--primary);">Back to Sign In</NuxtLink>
+          <p class="mui-body">{{ $t('forgotPassword.checkEmail') }}</p>
+          <NuxtLink to="/login" class="mui-caption underline hover:no-underline" style="color: var(--primary);">{{ $t('forgotPassword.backToSignIn') }}</NuxtLink>
         </div>
 
         <form v-else class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
           <div>
-            <input v-model.trim="form.email" type="email" autocomplete="email" placeholder="Please enter business email" class="mui-input" :class="{ 'is-error': errors.email }" />
+            <input v-model.trim="form.email" type="email" autocomplete="email" :placeholder="$t('common.emailPlaceholder')" class="mui-input" :class="{ 'is-error': errors.email }" />
             <p v-if="errors.email" class="text-sm mt-1" style="color: var(--danger);">{{ errors.email }}</p>
           </div>
 
@@ -75,13 +76,13 @@ async function onSubmit() {
 
           <div class="flex justify-center mt-2">
             <button v-wave class="mui-btn" type="submit" :disabled="loading">
-              {{ loading ? 'Sending...' : 'Send Reset Link' }}
+              {{ loading ? $t('forgotPassword.sending') : $t('forgotPassword.sendResetLink') }}
             </button>
           </div>
 
           <p class="mui-caption text-center mt-2">
-            Remembered your password?
-            <NuxtLink to="/login" class="underline hover:no-underline" style="color: var(--primary);">Sign In</NuxtLink>
+            {{ $t('forgotPassword.rememberedPassword') }}
+            <NuxtLink to="/login" class="underline hover:no-underline" style="color: var(--primary);">{{ $t('common.signIn') }}</NuxtLink>
           </p>
         </form>
       </section>

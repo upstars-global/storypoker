@@ -84,16 +84,16 @@ async function createRoom() {
     <main class="flex flex-1 flex-col items-center px-4 pt-[26px] pb-[40px]">
       <section class="w-full max-w-[460px] text-center">
         <h2 class="m-0 text-[22px] font-bold leading-[1.235] tracking-[0.00735em] text-[var(--text-primary)]">
-          Create a planning poker room
+          {{ $t('home.title') }}
         </h2>
         <p class="mt-[11px] whitespace-nowrap text-[15px] font-normal leading-[1.5] tracking-[0.00938em] text-[var(--text-body)]">
-          and start estimating with your team right away
+          {{ $t('home.subtitle') }}
         </p>
         <div class="mt-[19px] flex flex-col items-center">
           <input
             v-model="name"
             type="text"
-            placeholder="Please enter your name"
+            :placeholder="$t('home.namePlaceholder')"
             class="mui-input h-[51px] max-w-[280px]"
             :class="{ 'is-error': hasError }"
             @keyup.enter="createRoom"
@@ -103,7 +103,7 @@ async function createRoom() {
             class="mt-[30px] inline-flex h-[46px] min-w-[180px] items-center justify-center rounded-[23px] bg-[#607d8b] px-[22px] text-[13px] font-medium uppercase leading-[1.75] tracking-[0.02857em] text-white shadow-[0_3px_1px_-2px_rgba(0,0,0,.2),0_2px_2px_0_rgba(0,0,0,.14),0_1px_5px_0_rgba(0,0,0,.12)] transition-[background-color,box-shadow] duration-200 hover:bg-[#1c313a] hover:shadow-[0_2px_4px_-1px_rgba(0,0,0,.2),0_4px_5px_0_rgba(0,0,0,.14),0_1px_10px_0_rgba(0,0,0,.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#607d8b]"
             @click="createRoom"
           >
-            Create Room
+            {{ $t('home.createRoom') }}
           </button>
         </div>
       </section>
@@ -112,9 +112,9 @@ async function createRoom() {
         <table class="w-full text-[14px]" style="color: var(--text-body);">
           <thead style="color: var(--text-primary);">
             <tr class="text-left">
-              <th class="px-3 py-3 font-medium">Recent Rooms</th>
-              <th class="px-3 py-3 font-medium">Players</th>
-              <th class="px-3 py-3 font-medium text-right whitespace-nowrap">Last Visited</th>
+              <th class="px-3 py-3 font-medium">{{ $t('home.recentRooms') }}</th>
+              <th class="px-3 py-3 font-medium">{{ $t('home.players') }}</th>
+              <th class="px-3 py-3 font-medium text-right whitespace-nowrap">{{ $t('home.lastVisited') }}</th>
             </tr>
           </thead>
           <tbody>

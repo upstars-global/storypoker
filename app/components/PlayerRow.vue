@@ -73,7 +73,7 @@ function close() { emit('menuClose') }
         v-if="player.is_moderator"
         class="flex-none"
         style="font-size: 1.5rem; color: var(--icon-player-color);"
-        aria-label="moderator"
+        :aria-label="$t('players.moderatorLabel')"
       />
     </div>
 
@@ -82,12 +82,12 @@ function close() { emit('menuClose') }
         <IconCheckCircle
           v-if="player.vote !== null"
           style="font-size: 1.5rem; color: var(--icon-player-color);"
-          aria-label="estimate given"
+          :aria-label="$t('players.estimateGiven')"
         />
         <IconDeciding
           v-else
           style="font-size: 1.5rem; color: var(--icon-player-color);"
-          aria-label="player deciding"
+          :aria-label="$t('players.playerDeciding')"
         />
       </template>
       <template v-else>
@@ -111,12 +111,12 @@ function close() { emit('menuClose') }
       <IconCheckCircle
         v-else-if="phase === 'voting' && player.vote !== null"
         :style="{ fontSize: '1.5rem', color: isLight ? 'rgba(0, 0, 0, 0.26)' : 'rgba(255, 255, 255, 0.3)' }"
-        aria-label="estimate given"
+        :aria-label="$t('players.estimateGiven')"
       />
       <IconOffline
         v-else
         :style="{ fontSize: '1.5rem', color: isLight ? 'rgba(0, 0, 0, 0.26)' : 'rgba(255, 255, 255, 0.3)' }"
-        aria-label="inactive"
+        :aria-label="$t('players.inactive')"
       />
     </template>
 
@@ -146,7 +146,7 @@ function close() { emit('menuClose') }
                   @click="emit('toggleModerator', player.id, !player.is_moderator); close()"
                 >
                   <IconModerator class="mui-menu-icon" />
-                  <span class="flex-1">Is Moderator</span>
+                  <span class="flex-1">{{ $t('players.isModerator') }}</span>
                   <span class="mui-switch">
                     <input type="checkbox" :checked="player.is_moderator" tabindex="-1" readonly />
                     <span class="track" />
@@ -156,24 +156,24 @@ function close() { emit('menuClose') }
               </li>
               <li>
                 <button class="mui-menu-item" @click="emit('rename', player.id); close()">
-                  <IconEdit class="mui-menu-icon" /> Rename Player
+                  <IconEdit class="mui-menu-icon" /> {{ $t('players.renamePlayer') }}
                 </button>
               </li>
               <li>
                 <button class="mui-menu-item" @click="emit('leave', player.id); close()">
-                  <IconLeaveRoom class="mui-menu-icon" /> Leave Room
+                  <IconLeaveRoom class="mui-menu-icon" /> {{ $t('players.leaveRoom') }}
                 </button>
               </li>
             </template>
             <template v-else-if="currentUserIsAuthorizedModerator">
               <li>
                 <button class="mui-menu-item" @click="emit('rename', player.id); close()">
-                  <IconEdit class="mui-menu-icon" /> Rename Player
+                  <IconEdit class="mui-menu-icon" /> {{ $t('players.renamePlayer') }}
                 </button>
               </li>
               <li>
                 <button class="mui-menu-item" @click="emit('kick', player.id); close()">
-                  <IconPersonRemove class="mui-menu-icon" /> Kick Player
+                  <IconPersonRemove class="mui-menu-icon" /> {{ $t('players.kickPlayer') }}
                 </button>
               </li>
             </template>

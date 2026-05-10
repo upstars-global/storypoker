@@ -19,11 +19,16 @@ const router = useRouter()
 const { user } = storeToRefs(useAuthStore())
 const { avatarDataUri } = useDylanAvatar()
 const { isLight, toggle: toggleTheme } = useTheme()
+const { locale, setLocale } = useI18n()
 const showMenu = ref(false)
 
 function goRecent() {
   showMenu.value = false
   router.push('/')
+}
+
+function toggleLocale() {
+  setLocale(locale.value === 'uk' ? 'en' : 'uk')
 }
 </script>
 
@@ -38,12 +43,20 @@ function goRecent() {
     <div class="flex-1" />
 
     <div class="flex items-center gap-2 relative">
+      <button
+        v-wave
+        class="mui-icon-btn text-xs font-bold tracking-widest"
+        style="--hover-bg: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85); width: auto; padding: 4px 10px; border-radius: 4px;"
+        @click="toggleLocale"
+      >
+        {{ locale === 'uk' ? 'EN' : 'UA' }}
+      </button>
       <span v-if="playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">{{ playerName }}</span>
       <button
         v-wave
         class="mui-icon-btn"
         style="--hover-bg: rgba(255,255,255,0.08); color: #fff;"
-        aria-label="account of current user"
+        :aria-label="$t('header.currentUserAccount')"
         aria-haspopup="true"
         @click.stop="showMenu = !showMenu"
       >
@@ -64,17 +77,17 @@ function goRecent() {
       >
         <li v-if="isModerator">
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showMenu = false">
-            <IconEdit class="mui-menu-icon" /> Rename Room
+            <IconEdit class="mui-menu-icon" /> {{ $t('header.renameRoom') }}
           </button>
         </li>
         <li v-if="isModerator">
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showMenu = false">
-            <IconSettings class="mui-menu-icon" /> Configure Card Deck
+            <IconSettings class="mui-menu-icon" /> {{ $t('header.configureCardDeck') }}
           </button>
         </li>
         <li>
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="goRecent">
-            <IconHistory class="mui-menu-icon" /> Recent Rooms
+            <IconHistory class="mui-menu-icon" /> {{ $t('header.recentRooms') }}
           </button>
         </li>
         <li><hr class="mui-divider" /></li>
@@ -87,7 +100,7 @@ function goRecent() {
             @click="toggleTheme"
           >
             <IconDarkMode class="mui-menu-icon" />
-            <span class="flex-1">Light theme</span>
+            <span class="flex-1">{{ $t('header.lightTheme') }}</span>
             <span class="mui-switch">
               <input type="checkbox" :checked="isLight" tabindex="-1" readonly />
               <span class="track" />
@@ -99,12 +112,12 @@ function goRecent() {
           <li><hr class="mui-divider" /></li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openSignIn'); showMenu = false">
-              <IconLogin class="mui-menu-icon" /> Sign In
+              <IconLogin class="mui-menu-icon" /> {{ $t('common.signIn') }}
             </button>
           </li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openSignUp'); showMenu = false">
-              <IconPersonAdd class="mui-menu-icon" /> Sign Up
+              <IconPersonAdd class="mui-menu-icon" /> {{ $t('common.signUp') }}
             </button>
           </li>
         </template>
@@ -112,7 +125,7 @@ function goRecent() {
           <li><hr class="mui-divider" /></li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('signOut'); showMenu = false">
-              <IconLogout class="mui-menu-icon" /> Sign Out
+              <IconLogout class="mui-menu-icon" /> {{ $t('common.signOut') }}
             </button>
           </li>
         </template>

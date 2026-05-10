@@ -4,6 +4,7 @@ const props = defineProps<{
   phase: 'voting' | 'revealed'
 }>()
 
+const { t } = useI18n()
 const now = ref(Date.now())
 const revealedAt = ref<number | null>(null)
 
@@ -28,17 +29,17 @@ function formatDuration(ms: number) {
 const text = computed(() => {
   const start = new Date(props.roundStartedAt).getTime()
   if (props.phase === 'voting') {
-    return `Round started ${formatDuration(now.value - start)} ago`
+    return t('timer.roundStartedAgo', { duration: formatDuration(now.value - start) })
   }
   const elapsed = (revealedAt.value ?? now.value) - start
-  return `Round duration: ${formatDuration(elapsed)}`
+  return t('timer.roundDuration', { duration: formatDuration(elapsed) })
 })
 </script>
 
 <template>
   <div class="mui-paper">
     <div class="mui-paper-header" style="justify-content: center;">
-      <span>Timer</span>
+      <span>{{ $t('timer.title') }}</span>
     </div>
     <p class="mui-body px-4 py-3" style="color: var(--text-body);">{{ text }}</p>
   </div>

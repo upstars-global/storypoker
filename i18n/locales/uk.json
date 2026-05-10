@@ -1,0 +1,112 @@
+{
+  "common": {
+    "cancel": "Скасувати",
+    "save": "Зберегти",
+    "close": "Закрити",
+    "signIn": "Увійти",
+    "signUp": "Зареєструватись",
+    "signOut": "Вийти",
+    "password": "Пароль",
+    "emailPlaceholder": "Введіть корпоративний email",
+    "passwordPlaceholder": "Введіть пароль",
+    "confirmPasswordPlaceholder": "Підтвердіть пароль"
+  },
+  "header": {
+    "renameRoom": "Перейменувати кімнату",
+    "configureCardDeck": "Налаштувати колоду",
+    "recentRooms": "Нещодавні кімнати",
+    "lightTheme": "Світла тема",
+    "currentUserAccount": "акаунт поточного користувача"
+  },
+  "home": {
+    "title": "Створіть кімнату для планінг-покеру",
+    "subtitle": "і починайте оцінювати разом із командою",
+    "namePlaceholder": "Введіть своє ім'я",
+    "createRoom": "Створити кімнату",
+    "recentRooms": "Нещодавні кімнати",
+    "players": "Гравці",
+    "lastVisited": "Остання відвідана"
+  },
+  "join": {
+    "title": "Приєднатись до кімнати",
+    "subtitle": "Введіть ім'я, щоб приєднатись до команди",
+    "namePlaceholder": "Введіть своє ім'я",
+    "joinRoom": "Приєднатись"
+  },
+  "cards": {
+    "reveal": "Розкрити оцінки",
+    "startNewRound": "Почати новий раунд"
+  },
+  "timer": {
+    "title": "Таймер",
+    "roundStartedAgo": "Раунд розпочато {duration} тому",
+    "roundDuration": "Тривалість раунду: {duration}"
+  },
+  "deck": {
+    "configure": "Налаштувати колоду",
+    "save": "Зберегти колоду"
+  },
+  "players": {
+    "title": "Гравці",
+    "isModerator": "Модератор",
+    "renamePlayer": "Перейменувати гравця",
+    "leaveRoom": "Покинути кімнату",
+    "kickPlayer": "Вилучити гравця",
+    "moderatorLabel": "модератор",
+    "estimateGiven": "оцінку надано",
+    "playerDeciding": "гравець вирішує",
+    "inactive": "неактивний"
+  },
+  "room": {
+    "renameTitle": "Перейменувати кімнату",
+    "renamePlaceholder": "напр. backoffice",
+    "renameHint": "Залиште порожнім, щоб видалити назву.",
+    "renamePlayer": "Перейменувати гравця",
+    "slugError": "Від 2 до 32 символів: літери, цифри, дефіси",
+    "slugTaken": "Це ім'я вже зайнято"
+  },
+  "connection": {
+    "reconnecting": "Перепідключення…"
+  },
+  "auth": {
+    "gainModeratorPowers": "і отримайте права модератора",
+    "forgotPassword": "Забули пароль?",
+    "signingIn": "Вхід…",
+    "signingUp": "Реєстрація…"
+  },
+  "login": {
+    "pageTitle": "Увійти",
+    "welcome": "Раді бачити вас знову в Story Poker.",
+    "noAccount": "Немає акаунту?"
+  },
+  "signup": {
+    "pageTitle": "Зареєструватись",
+    "description": "Створіть акаунт і отримайте права модератора.",
+    "confirmEmail": "Перевірте email для підтвердження акаунту.",
+    "backToSignIn": "Повернутися до входу",
+    "alreadyHaveAccount": "Вже є акаунт?"
+  },
+  "forgotPassword": {
+    "pageTitle": "Скинути пароль",
+    "title": "Скинути пароль",
+    "description": "Введіть email — ми надішлемо інструкції зі скидання пароля.",
+    "checkEmail": "Перевірте пошту — там є посилання для скидання пароля.",
+    "backToSignIn": "Повернутися до входу",
+    "rememberedPassword": "Згадали пароль?",
+    "sending": "Надсилання…",
+    "sendResetLink": "Надіслати посилання для скидання"
+  },
+  "resetPassword": {
+    "pageTitle": "Встановити новий пароль",
+    "title": "Встановити новий пароль",
+    "description": "Оберіть новий пароль для вашого акаунту Story Poker.",
+    "checking": "Перевірка посилання…",
+    "updated": "Ваш пароль оновлено.",
+    "openLink": "Відкрийте посилання для скидання пароля з вашого email.",
+    "requestNewLink": "Запросити нове посилання",
+    "newPasswordPlaceholder": "Введіть новий пароль",
+    "confirmNewPasswordPlaceholder": "Підтвердіть новий пароль",
+    "updating": "Оновлення…",
+    "updatePassword": "Оновити пароль"
+  }
+}
