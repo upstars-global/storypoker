@@ -253,3 +253,84 @@ boxShadow: {
 - Додати tooltip на статус-іконки гравця
 - Анімований transition між темами (`transition: background 200ms ease, color 200ms ease`)
 - Фіксовані values голосування винести в config (зараз — Fibonacci `1, 2, 3, 5, 8, 13, 20, ?, ☕`)
+
+---
+
+## 10. Аудит поточної реалізації (assets/css/main.css)
+
+> Аудит станом на 2026-05-07. Версія: Tailwind v3 via `@nuxtjs/tailwindcss ^6`.
+
+### 10.1 Що реалізовано
+
+- Повна система CSS custom properties (`--bg-*`, `--text-*`, `--primary`, `--shadow-*`)
+- Dual-theme через `html[data-theme='dark|light']` — без flash завдяки inline script у `<head>` (nuxt.config.ts)
+- MUI-like бібліотека в `@layer components`: `mui-btn`, `mui-btn-text`, `mui-icon-btn`, `mui-input`, `mui-card`, `mui-menu`, `mui-menu-item`, `mui-modal-overlay`, `mui-modal-paper`, `mui-switch`, `mui-h5`, `mui-h6`, `mui-body`, `mui-caption`, `mui-svg-icon`
+- Responsive `mui-card-value` (4 breakpoints: base / 600 / 900 / 1200)
+- Consistent shadow scale (1/2/3/4/8 = Material elevation stack)
+
+### 10.2 Виявлені проблеми
+
+| # | Проблема | Вплив |
+|---|----------|-------|
+| 1 | Токени не зареєстровані в `tailwind.config.ts` → Tailwind не генерує утиліти `bg-primary`, `text-muted` тощо | Скрізь у шаблонах `style="color: var(--text-muted)"` замість `class="text-muted"` |
+| 2 | Inline `style=` у компонентах (AppHeader, [slug].vue та ін.) | Обходить Tailwind, важко рефакторити та підтримувати |
+| 3 | `mui-btn-text:disabled` не визначено | Кнопка-текст без disabled-стилю |
+| 4 | `--card-bg-color` у light = `rgb(240,240,240)` = `--bg-paper` → немає контрасту картки від фону | Карти зливаються з фоном у light mode |
+
+### 10.3 Рекомендовані виправлення
+
+**Пріоритет 1 — зареєструй токени в `tailwind.config.ts`:**
+
+```ts
+export default {
+  theme: {
+    extend: {
+      colors: {
+        primary: 'var(--primary)',
+        'primary-hover': 'var(--primary-hover)',
+        danger: 'var(--danger)',
+        success: 'var(--success)',
+      },
+      backgroundColor: {
+        app: 'var(--bg-app)',
+        appbar: 'var(--bg-appbar)',
+        paper: 'var(--bg-paper)',
+        elevated: 'var(--bg-elevated)',
+      },
+      textColor: {
+        primary: 'var(--text-primary)',
+        body: 'var(--text-body)',
+        muted: 'var(--text-muted)',
+      },
+      borderColor: {
+        DEFAULT: 'var(--border)',
+        input: 'var(--border-input)',
+      },
+      boxShadow: {
+        1: 'var(--shadow-1)',
+        2: 'var(--shadow-2)',
+        4: 'var(--shadow-4)',
+        8: 'var(--shadow-8)',
+      },
+    },
+  },
+}
+```
+
+**Пріоритет 2 — fix light mode card contrast:**
+
+```css
+html[data-theme='light'] {
+  --card-bg-color: rgb(255, 255, 255); /* було: rgb(240,240,240) = bg-paper */
+  --card-bg-hover: rgb(248, 248, 248);
+}
+```
+
+**Пріоритет 3 — додай `mui-btn-text:disabled`:**
+
+```css
+.mui-btn-text:disabled {
+  color: var(--text-disabled);
+  pointer-events: none;
+}
+```

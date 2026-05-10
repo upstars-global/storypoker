@@ -34,7 +34,7 @@ const openMenuId = ref<string | null>(null)
         {{ onlineCount }} / {{ totalCount }}
       </span>
     </div>
-    <div class="px-2 py-2 flex flex-col">
+    <div class="pl-4 pr-2 py-2 flex flex-col">
       <PlayerRow
         v-for="player in players"
         :key="player.id"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const emit = defineEmits<{
   join: [name: string]
+  close: []
 }>()
 
 const name = ref('')
@@ -17,7 +18,16 @@ function submit() {
 
 <template>
   <div class="mui-modal-overlay">
-    <div class="mui-modal-paper">
+    <div class="mui-modal-paper relative">
+      <button
+        v-wave
+        class="mui-icon-btn absolute"
+        style="top: 8px; right: 8px;"
+        aria-label="Close"
+        @click="emit('close')"
+      >
+        <IconClose style="font-size: 1.5rem;" />
+      </button>
       <h2 class="mui-h5 text-center">Join the room</h2>
       <p class="mui-caption text-center mt-2" style="color: var(--text-muted);">
         Enter your name to join your team

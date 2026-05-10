@@ -105,6 +105,42 @@ export const usePlayersStore = defineStore('players', () => {
     return data as Player
   }
 
+  async function findExistingPlayer(roomIdArg: string, userId: string | null): Promise<Player | null> {
+    const supabase = getSupabase()
+    if (userId) {
+      const { data } = await supabase
+        .from('players')
+        .select('*')
+        .eq('room_id', roomIdArg)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      const found = (data ?? [])[0] as Player | undefined
+      if (found) return found
+    }
+    if (typeof localStorage === 'undefined') return null
+    const candidateIds: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (!key || !key.startsWith('storypoker_session_')) continue
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+      try {
+        const parsed = JSON.parse(raw) as { playerId?: string }
+        if (parsed.playerId) candidateIds.push(parsed.playerId)
+      } catch {}
+    }
+    if (candidateIds.length === 0) return null
+    const { data } = await supabase
+      .from('players')
+      .select('*')
+      .eq('room_id', roomIdArg)
+      .in('id', candidateIds)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    return ((data ?? [])[0] as Player | undefined) ?? null
+  }
+
   async function linkUser(playerId: string, userId: string) {
     await getSupabase().from('players').update({ user_id: userId }).eq('id', playerId)
   }
@@ -121,6 +157,6 @@ export const usePlayersStore = defineStore('players', () => {
   return {
     roomId, players, pendingVotes, visiblePlayers,
     applyChange, voteOf, castVote, clearPendingVotes,
-    rename, toggleModerator, kick, leave, join, rejoin, linkUser, fetchAll,
+    rename, toggleModerator, kick, leave, join, rejoin, findExistingPlayer, linkUser, fetchAll,
   }
 })

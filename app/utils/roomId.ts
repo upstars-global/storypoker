@@ -9,7 +9,11 @@ export function generateRoomId(): string {
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/
 
 export function normalizeRoomSlug(input: string): string {
-  return input.trim().toLowerCase().replace(/\s+/g, '-')
+  return input.trim().toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
 }
 
 export function isValidRoomSlug(slug: string): boolean {

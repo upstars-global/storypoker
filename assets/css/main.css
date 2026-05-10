@@ -182,6 +182,23 @@ body {
     box-shadow: none;
   }
 
+  .mui-btn-secondary {
+    background-color: var(--bg-appbar);
+    color: #fff;
+  }
+  .mui-btn-secondary:hover {
+    background-color: var(--bg-paper-header);
+  }
+  html[data-theme='light'] .mui-btn-secondary {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: var(--text-primary);
+    box-shadow: none;
+  }
+  html[data-theme='light'] .mui-btn-secondary:hover {
+    background-color: rgba(0, 0, 0, 0.14);
+    box-shadow: none;
+  }
+
   .mui-icon-btn {
     display: inline-flex;
     align-items: center;
@@ -389,6 +406,8 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1300;
+    overflow-y: auto;
+    padding: 16px;
   }
 
   .mui-modal-paper {
