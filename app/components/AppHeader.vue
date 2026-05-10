@@ -65,7 +65,7 @@ function toggleLocale() {
           v-wave
           class="mui-icon-btn"
           style="--hover-bg: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);"
-          aria-label="Room settings"
+          :aria-label="$t('header.roomSettings')"
           @click.stop="showRoomMenu = !showRoomMenu"
         >
           <IconSettings style="font-size: 1.2rem;" />
@@ -78,12 +78,12 @@ function toggleLocale() {
         >
           <li v-if="user">
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showRoomMenu = false">
-              <IconEdit class="mui-menu-icon" /> Rename Room
+              <IconEdit class="mui-menu-icon" /> {{ $t('header.renameRoom') }}
             </button>
           </li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showRoomMenu = false">
-              <IconSettings class="mui-menu-icon" /> Configure Card Deck
+              <IconSettings class="mui-menu-icon" /> {{ $t('header.configureCardDeck') }}
             </button>
           </li>
         </ul>
@@ -91,8 +91,7 @@ function toggleLocale() {
     </template>
     <div class="flex-1" />
 
-<<<<<<< HEAD
-    <div class="flex items-center gap-2 relative">
+    <div class="flex items-center gap-2">
       <button
         v-wave
         class="mui-icon-btn text-xs font-bold tracking-widest"
@@ -101,42 +100,6 @@ function toggleLocale() {
       >
         {{ locale === 'uk' ? 'EN' : 'UA' }}
       </button>
-      <span v-if="playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">{{ playerName }}</span>
-      <button
-        v-wave
-        class="mui-icon-btn"
-        style="--hover-bg: rgba(255,255,255,0.08); color: #fff;"
-        :aria-label="$t('header.currentUserAccount')"
-        aria-haspopup="true"
-        @click.stop="showMenu = !showMenu"
-      >
-        <img
-          v-if="user"
-          :src="avatarDataUri(playerName)"
-          class="w-7 h-7 rounded-full"
-          :alt="playerName"
-        />
-        <IconAccount v-else style="font-size: 1.5rem;" />
-      </button>
-
-      <ul
-        v-if="showMenu"
-        v-click-outside="() => showMenu = false"
-        class="mui-menu absolute z-50"
-        style="min-width: 240px; right: 32px; top: 12px; margin-right: 8px;"
-      >
-        <li v-if="isModerator">
-          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showMenu = false">
-            <IconEdit class="mui-menu-icon" /> {{ $t('header.renameRoom') }}
-          </button>
-        </li>
-        <li v-if="isModerator">
-          <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showMenu = false">
-            <IconSettings class="mui-menu-icon" /> {{ $t('header.configureCardDeck') }}
-          </button>
-        </li>
-=======
-    <div class="flex items-center gap-2">
       <span v-if="playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">
         {{ playerName }}<template v-if="user && user.email"> ({{ user.email }})</template>
       </span>
@@ -145,7 +108,7 @@ function toggleLocale() {
           v-wave
           class="mui-icon-btn"
           style="--hover-bg: rgba(255,255,255,0.08); color: #fff;"
-          aria-label="account of current user"
+          :aria-label="$t('header.currentUserAccount')"
           aria-haspopup="true"
           @click.stop="showMenu = !showMenu"
         >
@@ -164,15 +127,14 @@ function toggleLocale() {
           class="mui-menu absolute z-50"
           style="min-width: 240px; right: 0; top: calc(100% + 4px);"
         >
-        <template v-if="user">
-          <li>
-            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openAccountSettings'); showMenu = false">
-              <IconSettings class="mui-menu-icon" /> Account Settings
-            </button>
-          </li>
-          <li><hr class="mui-divider" /></li>
-        </template>
->>>>>>> 52096d1692f0cace616e68ab9bd260cfbf11aba3
+          <template v-if="user">
+            <li>
+              <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openAccountSettings'); showMenu = false">
+                <IconSettings class="mui-menu-icon" /> {{ $t('header.accountSettings') }}
+              </button>
+            </li>
+            <li><hr class="mui-divider" /></li>
+          </template>
         <li>
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="goRecent">
             <IconHistory class="mui-menu-icon" /> {{ $t('header.recentRooms') }}

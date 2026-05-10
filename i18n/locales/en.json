@@ -16,7 +16,9 @@
     "configureCardDeck": "Configure Card Deck",
     "recentRooms": "Recent Rooms",
     "lightTheme": "Light theme",
-    "currentUserAccount": "account of current user"
+    "currentUserAccount": "account of current user",
+    "accountSettings": "Account Settings",
+    "roomSettings": "Room settings"
   },
   "home": {
     "title": "Create a planning poker room",
@@ -63,7 +65,10 @@
     "renameHint": "Leave empty to remove the custom name.",
     "renamePlayer": "Rename Player",
     "slugError": "Use 2–32 chars: letters, numbers, dashes",
-    "slugTaken": "This name is already taken"
+    "slugTaken": "This name is already taken",
+    "kickTitle": "Kick Player",
+    "kickConfirm": "Remove {name} from the room?",
+    "kickButton": "Kick"
   },
   "connection": {
     "reconnecting": "Reconnecting…"

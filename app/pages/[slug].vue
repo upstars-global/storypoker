@@ -297,26 +297,16 @@ async function submitRenameRoom() {
     router.replace(`/${roomId}`)
     return
   }
-<<<<<<< HEAD
-  const normalized = normalizeRoomSlug(raw)
-  if (!isValidRoomSlug(normalized)) {
-    roomSlugError.value = t('room.slugError')
-=======
   const slug = normalizeRoomSlug(name)
   if (!isValidRoomSlug(slug)) {
-    roomNameError.value = 'Name must be 2–32 alphanumeric characters'
->>>>>>> 52096d1692f0cace616e68ab9bd260cfbf11aba3
+    roomNameError.value = t('room.slugError')
     return
   }
   try {
     await roomStore.setRoomName(name, slug)
   } catch (e: any) {
     if (e?.code === 'room_slug_taken') {
-<<<<<<< HEAD
-      roomSlugError.value = t('room.slugTaken')
-=======
-      roomNameError.value = 'This name is already taken'
->>>>>>> 52096d1692f0cace616e68ab9bd260cfbf11aba3
+      roomNameError.value = t('room.slugTaken')
       return
     }
     throw e
@@ -400,11 +390,6 @@ async function submitRenameRoom() {
       @save="handleSaveCardDeck"
     />
 
-<<<<<<< HEAD
-    <div v-if="renameTarget" class="mui-modal-overlay" @click.self="renameTarget = null">
-      <div class="mui-modal-paper">
-        <h2 class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</h2>
-=======
     <UserSettingsModal
       v-if="showAccountSettings && user"
       @close="showAccountSettings = false"
@@ -416,64 +401,39 @@ async function submitRenameRoom() {
           v-wave
           class="mui-icon-btn absolute"
           style="top: 8px; right: 8px;"
-          aria-label="Close"
+          :aria-label="$t('common.close')"
           @click="renameTarget = null"
         >
           <IconClose style="font-size: 1.5rem;" />
         </button>
-        <h2 class="mui-h5 mb-4">Rename Player</h2>
->>>>>>> 52096d1692f0cace616e68ab9bd260cfbf11aba3
+        <h2 class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</h2>
         <input
           v-model="renameValue"
           class="mui-input"
           autofocus
         />
-<<<<<<< HEAD
-        <div class="flex gap-2 justify-end mt-6">
-          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="renameTarget = null">{{ $t('common.cancel') }}</button>
-          <button class="mui-btn" style="min-width: 120px;" @click="submitRename">{{ $t('common.save') }}</button>
-=======
         <div class="flex justify-end mt-6">
-          <button ref="renameSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">Save</button>
->>>>>>> 52096d1692f0cace616e68ab9bd260cfbf11aba3
+          <button ref="renameSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">{{ $t('common.save') }}</button>
         </div>
       </div>
     </div>
 
-<<<<<<< HEAD
-    <div v-if="showRenameRoom" class="mui-modal-overlay" @click.self="showRenameRoom = false">
-      <div class="mui-modal-paper">
-        <h2 class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</h2>
-=======
     <div v-if="showRenameRoom" class="mui-modal-overlay" @click.self="showRenameRoom = false" @keydown.esc="showRenameRoom = false" @keydown.enter.prevent="roomSaveBtn?.click()">
       <div class="mui-modal-paper relative">
         <button
           v-wave
           class="mui-icon-btn absolute"
           style="top: 8px; right: 8px;"
-          aria-label="Close"
+          :aria-label="$t('common.close')"
           @click="showRenameRoom = false"
         >
           <IconClose style="font-size: 1.5rem;" />
         </button>
-        <h2 class="mui-h5 mb-4">Rename Room</h2>
->>>>>>> 52096d1692f0cace616e68ab9bd260cfbf11aba3
+        <h2 class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</h2>
         <input
           v-model="roomNameInput"
           class="mui-input"
-<<<<<<< HEAD
           :placeholder="$t('room.renamePlaceholder')"
-          @keyup.enter="submitRenameRoom"
-        />
-        <p v-if="roomSlugError" class="text-[13px] mt-2" style="color: #d32f2f;">{{ roomSlugError }}</p>
-        <p v-else class="text-[13px] mt-2" style="color: var(--text-muted);">
-          {{ $t('room.renameHint') }}
-        </p>
-        <div class="flex gap-2 justify-end mt-6">
-          <button class="mui-btn mui-btn-text" style="min-width: auto;" @click="showRenameRoom = false">{{ $t('common.cancel') }}</button>
-          <button class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">{{ $t('common.save') }}</button>
-=======
-          placeholder="e.g. Backend Team"
           autofocus
         />
         <p v-if="roomNameError" class="text-[13px] mt-2" style="color: #d32f2f;">{{ roomNameError }}</p>
@@ -482,7 +442,7 @@ async function submitRenameRoom() {
           <span>URL: {{ origin }}/{{ roomId }}</span>
         </div>
         <div class="flex justify-end mt-6">
-          <button ref="roomSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">Save</button>
+          <button ref="roomSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">{{ $t('common.save') }}</button>
         </div>
       </div>
     </div>
@@ -493,16 +453,15 @@ async function submitRenameRoom() {
           v-wave
           class="mui-icon-btn absolute"
           style="top: 8px; right: 8px;"
-          aria-label="Close"
+          :aria-label="$t('common.close')"
           @click="kickTargetId = null"
         >
           <IconClose style="font-size: 1.5rem;" />
         </button>
-        <h2 class="mui-h5 mb-4">Kick Player</h2>
-        <p style="color: var(--text-body);">Remove <strong>{{ kickTargetName }}</strong> from the room?</p>
+        <h2 class="mui-h5 mb-4">{{ $t('room.kickTitle') }}</h2>
+        <p style="color: var(--text-body);">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>
         <div class="flex justify-end mt-6">
-          <button ref="kickConfirmBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">Kick</button>
->>>>>>> 52096d1692f0cace616e68ab9bd260cfbf11aba3
+          <button ref="kickConfirmBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">{{ $t('room.kickButton') }}</button>
         </div>
       </div>
     </div>

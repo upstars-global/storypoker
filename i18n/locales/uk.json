@@ -16,7 +16,9 @@
     "configureCardDeck": "Налаштувати колоду",
     "recentRooms": "Нещодавні кімнати",
     "lightTheme": "Світла тема",
-    "currentUserAccount": "акаунт поточного користувача"
+    "currentUserAccount": "акаунт поточного користувача",
+    "accountSettings": "Налаштування акаунту",
+    "roomSettings": "Налаштування кімнати"
   },
   "home": {
     "title": "Створіть кімнату для планінг-покеру",
@@ -63,7 +65,10 @@
     "renameHint": "Залиште порожнім, щоб видалити назву.",
     "renamePlayer": "Перейменувати гравця",
     "slugError": "Від 2 до 32 символів: літери, цифри, дефіси",
-    "slugTaken": "Це ім'я вже зайнято"
+    "slugTaken": "Це ім'я вже зайнято",
+    "kickTitle": "Вилучити гравця",
+    "kickConfirm": "Видалити {name} з кімнати?",
+    "kickButton": "Вилучити"
   },
   "connection": {
     "reconnecting": "Перепідключення…"
