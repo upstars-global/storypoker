@@ -87,8 +87,8 @@ function goRecent() {
     <div class="flex-1" />
 
     <div class="flex items-center gap-2">
-      <span v-if="playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">
-        {{ playerName }}<template v-if="user && user.email"> ({{ user.email }})</template>
+      <span v-if="user?.email || playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">
+        {{ user?.email ?? playerName }}
       </span>
       <div class="relative">
         <button
@@ -104,6 +104,7 @@ function goRecent() {
             :src="myAvatarUri"
             class="w-7 h-7 rounded-full"
             :alt="playerName"
+            style="background-color: var(--bg-paper);"
           />
           <IconAccount v-else style="font-size: 1.5rem;" />
         </button>

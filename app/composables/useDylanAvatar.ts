@@ -10,7 +10,9 @@ export function useDylanAvatar() {
     const collection = style === 'dylan' ? dylan : bottts
     const options = style === 'bottts' && grayscale
       ? { seed, baseColor: ['909090'], eyes: ['dizzy'], mouth: ['grill01'] }
-      : { seed, ...(grayscale ? { backgroundColor: ['cccccc'] } : {}) }
+      : style === 'dylan'
+        ? { seed, backgroundColor: [] }
+        : { seed, ...(grayscale ? { backgroundColor: ['cccccc'] } : {}) }
     const avatar = createAvatar(collection, options as any)
     return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(avatar.toString())))}`
   }
