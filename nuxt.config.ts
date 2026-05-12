@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       titleTemplate: '%s | Story Poker',
-      htmlAttrs: { lang: 'en' },
+      htmlAttrs: { lang: 'uk' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -28,7 +28,16 @@ export default defineNuxtConfig({
     }
   },
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
+  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@nuxtjs/i18n'],
+  i18n: {
+    defaultLocale: 'uk',
+    locales: [
+      { code: 'uk', file: 'uk.json' },
+      { code: 'en', file: 'en.json' },
+    ],
+    langDir: 'locales',
+    strategy: 'no_prefix',
+  },
   tailwindcss: {
     cssPath: resolve(__dirname, 'assets/css/main.css'),
   },

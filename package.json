@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@nuxtjs/i18n": "^10.3.0",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "happy-dom": "^20.9.0",
     "skillio": "^0.1.5",

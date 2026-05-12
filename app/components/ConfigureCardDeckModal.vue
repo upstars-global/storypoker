@@ -48,13 +48,13 @@ function save() {
         v-wave
         class="mui-icon-btn absolute"
         style="top: 12px; right: 12px;"
-        aria-label="Close"
+        :aria-label="$t('common.close')"
         @click="emit('close')"
       >
         <IconClose style="font-size: 1.5rem;" />
       </button>
       <h2 class="text-center text-[22px] font-bold tracking-[0.00735em]" style="color: var(--text-primary);">
-        Configure Card Deck
+        {{ $t('deck.configure') }}
       </h2>
 
       <div class="mt-7 flex justify-center">
@@ -86,7 +86,7 @@ function save() {
       </div>
 
       <div class="flex justify-center mt-8">
-        <button v-wave class="mui-btn" @click="save">Save Card Deck</button>
+        <button v-wave class="mui-btn" @click="save">{{ $t('deck.save') }}</button>
       </div>
     </div>
   </div>

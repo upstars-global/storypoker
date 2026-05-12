@@ -1,0 +1,117 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "password": "Password",
+    "emailPlaceholder": "Please enter business email",
+    "passwordPlaceholder": "Please enter password",
+    "confirmPasswordPlaceholder": "Confirm password"
+  },
+  "header": {
+    "renameRoom": "Rename Room",
+    "configureCardDeck": "Configure Card Deck",
+    "recentRooms": "Recent Rooms",
+    "lightTheme": "Light theme",
+    "currentUserAccount": "account of current user",
+    "accountSettings": "Account Settings",
+    "roomSettings": "Room settings"
+  },
+  "home": {
+    "title": "Create a planning poker room",
+    "subtitle": "and start estimating with your team right away",
+    "namePlaceholder": "Please enter your name",
+    "createRoom": "Create Room",
+    "recentRooms": "Recent Rooms",
+    "players": "Players",
+    "lastVisited": "Last Visited"
+  },
+  "join": {
+    "title": "Join the room",
+    "subtitle": "Enter your name to join your team",
+    "namePlaceholder": "Please enter your name",
+    "joinRoom": "Join Room"
+  },
+  "cards": {
+    "reveal": "Reveal Estimates",
+    "startNewRound": "Start New Estimation Round"
+  },
+  "timer": {
+    "title": "Timer",
+    "roundStartedAgo": "Round started {duration} ago",
+    "roundDuration": "Round duration: {duration}"
+  },
+  "deck": {
+    "configure": "Configure Card Deck",
+    "save": "Save Card Deck"
+  },
+  "players": {
+    "title": "Players",
+    "isModerator": "Is Moderator",
+    "renamePlayer": "Rename Player",
+    "leaveRoom": "Leave Room",
+    "kickPlayer": "Kick Player",
+    "moderatorLabel": "moderator",
+    "estimateGiven": "estimate given",
+    "playerDeciding": "player deciding",
+    "inactive": "inactive"
+  },
+  "room": {
+    "renameTitle": "Rename Room",
+    "renamePlaceholder": "e.g. backoffice",
+    "renameHint": "Leave empty to remove the custom name.",
+    "renamePlayer": "Rename Player",
+    "slugError": "Use 2–32 chars: letters, numbers, dashes",
+    "slugTaken": "This name is already taken",
+    "kickTitle": "Kick Player",
+    "kickConfirm": "Remove {name} from the room?",
+    "kickButton": "Kick"
+  },
+  "connection": {
+    "reconnecting": "Reconnecting…"
+  },
+  "auth": {
+    "gainModeratorPowers": "and gain moderator powers",
+    "forgotPassword": "Forgot password?",
+    "signingIn": "Signing In...",
+    "signingUp": "Signing Up..."
+  },
+  "login": {
+    "pageTitle": "Sign In",
+    "welcome": "Welcome back to Story Poker.",
+    "noAccount": "Don't have an account?"
+  },
+  "signup": {
+    "pageTitle": "Sign Up",
+    "description": "Create an account and gain moderator powers.",
+    "confirmEmail": "Check your email to confirm your account.",
+    "backToSignIn": "Back to Sign In",
+    "alreadyHaveAccount": "Already have an account?"
+  },
+  "forgotPassword": {
+    "pageTitle": "Reset Password",
+    "title": "Reset Password",
+    "description": "Enter your email and we will send password reset instructions.",
+    "checkEmail": "Check your email for a password reset link.",
+    "backToSignIn": "Back to Sign In",
+    "rememberedPassword": "Remembered your password?",
+    "sending": "Sending...",
+    "sendResetLink": "Send Reset Link"
+  },
+  "resetPassword": {
+    "pageTitle": "Set New Password",
+    "title": "Set New Password",
+    "description": "Choose a new password for your Story Poker account.",
+    "checking": "Checking reset link...",
+    "updated": "Your password has been updated.",
+    "openLink": "Open the password reset link from your email to continue.",
+    "requestNewLink": "Request a new link",
+    "newPasswordPlaceholder": "Please enter new password",
+    "confirmNewPasswordPlaceholder": "Confirm new password",
+    "updating": "Updating...",
+    "updatePassword": "Update Password"
+  }
+}

@@ -3,7 +3,8 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { validateEmail, validateRequiredPassword } from '~/utils/authValidation'
 
-useHead({ title: 'Sign In' })
+const { t } = useI18n()
+useHead({ title: t('login.pageTitle') })
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
@@ -57,21 +58,21 @@ async function onSubmit() {
 
     <main class="flex flex-1 items-center justify-center px-4 py-10">
       <section class="mui-modal-paper max-w-md">
-        <h1 class="mui-h5 text-center">Sign In</h1>
-        <p class="mui-caption text-center mt-2">Welcome back to Story Poker.</p>
+        <h1 class="mui-h5 text-center">{{ $t('common.signIn') }}</h1>
+        <p class="mui-caption text-center mt-2">{{ $t('login.welcome') }}</p>
 
         <form class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
           <div>
-            <input v-model.trim="form.email" type="email" autocomplete="email" placeholder="Please enter business email" class="mui-input" :class="{ 'is-error': errors.email }" />
+            <input v-model.trim="form.email" type="email" autocomplete="email" :placeholder="$t('common.emailPlaceholder')" class="mui-input" :class="{ 'is-error': errors.email }" />
             <p v-if="errors.email" class="text-sm mt-1" style="color: var(--danger);">{{ errors.email }}</p>
           </div>
 
           <div>
             <div class="flex items-center justify-between gap-3 mb-1">
-              <span class="mui-caption">Password</span>
-              <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline" style="color: var(--primary);">Forgot password?</NuxtLink>
+              <span class="mui-caption">{{ $t('common.password') }}</span>
+              <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline" style="color: var(--primary);">{{ $t('auth.forgotPassword') }}</NuxtLink>
             </div>
-            <input v-model="form.password" type="password" autocomplete="current-password" placeholder="Please enter password" class="mui-input" :class="{ 'is-error': errors.password }" />
+            <input v-model="form.password" type="password" autocomplete="current-password" :placeholder="$t('common.passwordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.password }" />
             <p v-if="errors.password" class="text-sm mt-1" style="color: var(--danger);">{{ errors.password }}</p>
           </div>
 
@@ -79,13 +80,13 @@ async function onSubmit() {
 
           <div class="flex justify-center mt-2">
             <button v-wave class="mui-btn" type="submit" :disabled="loading">
-              {{ loading ? 'Signing In...' : 'Sign In' }}
+              {{ loading ? $t('auth.signingIn') : $t('common.signIn') }}
             </button>
           </div>
 
           <p class="mui-caption text-center mt-2">
-            Don't have an account?
-            <NuxtLink to="/signup" class="underline hover:no-underline" style="color: var(--primary);">Sign Up</NuxtLink>
+            {{ $t('login.noAccount') }}
+            <NuxtLink to="/signup" class="underline hover:no-underline" style="color: var(--primary);">{{ $t('common.signUp') }}</NuxtLink>
           </p>
         </form>
       </section>

@@ -46,6 +46,7 @@ const renameSaveBtn = ref<HTMLButtonElement | null>(null)
 const roomSaveBtn = ref<HTMLButtonElement | null>(null)
 const kickConfirmBtn = ref<HTMLButtonElement | null>(null)
 
+const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
 const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
 const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
@@ -298,14 +299,14 @@ async function submitRenameRoom() {
   }
   const slug = normalizeRoomSlug(name)
   if (!isValidRoomSlug(slug)) {
-    roomNameError.value = 'Name must be 2–32 alphanumeric characters'
+    roomNameError.value = t('room.slugError')
     return
   }
   try {
     await roomStore.setRoomName(name, slug)
   } catch (e: any) {
     if (e?.code === 'room_slug_taken') {
-      roomNameError.value = 'This name is already taken'
+      roomNameError.value = t('room.slugTaken')
       return
     }
     throw e
@@ -400,19 +401,19 @@ async function submitRenameRoom() {
           v-wave
           class="mui-icon-btn absolute"
           style="top: 8px; right: 8px;"
-          aria-label="Close"
+          :aria-label="$t('common.close')"
           @click="renameTarget = null"
         >
           <IconClose style="font-size: 1.5rem;" />
         </button>
-        <h2 class="mui-h5 mb-4">Rename Player</h2>
+        <h2 class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</h2>
         <input
           v-model="renameValue"
           class="mui-input"
           autofocus
         />
         <div class="flex justify-end mt-6">
-          <button ref="renameSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">Save</button>
+          <button ref="renameSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">{{ $t('common.save') }}</button>
         </div>
       </div>
     </div>
@@ -423,16 +424,16 @@ async function submitRenameRoom() {
           v-wave
           class="mui-icon-btn absolute"
           style="top: 8px; right: 8px;"
-          aria-label="Close"
+          :aria-label="$t('common.close')"
           @click="showRenameRoom = false"
         >
           <IconClose style="font-size: 1.5rem;" />
         </button>
-        <h2 class="mui-h5 mb-4">Rename Room</h2>
+        <h2 class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</h2>
         <input
           v-model="roomNameInput"
           class="mui-input"
-          placeholder="e.g. Backend Team"
+          :placeholder="$t('room.renamePlaceholder')"
           autofocus
         />
         <p v-if="roomNameError" class="text-[13px] mt-2" style="color: #d32f2f;">{{ roomNameError }}</p>
@@ -441,7 +442,7 @@ async function submitRenameRoom() {
           <span>URL: {{ origin }}/{{ roomId }}</span>
         </div>
         <div class="flex justify-end mt-6">
-          <button ref="roomSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">Save</button>
+          <button ref="roomSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">{{ $t('common.save') }}</button>
         </div>
       </div>
     </div>
@@ -452,15 +453,15 @@ async function submitRenameRoom() {
           v-wave
           class="mui-icon-btn absolute"
           style="top: 8px; right: 8px;"
-          aria-label="Close"
+          :aria-label="$t('common.close')"
           @click="kickTargetId = null"
         >
           <IconClose style="font-size: 1.5rem;" />
         </button>
-        <h2 class="mui-h5 mb-4">Kick Player</h2>
-        <p style="color: var(--text-body);">Remove <strong>{{ kickTargetName }}</strong> from the room?</p>
+        <h2 class="mui-h5 mb-4">{{ $t('room.kickTitle') }}</h2>
+        <p style="color: var(--text-body);">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>
         <div class="flex justify-end mt-6">
-          <button ref="kickConfirmBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">Kick</button>
+          <button ref="kickConfirmBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">{{ $t('room.kickButton') }}</button>
         </div>
       </div>
     </div>

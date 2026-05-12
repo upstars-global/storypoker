@@ -33,7 +33,7 @@ const emit = defineEmits<{
     </div>
 
     <div v-if="isModerator" class="flex justify-center pt-8">
-      <button v-wave class="mui-btn" :disabled="!hasVotes" @click="emit('reveal')">Reveal Estimates</button>
+      <button v-wave class="mui-btn" :disabled="!hasVotes" @click="emit('reveal')">{{ $t('cards.reveal') }}</button>
     </div>
   </div>
 </template>

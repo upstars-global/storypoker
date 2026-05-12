@@ -54,27 +54,27 @@ async function submit() {
       <button
         class="mui-icon-btn absolute"
         style="top: 8px; right: 8px;"
-        aria-label="Close"
+        :aria-label="$t('common.close')"
         @click="emit('close')"
       >
         <IconClose style="font-size: 1.5rem;" />
       </button>
       <h2 class="mui-h5 text-center">
-        {{ mode === 'signin' ? 'Sign In' : 'Sign Up' }}
+        {{ mode === 'signin' ? $t('common.signIn') : $t('common.signUp') }}
       </h2>
       <p
         v-if="mode === 'signup'"
         class="mui-caption text-center mt-2"
         style="color: var(--text-muted);"
       >
-        and gain moderator powers
+        {{ $t('auth.gainModeratorPowers') }}
       </p>
       <div class="flex flex-col gap-3 mt-6">
         <div>
           <input
             v-model.trim="email"
             type="email"
-            placeholder="Please enter business email"
+            :placeholder="$t('common.emailPlaceholder')"
             autocomplete="email"
             class="mui-input"
             :class="{ 'is-error': errors.email }"
@@ -85,16 +85,16 @@ async function submit() {
 
         <div>
           <div v-if="mode === 'signin'" class="flex items-center justify-between gap-3 mb-1">
-            <span class="mui-caption">Password</span>
+            <span class="mui-caption">{{ $t('common.password') }}</span>
             <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline" style="color: var(--primary);" @click="emit('close')">
-              Forgot password?
+              {{ $t('auth.forgotPassword') }}
             </NuxtLink>
           </div>
           <input
             v-model="password"
             type="password"
             :autocomplete="mode === 'signin' ? 'current-password' : 'new-password'"
-            placeholder="Please enter password"
+            :placeholder="$t('common.passwordPlaceholder')"
             class="mui-input"
             :class="{ 'is-error': errors.password }"
             @keyup.enter="submit"
@@ -107,7 +107,7 @@ async function submit() {
             v-model="confirm"
             type="password"
             autocomplete="new-password"
-            placeholder="Confirm password"
+            :placeholder="$t('common.confirmPasswordPlaceholder')"
             class="mui-input"
             :class="{ 'is-error': errors.confirm }"
             @keyup.enter="submit"
@@ -118,7 +118,7 @@ async function submit() {
         <p v-if="errors.server" class="text-sm" style="color: var(--danger);">{{ errors.server }}</p>
         <div class="flex justify-center mt-2">
           <button class="mui-btn" :disabled="loading" @click="submit">
-            {{ loading ? (mode === 'signin' ? 'Signing In...' : 'Signing Up...') : (mode === 'signin' ? 'Sign In' : 'Sign Up') }}
+            {{ loading ? (mode === 'signin' ? $t('auth.signingIn') : $t('auth.signingUp')) : (mode === 'signin' ? $t('common.signIn') : $t('common.signUp')) }}
           </button>
         </div>
       </div>
