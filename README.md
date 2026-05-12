@@ -26,6 +26,22 @@ npm i
 npm run dev
 ```
 
+### Tests (Vitest)
+```sh
+npm test
+```
+
+Coverage (для CI або локально):
+```sh
+npm run test:ci
+```
+
+### CI/CD (GitHub Actions + Netlify)
+- CI: `.github/workflows/ci.yml` запускає `npm ci`, `npm run test:ci`, `npm run build` на PR та `main`.
+- CD: `.github/workflows/deploy-netlify.yml` деплоїть на Netlify при пуші в `main`, якщо задані secrets:
+  - `NETLIFY_AUTH_TOKEN`
+  - `NETLIFY_SITE_ID`
+
 ### Run Claude Code In Bypass Mode
 ```sh
 claude --dangerously-skip-permissions

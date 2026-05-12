@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-Guidance for Claude Code working with this repository.
+Guidance for Codex working with this repository.
 
 ## Communication
 - **Language**: Ukrainian (українська мова)
@@ -48,13 +48,11 @@ Finish: `verification-before-completion`
 
 ```bash
 npm install
-npm run dev       # Dev (port 3000; скрипт вже вмикає --host для LAN/мобільних)
+npm run dev       # Dev (port 3000, --host для LAN/мобільних)
 npm run build
 npm run generate  # SSG static pre-render
 npm run preview
 npm test          # vitest run
-npm run test:watch
-npm run test:ci   # vitest run --coverage
 ```
 
 ## Environment Setup

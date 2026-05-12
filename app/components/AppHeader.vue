@@ -38,6 +38,15 @@ const myAvatarUri = computed(() => {
   return ''
 })
 
+const profileFetched = ref(!user.value)
+
+watch(() => user.value?.id, async (id) => {
+  if (!id) { profileFetched.value = true; return }
+  profileFetched.value = false
+  await profilesStore.fetchOne(id)
+  profileFetched.value = true
+}, { immediate: true })
+
 function goRecent() {
   showMenu.value = false
   router.push('/')
@@ -104,7 +113,7 @@ function goRecent() {
             :src="myAvatarUri"
             class="w-7 h-7 rounded-full"
             :alt="playerName"
-            style="background-color: var(--bg-paper);"
+            :style="{ opacity: profileFetched ? 1 : 0, transition: 'opacity 0.15s' }"
           />
           <IconAccount v-else style="font-size: 1.5rem;" />
         </button>
