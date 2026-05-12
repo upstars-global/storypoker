@@ -41,7 +41,7 @@ const groups = computed(() => {
       class="mui-btn"
       @click="emit('startNewRound')"
     >
-      Start New Estimation Round
+      {{ $t('cards.startNewRound') }}
     </button>
   </div>
 </template>

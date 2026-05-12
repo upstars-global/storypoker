@@ -14,7 +14,11 @@ export const usePlayersStore = defineStore('players', () => {
   const pendingVotes = ref<Record<string, string | null>>({})
   const roomId = ref<string | null>(null)
 
-  const visiblePlayers = computed(() => players.value.filter(p => p.left_at === null))
+  const visiblePlayers = computed(() =>
+    players.value
+      .filter(p => p.left_at === null)
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+  )
 
   function applyChange(payload: RealtimePayload) {
     switch (payload.eventType) {

@@ -8,6 +8,8 @@ Thumbs.db
 /dist
 /coverage
 
+.env
+.env.local
 /.env/*
 !/.env/.env.example
 

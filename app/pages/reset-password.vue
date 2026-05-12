@@ -3,7 +3,8 @@ import { getSupabase } from '~/lib/supabase-instance'
 import { useAuthStore } from '~/stores/auth'
 import { validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
 
-useHead({ title: 'Set New Password' })
+const { t } = useI18n()
+useHead({ title: t('resetPassword.pageTitle') })
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -35,7 +36,7 @@ onMounted(async () => {
 
   const { data } = await supabase.auth.getSession()
   canReset.value = Boolean(data.session)
-  errors.session = canReset.value ? undefined : 'Open the password reset link from your email to continue.'
+  errors.session = canReset.value ? undefined : t('resetPassword.openLink')
   checkingSession.value = false
 })
 
@@ -73,31 +74,31 @@ async function onSubmit() {
 
     <main class="flex flex-1 items-center justify-center px-4 py-10">
       <section class="mui-modal-paper max-w-md">
-        <h1 class="mui-h5 text-center">Set New Password</h1>
-        <p class="mui-caption text-center mt-2">Choose a new password for your Story Poker account.</p>
+        <h1 class="mui-h5 text-center">{{ $t('resetPassword.title') }}</h1>
+        <p class="mui-caption text-center mt-2">{{ $t('resetPassword.description') }}</p>
 
         <div v-if="checkingSession" class="text-center mt-6">
-          <p class="mui-body">Checking reset link...</p>
+          <p class="mui-body">{{ $t('resetPassword.checking') }}</p>
         </div>
 
         <div v-else-if="success" class="text-center mt-6">
-          <p class="mui-body">Your password has been updated.</p>
-          <NuxtLink to="/login" class="mui-caption underline hover:no-underline" style="color: var(--primary);">Sign In</NuxtLink>
+          <p class="mui-body">{{ $t('resetPassword.updated') }}</p>
+          <NuxtLink to="/login" class="mui-caption underline hover:no-underline" style="color: var(--primary);">{{ $t('common.signIn') }}</NuxtLink>
         </div>
 
         <div v-else-if="!canReset" class="text-center mt-6">
           <p class="mui-body">{{ errors.session }}</p>
-          <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline" style="color: var(--primary);">Request a new link</NuxtLink>
+          <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline" style="color: var(--primary);">{{ $t('resetPassword.requestNewLink') }}</NuxtLink>
         </div>
 
         <form v-else class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
           <div>
-            <input v-model="form.password" type="password" autocomplete="new-password" placeholder="Please enter new password" class="mui-input" :class="{ 'is-error': errors.password }" />
+            <input v-model="form.password" type="password" autocomplete="new-password" :placeholder="$t('resetPassword.newPasswordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.password }" />
             <p v-if="errors.password" class="text-sm mt-1" style="color: var(--danger);">{{ errors.password }}</p>
           </div>
 
           <div>
-            <input v-model="form.confirm" type="password" autocomplete="new-password" placeholder="Confirm new password" class="mui-input" :class="{ 'is-error': errors.confirm }" />
+            <input v-model="form.confirm" type="password" autocomplete="new-password" :placeholder="$t('resetPassword.confirmNewPasswordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.confirm }" />
             <p v-if="errors.confirm" class="text-sm mt-1" style="color: var(--danger);">{{ errors.confirm }}</p>
           </div>
 
@@ -105,7 +106,7 @@ async function onSubmit() {
 
           <div class="flex justify-center mt-2">
             <button v-wave class="mui-btn" type="submit" :disabled="loading">
-              {{ loading ? 'Updating...' : 'Update Password' }}
+              {{ loading ? $t('resetPassword.updating') : $t('resetPassword.updatePassword') }}
             </button>
           </div>
         </form>

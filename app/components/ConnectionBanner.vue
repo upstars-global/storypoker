@@ -15,7 +15,7 @@ const { status } = storeToRefs(presence)
       aria-live="polite"
     >
       <span class="banner-spinner" aria-hidden="true" />
-      <span>Reconnecting…</span>
+      <span>{{ $t('connection.reconnecting') }}</span>
     </div>
   </Transition>
 </template>
