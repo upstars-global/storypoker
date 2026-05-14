@@ -95,28 +95,29 @@ async function save() {
       <div class="mt-6 flex items-center justify-center gap-4">
         <button
           v-wave
-          class="mui-icon-btn"
+          class="mui-btn mui-btn-secondary"
+          style="min-width: inherit;"
           aria-label="Previous"
           :disabled="cursor === 0"
-          :style="{ opacity: cursor === 0 ? 0.3 : 1 }"
           @click="prev"
         >
-          <span style="font-size: 1.5rem; line-height: 1;">‹</span>
+          <IconNavigateBefore style="font-size: 1.25rem;" />
         </button>
         <img
           v-if="previewUri"
           :src="previewUri"
           alt="Avatar preview"
           class="rounded-full"
-          style="width: 144px; height: 144px; background-color: var(--bg-paper); border: 1px solid var(--border);"
+          style="width: 144px; height: 144px;"
         />
         <button
           v-wave
-          class="mui-icon-btn"
+          class="mui-btn mui-btn-secondary"
+          style="min-width: inherit;"
           aria-label="Next"
           @click="next"
         >
-          <span style="font-size: 1.5rem; line-height: 1;">›</span>
+          <IconNavigateNext style="font-size: 1.25rem;" />
         </button>
       </div>
 

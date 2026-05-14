@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-Guidance for Claude Code working with this repository.
+Guidance for Codex working with this repository.
 
 ## Communication
 - **Language:** Ukrainian (українська мова)
@@ -24,6 +24,31 @@ Guidance for Claude Code working with this repository.
 - **i18n:** `@nuxtjs/i18n`, strategy `no_prefix`, локалі `i18n/locales/{uk,en}.json`
 - **UI:** `@nuxt/icon`, `v-wave`, DiceBear аватари, Roboto 300–700
 - **Node:** 24+
+
+## Workflow Sequences
+
+> `using-superpowers` runs automatically at session start; do not invoke it manually.
+
+### New Feature
+`brainstorming` → `writing-plans` → `executing-plans`
+As needed: `vue` · `nuxt` · `pinia` · `supabase` · `tailwind-design-system` · `vue-best-practices` · `vueuse-functions`
+Tests: `test-driven-development` + `vitest` and/or `webapp-testing`
+Finish: `verification-before-completion`
+
+### Bug / Regression
+`systematic-debugging` → `test-driven-development` → `vitest` → `verification-before-completion`
+
+### UI Component With Design
+`frontend-design` → `tailwind-design-system` → `vue` → `webapp-testing` → `verification-before-completion`
+
+### Supabase Task
+`supabase` → `test-driven-development` → `verification-before-completion`
+
+### Refactoring
+`vue-best-practices` → `test-driven-development` → `vitest` → `verification-before-completion`
+
+### Received Code Review
+`receiving-code-review` → fixes → `verification-before-completion`
 
 ## Common Commands
 

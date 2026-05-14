@@ -20,8 +20,6 @@ export function useTheme() {
     try { stored = localStorage.getItem(STORAGE_KEY) } catch {}
     if (stored === 'light' || stored === 'dark') {
       apply(stored, false)
-    } else if (window.matchMedia?.('(prefers-color-scheme: light)').matches) {
-      apply('light', false)
     } else {
       apply('dark', false)
     }

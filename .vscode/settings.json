@@ -1,17 +1,19 @@
 {
-  "javascript.updateImportsOnFileMove.enabled": "never",
-  "typescript.updateImportsOnFileMove.enabled": "never",
-
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
+  "terminal.integrated.initialHint": false,
+  "chat.disableAIFeatures": true,
+  "git.confirmSync": false,
+  "terminal.integrated.mouseWheelScrollSensitivity": 3,
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "editor.wordWrap": "off",
-
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.trimTrailingWhitespace": true,
-
   "diffEditor.ignoreTrimWhitespace": false,
   "diffEditor.renderSideBySide": false,
-
-  "git.openRepositoryInParentFolders": "never"
+  "git.openRepositoryInParentFolders": "never",
+  "[markdown]": {
+    "editor.wordWrap": "off",
+  },
 }
