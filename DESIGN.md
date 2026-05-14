@@ -258,7 +258,7 @@ boxShadow: {
 
 ## 10. Аудит поточної реалізації (assets/css/main.css)
 
-> Аудит станом на 2026-05-07. Версія: Tailwind v3 via `@nuxtjs/tailwindcss ^6`.
+> Аудит станом на 2026-05-14. Версія: Tailwind v3 via `@nuxtjs/tailwindcss ^6`.
 
 ### 10.1 Що реалізовано
 
@@ -267,66 +267,28 @@ boxShadow: {
 - MUI-like бібліотека в `@layer components`: `mui-btn`, `mui-btn-text`, `mui-icon-btn`, `mui-input`, `mui-card`, `mui-menu`, `mui-menu-item`, `mui-modal-overlay`, `mui-modal-paper`, `mui-switch`, `mui-h5`, `mui-h6`, `mui-body`, `mui-caption`, `mui-svg-icon`
 - Responsive `mui-card-value` (4 breakpoints: base / 600 / 900 / 1200)
 - Consistent shadow scale (1/2/3/4/8 = Material elevation stack)
+- ✅ Tailwind токени зареєстровані в `tailwind.config.ts` (раніше — пр. 10.2 #1): `primary`, `primary-hover`, `primary-soft`, `danger`, `success`, `bg-{app,appbar,paper,elevated,overlay,skeleton}`, `text-{primary,body,muted,disabled,inverse}`, `border-{DEFAULT,input}`, `shadow-{1,2,3,4,8}`
 
 ### 10.2 Виявлені проблеми
 
 | # | Проблема | Вплив |
 |---|----------|-------|
-| 1 | Токени не зареєстровані в `tailwind.config.ts` → Tailwind не генерує утиліти `bg-primary`, `text-muted` тощо | Скрізь у шаблонах `style="color: var(--text-muted)"` замість `class="text-muted"` |
 | 2 | Inline `style=` у компонентах (AppHeader, [slug].vue та ін.) | Обходить Tailwind, важко рефакторити та підтримувати |
 | 3 | `mui-btn-text:disabled` не визначено | Кнопка-текст без disabled-стилю |
-| 4 | `--card-bg-color` у light = `rgb(240,240,240)` = `--bg-paper` → немає контрасту картки від фону | Карти зливаються з фоном у light mode |
+| 4 | `--card-bg-color` у light = `rgb(240,240,240)` = `--bg-paper`, а `--card-bg-hover` теж = `rgb(240,240,240)` (ідентичний default) → немає контрасту картки від фону і немає hover-фідбеку | Карти зливаються з фоном у light mode, hover не зчитується
 
 ### 10.3 Рекомендовані виправлення
 
-**Пріоритет 1 — зареєструй токени в `tailwind.config.ts`:**
-
-```ts
-export default {
-  theme: {
-    extend: {
-      colors: {
-        primary: 'var(--primary)',
-        'primary-hover': 'var(--primary-hover)',
-        danger: 'var(--danger)',
-        success: 'var(--success)',
-      },
-      backgroundColor: {
-        app: 'var(--bg-app)',
-        appbar: 'var(--bg-appbar)',
-        paper: 'var(--bg-paper)',
-        elevated: 'var(--bg-elevated)',
-      },
-      textColor: {
-        primary: 'var(--text-primary)',
-        body: 'var(--text-body)',
-        muted: 'var(--text-muted)',
-      },
-      borderColor: {
-        DEFAULT: 'var(--border)',
-        input: 'var(--border-input)',
-      },
-      boxShadow: {
-        1: 'var(--shadow-1)',
-        2: 'var(--shadow-2)',
-        4: 'var(--shadow-4)',
-        8: 'var(--shadow-8)',
-      },
-    },
-  },
-}
-```
-
-**Пріоритет 2 — fix light mode card contrast:**
+**Пріоритет 1 — fix light mode card contrast:**
 
 ```css
 html[data-theme='light'] {
   --card-bg-color: rgb(255, 255, 255); /* було: rgb(240,240,240) = bg-paper */
-  --card-bg-hover: rgb(248, 248, 248);
+  --card-bg-hover: rgb(248, 248, 248); /* було: rgb(240,240,240) — ідентичний default */
 }
 ```
 
-**Пріоритет 3 — додай `mui-btn-text:disabled`:**
+**Пріоритет 2 — додай `mui-btn-text:disabled`:**
 
 ```css
 .mui-btn-text:disabled {
@@ -334,3 +296,5 @@ html[data-theme='light'] {
   pointer-events: none;
 }
 ```
+
+**Пріоритет 3 — поступово замінити inline `style="color: var(--text-*)"` на Tailwind утиліти (`text-muted`, `bg-paper` тощо), які вже доступні через `tailwind.config.ts`.**

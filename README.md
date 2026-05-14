@@ -49,21 +49,21 @@ claude --dangerously-skip-permissions
 
 ### Skills
 ```zsh
-npx skills add anthropics/skills@frontend-design -y
-npx skills add anthropics/skills@webapp-testing -y
-# npx skills add anthropics/claude-plugins-official@claude-md-improver -y
-npx skills add obra/superpowers@brainstorming -y
-npx skills add obra/superpowers@writing-plans -y
-npx skills add obra/superpowers@executing-plans -y
-npx skills add obra/superpowers@subagent-driven-development -y
-npx skills add obra/superpowers@dispatching-parallel-agents -y
-npx skills add obra/superpowers@test-driven-development -y
-npx skills add obra/superpowers@systematic-debugging -y
-npx skills add obra/superpowers@verification-before-completion -y
-npx skills add obra/superpowers@receiving-code-review -y
-npx skills add obra/superpowers@requesting-code-review -y
-npx skills add obra/superpowers@using-git-worktrees -y
-npx skills add obra/superpowers@finishing-a-development-branch -y
+npx skills add anthropics/skills@frontend-design -a claude-code -y
+npx skills add anthropics/skills@webapp-testing -a claude-code -y
+# npx skills add anthropics/claude-plugins-official@claude-md-improver -a codex claude-code -y
+npx skills add obra/superpowers@brainstorming -a codex claude-code -y
+npx skills add obra/superpowers@writing-plans -a codex claude-code -y
+npx skills add obra/superpowers@executing-plans -a codex claude-code -y
+npx skills add obra/superpowers@subagent-driven-development -a codex claude-code -y
+npx skills add obra/superpowers@dispatching-parallel-agents -a codex claude-code -y
+npx skills add obra/superpowers@test-driven-development -a codex claude-code -y
+npx skills add obra/superpowers@systematic-debugging -a codex claude-code -y
+npx skills add obra/superpowers@verification-before-completion -a codex claude-code -y
+npx skills add obra/superpowers@receiving-code-review -a codex claude-code -y
+npx skills add obra/superpowers@requesting-code-review -a codex claude-code -y
+npx skills add obra/superpowers@using-git-worktrees -a codex claude-code -y
+npx skills add obra/superpowers@finishing-a-development-branch -a codex claude-code -y
 ```
 
 ### Як подивитись скільки і яких скілів використовували агенти

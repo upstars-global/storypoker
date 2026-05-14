@@ -11,8 +11,9 @@ Guidance for Claude Code working with this repository.
 **Story Poker** — Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 5 пресетів або кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
 
 Джерела контексту:
-- `DESIGN.md` — продуктова специфікація
-- `docs/superpowers/plans/roadmap.md` — дорожня карта
+- `DESIGN.md` — дизайн-специфікація + audit (розділ 10)
+- `ROADMAP.md` — статус, design gaps, iter-цілі
+- `docs/superpowers/plans/` і `docs/superpowers/specs/` — iter-плани і специфікації окремих фіч
 - `examples/` — ескізи, gitignored
 
 ## Tech Stack
@@ -55,6 +56,8 @@ SUPABASE_URL=...
 SUPABASE_KEY=...            # publishable client key
 # SUPABASE_SECRET_KEY=...   # server-side only, не класти в client bundle
 ```
+
+`nuxt.config.ts` мапить ці змінні в `runtimeConfig.public.supabaseUrl/supabaseKey`; клієнтський код читає їх через `useRuntimeConfig().public`.
 
 ## Database
 
@@ -102,6 +105,7 @@ Pinia stores у `app/stores/`:
 - `players.ts` — players, optimistic votes, join/rejoin, rename, moderator toggle, kick/leave, link user
 - `presence.ts` — online `Set<playerId>` через Supabase Presence і reconnect/visibility handlers
 - `profiles.ts` — `user_profiles` cache, fetch/upsert, Realtime applyChange
+- `types.ts` — спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `UserProfile`)
 
 Stores беруть клієнт через `getSupabase()` з `app/lib/supabase-instance.ts`; `app/plugins/supabase.ts` робить `setSupabase(client)`. Тести інжектять mock через `setSupabase(mock)`.
 
@@ -127,10 +131,11 @@ app/
 ├── stores/       # auth, room, players, presence, profiles + __tests__
 ├── plugins/      # supabase, vWave, clickOutside
 ├── lib/          # supabase-instance
-└── utils/        # roomId, cardDecks, authValidation, recentRooms, playerRoles
+└── utils/        # roomId, cardDecks, authValidation, recentRooms, playerRoles, relativeTime
 assets/css/main.css
 i18n/locales/{uk,en}.json
 supabase/migrations/*.sql
+scripts/sync-after-history-rewrite.sh  # one-off git reset helper після rewrite main
 tests/setup.ts
 vitest.config.ts
 ```
