@@ -16,23 +16,23 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 * [DiceBear](https://www.dicebear.com/)
 
 ### Install
-```sh
+```zsh
 npm i
 ```
 
 ### Run
 Створи `/.env/.env` (Supabase, спільне для команди) та `/.env/.env.local` (персональне, наприклад Jira) на основі `/.env/.env.example`.
-```sh
+```zsh
 npm run dev
 ```
 
 ### Tests (Vitest)
-```sh
+```zsh
 npm test
 ```
 
 Coverage (для CI або локально):
-```sh
+```zsh
 npm run test:ci
 ```
 
@@ -43,38 +43,34 @@ npm run test:ci
   - `NETLIFY_SITE_ID`
 
 ### Run Claude Code In Bypass Mode
-```sh
+```zsh
 claude --dangerously-skip-permissions
 ```
 
 ### Skills
-```sh
-npx skills add obra/superpowers@using-superpowers -a claude-code -y
-npx skills add obra/superpowers@brainstorming -a claude-code -y
-npx skills add obra/superpowers@writing-plans -a claude-code -y
-npx skills add obra/superpowers@executing-plans -a claude-code -y
-npx skills add obra/superpowers@test-driven-development -a claude-code -y
-npx skills add obra/superpowers@systematic-debugging -a claude-code -y
-npx skills add obra/superpowers@verification-before-completion -a claude-code -y
-npx skills add obra/superpowers@receiving-code-review -a claude-code -y
-npx skills add anthropics/skills@frontend-design -a claude-code -y
-npx skills add anthropics/skills@webapp-testing -a claude-code -y
-npx skills add antfu/skills@vitest -a claude-code -y
-npx skills add antfu/skills@vue -a claude-code -y
-npx skills add antfu/skills@nuxt -a claude-code -y
-npx skills add antfu/skills@pinia -a claude-code -y
-npx skills add antfu/skills@vue-best-practices -a claude-code -y
-npx skills add antfu/skills@vueuse-functions -a claude-code -y
-npx skills add wshobson/agents@tailwind-design-system -a claude-code -y
-npx skills add supabase/agent-skills@supabase -a claude-code -y
-npx skills add anthropics/claude-plugins-official@claude-md-improver -a codex -y
+```zsh
+npx skills add anthropics/skills@frontend-design -y
+npx skills add anthropics/skills@webapp-testing -y
+# npx skills add anthropics/claude-plugins-official@claude-md-improver -y
+npx skills add obra/superpowers@brainstorming -y
+npx skills add obra/superpowers@writing-plans -y
+npx skills add obra/superpowers@executing-plans -y
+npx skills add obra/superpowers@subagent-driven-development -y
+npx skills add obra/superpowers@dispatching-parallel-agents -y
+npx skills add obra/superpowers@test-driven-development -y
+npx skills add obra/superpowers@systematic-debugging -y
+npx skills add obra/superpowers@verification-before-completion -y
+npx skills add obra/superpowers@receiving-code-review -y
+npx skills add obra/superpowers@requesting-code-review -y
+npx skills add obra/superpowers@using-git-worktrees -y
+npx skills add obra/superpowers@finishing-a-development-branch -y
 ```
 
 ### Як подивитись скільки і яких скілів використовували агенти
-```sh
+```zsh
 npm i -g skillio
 
-npx skl used -a claude-code codex -p 1d
+skl used -p 3h
 ```
 
 ### Have fun! ;)

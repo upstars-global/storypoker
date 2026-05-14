@@ -1,12 +1,11 @@
 Thumbs.db
 .DS_Store
-/.idea
 
-/node_modules
-/.nuxt
-/.output
-/dist
-/coverage
+/node_modules/
+*.log
+/.nuxt/
+/.output/
+/dist/
 
 .env
 .env.local
@@ -16,7 +15,12 @@ Thumbs.db
 /supabase/*
 !/supabase/migrations
 
-/examples
+/.netlify/
 
-/.agents
-/.claude
+/.agents/
+/.claude/
+/memory/
+skills-lock.json
+
+TODO-FOR-SKL-by-CODEX.md
+TODO-FOR-SKL-by-CLAUDE-CODE.md

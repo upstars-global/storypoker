@@ -3,189 +3,197 @@
 Guidance for Codex working with this repository.
 
 ## Communication
-- **Language**: Ukrainian (українська мова)
-- **Constraint**: цей файл — ≤ 200 рядків. Деталі продукту — в `DESIGN.md`
+- **Language:** Ukrainian (українська мова)
+- **Constraint:** цей файл — ≤ 200 рядків. Детальна продуктова специфікація — `DESIGN.md`.
 
 ## Project Overview
 
-**Story Poker** — Planning Poker для Agile-команд: кімнати, голосування за складність задач картами одного з 5 пресетів (Scrum, Fibonacci *, T-Shirt Size, Hours, Boolean) або кастомним підмножиною з модалки Configure Card Deck, приховане голосування з одночасним розкриттям, історія раундів.
+**Story Poker** — Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 5 пресетів або кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
 
-Продуктова специфікація — `DESIGN.md`. Дорожня карта — `docs/superpowers/plans/roadmap.md`. Ескізи — `examples/` (gitignored).
+Джерела контексту:
+- `DESIGN.md` — продуктова специфікація
+- `docs/superpowers/plans/roadmap.md` — дорожня карта
+- `examples/` — ескізи, gitignored
 
 ## Tech Stack
 
-- **Framework:** Nuxt 4.4 (Vue 3, Composition API `<script setup>`, `srcDir: app/`)
-- **Styling:** Tailwind v3 via `@nuxtjs/tailwindcss` 6, токени в `tailwind.config.ts`, MUI-like класи в `assets/css/main.css`
-- **Backend:** Supabase (Postgres + Realtime + Auth)
-- **UI:** `@nuxt/icon`, `v-wave`, `@dicebear/core` (аватари), Roboto 300–700
+- **Framework:** Nuxt 4.4, Vue 3, Composition API `<script setup>`, `srcDir: app/`
+- **Styling:** Tailwind v3 через `@nuxtjs/tailwindcss` 6, токени в `tailwind.config.ts`, MUI-like класи в `assets/css/main.css`
+- **State:** Pinia 3 через `@pinia/nuxt`
+- **Backend:** Supabase Postgres + Realtime + Presence + Auth
+- **i18n:** `@nuxtjs/i18n`, strategy `no_prefix`, локалі `i18n/locales/{uk,en}.json`
+- **UI:** `@nuxt/icon`, `v-wave`, DiceBear аватари, Roboto 300–700
 - **Node:** 24+
 
-## Workflow sequences
+## Workflow Sequences
+
 > `using-superpowers` runs automatically at session start; do not invoke it manually.
 
-### New feature
+### New Feature
 `brainstorming` → `writing-plans` → `executing-plans`
-During implementation, as needed: `vue` · `nuxt` · `pinia` · `supabase` · `tailwind-design-system` · `vue-best-practices` · `vueuse-functions`
+As needed: `vue` · `nuxt` · `pinia` · `supabase` · `tailwind-design-system` · `vue-best-practices` · `vueuse-functions`
 Tests: `test-driven-development` + `vitest` and/or `webapp-testing`
 Finish: `verification-before-completion`
 
-### Bug / regression
+### Bug / Regression
 `systematic-debugging` → `test-driven-development` → `vitest` → `verification-before-completion`
 
-### UI component with design
+### UI Component With Design
 `frontend-design` → `tailwind-design-system` → `vue` → `webapp-testing` → `verification-before-completion`
 
-### Supabase task (DB / Auth / RLS)
+### Supabase Task
 `supabase` → `test-driven-development` → `verification-before-completion`
 
 ### Refactoring
 `vue-best-practices` → `test-driven-development` → `vitest` → `verification-before-completion`
 
-### Received code review
-`receiving-code-review` → (fixes) → `verification-before-completion`
+### Received Code Review
+`receiving-code-review` → fixes → `verification-before-completion`
 
 ## Common Commands
 
 ```bash
 npm install
-npm run dev       # Dev (port 3000, --host для LAN/мобільних)
+npm run dev       # Nuxt dev, port 3000, --host already enabled
 npm run build
-npm run generate  # SSG static pre-render
+npm run generate  # static pre-render for Netlify
 npm run preview
 npm test          # vitest run
+npm run test:watch
+npm run test:ci   # vitest run --coverage
 ```
+
+CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci`, `npm run build`; deploy job runs `npm run generate` and Netlify deploy on `main` when Netlify secrets exist.
 
 ## Environment Setup
 
-Усі env-файли — у директорії `/.env/` (вся папка в `.gitignore`, окрім `.env.example`):
+Усі env-файли — у `/.env/` (папка gitignored, окрім `/.env/.env.example`):
 
-- `/.env/.env` — спільні змінні команди (Supabase, у майбутньому Netlify)
-- `/.env/.env.local` — персональні змінні користувача (Jira corporate тощо)
-- `/.env/.env.example` — шаблон (трекається в git)
+- `/.env/.env.local` — персональні override
+- `/.env/.env` — командні defaults
+- `nuxt.config.ts` спочатку вантажить `.env.local`, потім `.env`
 
-`nuxt.config.ts` викликає `dotenv.config()` для обох файлів: спочатку `.env.local` (override), потім `.env` (defaults). `runtimeConfig.public` пробрасує `SUPABASE_URL`/`SUPABASE_KEY` у клієнт.
+Шаблон:
 
-Шаблон значень:
-
-```
+```bash
 SUPABASE_URL=...
-SUPABASE_KEY=...            # publishable (sb_publishable_...) — клієнтський
-# SUPABASE_SECRET_KEY=...   # server-side only, наразі не використовується
+SUPABASE_KEY=...            # publishable client key
+# SUPABASE_SECRET_KEY=...   # server-side only, не класти в client bundle
 ```
 
 ## Database
 
-Єдина міграція в `supabase/migrations/001_initial_schema.sql` — накатується вручну через Supabase SQL Editor. Таблиці:
+Міграції в `supabase/migrations/` накатуються вручну через Supabase SQL Editor:
 
-- `rooms (id text PK, slug text unique)` — 8-символьний ID (`app/utils/roomId.ts`); `slug` — опційний людський URL (встановлює модератор)
-- `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at)` — стан раунду
+- `001_initial_schema.sql` — `rooms`, `room_state`, `players`, `round_history`, public RLS
+- `002_rooms_update_policy.sql` — public update для `rooms`
+- `003_rooms_name.sql` — `rooms.name`
+- `004_rooms_realtime.sql` — Realtime publication для `rooms`
+- `005_user_profiles.sql` — `user_profiles`, public RLS, Realtime publication
+
+Таблиці:
+- `rooms (id text PK, slug text unique, name text, created_at)`
+- `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at)`
 - `players (id uuid PK, room_id, name, is_moderator, vote, user_id, created_at, left_at)`
-- `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, created_at)` — snapshot гравців на момент reveal
+- `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, created_at)`
+- `user_profiles (user_id uuid PK, avatar_style, avatar_seed, updated_at)`
 
-**RLS:** усі policies — `public` (read/write для anon-ключа). Окремого backend немає, логіка в клієнті.
-
-**Soft-delete:** `leave` і `kick` ставлять `left_at`. Запити фільтрують `left_at is null`.
-
-**Realtime publication** має бути увімкнений для `players` і `room_state`.
+RLS зараз public read/write для anon key; окремого backend немає, логіка в клієнті. `leave` і `kick` — soft-delete через `left_at`; UI працює з `left_at is null`.
 
 ## Card Decks
 
-Пресети визначені в коді — `app/utils/cardDecks.ts`:
+Пресети в `app/utils/cardDecks.ts`:
 
-| id | name | defaultActive |
-|---|---|---|
-| `scrum` | Scrum Scale | `1/2,1,2,3,5,8,13,20,?,☕` (cards: +`0`,`40`,`100`) |
-| `fibonacci` | Fibonacci Sequence | `1,2,3,5,8,13,21,?,☕` (cards: +`0`,`34`,`55`,`89`,`144`) |
-| `tshirt` | T-Shirt Sizes | `S,M,L,XL,?,☕` (cards: +`0`,`XS`,`XXL`) |
-| `hours` | Hours | `1/2h,1h,2h,3h,5h,8h,13h,20h,?,☕` (cards: +`0`,`40h`,`100h`) |
-| `boolean` | Boolean | `True,False,?,☕` |
+| id | default active |
+|---|---|
+| `scrum` | `1/2,1,2,3,5,8,13,20,?,☕` |
+| `fibonacci` | `1,2,3,5,8,13,21,?,☕` |
+| `tshirt` | `S,M,L,XL,?,☕` |
+| `hours` | `1/2h,1h,2h,3h,5h,8h,13h,20h,?,☕` |
+| `boolean` | `True,False,?,☕` |
 
-`0` є в картах кожного пресету (крім boolean), але деактивований за замовчуванням.
-
-`room_state.deck_preset` зберігає вибір (синх між гравцями), `active_cards` — поточна підмножина (через чекбокси). Зміна пресету в модалці викликає `setDeckPreset()` → пише `deck_preset + defaultActive`. Toggle карток → `saveCardDeck(active_cards)`.
-
-`☕` — символ (не SVG), щоб не ламати legacy дані.
+`0` є в усіх небулевих пресетах, але деактивований за замовчуванням. `☕` — символ, не SVG. `setDeckPreset()` пише `deck_preset + defaultActive`; `saveCardDeck()` пише тільки `active_cards`.
 
 ## Round History
 
-`reveal()` оновлює `phase='revealed'` і **додатково** пише рядок у `round_history` зі snapshot гравців (`{player_id, name, vote}[]`). Записуються лише гравці з `vote !== null` (`?`/`☕` — рахуються). Skip коли `votes.length < 2` — соло-голосування не зберігаємо.
-
-Snapshot містить `name`, бо після rename/leave записи історії мають лишатися читабельними без JOIN.
+`reveal()` оновлює `room_state.phase='revealed'` і пише `round_history` зі snapshot `{player_id,name,vote}[]` тільки коли `votes.length >= 2`. `?` і `☕` рахуються як голоси. Snapshot містить `name`, щоб історія лишалась читабельною після rename/leave.
 
 ## State Management
 
 Pinia stores у `app/stores/`:
 
-- **`auth.ts`** — Supabase session + signIn/signUp/signOut
-- **`room.ts`** — `roomState`, `create()`, `reveal()` (+round_history), `startNewRound()`, `saveCardDeck()`, `setDeckPreset()`, `resolveRoom()`, `setSlug()`, `applyChange()`
-- **`players.ts`** — `players[]`, `pendingVotes`, optimistic `castVote()`, CRUD (join/rejoin/rename/kick/leave/linkUser/fetchAll), `applyChange()`, `voteOf()`, `clearPendingVotes()`
-- **`presence.ts`** — `status` (connecting/online/reconnecting/offline), live `online: Set<playerId>` через Supabase Presence, visibility/network handlers
+- `auth.ts` — Supabase session, sign in/up/out, password reset/update
+- `room.ts` — room state, create, reveal, new round, deck, resolve, room name/slug
+- `players.ts` — players, optimistic votes, join/rejoin, rename, moderator toggle, kick/leave, link user
+- `presence.ts` — online `Set<playerId>` через Supabase Presence і reconnect/visibility handlers
+- `profiles.ts` — `user_profiles` cache, fetch/upsert, Realtime applyChange
 
-**Store ↔ Supabase:** stores викликають `getSupabase()` з `app/lib/supabase-instance.ts`. Плагін `app/plugins/supabase.ts` робить `setSupabase(client)` один раз. Тести інжектять mock через `setSupabase(mock)`.
+Stores беруть клієнт через `getSupabase()` з `app/lib/supabase-instance.ts`; `app/plugins/supabase.ts` робить `setSupabase(client)`. Тести інжектять mock через `setSupabase(mock)`.
 
 ## Realtime
 
-Сторінка `[slug].vue` підписується на `postgres_changes` каналами `players:<roomId>`, `room_state:<roomId>`; payload → `xxxStore.applyChange(payload)` — диференційне оновлення, без full refetch. Після `'reconnecting' → 'online'` — одноразовий reconciliation refetch.
+`app/pages/[slug].vue` підписується на:
 
-**Optimistic vote:** `playersStore.castVote()` пише у `pendingVotes[playerId]` миттєво, потім async UPDATE. Success/realtime ACK чистить запис, error — rollback + throw.
+- `players:<roomId>` → `playersStore.applyChange`
+- `room_state:<roomId>` → `roomStore.applyChange`
+- `rooms:<roomId>` → sync `slug/name`, redirect між id і slug
+- `user_profiles:<roomId>` → `profilesStore.applyChange`
+- `room:<roomId>` Presence → online players
 
-**Presence:** колонка `is_online` НЕ існує — online-статус з `presenceStore.online`. Visibility hidden → `untrack` + `unsubscribe` (для mobile).
+Після `'reconnecting' → 'online'` виконується reconciliation refetch. Optimistic vote пишеться в `pendingVotes[playerId]`, success/realtime ACK очищає запис, error робить rollback.
 
 ## Project Structure
 
-```
+```text
 app/
-├── app.vue
-├── pages/
-│   ├── index.vue          # Створення кімнати + Recent Rooms
-│   └── [slug].vue         # Кімната (URL: /<roomId>)
-├── components/            # AppHeader, CardsArea, PlayersList, ConfigureCardDeckModal, ...
-├── composables/           # useTheme, useDylanAvatar
-├── stores/                # auth, room, players, presence (Pinia) + __tests__/
-├── plugins/               # supabase, vWave, clickOutside
-├── lib/                   # supabase-instance (singleton getter)
-└── utils/                 # roomId, relativeTime, recentRooms, cardDecks, authValidation + __tests__/
-assets/css/main.css        # MUI-like класи
-supabase/migrations/       # 001_initial_schema.sql
-tests/setup.ts             # happy-dom bootstrap
-vitest.config.ts           # alias '~' → app/
+├── pages/        # index, [slug], login, signup, forgot-password, reset-password
+├── components/   # AppHeader, CardsArea, PlayersList, modals, icons
+├── composables/  # useTheme, useDylanAvatar
+├── stores/       # auth, room, players, presence, profiles + __tests__
+├── plugins/      # supabase, vWave, clickOutside
+├── lib/          # supabase-instance
+└── utils/        # roomId, cardDecks, authValidation, recentRooms, playerRoles
+assets/css/main.css
+i18n/locales/{uk,en}.json
+supabase/migrations/*.sql
+tests/setup.ts
+vitest.config.ts
 ```
 
 ## Testing
 
-Юніт-тести у `app/stores/__tests__/` і `app/utils/__tests__/`. Vanilla Vitest + happy-dom (`tests/setup.ts`, `vitest.config.ts`), без Nuxt контексту. Supabase mock через `setSupabase()`.
+Unit tests are vanilla Vitest + happy-dom, без Nuxt runtime. Тести лежать у `app/stores/__tests__/` і `app/utils/__tests__/`; alias `~` → `app/`.
 
-## URL-схема
+## URL Schema
 
-- `/` — головна
-- `/<roomId>` — кімната за внутрішнім ID
-- `/<slug>` — кімната за людським URL (alias; обидва ведуть на одну кімнату)
+- `/` — home + Recent Rooms
+- `/<roomId>` — кімната за 8-символьним id
+- `/<slug>` — alias кімнати; якщо slug існує, URL з id редиректиться на slug
+- `/login`, `/signup`, `/forgot-password`, `/reset-password` — auth routes
 
-`[slug].vue` на mount викликає `resolveRoom(urlParam)` → отримує `{ id, slug }`. Якщо URL прийшов як id і slug існує — `router.replace(/<slug>)`. Realtime/presence/session завжди по внутрішньому `id`.
-
-`normalizeRoomSlug()` / `isValidRoomSlug()` — в `app/utils/roomId.ts`. Slug: 2–32 символи, `[a-z0-9-]`, без дефісу на початку/кінці.
-
-⚠️ Будь-який новий top-level роут (`/about`, `/auth`) перетне `[slug].vue` — додавай як іменовану сторінку (`pages/about.vue` має пріоритет) або вводь префікс `/r/<id>`.
+`normalizeRoomSlug()` / `isValidRoomSlug()` приймають 2–32 символи `[a-z0-9-]`, без дефісу на початку/кінці. Нові top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або вводь префікс.
 
 ## LocalStorage
 
-- `storypoker_session_<roomId>` — `{ playerId, playerName, lastVisitedAt }` для авто-rejoin + Recent Rooms (`app/utils/recentRooms.ts`)
-- `sp-theme` — `'light' | 'dark'`. Inline-скрипт у `<head>` (`nuxt.config.ts`) застосовує до hydration, щоб уникнути flash
+- `storypoker_session_<roomId>` — `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms
+- `sp-theme` — `light | dark`; inline script у `nuxt.config.ts` застосовує тему до hydration
 
 ## Code Style
 
-- **Без коментарів** — код самодокументується через імена
-- 2 пробіли, без табів, файли закінчуються одним `\n`
-- TypeScript у composables/utils, `<script setup lang="ts">` у компонентах
-- Без зайвих абстракцій (wrappers, що лише перейменовують функції)
+- Без коментарів у коді; імена мають пояснювати поведінку
+- 2 пробіли, без табів, один trailing newline
+- TypeScript у composables/utils/stores; `<script setup lang="ts">` у Vue SFC
+- Без wrapper-абстракцій, які тільки перейменовують функції
+- UI-тексти мають проходити через i18n, якщо компонент вже локалізований
+
+## Roles
+
+- **Player:** vote, rename self, leave room
+- **Moderator:** reveal, start new round, configure deck; own moderator toggle доступний у меню гравця
+- **Authorized moderator:** rename room, rename/kick other players, set slug/name
 
 ## Security
 
-- Ніколи не друкувати секрети чи повні значення env-змінних
-- У прикладах — placeholders
-- Secret key (`SUPABASE_SECRET_KEY`, `sb_secret_...`) — лише server-side, ніколи у client bundle
-
-## Ролі
-
-- **Гравець** — голосує, перейменовує себе, виходить з кімнати
-- **Модератор** (авторизований) — все вище + розкриває карти, стартує новий раунд, кікає, перейменовує інших гравців, налаштовує колоду карт, задає slug кімнати
+- Не друкувати секрети або повні env values
+- У прикладах використовувати placeholders
+- `SUPABASE_SECRET_KEY` / `sb_secret_...` — тільки server-side, ніколи в client bundle
