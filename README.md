@@ -49,8 +49,8 @@ claude --dangerously-skip-permissions
 
 ### Skills
 ```zsh
-npx skills add anthropics/skills@frontend-design -a claude-code -y
-npx skills add anthropics/skills@webapp-testing -a claude-code -y
+npx skills add anthropics/skills@frontend-design -a codex claude-code -y
+npx skills add anthropics/skills@webapp-testing -a codex claude-code -y
 # npx skills add anthropics/claude-plugins-official@claude-md-improver -a codex claude-code -y
 npx skills add obra/superpowers@brainstorming -a codex claude-code -y
 npx skills add obra/superpowers@writing-plans -a codex claude-code -y
