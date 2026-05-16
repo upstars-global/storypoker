@@ -5,7 +5,7 @@ Thumbs.db
 *.log
 **/.nuxt/
 **/.output/
-/dist/
+/dist
 
 .env
 .env.local
@@ -16,7 +16,7 @@ Thumbs.db
 /supabase/*
 !/supabase/migrations
 
-/.netlify/
+# /.netlify/
 
 /.agents/
 /.claude/

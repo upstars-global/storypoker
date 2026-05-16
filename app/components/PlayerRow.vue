@@ -86,6 +86,7 @@ function close() { emit('menuClose') }
         name="app:moderator"
         style="font-size: 1.5rem; color: var(--icon-player-color);"
         :aria-label="$t('players.moderatorLabel')"
+        :title="$t('players.moderatorLabel')"
       />
     </div>
 
@@ -94,9 +95,10 @@ function close() { emit('menuClose') }
         <Icon
           v-if="player.vote !== null"
           class="mui-svg-icon"
-          name="app:check-circle"
+          name="ic:baseline-check-circle"
           style="font-size: 1.5rem; color: var(--icon-player-color);"
           :aria-label="$t('players.estimateGiven')"
+          :title="$t('players.estimateGiven')"
         />
         <Icon
           v-else
@@ -104,6 +106,7 @@ function close() { emit('menuClose') }
           name="app:deciding"
           style="font-size: 1.5rem; color: var(--icon-player-color);"
           :aria-label="$t('players.playerDeciding')"
+          :title="$t('players.playerDeciding')"
         />
       </template>
       <template v-else>
@@ -115,8 +118,10 @@ function close() { emit('menuClose') }
         <Icon
           v-else
           class="mui-svg-icon"
-          name="app:cancel"
+          name="ic:baseline-cancel"
           style="font-size: 1.5rem; color: var(--icon-player-color);"
+          :aria-label="$t('players.noVote')"
+          :title="$t('players.noVote')"
         />
       </template>
     </template>
@@ -129,9 +134,10 @@ function close() { emit('menuClose') }
       <Icon
         v-else-if="phase === 'voting' && player.vote !== null"
         class="mui-svg-icon text-black/[0.26] dark:text-white/30"
-        name="app:check-circle"
+        name="ic:baseline-check-circle"
         style="font-size: 1.5rem;"
         :aria-label="$t('players.estimateGiven')"
+        :title="$t('players.estimateGiven')"
       />
       <Icon
         v-else
@@ -139,6 +145,7 @@ function close() { emit('menuClose') }
         name="app:offline"
         style="font-size: 1.5rem;"
         :aria-label="$t('players.inactive')"
+        :title="$t('players.inactive')"
       />
     </template>
 
@@ -151,7 +158,7 @@ function close() { emit('menuClose') }
           style="padding: 4px;"
           @click.stop="toggleMenu"
         >
-          <Icon class="mui-svg-icon text-muted dark:text-inverse" name="app:more-vert" style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon text-muted dark:text-inverse" name="ic:baseline-more-vert" style="font-size: 1.5rem;" />
         </button>
         <Teleport to="body">
           <ul
@@ -180,7 +187,7 @@ function close() { emit('menuClose') }
               </li>
               <li>
                 <button v-wave class="mui-menu-item" @click="emit('rename', player.id); close()">
-                  <Icon class="mui-menu-icon" name="app:edit" /> {{ $t('players.renamePlayer') }}
+                  <Icon class="mui-menu-icon" name="ic:baseline-edit" /> {{ $t('players.renamePlayer') }}
                 </button>
               </li>
               <li>
@@ -192,12 +199,12 @@ function close() { emit('menuClose') }
             <template v-else-if="currentUserIsAuthorizedModerator">
               <li>
                 <button v-wave class="mui-menu-item" @click="emit('rename', player.id); close()">
-                  <Icon class="mui-menu-icon" name="app:edit" /> {{ $t('players.renamePlayer') }}
+                  <Icon class="mui-menu-icon" name="ic:baseline-edit" /> {{ $t('players.renamePlayer') }}
                 </button>
               </li>
               <li>
                 <button v-wave class="mui-menu-item" @click="emit('kick', player.id); close()">
-                  <Icon class="mui-menu-icon" name="app:person-remove" /> {{ $t('players.kickPlayer') }}
+                  <Icon class="mui-menu-icon" name="ic:baseline-person-remove" /> {{ $t('players.kickPlayer') }}
                 </button>
               </li>
             </template>

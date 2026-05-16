@@ -20,11 +20,13 @@ Guidance for Claude Code working with this repository.
 
 - **Framework:** Nuxt 4.4, Vue 3, Composition API `<script setup>`, `srcDir: app/`
 - **Styling:** Tailwind v3 через `@nuxtjs/tailwindcss` 6, токени в `tailwind.config.ts`, MUI-like класи в `assets/css/main.css`
+  - utilities: `text-{primary,body,muted,disabled,inverse,danger,success}`, `bg-{app,appbar,paper,elevated,overlay,skeleton}`, `border` (DEFAULT = `var(--border)`), `shadow-{1..8}`
+  - button modifiers (compose з `.mui-btn`): `.mui-btn-md` (180×46 / 23rad / `#607d8b`), `.mui-btn-sm`, `.mui-btn-text`, `.mui-btn-secondary`
 - **State:** Pinia 3 через `@pinia/nuxt`
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **i18n:** `@nuxtjs/i18n`, strategy `no_prefix`, локалі `i18n/locales/{uk,en}.json`
-- **UI:** `@nuxt/icon`, `v-wave`, DiceBear аватари, Roboto 300–700
-- **Node:** 24+
+- **UI:** `@nuxt/icon` + `@iconify-json/ic` (`ic:baseline-*`); local `app:` icons only `moderator`, `deciding`, `offline`, `leave-room`; `v-wave`, DiceBear, Roboto 300–700
+- **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
 ## Common Commands
 
@@ -48,11 +50,9 @@ npm run test:ci      # lint + typecheck + unit + build (what CI runs)
 
 CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); E2E runs when E2E secrets exist; deploy runs `npm run generate` on `main` when checks pass and Netlify secrets exist.
 
-## Lockfile
+## Environment Setup
 
 `package-lock.json` — committed (required for `npm ci` in CI). Do NOT add it back to `.gitignore`.
-
-## Environment Setup
 
 Усі env-файли — у `/.env/` (папка gitignored, окрім `/.env/.env.example` і `/.env/.env.test.example`):
 
@@ -81,6 +81,7 @@ SUPABASE_KEY=...            # publishable client key
 - `004_rooms_realtime.sql` — Realtime publication для `rooms`
 - `005_user_profiles.sql` — `user_profiles`, public RLS, Realtime publication
 - `006_room_state_timer.sql` — `room_state.paused_at`, `room_state.paused_elapsed_ms` для керованого таймера
+- `007_players_room_state_realtime.sql` — Realtime publication для `players` і `room_state`
 
 Таблиці:
 - `rooms (id text PK, slug text unique, name text, created_at)`
@@ -161,7 +162,7 @@ playwright.config.ts
 
 ## Testing
 
-Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit/`; alias `~` → `app/`. E2e: Playwright у `tests/e2e/`; потребує `.env/.env.test`.
+Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit/`; alias `~` → `app/`. E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`. Локально зупини dev server на `:3000` або задай `E2E_BASE_URL`, бо Playwright має `reuseExistingServer: true`.
 
 ## URL Schema
 

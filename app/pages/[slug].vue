@@ -27,6 +27,7 @@ const { visiblePlayers, pendingVotes } = storeToRefs(playersStore)
 const { online, status: connectionStatus } = storeToRefs(presenceStore)
 
 const currentPlayerId = ref<string | null>(null)
+const notFound = ref(false)
 const showJoin = ref(false)
 const showAuth = ref<'signin' | 'signup' | null>(null)
 const showCardDeck = ref(false)
@@ -97,7 +98,7 @@ onMounted(async () => {
   await authStore.init()
   const resolved = await roomStore.resolveRoom(urlParam)
   if (!resolved) {
-    router.push('/')
+    notFound.value = true
     return
   }
   if (resolved.slug && urlParam === resolved.id) {
@@ -320,7 +321,20 @@ async function submitRenameRoom() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div v-if="notFound" class="min-h-screen flex items-center justify-center p-4 bg-app">
+    <div class="mui-modal-paper text-center max-w-md w-full">
+      <h2 class="text-mui-h2 font-bold text-primary">{{ $t('room.notFoundTitle') }}</h2>
+      <p class="text-mui-body text-body mt-3">
+        {{ $t('room.notFoundDescription', { id: urlParam }) }}
+      </p>
+      <div class="flex justify-center mt-6">
+        <NuxtLink to="/" class="mui-btn mui-btn-md inline-flex items-center justify-center">
+          {{ $t('room.notFoundBackHome') }}
+        </NuxtLink>
+      </div>
+    </div>
+  </div>
+  <div v-else class="min-h-screen flex flex-col">
     <AppHeader
       :online-count="onlineCount"
       :is-moderator="isModerator"
@@ -412,7 +426,7 @@ async function submitRenameRoom() {
           :aria-label="$t('common.close')"
           @click="renameTarget = null"
         >
-          <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</h2>
         <input
@@ -435,7 +449,7 @@ async function submitRenameRoom() {
           :aria-label="$t('common.close')"
           @click="showRenameRoom = false"
         >
-          <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</h2>
         <input
@@ -444,8 +458,8 @@ async function submitRenameRoom() {
           :placeholder="$t('room.renamePlaceholder')"
           autofocus
         />
-        <p v-if="roomNameError" class="text-[13px] mt-2" style="color: #d32f2f;">{{ roomNameError }}</p>
-        <div v-else class="text-[13px] mt-2 flex flex-col gap-[2px] text-muted">
+        <p v-if="roomNameError" class="text-mui-caption mt-2 text-danger">{{ roomNameError }}</p>
+        <div v-else class="text-mui-caption mt-2 flex flex-col gap-[2px] text-muted">
           <span v-if="roomNameInput.trim()">URL: {{ origin }}/{{ normalizeRoomSlug(roomNameInput) }}</span>
           <span>URL: {{ origin }}/{{ roomId }}</span>
         </div>
@@ -464,10 +478,10 @@ async function submitRenameRoom() {
           :aria-label="$t('common.close')"
           @click="kickTargetId = null"
         >
-          <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.kickTitle') }}</h2>
-        <p style="color: var(--text-body);">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>
+        <p class="text-body">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>
         <div class="flex justify-end mt-6">
           <button ref="kickConfirmBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">{{ $t('room.kickButton') }}</button>
         </div>

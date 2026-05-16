@@ -31,6 +31,33 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@nuxtjs/i18n', '@nuxt/icon', '@nuxt/eslint'],
   icon: {
     mode: 'svg',
+    clientBundle: {
+      scan: true,
+      icons: [
+        'ic:baseline-account-circle',
+        'ic:baseline-cancel',
+        'ic:baseline-check-circle',
+        'ic:baseline-close',
+        'ic:baseline-dark-mode',
+        'ic:baseline-edit',
+        'ic:baseline-forward-30',
+        'ic:baseline-history',
+        'ic:baseline-light-mode',
+        'ic:baseline-login',
+        'ic:baseline-logout',
+        'ic:baseline-more-vert',
+        'ic:baseline-navigate-before',
+        'ic:baseline-navigate-next',
+        'ic:baseline-pause',
+        'ic:baseline-person-add',
+        'ic:baseline-person-remove',
+        'ic:baseline-play-arrow',
+        'ic:baseline-replay',
+        'ic:baseline-replay-30',
+        'ic:baseline-settings',
+      ],
+    },
+    serverBundle: false,
     customCollections: [
       {
         prefix: 'app',
@@ -55,17 +82,17 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseKey: process.env.SUPABASE_KEY,
     },
-    vite: {
-      optimizeDeps: {
-        include: [
-          '@dicebear/collection',
-          '@dicebear/core',
-          '@supabase/supabase-js',
-          '@vue/devtools-core',
-          '@vue/devtools-kit',
-          'v-wave',
-        ]
-      }
+  },
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@dicebear/collection',
+        '@dicebear/core',
+        '@supabase/supabase-js',
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        'v-wave',
+      ],
     },
   },
 })

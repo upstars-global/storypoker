@@ -1,6 +1,6 @@
 # Story Poker
 
-_Vibe Story Poking - Every story point counts_
+_Vibe Story Poker - Every story point counts_
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/09bec6c8-94fe-4c39-b159-2c54e9a3c309/deploy-status)](https://app.netlify.com/projects/storypok/deploys)
 
@@ -12,7 +12,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 * [Supabase](https://supabase.com)
 * [Netlify](https://netlify.com)
 * [Tailwind](https://tailwindcss.com)
-<!-- * [Iconify](https://icon-sets.iconify.design) -->
+* [Iconify](https://icon-sets.iconify.design)
 * [DiceBear](https://www.dicebear.com/)
 
 ### Install
@@ -49,15 +49,20 @@ claude --dangerously-skip-permissions
 
 ### Skills
 ```zsh
-# DESIGN
+# FRONTEND
 npx skills add giuseppe-trisciuoglio/developer-kit -s tailwind-css-patterns -a codex claude-code -y
-npx skills add wshobson/agents -s tailwind-design-system -a codex claude-code -y
+npx skills add anthropics/skills -s frontend-design -a codex claude-code -y
 npx skills add better-auth/better-icons -s better-icons -a codex claude-code -y
+npx skills add wshobson/agents -s tailwind-design-system -a codex claude-code -y
 
-# SUPERPOWERS
+# TESTS
+npx skills add anthropics/skills -s webapp-testing -a codex claude-code -y
+npx skills add antfu/skills@vitest -a codex claude-code -y
+npx skills add currents-dev/playwright-best-practices-skill -a codex claude-code -y
+
+# WORKFLOW
 npx skills add obra/superpowers -s brainstorming -a codex claude-code -y
 npx skills add obra/superpowers -s writing-plans -a codex claude-code -y
-
 npx skills add obra/superpowers -s dispatching-parallel-agents -a codex claude-code -y
 npx skills add obra/superpowers -s executing-plans -a codex claude-code -y
 npx skills add obra/superpowers -s subagent-driven-development -a codex claude-code -y
@@ -69,15 +74,8 @@ npx skills add obra/superpowers -s receiving-code-review -a codex claude-code -y
 npx skills add obra/superpowers -s requesting-code-review -a codex claude-code -y
 npx skills add obra/superpowers -s finishing-a-development-branch -a codex claude-code -y
 
-# ANTHROPICS
-npx skills add anthropics/skills -s frontend-design -a codex claude-code -y
-npx skills add anthropics/skills -s webapp-testing -a codex claude-code -y
-
-# CLAUDE MD IMPROVER
+# META
 npx skills add anthropics/claude-plugins-official -s claude-md-improver -a codex claude-code -y
-
-# PLAYWRIGHT
-npx skills add currents-dev/playwright-best-practices-skill -a codex claude-code -y
 ```
 
 ### Як подивитись скільки і яких скілів використовували агенти

@@ -63,7 +63,8 @@
     "moderatorLabel": "moderator",
     "estimateGiven": "estimate given",
     "playerDeciding": "player deciding",
-    "inactive": "inactive"
+    "inactive": "inactive",
+    "noVote": "no vote"
   },
   "room": {
     "renameTitle": "Rename Room",
@@ -74,10 +75,22 @@
     "slugTaken": "This name is already taken",
     "kickTitle": "Kick Player",
     "kickConfirm": "Remove {name} from the room?",
-    "kickButton": "Kick"
+    "kickButton": "Kick",
+    "notFoundTitle": "Room not found",
+    "notFoundDescription": "No room exists at “{id}”. It may have been deleted, or the link is incorrect.",
+    "notFoundBackHome": "Back to home"
   },
   "connection": {
     "reconnecting": "Reconnecting…"
+  },
+  "userSettings": {
+    "title": "Account Settings",
+    "styleRobots": "Robots",
+    "styleDylan": "Dylan",
+    "previousAvatar": "Previous avatar",
+    "nextAvatar": "Next avatar",
+    "avatarPreview": "Avatar preview",
+    "saveError": "Failed to save"
   },
   "auth": {
     "gainModeratorPowers": "and gain moderator powers",

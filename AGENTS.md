@@ -28,22 +28,12 @@ Guidance for Codex working with this repository.
 
 ## Workflow Sequences
 
-### New Feature
-`brainstorming` → `writing-plans` → `executing-plans`
-As needed: `vue` · `nuxt` · `pinia` · `supabase` · `tailwind-design-system` · `vue-best-practices` · `vueuse-functions`
-Tests: `test-driven-development` + `vitest` and/or `webapp-testing`
-Finish: `verification-before-completion`
-
-### Bug / Regression
-`systematic-debugging` → `test-driven-development` → `vitest` → `verification-before-completion`
-
-### UI Component With Design
-`frontend-design` → `tailwind-design-system` → `vue` → `webapp-testing` → `verification-before-completion`
-
-### Supabase / Refactoring / Received Code Review
-- Supabase: `supabase` → `test-driven-development` → `verification-before-completion`
-- Refactoring: `vue-best-practices` → `test-driven-development` → `vitest` → `verification-before-completion`
-- Received review: `receiving-code-review` → fixes → `verification-before-completion`
+- **New feature:** `brainstorming` → `writing-plans` → `executing-plans` (+ `vue`/`nuxt`/`pinia`/`supabase`/`tailwind-design-system`/`vue-best-practices`/`vueuse-functions` за потребою) → `test-driven-development` + `vitest`/`webapp-testing` → `verification-before-completion`
+- **Bug / regression:** `systematic-debugging` → `test-driven-development` → `vitest` → `verification-before-completion`
+- **UI з дизайном:** `frontend-design` → `tailwind-design-system` → `vue` → `webapp-testing` → `verification-before-completion`
+- **Supabase:** `supabase` → `test-driven-development` → `verification-before-completion`
+- **Refactoring:** `vue-best-practices` → `test-driven-development` → `vitest` → `verification-before-completion`
+- **Received review:** `receiving-code-review` → fixes → `verification-before-completion`
 
 ## Common Commands
 
@@ -53,19 +43,24 @@ npm run dev       # Nuxt dev, port 3000, --host already enabled
 npm run build
 npm run generate  # static pre-render for Netlify
 npm run preview
+npm run lint
+npm run typecheck # vue-tsc via nuxt typecheck
 npm test          # vitest run
-npm run test:watch
-npm run test:ci   # lint + typecheck + unit + build
+npm run test:unit
+npm run test:e2e        # playwright, потребує /.env/.env.test
+npm run test:e2e:smoke
+npm run test:ci   # lint + typecheck + unit + build (CI rolls this)
 ```
 
 CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci`; E2E runs when E2E secrets exist; deploy requires tests and Netlify secrets.
 
 ## Environment Setup
 
-Усі env-файли — у `/.env/` (папка gitignored, окрім `/.env/.env.example`):
+Усі env-файли — у `/.env/` (папка gitignored, окрім `/.env/.env.example` і `/.env/.env.test.example`):
 
 - `/.env/.env.local` — персональні override
 - `/.env/.env` — командні defaults
+- `/.env/.env.test` — креди тестового Supabase project для Playwright (gitignored)
 - `nuxt.config.ts` спочатку вантажить `.env.local`, потім `.env`
 
 Шаблон:
@@ -148,7 +143,7 @@ app/
 ├── pages/        # index, [slug], login, signup, forgot-password, reset-password
 ├── components/   # AppHeader, CardsArea, PlayersList, modals, icons
 ├── composables/  # useTheme, useDylanAvatar
-├── stores/       # auth, room, players, presence, profiles + __tests__
+├── stores/       # auth, room, players, presence, profiles
 ├── plugins/      # supabase, vWave, clickOutside
 ├── lib/          # supabase-instance
 └── utils/        # roomId, cardDecks, authValidation, recentRooms, playerRoles, relativeTime
@@ -156,13 +151,17 @@ assets/css/main.css
 i18n/locales/{uk,en}.json
 supabase/migrations/*.sql
 scripts/sync-after-history-rewrite.sh  # one-off git reset helper після rewrite main
-tests/setup.ts
+tests/
+├── unit/stores|utils/   # Vitest unit tests (alias ~ → app/)
+├── fixtures/, page-objects/, support/
+└── e2e/                 # smoke.spec.ts, critical-flows.spec.ts
 vitest.config.ts
+playwright.config.ts
 ```
 
 ## Testing
 
-Unit tests are vanilla Vitest + happy-dom, без Nuxt runtime. Тести лежать у `app/stores/__tests__/` і `app/utils/__tests__/`; alias `~` → `app/`.
+Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit/`; alias `~` → `app/`. E2E: Playwright у `tests/e2e/`; потребує `/.env/.env.test`.
 
 ## URL Schema
 

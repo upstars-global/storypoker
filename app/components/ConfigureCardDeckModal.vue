@@ -51,17 +51,17 @@ function save() {
         :aria-label="$t('common.close')"
         @click="emit('close')"
       >
-        <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
       </button>
-      <h2 class="text-center text-[22px] font-bold tracking-[0.00735em]" style="color: var(--text-primary);">
+      <h2 class="text-center text-mui-h2 font-bold text-primary">
         {{ $t('deck.configure') }}
       </h2>
 
       <div class="mt-7 flex justify-center">
         <select
           :value="presetId"
-          class="rounded border bg-transparent px-3 py-2 text-[15px] focus:outline-none focus:ring-1 focus:ring-[#546e7a]"
-          style="border-color: var(--border); color: var(--text-primary); min-width: 240px;"
+          class="rounded border bg-transparent px-3 py-2 text-mui-body text-primary focus:outline-none focus:ring-1 focus:ring-[#546e7a]"
+          style="min-width: 240px;"
           @change="applyPreset(($event.target as HTMLSelectElement).value as DeckPresetId)"
         >
           <option v-for="p in DECK_PRESETS" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -72,8 +72,7 @@ function save() {
         <label
           v-for="card in currentDeck.cards"
           :key="card"
-          class="flex items-center gap-3 cursor-pointer text-[15px]"
-          style="color: var(--text-primary);"
+          class="flex items-center gap-3 cursor-pointer text-mui-body text-primary"
         >
           <input
             type="checkbox"

@@ -61,10 +61,10 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
 
 <template>
   <div class="mui-paper">
-    <div class="mui-paper-header" style="justify-content: center;">
+    <div class="mui-paper-header justify-center">
       <span>{{ $t('timer.title') }}</span>
     </div>
-    <p class="mui-body px-4 py-3" style="color: var(--text-body);">{{ text }}</p>
+    <p class="mui-body px-4 py-3 text-body">{{ text }}</p>
     <div v-if="showControls" class="flex flex-wrap justify-center gap-2 px-4 pb-3">
       <button
         v-wave
@@ -74,7 +74,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
         :title="$t('timer.minus30')"
         @click="emit('adjust', -30000)"
       >
-        <Icon class="mui-svg-icon" name="app:replay-30" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" name="ic:baseline-replay-30" style="font-size: 1.125rem;" />
       </button>
       <button
         v-if="!isPaused"
@@ -85,7 +85,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
         :title="$t('timer.pause')"
         @click="emit('pause')"
       >
-        <Icon class="mui-svg-icon" name="app:pause" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" name="ic:baseline-pause" style="font-size: 1.125rem;" />
       </button>
       <button
         v-else
@@ -96,7 +96,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
         :title="$t('timer.continue')"
         @click="emit('resume')"
       >
-        <Icon class="mui-svg-icon" name="app:play" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" name="ic:baseline-play-arrow" style="font-size: 1.125rem;" />
       </button>
       <button
         v-wave
@@ -106,7 +106,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
         :title="$t('timer.reset')"
         @click="emit('reset')"
       >
-        <Icon class="mui-svg-icon" name="app:replay" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" name="ic:baseline-replay" style="font-size: 1.125rem;" />
       </button>
       <button
         v-wave
@@ -116,7 +116,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
         :title="$t('timer.plus30')"
         @click="emit('adjust', 30000)"
       >
-        <Icon class="mui-svg-icon" name="app:forward-30" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" name="ic:baseline-forward-30" style="font-size: 1.125rem;" />
       </button>
     </div>
   </div>

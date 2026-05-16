@@ -57,7 +57,7 @@ async function submit() {
         :aria-label="$t('common.close')"
         @click="emit('close')"
       >
-        <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="mui-h5 text-center">
         {{ mode === 'signin' ? $t('common.signIn') : $t('common.signUp') }}

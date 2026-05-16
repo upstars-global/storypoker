@@ -65,24 +65,24 @@ function toggleLocale() {
 
 <template>
   <header
-    class="sticky top-0 z-40 w-full flex items-center px-4 sm:px-6"
-    style="background-color: var(--bg-appbar); color: #fff; min-height: 56px; box-shadow: var(--shadow-4);"
+    class="sticky top-0 z-40 w-full flex items-center px-4 sm:px-6 bg-appbar text-white shadow-4"
+    style="min-height: 56px;"
   >
-    <NuxtLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded" style="color: #fff;">
-      Story Poking
+    <NuxtLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded text-white">
+      Story Poker
     </NuxtLink>
     <template v-if="roomName">
-      <span style="color: rgba(255,255,255,0.4); margin: 0 6px;">/</span>
-      <span class="mui-h6 text-lg" style="color: rgba(255,255,255,0.85);">{{ roomName }}</span>
+      <span class="mx-1.5 text-appbar-subtle">/</span>
+      <span class="mui-h6 text-lg text-appbar-emphasis">{{ roomName }}</span>
       <div v-if="isModerator" class="relative ml-1">
         <button
           v-wave
-          class="mui-icon-btn"
-          style="--hover-bg: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);"
+          class="mui-icon-btn text-appbar-muted"
+          style="--hover-bg: rgba(255,255,255,0.08);"
           :aria-label="$t('header.roomSettings')"
           @click.stop="showRoomMenu = !showRoomMenu"
         >
-          <Icon class="mui-svg-icon" name="app:settings" style="font-size: 1.2rem;" />
+          <Icon class="mui-svg-icon" name="ic:baseline-settings" style="font-size: 1.2rem;" />
         </button>
         <ul
           v-if="showRoomMenu"
@@ -92,12 +92,12 @@ function toggleLocale() {
         >
           <li v-if="user">
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showRoomMenu = false">
-              <Icon class="mui-menu-icon" name="app:edit" /> {{ $t('header.renameRoom') }}
+              <Icon class="mui-menu-icon" name="ic:baseline-edit" /> {{ $t('header.renameRoom') }}
             </button>
           </li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showRoomMenu = false">
-              <Icon class="mui-menu-icon" name="app:settings" /> {{ $t('header.configureCardDeck') }}
+              <Icon class="mui-menu-icon" name="ic:baseline-settings" /> {{ $t('header.configureCardDeck') }}
             </button>
           </li>
         </ul>
@@ -108,20 +108,20 @@ function toggleLocale() {
     <div class="flex items-center gap-2">
       <button
         v-wave
-        class="mui-icon-btn text-xs font-bold tracking-widest"
-        style="--hover-bg: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85); width: auto; padding: 4px 10px; border-radius: 4px;"
+        class="mui-icon-btn text-xs font-bold tracking-widest text-appbar-emphasis"
+        style="--hover-bg: rgba(255,255,255,0.12); width: auto; padding: 4px 10px; border-radius: 4px;"
         @click="toggleLocale"
       >
         {{ locale === 'uk' ? 'EN' : 'UA' }}
       </button>
-      <span v-if="headerLabel" class="text-sm" style="color: rgba(255,255,255,0.85);">
+      <span v-if="headerLabel" class="text-sm text-appbar-emphasis">
         {{ headerLabel }}
       </span>
       <div class="relative">
         <button
           v-wave
-          class="mui-icon-btn"
-          style="--hover-bg: rgba(255,255,255,0.08); color: #fff;"
+          class="mui-icon-btn text-white"
+          style="--hover-bg: rgba(255,255,255,0.08);"
           :aria-label="$t('header.currentUserAccount')"
           aria-haspopup="true"
           data-testid="account-menu-button"
@@ -134,7 +134,7 @@ function toggleLocale() {
             :alt="playerName"
             :style="{ opacity: profileFetched ? 1 : 0, transition: 'opacity 0.15s' }"
           />
-          <Icon v-else class="mui-svg-icon" name="app:account" style="font-size: 1.5rem;" />
+          <Icon v-else class="mui-svg-icon" name="ic:baseline-account-circle" style="font-size: 1.5rem;" />
         </button>
 
         <ul
@@ -146,14 +146,14 @@ function toggleLocale() {
           <template v-if="user">
             <li>
               <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openAccountSettings'); showMenu = false">
-                <Icon class="mui-menu-icon" name="app:settings" /> {{ $t('header.accountSettings') }}
+                <Icon class="mui-menu-icon" name="ic:baseline-settings" /> {{ $t('header.accountSettings') }}
               </button>
             </li>
             <li><hr class="mui-divider" /></li>
           </template>
         <li>
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="goRecent">
-            <Icon class="mui-menu-icon" name="app:history" /> {{ $t('header.recentRooms') }}
+            <Icon class="mui-menu-icon" name="ic:baseline-history" /> {{ $t('header.recentRooms') }}
           </button>
         </li>
         <li><hr class="mui-divider" /></li>
@@ -165,7 +165,7 @@ function toggleLocale() {
             :aria-checked="isLight"
             @click="toggleTheme"
           >
-            <Icon class="mui-menu-icon" :name="isLight ? 'app:light-mode' : 'app:dark-mode'" />
+            <Icon class="mui-menu-icon" :name="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'" />
             <span class="flex-1">{{ isLight ? $t('header.lightTheme') : $t('header.darkTheme') }}</span>
             <span class="mui-switch">
               <input type="checkbox" :checked="isLight" tabindex="-1" readonly />
@@ -178,12 +178,12 @@ function toggleLocale() {
           <li><hr class="mui-divider" /></li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" data-testid="auth-sign-in-menu-item" @click="emit('openSignIn'); showMenu = false">
-              <Icon class="mui-menu-icon" name="app:login" /> {{ $t('common.signIn') }}
+              <Icon class="mui-menu-icon" name="ic:baseline-login" /> {{ $t('common.signIn') }}
             </button>
           </li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openSignUp'); showMenu = false">
-              <Icon class="mui-menu-icon" name="app:person-add" /> {{ $t('common.signUp') }}
+              <Icon class="mui-menu-icon" name="ic:baseline-person-add" /> {{ $t('common.signUp') }}
             </button>
           </li>
         </template>
@@ -191,7 +191,7 @@ function toggleLocale() {
           <li><hr class="mui-divider" /></li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" data-testid="auth-sign-out-menu-item" @click="emit('signOut'); showMenu = false">
-              <Icon class="mui-menu-icon" name="app:logout" /> {{ $t('common.signOut') }}
+              <Icon class="mui-menu-icon" name="ic:baseline-logout" /> {{ $t('common.signOut') }}
             </button>
           </li>
         </template>
