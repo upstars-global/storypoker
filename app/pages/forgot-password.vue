@@ -1,10 +1,9 @@
 <script setup lang="ts">
+import { reactive, shallowRef, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { validateEmail } from '~/utils/authValidation'
-
-const { t } = useI18n()
-useHead({ title: t('forgotPassword.pageTitle') })
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
@@ -63,7 +62,7 @@ async function onSubmit() {
 
         <div v-if="success" class="text-center mt-6">
           <p class="mui-body">{{ $t('forgotPassword.checkEmail') }}</p>
-          <NuxtLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('forgotPassword.backToSignIn') }}</NuxtLink>
+          <RouterLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('forgotPassword.backToSignIn') }}</RouterLink>
         </div>
 
         <form v-else class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
@@ -82,7 +81,7 @@ async function onSubmit() {
 
           <p class="mui-caption text-center mt-2">
             {{ $t('forgotPassword.rememberedPassword') }}
-            <NuxtLink to="/login" class="underline hover:no-underline text-primary">{{ $t('common.signIn') }}</NuxtLink>
+            <RouterLink to="/login" class="underline hover:no-underline text-primary">{{ $t('common.signIn') }}</RouterLink>
           </p>
         </form>
       </section>

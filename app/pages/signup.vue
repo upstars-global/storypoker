@@ -1,10 +1,9 @@
 <script setup lang="ts">
+import { reactive, shallowRef, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
-
-const { t } = useI18n()
-useHead({ title: t('signup.pageTitle') })
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
@@ -65,7 +64,7 @@ async function onSubmit() {
 
         <div v-if="success" data-testid="signup-success" class="text-center mt-6">
           <p class="mui-body">{{ $t('signup.confirmEmail') }}</p>
-          <NuxtLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('signup.backToSignIn') }}</NuxtLink>
+          <RouterLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('signup.backToSignIn') }}</RouterLink>
         </div>
 
         <form v-else class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
@@ -94,7 +93,7 @@ async function onSubmit() {
 
           <p class="mui-caption text-center mt-2">
             {{ $t('signup.alreadyHaveAccount') }}
-            <NuxtLink to="/login" class="underline hover:no-underline text-primary">{{ $t('common.signIn') }}</NuxtLink>
+            <RouterLink to="/login" class="underline hover:no-underline text-primary">{{ $t('common.signIn') }}</RouterLink>
           </p>
         </form>
       </section>

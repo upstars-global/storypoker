@@ -1,10 +1,9 @@
 <script setup lang="ts">
+import { reactive, shallowRef, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { validateEmail, validateRequiredPassword } from '~/utils/authValidation'
-
-const { t } = useI18n()
-useHead({ title: t('login.pageTitle') })
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
@@ -70,7 +69,7 @@ async function onSubmit() {
           <div>
             <div class="flex items-center justify-between gap-3 mb-1">
               <span class="mui-caption">{{ $t('common.password') }}</span>
-              <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary">{{ $t('auth.forgotPassword') }}</NuxtLink>
+              <RouterLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary">{{ $t('auth.forgotPassword') }}</RouterLink>
             </div>
             <input v-model="form.password" type="password" autocomplete="current-password" :placeholder="$t('common.passwordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.password }" data-testid="login-password" />
             <p v-if="errors.password" class="text-sm mt-1 text-danger">{{ errors.password }}</p>
@@ -86,7 +85,7 @@ async function onSubmit() {
 
           <p class="mui-caption text-center mt-2">
             {{ $t('login.noAccount') }}
-            <NuxtLink to="/signup" class="underline hover:no-underline text-primary">{{ $t('common.signUp') }}</NuxtLink>
+            <RouterLink to="/signup" class="underline hover:no-underline text-primary">{{ $t('common.signUp') }}</RouterLink>
           </p>
         </form>
       </section>

@@ -4,6 +4,7 @@ import en from '~/i18n/locales/en.json'
 
 export const i18n = createI18n({
   legacy: false,
+  globalInjection: true,
   locale: 'uk',
   fallbackLocale: 'en',
   messages: { uk, en },

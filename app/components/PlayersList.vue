@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
+
 const props = defineProps<{
   players: Array<{
     id: string
@@ -45,7 +47,7 @@ const openMenuId = ref<string | null>(null)
         :current-user-is-authorized-moderator="currentUserIsAuthorizedModerator"
         :open-menu-id="openMenuId"
         @rename="emit('rename', $event)"
-        @toggle-moderator="(id, val) => emit('toggleModerator', id, val)"
+        @toggle-moderator="(id: string, val: boolean) => emit('toggleModerator', id, val)"
         @leave="emit('leave', $event)"
         @kick="emit('kick', $event)"
         @menu-open="openMenuId = $event"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, reactive } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
 
@@ -85,9 +86,9 @@ async function submit() {
         <div>
           <div v-if="mode === 'signin'" class="flex items-center justify-between gap-3 mb-1">
             <span class="mui-caption">{{ $t('common.password') }}</span>
-            <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary" @click="emit('close')">
+            <RouterLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary" @click="emit('close')">
               {{ $t('auth.forgotPassword') }}
-            </NuxtLink>
+            </RouterLink>
           </div>
           <input
             v-model="password"

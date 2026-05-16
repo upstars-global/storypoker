@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
 import { useProfilesStore } from '~/stores/profiles'
+import { getSupabase } from '~/lib/supabase-instance'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
@@ -160,10 +164,10 @@ onUnmounted(async () => {
 })
 
 async function fetchInitialData() {
-  const { $supabase } = useNuxtApp()
+  const supabase = getSupabase()
   const [{ data: pData }, { data: sData }] = await Promise.all([
-    $supabase.from('players').select('*').eq('room_id', roomId).order('created_at'),
-    $supabase.from('room_state').select('*').eq('room_id', roomId).single(),
+    supabase.from('players').select('*').eq('room_id', roomId).order('created_at'),
+    supabase.from('room_state').select('*').eq('room_id', roomId).single(),
   ])
   playersStore.players = pData ?? []
   roomStore.roomState = sData ?? null
@@ -173,18 +177,18 @@ async function fetchInitialData() {
 }
 
 function subscribeRealtime() {
-  const { $supabase } = useNuxtApp()
-  playersChannel = $supabase
+  const supabase = getSupabase()
+  playersChannel = supabase
     .channel(`players:${roomId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${roomId}` },
       (payload) => playersStore.applyChange(payload as any))
     .subscribe()
-  stateChannel = $supabase
+  stateChannel = supabase
     .channel(`room_state:${roomId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'room_state', filter: `room_id=eq.${roomId}` },
       (payload) => roomStore.applyChange(payload as any))
     .subscribe()
-  roomChannel = $supabase
+  roomChannel = supabase
     .channel(`rooms:${roomId}`)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
       (payload: any) => {
@@ -198,7 +202,7 @@ function subscribeRealtime() {
         }
       })
     .subscribe()
-  profilesChannel = $supabase
+  profilesChannel = supabase
     .channel(`user_profiles:${roomId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'user_profiles' },
       (payload) => profilesStore.applyChange(payload as any))
@@ -213,7 +217,6 @@ function unsubscribe() {
 }
 
 function getStoredSession(): { playerId: string; playerName: string } | null {
-  if (!import.meta.client) return null
   const raw = localStorage.getItem(`storypoker_session_${roomId}`)
   if (!raw) return null
   try { return JSON.parse(raw) } catch { return null }
@@ -328,9 +331,9 @@ async function submitRenameRoom() {
         {{ $t('room.notFoundDescription', { id: urlParam }) }}
       </p>
       <div class="flex justify-center mt-6">
-        <NuxtLink to="/" class="mui-btn mui-btn-md inline-flex items-center justify-center">
+        <RouterLink to="/" class="mui-btn mui-btn-md inline-flex items-center justify-center">
           {{ $t('room.notFoundBackHome') }}
-        </NuxtLink>
+        </RouterLink>
       </div>
     </div>
   </div>

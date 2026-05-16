@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useProfilesStore } from '~/stores/profiles'
+import { useDylanAvatar } from '~/composables/useDylanAvatar'
+
 const props = defineProps<{
   player: {
     id: string
@@ -24,7 +28,6 @@ const emit = defineEmits<{
   menuClose: []
 }>()
 
-import { useProfilesStore } from '~/stores/profiles'
 const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 

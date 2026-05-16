@@ -13,6 +13,8 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
     "paths": {
       "~/*": ["app/*"],
       "@/*": ["app/*"]
@@ -22,7 +24,7 @@
     "app/**/*.ts",
     "app/**/*.tsx",
     "app/**/*.vue",
-    "tests/**/*.ts"
+    "tests/unit/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", ".nuxt", ".output"]
+  "exclude": ["node_modules", "dist", ".nuxt", ".output", "app/plugins/**"]
 }

@@ -1,4 +1,13 @@
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '~/stores/auth'
+import { useProfilesStore } from '~/stores/profiles'
+import { useDylanAvatar } from '~/composables/useDylanAvatar'
+import { useTheme } from '~/composables/useTheme'
+
 const props = defineProps<{
   onlineCount: number
   isModerator: boolean
@@ -16,15 +25,12 @@ const emit = defineEmits<{
   signOut: []
 }>()
 
-import { storeToRefs } from 'pinia'
-import { useAuthStore } from '~/stores/auth'
-import { useProfilesStore } from '~/stores/profiles'
 const router = useRouter()
 const { user } = storeToRefs(useAuthStore())
 const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 const { isLight, toggle: toggleTheme } = useTheme()
-const { locale, setLocale } = useI18n()
+const { locale } = useI18n()
 const showMenu = ref(false)
 const showRoomMenu = ref(false)
 
@@ -59,7 +65,7 @@ function goRecent() {
 }
 
 function toggleLocale() {
-  setLocale(locale.value === 'uk' ? 'en' : 'uk')
+  locale.value = locale.value === 'uk' ? 'en' : 'uk'
 }
 </script>
 
@@ -68,9 +74,9 @@ function toggleLocale() {
     class="sticky top-0 z-40 w-full flex items-center px-4 sm:px-6 bg-appbar text-white shadow-4"
     style="min-height: 56px;"
   >
-    <NuxtLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded text-white">
+    <RouterLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded text-white">
       Story Poker
-    </NuxtLink>
+    </RouterLink>
     <template v-if="roomName">
       <span class="mx-1.5 text-appbar-subtle">/</span>
       <span class="mui-h6 text-lg text-appbar-emphasis">{{ roomName }}</span>
