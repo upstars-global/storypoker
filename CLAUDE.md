@@ -18,50 +18,46 @@ Guidance for Claude Code working with this repository.
 
 ## Tech Stack
 
-- **Framework:** Nuxt 4.4, Vue 3, Composition API `<script setup>`, `srcDir: app/`
-- **Styling:** Tailwind v3 через `@nuxtjs/tailwindcss` 6, токени в `tailwind.config.ts`, MUI-like класи в `assets/css/main.css`
+- **Framework:** Vue 3.5 + Vite 6 SPA, Composition API `<script setup>`, `srcDir: app/`
+- **Routing:** `vue-router@5` — явні маршрути в `app/router.ts`, без file-based routing
+- **Styling:** Tailwind v3 через PostCSS (autoprefixer), токени в `tailwind.config.ts`, MUI-like класи в `app/assets/css/main.css`
   - utilities: `text-{primary,body,muted,disabled,inverse,danger,success}`, `bg-{app,appbar,paper,elevated,overlay,skeleton}`, `border` (DEFAULT = `var(--border)`), `shadow-{1..8}`
   - button modifiers (compose з `.mui-btn`): `.mui-btn-md` (180×46 / 23rad / `#607d8b`), `.mui-btn-sm`, `.mui-btn-text`, `.mui-btn-secondary`
-- **State:** Pinia 3 через `@pinia/nuxt`
+- **State:** Pinia 3 (без auto-imports — явні `from 'pinia'`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
-- **i18n:** `@nuxtjs/i18n`, strategy `no_prefix`, локалі `i18n/locales/{uk,en}.json`
-- **UI:** `@nuxt/icon` + `@iconify-json/ic` (`ic:baseline-*`); local `app:` icons only `moderator`, `deciding`, `offline`, `leave-room`; `v-wave`, DiceBear, Roboto 300–700
+- **i18n:** `vue-i18n@10` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
+- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`); custom collection `app:` для `moderator`, `deciding`, `offline`, `leave-room` — зареєстровано через `addCollection` у `app/lib/registerAppIcons.ts`; `v-wave`, DiceBear, Roboto 300–700
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
 ## Common Commands
 
 ```bash
 npm install
-npm run dev          # Nuxt dev, port 3000, --host already enabled
-npm run build
-npm run generate     # static pre-render for Netlify
-npm run preview
-npm run lint         # ESLint
-npm run typecheck    # vue-tsc via nuxt typecheck
+npm run dev          # Vite dev, port 3000 (host enabled)
+npm run build        # vite build → dist/
+npm run preview      # vite preview, port 3000
+npm run lint         # ESLint flat config
+npm run typecheck    # vue-tsc --noEmit
 npm test             # vitest run
 npm run test:watch
-npm run test:unit    # vitest run
+npm run test:unit
 npm run test:unit:watch
 npm run test:unit:coverage
-npm run test:e2e     # playwright — all e2e tests (local only, needs .env.test)
-npm run test:e2e:smoke   # smoke flows (local only)
-npm run test:ci      # lint + typecheck + unit + build (what CI runs)
+npm run test:e2e
+npm run test:e2e:smoke
+npm run test:ci      # lint + typecheck + unit + build (CI runs this)
 ```
 
-CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); E2E runs when E2E secrets exist; deploy runs `npm run generate` on `main` when checks pass and Netlify secrets exist.
+CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); E2E runs when E2E secrets exist; deploy runs `npm run build` on `main` when checks pass and Netlify secrets exist.
 
 ## Environment Setup
 
-`package-lock.json` — committed (required for `npm ci` in CI). Do NOT add it back to `.gitignore`.
+`package-lock.json` — committed (required for `npm ci`). Do NOT add it back to `.gitignore`.
 
-Усі env-файли — у `/.env/` (папка gitignored, окрім `/.env/.env.example` і `/.env/.env.test.example`):
-
+Усі env-файли — у `/.env/` (gitignored, окрім `*.example`). Vite читає через `envDir: '.env'` у `vite.config.ts`:
 - `/.env/.env.local` — персональні override
 - `/.env/.env` — командні defaults
-- `/.env/.env.test` — креди тестового Supabase project для Playwright (gitignored)
-- `nuxt.config.ts` спочатку вантажить `.env.local`, потім `.env`
-
-Шаблон:
+- `/.env/.env.test` — креди тестового Supabase project для Playwright
 
 ```bash
 VITE_SUPABASE_URL=...
@@ -69,28 +65,18 @@ VITE_SUPABASE_KEY=...        # publishable client key
 # SUPABASE_SECRET_KEY=...    # server-side only, БЕЗ VITE_ префіксу
 ```
 
-Vite читає `.env/` через `envDir` у `vite.config.ts`; клієнтський код через `import.meta.env.VITE_*` (тільки `VITE_*` потрапляють у browser bundle).
+Клієнтський код читає через `import.meta.env.VITE_*` (тільки `VITE_*` потрапляють у browser bundle).
 
 ## Database
 
-Міграції в `supabase/migrations/` накатуються вручну через Supabase SQL Editor:
-
-- `001_initial_schema.sql` — `rooms`, `room_state`, `players`, `round_history`, public RLS
-- `002_rooms_update_policy.sql` — public update для `rooms`
-- `003_rooms_name.sql` — `rooms.name`
-- `004_rooms_realtime.sql` — Realtime publication для `rooms`
-- `005_user_profiles.sql` — `user_profiles`, public RLS, Realtime publication
-- `006_room_state_timer.sql` — `room_state.paused_at`, `room_state.paused_elapsed_ms` для керованого таймера
-- `007_players_room_state_realtime.sql` — Realtime publication для `players` і `room_state`
-
-Таблиці:
+Міграції в `supabase/migrations/` — накатуються вручну через Supabase SQL Editor (`001`–`007`: schema, RLS, Realtime, timer, user_profiles). Таблиці:
 - `rooms (id text PK, slug text unique, name text, created_at)`
 - `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms)`
 - `players (id uuid PK, room_id, name, is_moderator, vote, user_id, created_at, left_at)`
 - `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, created_at)`
 - `user_profiles (user_id uuid PK, avatar_style, avatar_seed, updated_at)`
 
-RLS зараз public read/write для anon key; окремого backend немає, логіка в клієнті. `leave` і `kick` — soft-delete через `left_at`; UI працює з `left_at is null`.
+RLS зараз public read/write для anon key; логіка в клієнті. `leave` і `kick` — soft-delete через `left_at`; UI працює з `left_at is null`.
 
 ## Card Decks
 
@@ -138,31 +124,39 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 ## Project Structure
 
 ```text
-app/
-├── pages/        # index, [slug], login, signup, forgot-password, reset-password
-├── components/   # AppHeader, CardsArea, PlayersList, modals, icons
-├── composables/  # useTheme, useDylanAvatar
-├── stores/       # auth, room, players, presence, profiles
-├── plugins/      # vWave, clickOutside
-├── lib/          # supabase-instance
-└── utils/        # roomId, cardDecks, authValidation, recentRooms, playerRoles, relativeTime
-assets/css/main.css
-i18n/locales/{uk,en}.json
-supabase/migrations/*.sql
-tests/
-├── unit/stores|utils/   # Vitest unit tests (alias ~ → app/)
-├── fixtures/            # Playwright fixtures (room, auth)
-├── page-objects/        # Playwright POMs
-├── support/test.ts      # merged Playwright test export
-├── support/setup/       # vitest.ts setup
-├── e2e/                 # smoke.spec.ts, critical-flows.spec.ts
-vitest.config.ts
-playwright.config.ts
+/
+├── index.html             # head/meta + theme inline script
+├── vite.config.ts
+├── postcss.config.js
+├── tsconfig.json, tsconfig.node.json
+├── eslint.config.js
+├── netlify.toml
+├── public/
+│   ├── _redirects         # /*  /index.html  200
+│   └── favicon.svg
+├── app/
+│   ├── main.ts            # entry: createApp + pinia + router + i18n + plugins
+│   ├── router.ts          # явні 6 routes
+│   ├── i18n.ts            # createI18n
+│   ├── App.vue            # <RouterView />
+│   ├── pages/             # index, [slug], login, signup, forgot-password, reset-password
+│   ├── components/        # AppHeader, CardsArea, PlayersList, modals, icons
+│   ├── composables/       # useTheme, useDylanAvatar
+│   ├── stores/            # auth, room, players, presence, profiles
+│   ├── directives/        # clickOutside
+│   ├── lib/               # supabase-instance, registerAppIcons
+│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, playerRoles, relativeTime
+│   ├── i18n/locales/{uk,en}.json
+│   └── assets/css/main.css, assets/icons/
+├── supabase/migrations/*.sql
+└── tests/
+    ├── unit/stores|utils/   # Vitest (alias ~ → app/)
+    ├── fixtures/, page-objects/, support/, e2e/
 ```
 
 ## Testing
 
-Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit/`; alias `~` → `app/`. E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`. Локально зупини dev server на `:3000` або задай `E2E_BASE_URL`, бо Playwright має `reuseExistingServer: true`.
+Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `app/`. E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`. Локально зупини dev server на `:3000` або задай `E2E_BASE_URL`, бо Playwright має `reuseExistingServer: true`.
 
 ## URL Schema
 
@@ -176,7 +170,7 @@ Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit
 ## LocalStorage
 
 - `storypoker_session_<roomId>` — `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms
-- `sp-theme` — `light | dark`; inline script у `nuxt.config.ts` застосовує тему до hydration
+- `sp-theme` — `light | dark`; inline script у `index.html` застосовує тему до завантаження JS
 
 ## Code Style
 
