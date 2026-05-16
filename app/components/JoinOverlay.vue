@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
 import { ref } from 'vue'
 
 const emit = defineEmits<{
@@ -28,7 +29,7 @@ function submit() {
         aria-label="Close"
         @click="emit('close')"
       >
-        <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="mui-h5 text-center">{{ $t('join.title') }}</h2>
       <p class="mui-caption text-center mt-2 text-muted">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
 import { ref, reactive } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
@@ -58,7 +59,7 @@ async function submit() {
         :aria-label="$t('common.close')"
         @click="emit('close')"
       >
-        <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="mui-h5 text-center">
         {{ mode === 'signin' ? $t('common.signIn') : $t('common.signUp') }}

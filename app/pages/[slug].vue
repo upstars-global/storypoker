@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -429,7 +430,7 @@ async function submitRenameRoom() {
           :aria-label="$t('common.close')"
           @click="renameTarget = null"
         >
-          <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</h2>
         <input
@@ -452,7 +453,7 @@ async function submitRenameRoom() {
           :aria-label="$t('common.close')"
           @click="showRenameRoom = false"
         >
-          <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</h2>
         <input
@@ -481,7 +482,7 @@ async function submitRenameRoom() {
           :aria-label="$t('common.close')"
           @click="kickTargetId = null"
         >
-          <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.kickTitle') }}</h2>
         <p class="text-body">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>
