@@ -26,7 +26,7 @@ function submit() {
         aria-label="Close"
         @click="emit('close')"
       >
-        <IconClose style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="mui-h5 text-center">{{ $t('join.title') }}</h2>
       <p class="mui-caption text-center mt-2" style="color: var(--text-muted);">

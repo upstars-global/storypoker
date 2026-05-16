@@ -42,7 +42,12 @@
   "timer": {
     "title": "Таймер",
     "roundStartedAgo": "Раунд розпочато {duration} тому",
-    "roundDuration": "Тривалість раунду: {duration}"
+    "roundDuration": "Тривалість раунду: {duration}",
+    "reset": "Скинути",
+    "pause": "Пауза",
+    "continue": "Продовжити",
+    "minus30": "-30с",
+    "plus30": "+30с"
   },
   "deck": {
     "configure": "Налаштувати колоду",

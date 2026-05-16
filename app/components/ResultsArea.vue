@@ -23,7 +23,7 @@ const groups = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-8 w-full">
+  <div data-testid="results-area" class="flex flex-col items-center gap-8 w-full">
     <div v-if="groups" class="w-full flex flex-wrap justify-center gap-8">
       <div
         v-for="g in groups"
@@ -39,6 +39,7 @@ const groups = computed(() => {
     <button
       v-if="isModerator"
       class="mui-btn"
+      data-testid="new-round-button"
       @click="emit('startNewRound')"
     >
       {{ $t('cards.startNewRound') }}

@@ -72,7 +72,7 @@ async function save() {
         aria-label="Close"
         @click="emit('close')"
       >
-        <IconClose style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="text-center text-[22px] font-bold tracking-[0.00735em]" style="color: var(--text-primary);">
         Account Settings
@@ -101,7 +101,7 @@ async function save() {
           :disabled="cursor === 0"
           @click="prev"
         >
-          <IconNavigateBefore style="font-size: 1.25rem;" />
+          <Icon class="mui-svg-icon" name="app:navigate-before" style="font-size: 1.25rem;" />
         </button>
         <img
           v-if="previewUri"
@@ -117,7 +117,7 @@ async function save() {
           aria-label="Next"
           @click="next"
         >
-          <IconNavigateNext style="font-size: 1.25rem;" />
+          <Icon class="mui-svg-icon" name="app:navigate-next" style="font-size: 1.25rem;" />
         </button>
       </div>
 

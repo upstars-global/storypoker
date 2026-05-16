@@ -7,6 +7,7 @@ const props = defineProps<{
     vote: string | null
     is_online: boolean
     user_id: string | null
+    votePending: boolean
   }>
   phase: 'voting' | 'revealed'
   currentPlayerId: string | null
@@ -27,7 +28,7 @@ const openMenuId = ref<string | null>(null)
 </script>
 
 <template>
-  <div class="mui-paper">
+  <div data-testid="players-list" class="mui-paper">
     <div class="mui-paper-header flex items-center justify-center gap-2">
       <span>{{ $t('players.title') }}</span>
       <span class="text-sm font-normal" style="color: #ffffff;">

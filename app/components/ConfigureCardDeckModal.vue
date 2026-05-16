@@ -51,7 +51,7 @@ function save() {
         :aria-label="$t('common.close')"
         @click="emit('close')"
       >
-        <IconClose style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="text-center text-[22px] font-bold tracking-[0.00735em]" style="color: var(--text-primary);">
         {{ $t('deck.configure') }}

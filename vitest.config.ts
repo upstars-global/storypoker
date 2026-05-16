@@ -4,8 +4,8 @@ import { resolve } from 'path'
 export default defineConfig({
   test: {
     environment: 'happy-dom',
-    setupFiles: ['./tests/setup.ts'],
-    include: ['app/**/__tests__/**/*.spec.ts'],
+    setupFiles: ['./tests/support/setup/vitest.ts'],
+    include: ['tests/unit/**/*.spec.ts', 'tests/components/**/*.spec.ts', 'tests/integration/**/*.spec.ts'],
     passWithNoTests: true,
     coverage: {
       provider: 'v8',

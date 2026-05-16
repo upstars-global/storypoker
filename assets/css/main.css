@@ -199,6 +199,20 @@ body {
     box-shadow: none;
   }
 
+  .mui-btn-sm {
+    min-width: 64px;
+    min-height: 28px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    box-shadow: var(--shadow-1);
+  }
+  @media (max-width: 899.95px) {
+    .mui-btn-sm {
+      min-width: 56px;
+    }
+  }
+
   .mui-icon-btn {
     display: inline-flex;
     align-items: center;

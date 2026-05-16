@@ -114,6 +114,23 @@ DB-схема `round_history` уже існує (`001_initial_schema.sql`, `reve
 
 ---
 
+## E2E Test Coverage — beyond smoke ⏳ planned
+
+Smoke pack (планується, спека: `docs/superpowers/specs/2026-05-15-playwright-e2e-tests-design.md`) покриває 3 критичні flows: home→create room, solo vote→reveal→new round, signup/login. Все нижче — поза smoke і чекає на окремий iter:
+
+- [ ] Multi-user vote (2 browser contexts: moderator + player → reveal → результати)
+- [ ] Presence (online/offline, visibility-hidden → untrack, reconnect reconciliation)
+- [ ] Kick player (authorized moderator)
+- [ ] Rename player (self + by authorized moderator)
+- [ ] Configure Card Deck (preset switch + custom active subset, голоси не губляться)
+- [ ] Timer (start/pause/resume/reset/±30s, контроли тільки для authorized moderator)
+- [ ] Round history (votes ≥ 2 → запис у `round_history`, перегляд історії в UI)
+- [ ] Password reset flow (forgot → email link → reset)
+- [ ] Room slug aliases (set slug, редирект з `/<roomId>` на `/<slug>`)
+- [ ] RLS edge cases (anon access boundaries, soft-delete via `left_at`)
+
+---
+
 ## Cross-iter Open Questions
 
 - Mobile layout верифіковано лише empirically; референс із `examples/room.html` — desktop-only (1440 × 900). Окремий design pass для mobile/tablet?

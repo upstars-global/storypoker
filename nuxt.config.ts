@@ -28,7 +28,16 @@ export default defineNuxtConfig({
     }
   },
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@nuxtjs/i18n'],
+  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@nuxtjs/i18n', '@nuxt/icon', '@nuxt/eslint'],
+  icon: {
+    mode: 'svg',
+    customCollections: [
+      {
+        prefix: 'app',
+        dir: resolve(__dirname, 'assets/icons'),
+      },
+    ],
+  },
   i18n: {
     defaultLocale: 'uk',
     locales: [
@@ -49,12 +58,12 @@ export default defineNuxtConfig({
     vite: {
       optimizeDeps: {
         include: [
+          '@dicebear/collection',
+          '@dicebear/core',
+          '@supabase/supabase-js',
           '@vue/devtools-core',
           '@vue/devtools-kit',
-          '@supabase/supabase-js',
           'v-wave',
-          '@dicebear/core',
-          '@dicebear/collection',
         ]
       }
     },

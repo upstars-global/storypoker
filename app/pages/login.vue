@@ -63,7 +63,7 @@ async function onSubmit() {
 
         <form class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
           <div>
-            <input v-model.trim="form.email" type="email" autocomplete="email" :placeholder="$t('common.emailPlaceholder')" class="mui-input" :class="{ 'is-error': errors.email }" />
+            <input v-model.trim="form.email" type="email" autocomplete="email" :placeholder="$t('common.emailPlaceholder')" class="mui-input" :class="{ 'is-error': errors.email }" data-testid="login-email" />
             <p v-if="errors.email" class="text-sm mt-1" style="color: var(--danger);">{{ errors.email }}</p>
           </div>
 
@@ -72,14 +72,14 @@ async function onSubmit() {
               <span class="mui-caption">{{ $t('common.password') }}</span>
               <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline" style="color: var(--primary);">{{ $t('auth.forgotPassword') }}</NuxtLink>
             </div>
-            <input v-model="form.password" type="password" autocomplete="current-password" :placeholder="$t('common.passwordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.password }" />
+            <input v-model="form.password" type="password" autocomplete="current-password" :placeholder="$t('common.passwordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.password }" data-testid="login-password" />
             <p v-if="errors.password" class="text-sm mt-1" style="color: var(--danger);">{{ errors.password }}</p>
           </div>
 
           <p v-if="errors.server" class="text-sm" style="color: var(--danger);">{{ errors.server }}</p>
 
           <div class="flex justify-center mt-2">
-            <button v-wave class="mui-btn" type="submit" :disabled="loading">
+            <button v-wave class="mui-btn" type="submit" :disabled="loading" data-testid="login-submit">
               {{ loading ? $t('auth.signingIn') : $t('common.signIn') }}
             </button>
           </div>

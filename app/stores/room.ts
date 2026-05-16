@@ -48,9 +48,57 @@ export const useRoomStore = defineStore('room', () => {
       supabase.from('players').update({ vote: null }).eq('room_id', roomId.value),
       supabase
         .from('room_state')
-        .update({ phase: 'voting', round_started_at: new Date().toISOString() })
+        .update({
+          phase: 'voting',
+          round_started_at: new Date().toISOString(),
+          paused_at: null,
+          paused_elapsed_ms: 0,
+        })
         .eq('room_id', roomId.value),
     ])
+  }
+
+  async function resetTimer() {
+    if (!roomId.value) return
+    await getSupabase()
+      .from('room_state')
+      .update({
+        round_started_at: new Date().toISOString(),
+        paused_at: null,
+        paused_elapsed_ms: 0,
+      })
+      .eq('room_id', roomId.value)
+  }
+
+  async function pauseTimer() {
+    if (!roomId.value || !roomState.value || roomState.value.paused_at) return
+    await getSupabase()
+      .from('room_state')
+      .update({ paused_at: new Date().toISOString() })
+      .eq('room_id', roomId.value)
+  }
+
+  async function resumeTimer() {
+    if (!roomId.value || !roomState.value || !roomState.value.paused_at) return
+    const pausedSince = new Date(roomState.value.paused_at).getTime()
+    const next = Math.max(0, (roomState.value.paused_elapsed_ms ?? 0) + (Date.now() - pausedSince))
+    await getSupabase()
+      .from('room_state')
+      .update({ paused_at: null, paused_elapsed_ms: next })
+      .eq('room_id', roomId.value)
+  }
+
+  async function adjustTimer(deltaMs: number) {
+    if (!roomId.value || !roomState.value) return
+    const start = new Date(roomState.value.round_started_at).getTime()
+    const cap = roomState.value.paused_at
+      ? new Date(roomState.value.paused_at).getTime()
+      : Date.now()
+    const nextStart = Math.min(cap, start - deltaMs)
+    await getSupabase()
+      .from('room_state')
+      .update({ round_started_at: new Date(nextStart).toISOString() })
+      .eq('room_id', roomId.value)
   }
 
   async function saveCardDeck(cards: string[]) {
@@ -106,5 +154,20 @@ export const useRoomStore = defineStore('room', () => {
     }
   }
 
-  return { roomId, roomState, applyChange, reveal, startNewRound, saveCardDeck, setDeckPreset, create, resolveRoom, setRoomName }
+  return {
+    roomId,
+    roomState,
+    applyChange,
+    reveal,
+    startNewRound,
+    saveCardDeck,
+    setDeckPreset,
+    create,
+    resolveRoom,
+    setRoomName,
+    resetTimer,
+    pauseTimer,
+    resumeTimer,
+    adjustTimer,
+  }
 })

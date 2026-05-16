@@ -117,11 +117,13 @@ async function createRoom() {
             :placeholder="$t('home.namePlaceholder')"
             class="mui-input h-[51px] max-w-[280px]"
             :class="{ 'is-error': hasError }"
+            data-testid="home-name-input"
             @keyup.enter="createRoom"
           />
           <button
             v-wave
             class="mt-[30px] inline-flex h-[46px] min-w-[180px] items-center justify-center rounded-[23px] bg-[#607d8b] px-[22px] text-[13px] font-medium uppercase leading-[1.75] tracking-[0.02857em] text-white shadow-[0_3px_1px_-2px_rgba(0,0,0,.2),0_2px_2px_0_rgba(0,0,0,.14),0_1px_5px_0_rgba(0,0,0,.12)] transition-[background-color,box-shadow] duration-200 hover:bg-[#1c313a] hover:shadow-[0_2px_4px_-1px_rgba(0,0,0,.2),0_4px_5px_0_rgba(0,0,0,.14),0_1px_10px_0_rgba(0,0,0,.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#607d8b]"
+            data-testid="home-create-room"
             @click="createRoom"
           >
             {{ $t('home.createRoom') }}

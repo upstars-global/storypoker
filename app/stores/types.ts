@@ -17,6 +17,8 @@ export interface RoomState {
   deck_preset: DeckPresetId
   active_cards: string[]
   round_started_at: string
+  paused_at: string | null
+  paused_elapsed_ms: number
 }
 
 export interface RoundHistoryVote {

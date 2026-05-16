@@ -57,6 +57,7 @@ const playersForUi = computed(() =>
     ...p,
     is_online: online.value.has(p.id),
     vote: playersStore.voteOf(p.id),
+    votePending: pendingVotes.value[p.id] !== undefined,
   }))
 )
 
@@ -350,6 +351,13 @@ async function submitRenameRoom() {
           v-if="roomState"
           :round-started-at="roomState.round_started_at"
           :phase="roomState.phase ?? 'voting'"
+          :paused-at="roomState.paused_at ?? null"
+          :paused-elapsed-ms="roomState.paused_elapsed_ms ?? 0"
+          :can-control="isAuthorizedModerator"
+          @reset="roomStore.resetTimer"
+          @pause="roomStore.pauseTimer"
+          @resume="roomStore.resumeTimer"
+          @adjust="(ms: number) => roomStore.adjustTimer(ms)"
         />
       </div>
 
@@ -404,7 +412,7 @@ async function submitRenameRoom() {
           :aria-label="$t('common.close')"
           @click="renameTarget = null"
         >
-          <IconClose style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</h2>
         <input
@@ -427,7 +435,7 @@ async function submitRenameRoom() {
           :aria-label="$t('common.close')"
           @click="showRenameRoom = false"
         >
-          <IconClose style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</h2>
         <input
@@ -456,7 +464,7 @@ async function submitRenameRoom() {
           :aria-label="$t('common.close')"
           @click="kickTargetId = null"
         >
-          <IconClose style="font-size: 1.5rem;" />
+          <Icon class="mui-svg-icon" name="app:close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.kickTitle') }}</h2>
         <p style="color: var(--text-body);">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>

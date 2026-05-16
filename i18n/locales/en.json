@@ -42,7 +42,12 @@
   "timer": {
     "title": "Timer",
     "roundStartedAgo": "Round started {duration} ago",
-    "roundDuration": "Round duration: {duration}"
+    "roundDuration": "Round duration: {duration}",
+    "reset": "Reset",
+    "pause": "Pause",
+    "continue": "Continue",
+    "minus30": "-30s",
+    "plus30": "+30s"
   },
   "deck": {
     "configure": "Configure Card Deck",
