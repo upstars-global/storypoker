@@ -25,6 +25,9 @@ const emit = defineEmits<{
           type="button"
           class="mui-card"
           :class="{ 'is-selected': selectedVote === card }"
+          data-testid="vote-card"
+          :data-value="card"
+          :aria-pressed="selectedVote === card"
           @click="emit('vote', card)"
         >
           <span class="mui-card-value">{{ card }}</span>
@@ -33,7 +36,7 @@ const emit = defineEmits<{
     </div>
 
     <div v-if="isModerator" class="flex justify-center pt-8">
-      <button v-wave class="mui-btn" :disabled="!hasVotes" @click="emit('reveal')">{{ $t('cards.reveal') }}</button>
+      <button v-wave class="mui-btn" :disabled="!hasVotes" data-testid="reveal-button" @click="emit('reveal')">{{ $t('cards.reveal') }}</button>
     </div>
   </div>
 </template>

@@ -146,6 +146,9 @@ export const usePlayersStore = defineStore('players', () => {
   }
 
   async function linkUser(playerId: string, userId: string) {
+    const idx = players.value.findIndex(p => p.id === playerId)
+    const existing = idx >= 0 ? players.value[idx] : null
+    if (existing) players.value[idx] = { ...existing, user_id: userId }
     await getSupabase().from('players').update({ user_id: userId }).eq('id', playerId)
   }
 

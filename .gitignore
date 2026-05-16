@@ -2,26 +2,28 @@ Thumbs.db
 .DS_Store
 
 /node_modules/
-package-lock.json
 *.log
-/.nuxt/
-/.output/
-/dist/
+**/.nuxt/
+**/.output/
+/dist
 
 .env
 .env.local
 /.env/*
 !/.env/.env.example
+!/.env/.env.test.example
 
 /supabase/*
 !/supabase/migrations
 
-/.netlify/
+# /.netlify/
 
 /.agents/
 /.claude/
 /memory/
 skills-lock.json
 
-TODO-FOR-SKL-by-CODEX.md
-TODO-FOR-SKL-by-CLAUDE-CODE.md
+/test-results/
+/playwright-report/
+/coverage/
+assets/icons/node_modules/

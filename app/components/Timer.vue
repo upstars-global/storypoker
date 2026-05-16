@@ -2,6 +2,16 @@
 const props = defineProps<{
   roundStartedAt: string
   phase: 'voting' | 'revealed'
+  pausedAt: string | null
+  pausedElapsedMs: number
+  canControl: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'reset'): void
+  (e: 'pause'): void
+  (e: 'resume'): void
+  (e: 'adjust', deltaMs: number): void
 }>()
 
 const { t } = useI18n()
@@ -26,21 +36,88 @@ function formatDuration(ms: number) {
   return `${seconds}s`
 }
 
-const text = computed(() => {
-  const start = new Date(props.roundStartedAt).getTime()
-  if (props.phase === 'voting') {
-    return t('timer.roundStartedAgo', { duration: formatDuration(now.value - start) })
-  }
-  const elapsed = (revealedAt.value ?? now.value) - start
-  return t('timer.roundDuration', { duration: formatDuration(elapsed) })
+const isPaused = computed(() => Boolean(props.pausedAt))
+
+const pivotMs = computed(() => {
+  if (props.phase === 'revealed' && revealedAt.value !== null) return revealedAt.value
+  if (props.pausedAt) return new Date(props.pausedAt).getTime()
+  return now.value
 })
+
+const elapsedMs = computed(() => {
+  const start = new Date(props.roundStartedAt).getTime()
+  return Math.max(0, pivotMs.value - start - (props.pausedElapsedMs ?? 0))
+})
+
+const text = computed(() => {
+  const duration = formatDuration(elapsedMs.value)
+  return props.phase === 'voting'
+    ? t('timer.roundStartedAgo', { duration })
+    : t('timer.roundDuration', { duration })
+})
+
+const showControls = computed(() => props.canControl && props.phase === 'voting')
 </script>
 
 <template>
   <div class="mui-paper">
-    <div class="mui-paper-header" style="justify-content: center;">
+    <div class="mui-paper-header justify-center">
       <span>{{ $t('timer.title') }}</span>
     </div>
-    <p class="mui-body px-4 py-3" style="color: var(--text-body);">{{ text }}</p>
+    <p class="mui-body px-4 py-3 text-body">{{ text }}</p>
+    <div v-if="showControls" class="flex flex-wrap justify-center gap-2 px-4 pb-3">
+      <button
+        v-wave
+        type="button"
+        class="mui-btn mui-btn-secondary mui-btn-sm"
+        :aria-label="$t('timer.minus30')"
+        :title="$t('timer.minus30')"
+        @click="emit('adjust', -30000)"
+      >
+        <Icon class="mui-svg-icon" name="ic:baseline-replay-30" style="font-size: 1.125rem;" />
+      </button>
+      <button
+        v-if="!isPaused"
+        v-wave
+        type="button"
+        class="mui-btn mui-btn-secondary mui-btn-sm"
+        :aria-label="$t('timer.pause')"
+        :title="$t('timer.pause')"
+        @click="emit('pause')"
+      >
+        <Icon class="mui-svg-icon" name="ic:baseline-pause" style="font-size: 1.125rem;" />
+      </button>
+      <button
+        v-else
+        v-wave
+        type="button"
+        class="mui-btn mui-btn-secondary mui-btn-sm"
+        :aria-label="$t('timer.continue')"
+        :title="$t('timer.continue')"
+        @click="emit('resume')"
+      >
+        <Icon class="mui-svg-icon" name="ic:baseline-play-arrow" style="font-size: 1.125rem;" />
+      </button>
+      <button
+        v-wave
+        type="button"
+        class="mui-btn mui-btn-secondary mui-btn-sm"
+        :aria-label="$t('timer.reset')"
+        :title="$t('timer.reset')"
+        @click="emit('reset')"
+      >
+        <Icon class="mui-svg-icon" name="ic:baseline-replay" style="font-size: 1.125rem;" />
+      </button>
+      <button
+        v-wave
+        type="button"
+        class="mui-btn mui-btn-secondary mui-btn-sm"
+        :aria-label="$t('timer.plus30')"
+        :title="$t('timer.plus30')"
+        @click="emit('adjust', 30000)"
+      >
+        <Icon class="mui-svg-icon" name="ic:baseline-forward-30" style="font-size: 1.125rem;" />
+      </button>
+    </div>
   </div>
 </template>

@@ -15,7 +15,8 @@
     "renameRoom": "Rename Room",
     "configureCardDeck": "Configure Card Deck",
     "recentRooms": "Recent Rooms",
-    "lightTheme": "Light theme",
+    "lightTheme": "Light Theme",
+    "darkTheme": "Dark Theme",
     "currentUserAccount": "account of current user",
     "accountSettings": "Account Settings",
     "roomSettings": "Room settings"
@@ -42,7 +43,12 @@
   "timer": {
     "title": "Timer",
     "roundStartedAgo": "Round started {duration} ago",
-    "roundDuration": "Round duration: {duration}"
+    "roundDuration": "Round duration: {duration}",
+    "reset": "Reset",
+    "pause": "Pause",
+    "continue": "Continue",
+    "minus30": "-30s",
+    "plus30": "+30s"
   },
   "deck": {
     "configure": "Configure Card Deck",
@@ -57,7 +63,8 @@
     "moderatorLabel": "moderator",
     "estimateGiven": "estimate given",
     "playerDeciding": "player deciding",
-    "inactive": "inactive"
+    "inactive": "inactive",
+    "noVote": "no vote"
   },
   "room": {
     "renameTitle": "Rename Room",
@@ -68,10 +75,22 @@
     "slugTaken": "This name is already taken",
     "kickTitle": "Kick Player",
     "kickConfirm": "Remove {name} from the room?",
-    "kickButton": "Kick"
+    "kickButton": "Kick",
+    "notFoundTitle": "Room not found",
+    "notFoundDescription": "No room exists at “{id}”. It may have been deleted, or the link is incorrect.",
+    "notFoundBackHome": "Back to home"
   },
   "connection": {
     "reconnecting": "Reconnecting…"
+  },
+  "userSettings": {
+    "title": "Account Settings",
+    "styleRobots": "Robots",
+    "styleDylan": "Dylan",
+    "previousAvatar": "Previous avatar",
+    "nextAvatar": "Next avatar",
+    "avatarPreview": "Avatar preview",
+    "saveError": "Failed to save"
   },
   "auth": {
     "gainModeratorPowers": "and gain moderator powers",

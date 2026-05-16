@@ -10,11 +10,11 @@ const data = computed(() => {
   const total = entries.reduce((s, [, c]) => s + c, 0)
   if (total === 0) return { segments: [], single: null }
 
-  // Єдиний сегмент — повне коло
-  if (entries.length === 1) {
+  const firstEntry = entries[0]
+  if (entries.length === 1 && firstEntry) {
     return {
       segments: [],
-      single: { label: entries[0][0], color: COLORS[0] },
+      single: { label: firstEntry[0], color: COLORS[0] },
     }
   }
 
@@ -43,7 +43,6 @@ const data = computed(() => {
 
 <template>
   <svg viewBox="0 0 100 100" class="block mx-auto" style="width: 100%; max-width: 500px;">
-    <!-- Єдиний голос — повне коло -->
     <template v-if="data.single">
       <circle cx="50" cy="50" r="49" :fill="data.single.color" />
       <text
@@ -55,7 +54,6 @@ const data = computed(() => {
         font-weight="400"
       >{{ data.single.label }}</text>
     </template>
-    <!-- Кілька сегментів — пай чарт -->
     <template v-else>
       <path
         v-for="seg in data.segments"

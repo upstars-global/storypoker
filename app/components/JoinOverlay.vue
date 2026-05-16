@@ -26,10 +26,10 @@ function submit() {
         aria-label="Close"
         @click="emit('close')"
       >
-        <IconClose style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="mui-h5 text-center">{{ $t('join.title') }}</h2>
-      <p class="mui-caption text-center mt-2" style="color: var(--text-muted);">
+      <p class="mui-caption text-center mt-2 text-muted">
         {{ $t('join.subtitle') }}
       </p>
       <div class="flex flex-col gap-4 mt-6">

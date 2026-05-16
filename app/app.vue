@@ -4,7 +4,7 @@ onMounted(() => init())
 </script>
 
 <template>
-  <div class="min-h-screen" style="background-color: var(--bg-app); color: var(--text-body);">
+  <div class="min-h-screen bg-app text-body">
     <ConnectionBanner />
     <NuxtPage />
   </div>

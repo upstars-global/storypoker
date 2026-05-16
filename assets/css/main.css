@@ -74,12 +74,17 @@ html[data-theme='light'] {
   --paper-overlay: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0));
 
   --icon-player-color: #495a63;
-  --card-value-color: #6e6e6e;
-  --card-bg-color: rgb(240, 240, 240);
-  --card-bg-hover: rgb(240, 240, 240);
+  --card-value-color: #525252;
+  --card-bg-color: rgb(255, 255, 255);
+  --card-bg-hover: rgb(248, 248, 248);
 }
 
-* {
+html,
+body,
+input,
+button,
+textarea,
+select {
   font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
 }
 
@@ -181,6 +186,11 @@ body {
   .mui-btn-text:active {
     box-shadow: none;
   }
+  .mui-btn-text:disabled {
+    color: var(--text-disabled);
+    background: transparent;
+    pointer-events: none;
+  }
 
   .mui-btn-secondary {
     background-color: var(--bg-appbar);
@@ -197,6 +207,32 @@ body {
   html[data-theme='light'] .mui-btn-secondary:hover {
     background-color: rgba(0, 0, 0, 0.14);
     box-shadow: none;
+  }
+
+  .mui-btn-sm {
+    min-width: 64px;
+    min-height: 28px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    box-shadow: var(--shadow-1);
+  }
+  @media (max-width: 899.95px) {
+    .mui-btn-sm {
+      min-width: 56px;
+    }
+  }
+
+  .mui-btn-md {
+    min-width: 180px;
+    min-height: 46px;
+    padding: 8px 22px;
+    border-radius: 23px;
+    font-size: 0.8125rem;
+    background-color: #607d8b;
+  }
+  .mui-btn-md:hover {
+    background-color: #1c313a;
   }
 
   .mui-icon-btn {

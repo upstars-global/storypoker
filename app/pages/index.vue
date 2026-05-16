@@ -45,8 +45,9 @@ onMounted(async () => {
 
   const namesByRoom: Record<string, string[]> = {}
   for (const row of playersData ?? []) {
-    namesByRoom[row.room_id] = namesByRoom[row.room_id] ?? []
-    namesByRoom[row.room_id].push(row.name)
+    const names = namesByRoom[row.room_id] ?? []
+    names.push(row.name)
+    namesByRoom[row.room_id] = names
   }
 
   const slugByRoom: Record<string, { slug: string | null; name: string | null }> = {}
@@ -79,7 +80,7 @@ async function createRoom() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-body)]">
+  <div class="min-h-screen flex flex-col bg-app text-body">
     <AppHeader
       :online-count="0"
       :is-moderator="false"
@@ -104,10 +105,10 @@ async function createRoom() {
 
     <main class="flex flex-1 flex-col items-center px-4 pt-[26px] pb-[40px]">
       <section class="w-full max-w-[460px] text-center">
-        <h2 class="m-0 text-[22px] font-bold leading-[1.235] tracking-[0.00735em] text-[var(--text-primary)]">
+        <h2 class="m-0 text-mui-h2 font-bold text-primary">
           {{ $t('home.title') }}
         </h2>
-        <p class="mt-[11px] whitespace-nowrap text-[15px] font-normal leading-[1.5] tracking-[0.00938em] text-[var(--text-body)]">
+        <p class="mt-[11px] whitespace-nowrap text-mui-body font-normal text-body">
           {{ $t('home.subtitle') }}
         </p>
         <div class="mt-[19px] flex flex-col items-center">
@@ -117,11 +118,13 @@ async function createRoom() {
             :placeholder="$t('home.namePlaceholder')"
             class="mui-input h-[51px] max-w-[280px]"
             :class="{ 'is-error': hasError }"
+            data-testid="home-name-input"
             @keyup.enter="createRoom"
           />
           <button
             v-wave
-            class="mt-[30px] inline-flex h-[46px] min-w-[180px] items-center justify-center rounded-[23px] bg-[#607d8b] px-[22px] text-[13px] font-medium uppercase leading-[1.75] tracking-[0.02857em] text-white shadow-[0_3px_1px_-2px_rgba(0,0,0,.2),0_2px_2px_0_rgba(0,0,0,.14),0_1px_5px_0_rgba(0,0,0,.12)] transition-[background-color,box-shadow] duration-200 hover:bg-[#1c313a] hover:shadow-[0_2px_4px_-1px_rgba(0,0,0,.2),0_4px_5px_0_rgba(0,0,0,.14),0_1px_10px_0_rgba(0,0,0,.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#607d8b]"
+            class="mui-btn mui-btn-md mt-[30px]"
+            data-testid="home-create-room"
             @click="createRoom"
           >
             {{ $t('home.createRoom') }}
@@ -130,8 +133,8 @@ async function createRoom() {
       </section>
 
       <section v-if="recentRooms.length" class="w-full max-w-[920px] mt-[60px]">
-        <table class="w-full text-[14px]" style="color: var(--text-body);">
-          <thead style="color: var(--text-primary);">
+        <table class="w-full text-mui-table text-body">
+          <thead class="text-primary">
             <tr class="text-left">
               <th class="px-3 py-3 font-medium">{{ $t('home.recentRooms') }}</th>
               <th class="px-3 py-3 font-medium">{{ $t('home.players') }}</th>
@@ -143,18 +146,17 @@ async function createRoom() {
               v-for="room in recentRooms"
               :key="room.roomId"
               class="border-t"
-              style="border-color: var(--border);"
             >
               <td class="px-3 py-3 align-top">
-                <NuxtLink :to="`/${room.slug ?? room.roomId}`" class="underline hover:no-underline" style="color: var(--primary);">
+                <NuxtLink :to="`/${room.slug ?? room.roomId}`" class="underline hover:no-underline text-primary">
                   {{ room.name ?? room.slug ?? room.roomId }}
                 </NuxtLink>
               </td>
               <td class="px-3 py-3 align-top">
                 <span v-if="room.playerNames.length">{{ room.playerNames.join(', ') }}</span>
-                <span v-else style="color: var(--text-muted);">—</span>
+                <span v-else class="text-muted">—</span>
               </td>
-              <td class="px-3 py-3 align-top text-right whitespace-nowrap" style="color: var(--text-muted);">
+              <td class="px-3 py-3 align-top text-right whitespace-nowrap text-muted">
                 {{ room.lastVisitedAt ? relativeTime(room.lastVisitedAt) : '—' }}
               </td>
             </tr>

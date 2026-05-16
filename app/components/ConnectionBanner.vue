@@ -10,42 +10,23 @@ const { status } = storeToRefs(presence)
   <Transition name="banner-fade">
     <div
       v-if="status === 'reconnecting'"
-      class="connection-banner"
+      class="fixed inset-x-0 top-0 z-[9999] flex h-8 items-center justify-center gap-2 bg-amber-500 text-sm font-medium text-black"
       role="status"
       aria-live="polite"
     >
-      <span class="banner-spinner" aria-hidden="true" />
+      <span class="h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" />
       <span>{{ $t('connection.reconnecting') }}</span>
     </div>
   </Transition>
 </template>
 
 <style scoped>
-.connection-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background-color: #f59e0b;
-  color: #000;
-  font-size: 14px;
-  font-weight: 500;
-  z-index: 9999;
+.banner-fade-enter-active,
+.banner-fade-leave-active {
+  transition: opacity 0.15s;
 }
-.banner-spinner {
-  width: 12px;
-  height: 12px;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.banner-fade-enter-from,
+.banner-fade-leave-to {
+  opacity: 0;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-.banner-fade-enter-active, .banner-fade-leave-active { transition: opacity 0.15s; }
-.banner-fade-enter-from, .banner-fade-leave-to { opacity: 0; }
 </style>

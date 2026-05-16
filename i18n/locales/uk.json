@@ -16,6 +16,7 @@
     "configureCardDeck": "Налаштувати колоду",
     "recentRooms": "Нещодавні кімнати",
     "lightTheme": "Світла тема",
+    "darkTheme": "Темна тема",
     "currentUserAccount": "акаунт поточного користувача",
     "accountSettings": "Налаштування акаунту",
     "roomSettings": "Налаштування кімнати"
@@ -42,7 +43,12 @@
   "timer": {
     "title": "Таймер",
     "roundStartedAgo": "Раунд розпочато {duration} тому",
-    "roundDuration": "Тривалість раунду: {duration}"
+    "roundDuration": "Тривалість раунду: {duration}",
+    "reset": "Скинути",
+    "pause": "Пауза",
+    "continue": "Продовжити",
+    "minus30": "-30с",
+    "plus30": "+30с"
   },
   "deck": {
     "configure": "Налаштувати колоду",
@@ -57,7 +63,8 @@
     "moderatorLabel": "модератор",
     "estimateGiven": "оцінку надано",
     "playerDeciding": "гравець вирішує",
-    "inactive": "неактивний"
+    "inactive": "неактивний",
+    "noVote": "не голосував"
   },
   "room": {
     "renameTitle": "Перейменувати кімнату",
@@ -68,10 +75,22 @@
     "slugTaken": "Це ім'я вже зайнято",
     "kickTitle": "Вилучити гравця",
     "kickConfirm": "Видалити {name} з кімнати?",
-    "kickButton": "Вилучити"
+    "kickButton": "Вилучити",
+    "notFoundTitle": "Кімнату не знайдено",
+    "notFoundDescription": "Кімнати з адресою «{id}» не існує. Можливо, її було видалено, або посилання містить помилку.",
+    "notFoundBackHome": "На головну"
   },
   "connection": {
     "reconnecting": "Перепідключення…"
+  },
+  "userSettings": {
+    "title": "Налаштування акаунту",
+    "styleRobots": "Роботи",
+    "styleDylan": "Dylan",
+    "previousAvatar": "Попередній аватар",
+    "nextAvatar": "Наступний аватар",
+    "avatarPreview": "Попередній перегляд аватара",
+    "saveError": "Не вдалося зберегти"
   },
   "auth": {
     "gainModeratorPowers": "і отримайте права модератора",

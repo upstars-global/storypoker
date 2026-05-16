@@ -1,6 +1,6 @@
 # Story Poker
 
-_Vibe Story Poking - Every story point counts_
+_Vibe Story Poker - Every story point counts_
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/09bec6c8-94fe-4c39-b159-2c54e9a3c309/deploy-status)](https://app.netlify.com/projects/storypok/deploys)
 
@@ -37,8 +37,8 @@ npm run test:ci
 ```
 
 ### CI/CD (GitHub Actions + Netlify)
-- CI: `.github/workflows/ci.yml` запускає `npm ci`, `npm run test:ci`, `npm run build` на PR та `main`.
-- CD: `.github/workflows/deploy-netlify.yml` деплоїть на Netlify при пуші в `main`, якщо задані secrets:
+- CI: `.github/workflows/ci.yml` запускає `npm ci` і `npm run test:ci` на PR та `main`; Playwright E2E запускається, якщо задані E2E secrets.
+- CD: той самий workflow деплоїть на Netlify при пуші в `main`, якщо основні checks пройшли й задані Netlify secrets; E2E блокує deploy тільки коли запускається і падає.
   - `NETLIFY_AUTH_TOKEN`
   - `NETLIFY_SITE_ID`
 
@@ -49,21 +49,33 @@ claude --dangerously-skip-permissions
 
 ### Skills
 ```zsh
-npx skills add anthropics/skills@frontend-design -a codex claude-code -y
-npx skills add anthropics/skills@webapp-testing -a codex claude-code -y
-# npx skills add anthropics/claude-plugins-official@claude-md-improver -a codex claude-code -y
-npx skills add obra/superpowers@brainstorming -a codex claude-code -y
-npx skills add obra/superpowers@writing-plans -a codex claude-code -y
-npx skills add obra/superpowers@executing-plans -a codex claude-code -y
-npx skills add obra/superpowers@subagent-driven-development -a codex claude-code -y
-npx skills add obra/superpowers@dispatching-parallel-agents -a codex claude-code -y
-npx skills add obra/superpowers@test-driven-development -a codex claude-code -y
-npx skills add obra/superpowers@systematic-debugging -a codex claude-code -y
-npx skills add obra/superpowers@verification-before-completion -a codex claude-code -y
-npx skills add obra/superpowers@receiving-code-review -a codex claude-code -y
-npx skills add obra/superpowers@requesting-code-review -a codex claude-code -y
-npx skills add obra/superpowers@using-git-worktrees -a codex claude-code -y
-npx skills add obra/superpowers@finishing-a-development-branch -a codex claude-code -y
+# FRONTEND
+npx skills add giuseppe-trisciuoglio/developer-kit -s tailwind-css-patterns -a codex claude-code -y
+npx skills add anthropics/skills -s frontend-design -a codex claude-code -y
+npx skills add better-auth/better-icons -s better-icons -a codex claude-code -y
+npx skills add wshobson/agents -s tailwind-design-system -a codex claude-code -y
+
+# TESTS
+npx skills add anthropics/skills -s webapp-testing -a codex claude-code -y
+npx skills add antfu/skills@vitest -a codex claude-code -y
+npx skills add currents-dev/playwright-best-practices-skill -a codex claude-code -y
+
+# WORKFLOW
+npx skills add obra/superpowers -s brainstorming -a codex claude-code -y
+npx skills add obra/superpowers -s writing-plans -a codex claude-code -y
+npx skills add obra/superpowers -s dispatching-parallel-agents -a codex claude-code -y
+npx skills add obra/superpowers -s executing-plans -a codex claude-code -y
+npx skills add obra/superpowers -s subagent-driven-development -a codex claude-code -y
+npx skills add obra/superpowers -s systematic-debugging -a codex claude-code -y
+npx skills add obra/superpowers -s test-driven-development -a codex claude-code -y
+npx skills add obra/superpowers -s using-git-worktrees -a codex claude-code -y
+npx skills add obra/superpowers -s verification-before-completion -a codex claude-code -y
+npx skills add obra/superpowers -s receiving-code-review -a codex claude-code -y
+npx skills add obra/superpowers -s requesting-code-review -a codex claude-code -y
+npx skills add obra/superpowers -s finishing-a-development-branch -a codex claude-code -y
+
+# META
+npx skills add anthropics/claude-plugins-official -s claude-md-improver -a codex claude-code -y
 ```
 
 ### Як подивитись скільки і яких скілів використовували агенти

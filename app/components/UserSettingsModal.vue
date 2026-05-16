@@ -12,6 +12,7 @@ const emit = defineEmits<{
 const { user } = storeToRefs(useAuthStore())
 const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
+const { t } = useI18n()
 
 const initial = user.value ? profilesStore.get(user.value.id) : null
 const style = ref<AvatarStyle>(initial?.avatar_style ?? 'bottts')
@@ -54,8 +55,8 @@ async function save() {
       avatar_seed: seed.value,
     })
     emit('close')
-  } catch (e: any) {
-    error.value = e?.message ?? 'Failed to save'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : t('userSettings.saveError')
   } finally {
     saving.value = false
   }
@@ -69,13 +70,13 @@ async function save() {
         v-wave
         class="mui-icon-btn absolute"
         style="top: 12px; right: 12px;"
-        aria-label="Close"
+        :aria-label="$t('common.close')"
         @click="emit('close')"
       >
-        <IconClose style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
       </button>
-      <h2 class="text-center text-[22px] font-bold tracking-[0.00735em]" style="color: var(--text-primary);">
-        Account Settings
+      <h2 class="text-center text-mui-h2 font-bold text-primary">
+        {{ $t('userSettings.title') }}
       </h2>
 
       <div class="mt-6 flex justify-center gap-2">
@@ -88,7 +89,7 @@ async function save() {
           style="min-width: 120px;"
           @click="selectStyle(s)"
         >
-          {{ s === 'bottts' ? 'Robots' : 'Dylan' }}
+          {{ s === 'bottts' ? $t('userSettings.styleRobots') : $t('userSettings.styleDylan') }}
         </button>
       </div>
 
@@ -97,34 +98,36 @@ async function save() {
           v-wave
           class="mui-btn mui-btn-secondary"
           style="min-width: inherit;"
-          aria-label="Previous"
+          :aria-label="$t('userSettings.previousAvatar')"
           :disabled="cursor === 0"
           @click="prev"
         >
-          <IconNavigateBefore style="font-size: 1.25rem;" />
+          <Icon class="mui-svg-icon" name="ic:baseline-navigate-before" style="font-size: 1.25rem;" />
         </button>
         <img
           v-if="previewUri"
           :src="previewUri"
-          alt="Avatar preview"
+          :alt="$t('userSettings.avatarPreview')"
           class="rounded-full"
           style="width: 144px; height: 144px;"
-        />
+        >
         <button
           v-wave
           class="mui-btn mui-btn-secondary"
           style="min-width: inherit;"
-          aria-label="Next"
+          :aria-label="$t('userSettings.nextAvatar')"
           @click="next"
         >
-          <IconNavigateNext style="font-size: 1.25rem;" />
+          <Icon class="mui-svg-icon" name="ic:baseline-navigate-next" style="font-size: 1.25rem;" />
         </button>
       </div>
 
-      <p v-if="error" class="text-[13px] mt-4 text-center" style="color: #d32f2f;">{{ error }}</p>
+      <p v-if="error" class="text-mui-caption mt-4 text-center text-danger">{{ error }}</p>
 
       <div class="flex justify-center mt-8">
-        <button v-wave class="mui-btn" style="min-width: 120px;" :disabled="saving" @click="save">Save</button>
+        <button v-wave class="mui-btn" style="min-width: 120px;" :disabled="saving" @click="save">
+          {{ $t('common.save') }}
+        </button>
       </div>
     </div>
   </div>

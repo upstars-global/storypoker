@@ -7,6 +7,7 @@ const props = defineProps<{
     vote: string | null
     is_online: boolean
     user_id: string | null
+    votePending: boolean
   }
   phase: 'voting' | 'revealed'
   currentPlayerId: string | null
@@ -26,7 +27,6 @@ const emit = defineEmits<{
 import { useProfilesStore } from '~/stores/profiles'
 const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
-const { isLight } = useTheme()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
 const showMenu = computed(() => props.openMenuId === props.player.id)
@@ -47,7 +47,7 @@ function toggleMenu() {
       menuStyle.value = {
         position: 'fixed',
         top: `${rect.bottom + 4}px`,
-        left: `${rect.left}px`,
+        right: `${window.innerWidth - rect.right}px`,
         minWidth: '200px',
       }
     }
@@ -60,6 +60,10 @@ function close() { emit('menuClose') }
 
 <template>
   <div
+    data-testid="player-row"
+    :data-player-name="player.name"
+    :data-voted="String(player.vote !== null)"
+    :data-vote-pending="String(player.votePending)"
     class="grid items-center gap-2 rounded relative"
     style="grid-template-columns: 32px 1fr auto 36px;"
   >
@@ -76,25 +80,33 @@ function close() { emit('menuClose') }
       >
         {{ player.name }}
       </span>
-      <IconModerator
+      <Icon
         v-if="player.is_moderator"
-        class="flex-none"
+        class="mui-svg-icon flex-none"
+        name="app:moderator"
         style="font-size: 1.5rem; color: var(--icon-player-color);"
         :aria-label="$t('players.moderatorLabel')"
+        :title="$t('players.moderatorLabel')"
       />
     </div>
 
     <template v-if="player.is_online">
       <template v-if="phase === 'voting'">
-        <IconCheckCircle
+        <Icon
           v-if="player.vote !== null"
+          class="mui-svg-icon"
+          name="ic:baseline-check-circle"
           style="font-size: 1.5rem; color: var(--icon-player-color);"
           :aria-label="$t('players.estimateGiven')"
+          :title="$t('players.estimateGiven')"
         />
-        <IconDeciding
+        <Icon
           v-else
+          class="mui-svg-icon"
+          name="app:deciding"
           style="font-size: 1.5rem; color: var(--icon-player-color);"
           :aria-label="$t('players.playerDeciding')"
+          :title="$t('players.playerDeciding')"
         />
       </template>
       <template v-else>
@@ -103,27 +115,37 @@ function close() { emit('menuClose') }
           class="text-base font-medium text-center"
           style="width: 24px; color: var(--text-primary);"
         >{{ player.vote }}</span>
-        <IconCancel
+        <Icon
           v-else
-          :style="{ fontSize: '1.5rem', color: isLight ? 'rgb(69, 90, 100)' : 'rgb(250, 250, 250)' }"
+          class="mui-svg-icon"
+          name="ic:baseline-cancel"
+          style="font-size: 1.5rem; color: var(--icon-player-color);"
+          :aria-label="$t('players.noVote')"
+          :title="$t('players.noVote')"
         />
       </template>
     </template>
     <template v-else>
       <span
         v-if="phase === 'revealed' && player.vote !== null"
-        class="text-base font-medium text-center"
-        :style="{ width: '24px', color: isLight ? 'rgba(0, 0, 0, 0.38)' : 'rgb(123, 123, 123)' }"
+        class="text-base font-medium text-center text-disabled dark:text-muted"
+        style="width: 24px;"
       >{{ player.vote }}</span>
-      <IconCheckCircle
+      <Icon
         v-else-if="phase === 'voting' && player.vote !== null"
-        :style="{ fontSize: '1.5rem', color: isLight ? 'rgba(0, 0, 0, 0.26)' : 'rgba(255, 255, 255, 0.3)' }"
+        class="mui-svg-icon text-black/[0.26] dark:text-white/30"
+        name="ic:baseline-check-circle"
+        style="font-size: 1.5rem;"
         :aria-label="$t('players.estimateGiven')"
+        :title="$t('players.estimateGiven')"
       />
-      <IconOffline
+      <Icon
         v-else
-        :style="{ fontSize: '1.5rem', color: isLight ? 'rgba(0, 0, 0, 0.26)' : 'rgba(255, 255, 255, 0.3)' }"
+        class="mui-svg-icon text-black/[0.26] dark:text-white/30"
+        name="app:offline"
+        style="font-size: 1.5rem;"
         :aria-label="$t('players.inactive')"
+        :title="$t('players.inactive')"
       />
     </template>
 
@@ -136,7 +158,7 @@ function close() { emit('menuClose') }
           style="padding: 4px;"
           @click.stop="toggleMenu"
         >
-          <IconMoreVert :style="{ fontSize: '1.5rem', color: isLight ? 'rgba(0, 0, 0, 0.54)' : 'rgb(255, 255, 255)' }" />
+          <Icon class="mui-svg-icon text-muted dark:text-inverse" name="ic:baseline-more-vert" style="font-size: 1.5rem;" />
         </button>
         <Teleport to="body">
           <ul
@@ -151,10 +173,10 @@ function close() { emit('menuClose') }
                   v-wave
                   class="mui-menu-item"
                   role="menuitemcheckbox"
-                  :aria-checked="String(player.is_moderator)"
+                  :aria-checked="player.is_moderator"
                   @click="emit('toggleModerator', player.id, !player.is_moderator); close()"
                 >
-                  <IconModerator class="mui-menu-icon" />
+                  <Icon class="mui-menu-icon" name="app:moderator" />
                   <span class="flex-1">{{ $t('players.isModerator') }}</span>
                   <span class="mui-switch">
                     <input type="checkbox" :checked="player.is_moderator" tabindex="-1" readonly />
@@ -165,24 +187,24 @@ function close() { emit('menuClose') }
               </li>
               <li>
                 <button v-wave class="mui-menu-item" @click="emit('rename', player.id); close()">
-                  <IconEdit class="mui-menu-icon" /> {{ $t('players.renamePlayer') }}
+                  <Icon class="mui-menu-icon" name="ic:baseline-edit" /> {{ $t('players.renamePlayer') }}
                 </button>
               </li>
               <li>
                 <button v-wave class="mui-menu-item" @click="emit('leave', player.id); close()">
-                  <IconLeaveRoom class="mui-menu-icon" /> {{ $t('players.leaveRoom') }}
+                  <Icon class="mui-menu-icon" name="app:leave-room" /> {{ $t('players.leaveRoom') }}
                 </button>
               </li>
             </template>
             <template v-else-if="currentUserIsAuthorizedModerator">
               <li>
                 <button v-wave class="mui-menu-item" @click="emit('rename', player.id); close()">
-                  <IconEdit class="mui-menu-icon" /> {{ $t('players.renamePlayer') }}
+                  <Icon class="mui-menu-icon" name="ic:baseline-edit" /> {{ $t('players.renamePlayer') }}
                 </button>
               </li>
               <li>
                 <button v-wave class="mui-menu-item" @click="emit('kick', player.id); close()">
-                  <IconPersonRemove class="mui-menu-icon" /> {{ $t('players.kickPlayer') }}
+                  <Icon class="mui-menu-icon" name="ic:baseline-person-remove" /> {{ $t('players.kickPlayer') }}
                 </button>
               </li>
             </template>

@@ -29,13 +29,24 @@ export const useRoomStore = defineStore('room', () => {
       .filter(p => p.vote !== null)
       .map(p => ({ player_id: p.id, name: p.name, vote: p.vote as string }))
 
-    await supabase.from('room_state').update({ phase: 'revealed' }).eq('room_id', roomId.value)
+    const revealedAt = new Date()
+    const update: Partial<Pick<RoomState, 'phase' | 'paused_at' | 'paused_elapsed_ms'>> = { phase: 'revealed' }
+    if (roomState.value.paused_at) {
+      const pausedSince = new Date(roomState.value.paused_at).getTime()
+      update.paused_at = null
+      update.paused_elapsed_ms = Math.max(
+        0,
+        (roomState.value.paused_elapsed_ms ?? 0) + (revealedAt.getTime() - pausedSince),
+      )
+    }
+
+    await supabase.from('room_state').update(update).eq('room_id', roomId.value)
 
     if (votes.length >= 2) {
       await supabase.from('round_history').insert({
         room_id: roomId.value,
         started_at: roomState.value.round_started_at,
-        revealed_at: new Date().toISOString(),
+        revealed_at: revealedAt.toISOString(),
         votes,
       })
     }
@@ -48,9 +59,58 @@ export const useRoomStore = defineStore('room', () => {
       supabase.from('players').update({ vote: null }).eq('room_id', roomId.value),
       supabase
         .from('room_state')
-        .update({ phase: 'voting', round_started_at: new Date().toISOString() })
+        .update({
+          phase: 'voting',
+          round_started_at: new Date().toISOString(),
+          paused_at: null,
+          paused_elapsed_ms: 0,
+        })
         .eq('room_id', roomId.value),
     ])
+  }
+
+  async function resetTimer() {
+    if (!roomId.value) return
+    await getSupabase()
+      .from('room_state')
+      .update({
+        round_started_at: new Date().toISOString(),
+        paused_at: null,
+        paused_elapsed_ms: 0,
+      })
+      .eq('room_id', roomId.value)
+  }
+
+  async function pauseTimer() {
+    if (!roomId.value || !roomState.value || roomState.value.paused_at) return
+    await getSupabase()
+      .from('room_state')
+      .update({ paused_at: new Date().toISOString() })
+      .eq('room_id', roomId.value)
+  }
+
+  async function resumeTimer() {
+    if (!roomId.value || !roomState.value || !roomState.value.paused_at) return
+    const pausedSince = new Date(roomState.value.paused_at).getTime()
+    const next = Math.max(0, (roomState.value.paused_elapsed_ms ?? 0) + (Date.now() - pausedSince))
+    await getSupabase()
+      .from('room_state')
+      .update({ paused_at: null, paused_elapsed_ms: next })
+      .eq('room_id', roomId.value)
+  }
+
+  async function adjustTimer(deltaMs: number) {
+    if (!roomId.value || !roomState.value) return
+    const start = new Date(roomState.value.round_started_at).getTime()
+    const pivot = roomState.value.paused_at
+      ? new Date(roomState.value.paused_at).getTime()
+      : Date.now()
+    const cap = pivot - (roomState.value.paused_elapsed_ms ?? 0)
+    const nextStart = Math.min(cap, start - deltaMs)
+    await getSupabase()
+      .from('room_state')
+      .update({ round_started_at: new Date(nextStart).toISOString() })
+      .eq('room_id', roomId.value)
   }
 
   async function saveCardDeck(cards: string[]) {
@@ -106,5 +166,20 @@ export const useRoomStore = defineStore('room', () => {
     }
   }
 
-  return { roomId, roomState, applyChange, reveal, startNewRound, saveCardDeck, setDeckPreset, create, resolveRoom, setRoomName }
+  return {
+    roomId,
+    roomState,
+    applyChange,
+    reveal,
+    startNewRound,
+    saveCardDeck,
+    setDeckPreset,
+    create,
+    resolveRoom,
+    setRoomName,
+    resetTimer,
+    pauseTimer,
+    resumeTimer,
+    adjustTimer,
+  }
 })

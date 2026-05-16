@@ -23,7 +23,7 @@ const groups = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-8 w-full">
+  <div data-testid="results-area" class="flex flex-col items-center gap-8 w-full">
     <div v-if="groups" class="w-full flex flex-wrap justify-center gap-8">
       <div
         v-for="g in groups"
@@ -31,7 +31,7 @@ const groups = computed(() => {
         class="flex flex-col items-center gap-2"
         style="flex: 1 1 280px; max-width: 500px;"
       >
-        <span class="mui-h6" style="color: var(--text-primary);">{{ g.label }}</span>
+        <span class="mui-h6 text-primary">{{ g.label }}</span>
         <PieChart :votes="g.votes" />
       </div>
     </div>
@@ -39,6 +39,7 @@ const groups = computed(() => {
     <button
       v-if="isModerator"
       class="mui-btn"
+      data-testid="new-round-button"
       @click="emit('startNewRound')"
     >
       {{ $t('cards.startNewRound') }}
