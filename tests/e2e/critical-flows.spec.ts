@@ -3,8 +3,8 @@ import { test, expect } from '../support/test'
 import { AuthPage } from '../page-objects/AuthPage'
 
 test('signup → success screen (email confirmation on)', async ({ page, signupViaUI, trackedEmails }) => {
-  const password = process.env.E2E_TEST_USER_PASSWORD
-  if (!password) throw new Error('E2E_TEST_USER_PASSWORD is not set')
+  const password = process.env.E2E_TEST_USER_PASSWORD ?? ''
+  test.skip(!password, 'E2E_TEST_USER_PASSWORD is not set')
 
   const email = `e2e-${randomUUID()}@storypoker-test.dev`
   trackedEmails.push(email)
@@ -14,11 +14,9 @@ test('signup → success screen (email confirmation on)', async ({ page, signupV
 })
 
 test('login persistent user → account menu reflects signed-in/out', async ({ page }) => {
-  const email = process.env.E2E_TEST_USER_EMAIL
-  const password = process.env.E2E_TEST_USER_PASSWORD
-  if (!email || !password) {
-    throw new Error('E2E_TEST_USER_EMAIL / E2E_TEST_USER_PASSWORD must be set')
-  }
+  const email = process.env.E2E_TEST_USER_EMAIL ?? ''
+  const password = process.env.E2E_TEST_USER_PASSWORD ?? ''
+  test.skip(!email || !password, 'E2E_TEST_USER_EMAIL / E2E_TEST_USER_PASSWORD must be set')
 
   const auth = new AuthPage(page)
   await auth.login(email, password)

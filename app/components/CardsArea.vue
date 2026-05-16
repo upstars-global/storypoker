@@ -27,7 +27,7 @@ const emit = defineEmits<{
           :class="{ 'is-selected': selectedVote === card }"
           data-testid="vote-card"
           :data-value="card"
-          :aria-pressed="String(selectedVote === card)"
+          :aria-pressed="selectedVote === card"
           @click="emit('vote', card)"
         >
           <span class="mui-card-value">{{ card }}</span>

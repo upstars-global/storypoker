@@ -55,10 +55,10 @@ npm run generate  # static pre-render for Netlify
 npm run preview
 npm test          # vitest run
 npm run test:watch
-npm run test:ci   # vitest run --coverage
+npm run test:ci   # lint + typecheck + unit + build
 ```
 
-CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci`, `npm run build`; deploy job runs `npm run generate` and Netlify deploy on `main` when Netlify secrets exist.
+CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci`; E2E runs when E2E secrets exist; deploy requires tests and Netlify secrets.
 
 ## Environment Setup
 

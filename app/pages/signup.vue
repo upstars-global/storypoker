@@ -48,7 +48,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-body)]">
+  <div class="min-h-screen flex flex-col bg-app text-body">
     <AppHeader
       :online-count="0"
       :is-moderator="false"
@@ -65,26 +65,26 @@ async function onSubmit() {
 
         <div v-if="success" data-testid="signup-success" class="text-center mt-6">
           <p class="mui-body">{{ $t('signup.confirmEmail') }}</p>
-          <NuxtLink to="/login" class="mui-caption underline hover:no-underline" style="color: var(--primary);">{{ $t('signup.backToSignIn') }}</NuxtLink>
+          <NuxtLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('signup.backToSignIn') }}</NuxtLink>
         </div>
 
         <form v-else class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
           <div>
             <input v-model.trim="form.email" type="email" autocomplete="email" :placeholder="$t('common.emailPlaceholder')" class="mui-input" :class="{ 'is-error': errors.email }" data-testid="signup-email" />
-            <p v-if="errors.email" class="text-sm mt-1" style="color: var(--danger);">{{ errors.email }}</p>
+            <p v-if="errors.email" class="text-sm mt-1 text-danger">{{ errors.email }}</p>
           </div>
 
           <div>
             <input v-model="form.password" type="password" autocomplete="new-password" :placeholder="$t('common.passwordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.password }" data-testid="signup-password" />
-            <p v-if="errors.password" class="text-sm mt-1" style="color: var(--danger);">{{ errors.password }}</p>
+            <p v-if="errors.password" class="text-sm mt-1 text-danger">{{ errors.password }}</p>
           </div>
 
           <div>
             <input v-model="form.confirm" type="password" autocomplete="new-password" :placeholder="$t('common.confirmPasswordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.confirm }" data-testid="signup-confirm" />
-            <p v-if="errors.confirm" class="text-sm mt-1" style="color: var(--danger);">{{ errors.confirm }}</p>
+            <p v-if="errors.confirm" class="text-sm mt-1 text-danger">{{ errors.confirm }}</p>
           </div>
 
-          <p v-if="errors.server" class="text-sm" style="color: var(--danger);">{{ errors.server }}</p>
+          <p v-if="errors.server" class="text-sm text-danger">{{ errors.server }}</p>
 
           <div class="flex justify-center mt-2">
             <button v-wave class="mui-btn" type="submit" :disabled="loading" data-testid="signup-submit">
@@ -94,7 +94,7 @@ async function onSubmit() {
 
           <p class="mui-caption text-center mt-2">
             {{ $t('signup.alreadyHaveAccount') }}
-            <NuxtLink to="/login" class="underline hover:no-underline" style="color: var(--primary);">{{ $t('common.signIn') }}</NuxtLink>
+            <NuxtLink to="/login" class="underline hover:no-underline text-primary">{{ $t('common.signIn') }}</NuxtLink>
           </p>
         </form>
       </section>

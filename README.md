@@ -37,8 +37,8 @@ npm run test:ci
 ```
 
 ### CI/CD (GitHub Actions + Netlify)
-- CI: `.github/workflows/ci.yml` запускає `npm ci`, `npm run test:ci`, `npm run build` на PR та `main`.
-- CD: `.github/workflows/deploy-netlify.yml` деплоїть на Netlify при пуші в `main`, якщо задані secrets:
+- CI: `.github/workflows/ci.yml` запускає `npm ci` і `npm run test:ci` на PR та `main`; Playwright E2E запускається, якщо задані E2E secrets.
+- CD: той самий workflow деплоїть на Netlify при пуші в `main`, якщо основні checks пройшли й задані Netlify secrets; E2E блокує deploy тільки коли запускається і падає.
   - `NETLIFY_AUTH_TOKEN`
   - `NETLIFY_SITE_ID`
 

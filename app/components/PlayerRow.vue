@@ -27,7 +27,6 @@ const emit = defineEmits<{
 import { useProfilesStore } from '~/stores/profiles'
 const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
-const { isLight } = useTheme()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
 const showMenu = computed(() => props.openMenuId === props.player.id)
@@ -48,7 +47,7 @@ function toggleMenu() {
       menuStyle.value = {
         position: 'fixed',
         top: `${rect.bottom + 4}px`,
-        left: `${rect.left}px`,
+        right: `${window.innerWidth - rect.right}px`,
         minWidth: '200px',
       }
     }
@@ -117,28 +116,28 @@ function close() { emit('menuClose') }
           v-else
           class="mui-svg-icon"
           name="app:cancel"
-          :style="{ fontSize: '1.5rem', color: isLight ? 'rgb(69, 90, 100)' : 'rgb(250, 250, 250)' }"
+          style="font-size: 1.5rem; color: var(--icon-player-color);"
         />
       </template>
     </template>
     <template v-else>
       <span
         v-if="phase === 'revealed' && player.vote !== null"
-        class="text-base font-medium text-center"
-        :style="{ width: '24px', color: isLight ? 'rgba(0, 0, 0, 0.38)' : 'rgb(123, 123, 123)' }"
+        class="text-base font-medium text-center text-disabled dark:text-muted"
+        style="width: 24px;"
       >{{ player.vote }}</span>
       <Icon
         v-else-if="phase === 'voting' && player.vote !== null"
-        class="mui-svg-icon"
+        class="mui-svg-icon text-black/[0.26] dark:text-white/30"
         name="app:check-circle"
-        :style="{ fontSize: '1.5rem', color: isLight ? 'rgba(0, 0, 0, 0.26)' : 'rgba(255, 255, 255, 0.3)' }"
+        style="font-size: 1.5rem;"
         :aria-label="$t('players.estimateGiven')"
       />
       <Icon
         v-else
-        class="mui-svg-icon"
+        class="mui-svg-icon text-black/[0.26] dark:text-white/30"
         name="app:offline"
-        :style="{ fontSize: '1.5rem', color: isLight ? 'rgba(0, 0, 0, 0.26)' : 'rgba(255, 255, 255, 0.3)' }"
+        style="font-size: 1.5rem;"
         :aria-label="$t('players.inactive')"
       />
     </template>
@@ -152,7 +151,7 @@ function close() { emit('menuClose') }
           style="padding: 4px;"
           @click.stop="toggleMenu"
         >
-          <Icon class="mui-svg-icon" name="app:more-vert" :style="{ fontSize: '1.5rem', color: isLight ? 'rgba(0, 0, 0, 0.54)' : 'rgb(255, 255, 255)' }" />
+          <Icon class="mui-svg-icon text-muted dark:text-inverse" name="app:more-vert" style="font-size: 1.5rem;" />
         </button>
         <Teleport to="body">
           <ul
@@ -167,7 +166,7 @@ function close() { emit('menuClose') }
                   v-wave
                   class="mui-menu-item"
                   role="menuitemcheckbox"
-                  :aria-checked="String(player.is_moderator)"
+                  :aria-checked="player.is_moderator"
                   @click="emit('toggleModerator', player.id, !player.is_moderator); close()"
                 >
                   <Icon class="mui-menu-icon" name="app:moderator" />

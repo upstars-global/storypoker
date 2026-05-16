@@ -36,6 +36,8 @@ npm run generate     # static pre-render for Netlify
 npm run preview
 npm run lint         # ESLint
 npm run typecheck    # vue-tsc via nuxt typecheck
+npm test             # vitest run
+npm run test:watch
 npm run test:unit    # vitest run
 npm run test:unit:watch
 npm run test:unit:coverage
@@ -44,7 +46,7 @@ npm run test:e2e:smoke   # smoke flows (local only)
 npm run test:ci      # lint + typecheck + unit + build (what CI runs)
 ```
 
-CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); deploy runs `npm run generate` on `main` when Netlify secrets exist.
+CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); E2E runs when E2E secrets exist; deploy runs `npm run generate` on `main` when checks pass and Netlify secrets exist.
 
 ## Lockfile
 

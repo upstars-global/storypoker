@@ -45,8 +45,9 @@ onMounted(async () => {
 
   const namesByRoom: Record<string, string[]> = {}
   for (const row of playersData ?? []) {
-    namesByRoom[row.room_id] = namesByRoom[row.room_id] ?? []
-    namesByRoom[row.room_id].push(row.name)
+    const names = namesByRoom[row.room_id] ?? []
+    names.push(row.name)
+    namesByRoom[row.room_id] = names
   }
 
   const slugByRoom: Record<string, { slug: string | null; name: string | null }> = {}
@@ -79,7 +80,7 @@ async function createRoom() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-body)]">
+  <div class="min-h-screen flex flex-col bg-app text-body">
     <AppHeader
       :online-count="0"
       :is-moderator="false"
@@ -104,10 +105,10 @@ async function createRoom() {
 
     <main class="flex flex-1 flex-col items-center px-4 pt-[26px] pb-[40px]">
       <section class="w-full max-w-[460px] text-center">
-        <h2 class="m-0 text-[22px] font-bold leading-[1.235] tracking-[0.00735em] text-[var(--text-primary)]">
+        <h2 class="m-0 text-[22px] font-bold leading-[1.235] tracking-[0.00735em] text-primary">
           {{ $t('home.title') }}
         </h2>
-        <p class="mt-[11px] whitespace-nowrap text-[15px] font-normal leading-[1.5] tracking-[0.00938em] text-[var(--text-body)]">
+        <p class="mt-[11px] whitespace-nowrap text-[15px] font-normal leading-[1.5] tracking-[0.00938em] text-body">
           {{ $t('home.subtitle') }}
         </p>
         <div class="mt-[19px] flex flex-col items-center">
@@ -148,15 +149,15 @@ async function createRoom() {
               style="border-color: var(--border);"
             >
               <td class="px-3 py-3 align-top">
-                <NuxtLink :to="`/${room.slug ?? room.roomId}`" class="underline hover:no-underline" style="color: var(--primary);">
+                <NuxtLink :to="`/${room.slug ?? room.roomId}`" class="underline hover:no-underline text-primary">
                   {{ room.name ?? room.slug ?? room.roomId }}
                 </NuxtLink>
               </td>
               <td class="px-3 py-3 align-top">
                 <span v-if="room.playerNames.length">{{ room.playerNames.join(', ') }}</span>
-                <span v-else style="color: var(--text-muted);">—</span>
+                <span v-else class="text-muted">—</span>
               </td>
-              <td class="px-3 py-3 align-top text-right whitespace-nowrap" style="color: var(--text-muted);">
+              <td class="px-3 py-3 align-top text-right whitespace-nowrap text-muted">
                 {{ room.lastVisitedAt ? relativeTime(room.lastVisitedAt) : '—' }}
               </td>
             </tr>

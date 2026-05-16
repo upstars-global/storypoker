@@ -4,6 +4,7 @@ export default {
   content: [
     './app/**/*.{vue,ts}',
   ],
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
@@ -27,6 +28,8 @@ export default {
         muted: 'var(--text-muted)',
         disabled: 'var(--text-disabled)',
         inverse: 'var(--text-inverse)',
+        danger: 'var(--danger)',
+        success: 'var(--success)',
       },
       borderColor: {
         DEFAULT: 'var(--border)',

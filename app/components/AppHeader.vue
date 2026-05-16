@@ -39,6 +39,11 @@ const myAvatarUri = computed(() => {
   return ''
 })
 
+const headerLabel = computed(() => {
+  if (props.roomName) return props.playerName
+  return user.value?.email ?? ''
+})
+
 const profileFetched = ref(!user.value)
 
 watch(() => user.value?.id, async (id) => {
@@ -109,8 +114,8 @@ function toggleLocale() {
       >
         {{ locale === 'uk' ? 'EN' : 'UA' }}
       </button>
-      <span v-if="playerName" class="text-sm" style="color: rgba(255,255,255,0.85);">
-        {{ playerName }}<template v-if="user && user.email"> ({{ user.email }})</template>
+      <span v-if="headerLabel" class="text-sm" style="color: rgba(255,255,255,0.85);">
+        {{ headerLabel }}
       </span>
       <div class="relative">
         <button
@@ -157,11 +162,11 @@ function toggleLocale() {
             v-wave
             class="mui-menu-item whitespace-nowrap"
             role="menuitemcheckbox"
-            :aria-checked="String(isLight)"
+            :aria-checked="isLight"
             @click="toggleTheme"
           >
-            <Icon class="mui-menu-icon" name="app:dark-mode" />
-            <span class="flex-1">{{ $t('header.lightTheme') }}</span>
+            <Icon class="mui-menu-icon" :name="isLight ? 'app:light-mode' : 'app:dark-mode'" />
+            <span class="flex-1">{{ isLight ? $t('header.lightTheme') : $t('header.darkTheme') }}</span>
             <span class="mui-switch">
               <input type="checkbox" :checked="isLight" tabindex="-1" readonly />
               <span class="track" />

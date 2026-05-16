@@ -2,7 +2,7 @@ import { test, expect } from '../support/test'
 import { HomePage } from '../page-objects/HomePage'
 import { RoomPage } from '../page-objects/RoomPage'
 
-test('home → create room → joined as moderator with auto-rejoin', async ({ page, trackedRoomIds }) => {
+test('home → create room → joined as moderator with auto-rejoin', async ({ page, trackedRoomIds, consoleErrors: _consoleErrors }) => {
   const home = new HomePage(page)
   await home.goto()
   const roomId = await home.createRoom('E2E Tester')
@@ -30,7 +30,7 @@ test('home → create room → joined as moderator with auto-rejoin', async ({ p
   ).toBeVisible()
 })
 
-test('moderator votes, reveals, starts new round', async ({ page, trackedRoomIds }) => {
+test('moderator votes, reveals, starts new round', async ({ page, trackedRoomIds, consoleErrors: _consoleErrors }) => {
   const home = new HomePage(page)
   const room = new RoomPage(page)
   const NAME = 'Moderator Solo'

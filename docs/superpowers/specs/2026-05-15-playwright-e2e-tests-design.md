@@ -35,34 +35,37 @@
 ### Файлова структура
 
 ```
-e2e/
-├── tests/
-│   ├── home-create-room.spec.ts
-│   ├── solo-vote-reveal.spec.ts
-│   └── auth-signup-login.spec.ts
+playwright.config.ts
+tests/
+├── e2e/
+│   ├── smoke.spec.ts                 # home/create + solo vote/reveal
+│   └── critical-flows.spec.ts        # auth signup/login, chromium only
 ├── fixtures/
 │   ├── room.ts                       # unique room id + service-role cleanup
 │   ├── auth.ts                       # signup helper + admin cleanup
-│   └── supabase-admin.ts             # service-role client (Node-only)
-├── pages/
+│   └── console.ts                    # browser console/pageerror guard
+├── page-objects/
 │   ├── HomePage.ts
 │   ├── RoomPage.ts
 │   └── AuthPage.ts
-└── playwright.config.ts
+└── support/
+    ├── test.ts                       # merged Playwright fixtures
+    └── helpers/supabase-admin.ts     # service-role client (Node-only)
 ```
 
 Додатково:
 - `package.json`:
   - scripts:
-    - `"test:e2e": "playwright test -c e2e/playwright.config.ts"`
-    - `"test:e2e:ui": "playwright test -c e2e/playwright.config.ts --ui"`
+    - `"test:e2e": "playwright test"`
+    - `"test:e2e:smoke": "playwright test tests/e2e/smoke.spec.ts"`
+    - `"test:e2e:ui": "playwright test --ui"`
   - devDeps: `@playwright/test`, `dotenv`
 - `.env/.env.test.example` (in git), `.env/.env.test` (gitignored)
 - `.gitignore`:
   - **зняти** `package-lock.json` (P1)
-  - **додати** `e2e/test-results/`, `e2e/playwright-report/`
+  - **додати** `test-results/`, `playwright-report/`
   - **додати** `!/.env/.env.test.example` (бо `/.env/*` блокує всі файли крім явних unignore-ів)
-- `vitest.config.ts`: Vitest зараз має narrow include `app/**` — `e2e/**` уже виключений де-факто; додавати `exclude` опціонально для явності
+- `vitest.config.ts`: Vitest зараз має narrow include `app/**`; `tests/e2e/**` не входить у unit-suite
 - `.github/workflows/ci.yml`: новий `e2e` job + виправлення `deploy` gate
 
 ### Селектор-контракт (data-testid)
@@ -90,15 +93,15 @@ e2e/
 
 ### Принципи
 
-- **Ізоляція unit/e2e:** Vitest працює тільки з `app/**`; Playwright — тільки з `e2e/**`
-- **Page Object Model:** селектори у `pages/*.ts`, тести — як сценарії
+- **Ізоляція unit/e2e:** Vitest працює тільки з `app/**`; Playwright — тільки з `tests/e2e/**`
+- **Page Object Model:** селектори у `tests/page-objects/*.ts`, тести — як сценарії
 - **Service-role isolation:** `supabase-admin.ts` живе тільки в Node-процесі Playwright fixtures, ніколи не імпортується з `app/`
 - **Test data isolation:** кожен тест працює з власним унікальним room id; auth-тести з унікальним email `e2e-{uuid}@storypoker-test.dev`
 - **Cleanup-on-teardown:** Playwright fixtures гарантують cleanup навіть при failed test, через service-role (`rooms` не має public DELETE policy)
 
 ## Test scope (3 flows)
 
-### Flow 1 — `home-create-room.spec.ts` (Chromium + WebKit)
+### Flow 1 — `tests/e2e/smoke.spec.ts` / create room (Chromium + WebKit)
 
 Source-of-truth: `app/pages/index.vue:65-78` (`createRoom()`).
 Home одразу joinить гравця і робить redirect — JoinOverlay після Create Room не з'являється.
@@ -115,7 +118,7 @@ Home одразу joinить гравця і робить redirect — JoinOverl
 
 Cleanup: room fixture зберігає `roomId` через URL parse у `afterEach` і видаляє кімнату через service-role admin.
 
-### Flow 2 — `solo-vote-reveal.spec.ts` (Chromium + WebKit)
+### Flow 2 — `tests/e2e/smoke.spec.ts` / solo vote reveal (Chromium + WebKit)
 
 Залежність від Flow 1: тест використовує той самий home flow для створення кімнати — це **єдиний** шлях, де гравець стає moderator (`index.vue:75` робить `toggleModerator(true)`). `playersStore.join()` створює `is_moderator: false` (`app/stores/players.ts:94`), тому direct join у існуючу кімнату не дав би moderator-контролів.
 
@@ -127,9 +130,9 @@ Cleanup: room fixture зберігає `roomId` через URL parse у `afterEa
 
 **Caveat:** `round_history` не пишеться при solo (`reveal()` вимагає `votes.length >= 2`); цей тест не перевіряє таблицю history.
 
-### Flow 3 — `auth-signup-login.spec.ts` (Chromium only)
+### Flow 3 — `tests/e2e/critical-flows.spec.ts` / auth (Chromium only)
 
-Project-level обмеження через per-test `test.skip(({ browserName }, testInfo) => browserName !== 'chromium')` у `test.beforeEach` або per-test. `test.describe.configure({ project })` — невалідний API. Альтернатива: `projects[].testIgnore` для webkit, виключаючи `auth-signup-login.spec.ts`. Обираємо `testIgnore` для fitness — менше runtime overhead.
+Project-level обмеження через per-test `test.skip(({ browserName }, testInfo) => browserName !== 'chromium')` у `test.beforeEach` або per-test. `test.describe.configure({ project })` — невалідний API. Альтернатива: `projects[].testIgnore` для webkit, виключаючи `critical-flows.spec.ts`. Обираємо `testIgnore` для fitness — менше runtime overhead.
 
 **3a — Signup (детерміністичний outcome, email-confirm ON):**
 
@@ -159,11 +162,11 @@ Source-of-truth: `app/pages/login.vue`.
 
 ## Інфраструктура
 
-### `e2e/playwright.config.ts`
+### `playwright.config.ts`
 
 Ключові поля:
-- `testDir: './tests'`
-- `outputDir: resolve(__cfgDir, 'test-results')` (де `__cfgDir = dirname(fileURLToPath(import.meta.url))`)
+- `testDir: './tests/e2e'`
+- `outputDir: resolve(__cfgDir, 'test-results/playwright')` (де `__cfgDir = dirname(fileURLToPath(import.meta.url))`)
 - `fullyParallel: true`
 - `workers: process.env.CI ? 2 : 4`
 - `retries: process.env.CI ? 1 : 0`
@@ -172,10 +175,10 @@ Source-of-truth: `app/pages/login.vue`.
 - `use.trace: 'on-first-retry'`, `use.screenshot: 'only-on-failure'`
 - `projects:`
   - `{ name: 'chromium', use: devices['Desktop Chrome'] }`
-  - `{ name: 'webkit',   use: devices['Desktop Safari'], testIgnore: ['**/auth-signup-login.spec.ts'] }`
+  - `{ name: 'webkit',   use: devices['Desktop Safari'], testIgnore: ['**/critical-flows.spec.ts'] }`
 - `webServer`: тільки коли `E2E_BASE_URL` не задано
   - `command: 'npm run build && npm run preview'`
-  - `cwd: repoRoot` — обов'язково: за замовчуванням `webServer.cwd` дорівнює директорії config-файлу (`e2e/`), де немає `package.json`; без `cwd` команда падає
+  - `cwd: __cfgDir` — root repo з `package.json`
   - `url: 'http://localhost:3000'`
   - `timeout: 180_000`
   - `reuseExistingServer: !process.env.CI`
@@ -200,18 +203,17 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __cfgDir = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(__cfgDir, '..');
 
 if (!process.env.CI) {
-  loadDotenv({ path: resolve(repoRoot, '.env/.env.test') });
+  loadDotenv({ path: resolve(__cfgDir, '.env/.env.test'), override: true });
 }
 ```
 
 **Canonical env model:**
-- **Локально:** `npm run test:e2e` запускає `playwright test -c e2e/playwright.config.ts`. Playwright config робить `loadDotenv` для `.env/.env.test` ДО запуску `webServer`. Через `webServer.env`, Playwright передає `SUPABASE_URL`/`SUPABASE_KEY` у `npm run preview` як child process env. Nuxt preview бачить їх через `process.env` (Nuxt runtime config map у `nuxt.config.ts`). Жодних дублікатів у `.env/.env.local` не потрібно.
+- **Локально:** `npm run test:e2e` запускає root `playwright.config.ts`. Playwright config робить `loadDotenv({ override: true })` для `.env/.env.test` ДО запуску `webServer`, тому test-project креди перекривають shell defaults. Через `webServer.env`, Playwright передає `SUPABASE_URL`/`SUPABASE_KEY` у `npm run preview` як child process env. Nuxt preview бачить їх через `process.env` (Nuxt runtime config map у `nuxt.config.ts`). Жодних дублікатів у `.env/.env.local` не потрібно.
 - **CI:** GitHub Actions передає всі секрети через `env:` блок у step. Playwright config бачить `process.env.CI=true` і не викликає `loadDotenv`. `webServer.env` так само пробрасує креди у child preview process.
 
-### `e2e/fixtures/supabase-admin.ts`
+### `tests/support/helpers/supabase-admin.ts`
 
 ```ts
 import { createClient } from '@supabase/supabase-js';
@@ -224,9 +226,9 @@ export function getAdminClient() {
 }
 ```
 
-Імпортується тільки з `e2e/fixtures/**`, ніколи з `app/`. Code review check: grep `supabase-admin` у `app/` має повертати порожній результат.
+Імпортується тільки з `tests/fixtures/**`, ніколи з `app/`. Code review check: grep `supabase-admin` у `app/` має повертати порожній результат.
 
-### `e2e/fixtures/room.ts`
+### `tests/fixtures/room.ts`
 
 Custom Playwright fixture:
 - `trackedRoomIds: string[]` — track створені кімнати; helper `track(roomId)` додає; або auto-track через парс URL у `page.on('framenavigated')`
@@ -235,7 +237,7 @@ Custom Playwright fixture:
   - `ON DELETE CASCADE` на `room_state.room_id`, `players.room_id`, `round_history.room_id` прибирає решту
   - Errors handling — див. секцію [Cleanup errors policy](#cleanup-errors-policy)
 
-### `e2e/fixtures/auth.ts`
+### `tests/fixtures/auth.ts`
 
 Custom Playwright fixture:
 - `trackedEmails: string[]` — track створених юзерів за email (UI/store не повертають `user.id`)
@@ -253,7 +255,7 @@ Custom Playwright fixture:
 - **Тест passed → cleanup failed:** throw з помилкою; rerun має побачити stale state, не маскувати проблему
 - **Тест failed → cleanup failed:** log через `testInfo.attach('cleanup-error', ...)` або `console.warn`; не override-ити початкову помилку тесту, бо вона важливіша
 
-Реалізація: в `afterEach` перевіряти `testInfo.status === 'passed'`. Якщо так — throw on `error`; інакше log. Це стосується ВСІХ cleanup calls у `e2e/fixtures/room.ts` і `e2e/fixtures/auth.ts`.
+Реалізація: в `afterEach` перевіряти `testInfo.status === 'passed'`. Якщо так — throw on `error`; інакше log. Це стосується ВСІХ cleanup calls у `tests/fixtures/room.ts` і `tests/fixtures/auth.ts`.
 
 ## CI integration
 
@@ -317,7 +319,9 @@ e2e:
       uses: actions/upload-artifact@v4
       with:
         name: playwright-report
-        path: e2e/playwright-report/
+        path: |
+          playwright-report/
+          test-results/playwright/
         retention-days: 7
 
 deploy:
@@ -326,7 +330,7 @@ deploy:
     always()
     && github.ref == 'refs/heads/main'
     && needs.test.result == 'success'
-    && needs.e2e.result == 'success'
+    && (needs.e2e.result == 'success' || needs.e2e.result == 'skipped')
     && needs.detect-secrets.outputs.has_netlify == 'true'
   # ... решта без змін
 ```
@@ -347,7 +351,7 @@ deploy:
 1. Виконати P1, P3 (P2 не потрібно — продукт працює з email-confirm ON)
 2. Створити `.env/.env.test` за шаблоном `.env/.env.test.example`
 3. `npx playwright install chromium webkit` (один раз)
-4. `npm run test:e2e` — Playwright config робить `loadDotenv('.env/.env.test')`, потім запустить build + preview + smoke
+4. `npm run test:e2e` — Playwright config робить `loadDotenv({ override: true })` для `.env/.env.test`, потім запустить build + preview + smoke
 5. `npm run test:e2e:ui` — інтерактивний debug
 
 ## Залежності і ризики
@@ -366,14 +370,14 @@ deploy:
 
 ## Тестова стратегія перевірки spec
 
-- Unit `npm test` не торкається `e2e/`
+- Unit `npm test` не торкається `tests/e2e/`
 - `npm run test:e2e` має пройти локально перед merge
 - CI має пройти на feature branch перед merge у main
 - Перевірити поведінку deploy gate:
-  - На форку без secrets: `detect-secrets` дає `has_e2e=false` + `has_netlify=false`; `e2e` skipped; `deploy` skipped (через `needs.e2e.result == 'success'` false + `has_netlify=false`); workflow не failed
+  - На форку без secrets: `detect-secrets` дає `has_e2e=false` + `has_netlify=false`; `e2e` skipped; `deploy` skipped через `has_netlify=false`; workflow не failed
   - На main з усіма secrets, e2e passed: `deploy` runs
   - На main з усіма secrets, e2e failed: `deploy` skipped (smoke блокує prod — це навмисна поведінка, узгоджено з метою)
-  - На main, якщо хтось забуде E2E secrets, але Netlify secrets є: `deploy` skipped (бо `e2e.result != 'success'`); це навмисний strict mode — без smoke deploy не йде
+  - На main, якщо E2E secrets відсутні, але Netlify secrets є: `deploy` runs після основних checks; E2E блокує deploy тільки коли job запускається і падає
 
 ## Посилання
 

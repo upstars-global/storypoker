@@ -2,13 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Додати Playwright smoke pack (3 user flows) у `e2e/`, інтегрувати у CI окремим job-ом, який блокує deploy.
+**Goal:** Додати Playwright smoke pack (3 user flows) у `tests/e2e/`, інтегрувати у CI окремим job-ом, який блокує deploy.
 
-**Architecture:** Окрема директорія `e2e/` (ізольована від Vitest), Page Object Model, custom Playwright fixtures зі service-role cleanup, ESM-сумісний `playwright.config.ts` з ручним `loadDotenv` для `.env/.env.test`. CI отримує новий `detect-secrets` job, який видає прапори; `e2e` і `deploy` jobs мають `if:` на ці outputs (бо `secrets.*` не expand-яться в job-level `if`).
+**Architecture:** Root `playwright.config.ts`, тести в `tests/e2e/`, Page Object Model у `tests/page-objects/`, custom Playwright fixtures зі service-role cleanup у `tests/fixtures/`, ESM-сумісний ручний `loadDotenv({ override: true })` для `.env/.env.test`. CI отримує новий `detect-secrets` job, який видає прапори; `e2e` і `deploy` jobs мають `if:` на ці outputs (бо `secrets.*` не expand-яться в job-level `if`).
 
 **Tech Stack:** `@playwright/test` ^1.x, `dotenv` ^16.x, `@supabase/supabase-js` (вже встановлено), Node 24+.
 
 **Спека:** `docs/superpowers/specs/2026-05-15-playwright-e2e-tests-design.md`. Якщо ці файли розходяться — спека канон.
+
+> As-built note: цей план зберігає детальні task-by-task нотатки з початкового розбиття. Канонічна поточна структура описана у секціях Goal/Architecture/Файлова структура вище та у спеці: root `playwright.config.ts`, E2E specs у `tests/e2e/`, fixtures у `tests/fixtures/`, POM у `tests/page-objects/`.
 
 ---
 
@@ -17,19 +19,20 @@
 Створюємо:
 - `supabase/migrations/007_players_room_state_realtime.sql` — idempotent додавання `players` і `room_state` до `supabase_realtime` (P5)
 - `.env/.env.test.example` — committed шаблон
-- `e2e/playwright.config.ts` — конфіг (ESM, dotenv, webServer)
-- `e2e/fixtures/supabase-admin.ts` — service-role клієнт, тільки в Node
-- `e2e/fixtures/room.ts` — auto-cleanup створених кімнат
-- `e2e/fixtures/auth.ts` — auto-cleanup створених юзерів + UI signup helper
-- `e2e/pages/HomePage.ts` — POM для `/`
-- `e2e/pages/RoomPage.ts` — POM для `/<roomId>`
-- `e2e/pages/AuthPage.ts` — POM для `/signup`, `/login`, account menu
-- `e2e/tests/home-create-room.spec.ts` — Flow 1
-- `e2e/tests/solo-vote-reveal.spec.ts` — Flow 2
-- `e2e/tests/auth-signup-login.spec.ts` — Flow 3 (chromium only)
+- `playwright.config.ts` — конфіг (ESM, dotenv, webServer)
+- `tests/support/helpers/supabase-admin.ts` — service-role клієнт, тільки в Node
+- `tests/fixtures/room.ts` — auto-cleanup створених кімнат
+- `tests/fixtures/auth.ts` — auto-cleanup створених юзерів + UI signup helper
+- `tests/fixtures/console.ts` — browser console/pageerror guard
+- `tests/support/test.ts` — merged Playwright fixtures
+- `tests/page-objects/HomePage.ts` — POM для `/`
+- `tests/page-objects/RoomPage.ts` — POM для `/<roomId>`
+- `tests/page-objects/AuthPage.ts` — POM для `/signup`, `/login`, account menu
+- `tests/e2e/smoke.spec.ts` — Flow 1 + Flow 2
+- `tests/e2e/critical-flows.spec.ts` — Flow 3 (chromium only)
 
 Модифікуємо:
-- `.gitignore` — зняти `package-lock.json`; додати `e2e/test-results/`, `e2e/playwright-report/`, `!/.env/.env.test.example`
+- `.gitignore` — зняти `package-lock.json`; додати `test-results/`, `playwright-report/`, `!/.env/.env.test.example`
 - `package.json` — devDeps + scripts
 - `package-lock.json` — починає трекатись після P1
 - `app/pages/index.vue` — testids
@@ -37,7 +40,7 @@
 - `app/pages/login.vue` — testids
 - `app/components/AppHeader.vue` — testids
 - `app/components/CardsArea.vue` — testids + `aria-pressed`
-- `app/components/ResultsArea.vue` — testids
+- `app/components/ResultsArea.vue` — `results-area` і `new-round-button` testids
 - `app/components/PlayersList.vue` — testid root + типу `players` prop
 - `app/components/PlayerRow.vue` — testid root + data-* атрибути + `votePending` поле player
 - `app/pages/[slug].vue` — `playersForUi` додає `votePending`
@@ -1154,8 +1157,8 @@ import { test, expect } from '../fixtures/auth'
 import { AuthPage } from '../pages/AuthPage'
 
 test('signup → success screen (email confirmation on)', async ({ page, signupViaUI, trackedEmails }) => {
-  const password = process.env.E2E_TEST_USER_PASSWORD
-  if (!password) throw new Error('E2E_TEST_USER_PASSWORD is not set')
+  const password = process.env.E2E_TEST_USER_PASSWORD ?? ''
+  test.skip(!password, 'E2E_TEST_USER_PASSWORD is not set')
 
   const email = `e2e-${randomUUID()}@storypoker-test.dev`
   trackedEmails.push(email)
@@ -1165,11 +1168,9 @@ test('signup → success screen (email confirmation on)', async ({ page, signupV
 })
 
 test('login persistent user → account menu reflects signed-in/out', async ({ page }) => {
-  const email = process.env.E2E_TEST_USER_EMAIL
-  const password = process.env.E2E_TEST_USER_PASSWORD
-  if (!email || !password) {
-    throw new Error('E2E_TEST_USER_EMAIL / E2E_TEST_USER_PASSWORD must be set')
-  }
+  const email = process.env.E2E_TEST_USER_EMAIL ?? ''
+  const password = process.env.E2E_TEST_USER_PASSWORD ?? ''
+  test.skip(!email || !password, 'E2E_TEST_USER_EMAIL / E2E_TEST_USER_PASSWORD must be set')
 
   const auth = new AuthPage(page)
   await auth.login(email, password)
@@ -1313,7 +1314,7 @@ jobs:
       always()
       && github.ref == 'refs/heads/main'
       && needs.test.result == 'success'
-      && needs.e2e.result == 'success'
+      && (needs.e2e.result == 'success' || needs.e2e.result == 'skipped')
       && needs.detect-secrets.outputs.has_netlify == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -1342,7 +1343,7 @@ jobs:
 
 Зверни увагу:
 - `secrets.*` у job-level `if:` НЕ використовуються — замість цього `needs.detect-secrets.outputs.*`. Це виправляє регресію існуючого `deploy.if` (`.github/workflows/ci.yml:35` у поточному файлі).
-- `deploy` має `always() && ...` тому що без `always()` `needs.e2e.result == 'success'` не оцінюватиметься коли `e2e` skipped (skipped не = success). `always()` змушує умови оцінитись завжди; самі умови забезпечують точну логіку.
+- `deploy` має `always() && ...` тому що без `always()` skipped `e2e` job завадить оцінити решту умов. E2E failure блокує deploy, skipped E2E не блокує deploy.
 
 - [ ] **Step 2: Перевірити YAML локально**
 

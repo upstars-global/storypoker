@@ -2,7 +2,7 @@
 
 План робіт і відкритих питань. Iter-плани й специфікації окремих фіч — у [`docs/superpowers/plans/`](docs/superpowers/plans/) та [`docs/superpowers/specs/`](docs/superpowers/specs/). Аудит дизайн-системи — у [`DESIGN.md`](DESIGN.md) (розділ 10).
 
-> Статус станом на 2026-05-14.
+> Статус станом на 2026-05-16.
 
 ---
 
@@ -14,8 +14,10 @@
 | Iter 2 — Auth & Account | ⚠️ IN PROGRESS |
 | Iter 3 — Insights & History | ⏳ planned |
 | Iter 4 — Estimation Scale | ⏳ planned (частина зроблена) |
-| Design system — Tailwind tokens | ✅ зареєстровані в `tailwind.config.ts` |
-| Design system — light card contrast, btn disabled, inline `style=` | ❌ open (див. нижче) |
+| Design system — Tailwind tokens | ✅ `colors/bg/text/border/shadow`, `darkMode: ['selector', '[data-theme="dark"]']` |
+| Design system — inline color `style=` → tokens | ✅ done (2026-05-16, 31 заміна по 9 файлах) |
+| Design system — light card contrast, btn disabled, non-color inline `style=`, home button class soup, MUI px scale | ❌ open (G1, G2, G3-залишок, G6, G7, G8, G9) |
+| Icons — local `assets/icons/*.svg` (25 шт.) | ✅ почищено `trending-up.svg` + dev cache; G10 опційний follow-up |
 
 ---
 
@@ -46,9 +48,10 @@
   ```
 
 ### G3. Inline `style="color: var(--text-*)"` поверх Tailwind
-- **Файли:** `app/components/AppHeader.vue`, `app/pages/[slug].vue` — ~30+ використань
-- **Симптом:** обходить Tailwind, ускладнює рефакторинг і темізацію. Утиліти (`text-muted`, `bg-paper`, `text-body` тощо) уже доступні через `tailwind.config.ts`.
-- **Підхід:** поступова заміна під час touching компонента.
+- **Файли:** `app/components/AppHeader.vue`, `app/pages/[slug].vue`
+- **Симптом:** обходить Tailwind, ускладнює рефакторинг і темізацію. Утиліти (`text-muted`, `bg-paper`, `text-body`, `text-danger`, `text-primary` тощо) доступні через `tailwind.config.ts`.
+- **Прогрес (2026-05-16):** ✅ кольорові inline-styles (`color: var(--danger|primary|text-muted)`) — 31 заміна по 9 файлах; додано `text-danger`/`text-success` у `textColor.extend`; `darkMode: ['selector', '[data-theme="dark"]']` сконфігуровано.
+- **Залишилось:** non-color inline styles — `font-size` (×13), positioning (`top: 8px; right: 8px;` ×5; `min-width: 120px` ×5), `width: 24px/28px/36px` тощо. Замінити при touching компонента або в окремому проході.
 
 ### G4. Status icons без tooltip на player row
 - **Файл:** `app/components/PlayerRow.vue` (потребує перевірки)
@@ -57,6 +60,31 @@
 
 ### G5. Контраст vote card values у light
 - **Симптом:** `rgb(97,97,97)` на `#f5f5f5` ≈ 5.7:1 — проходить WCAG AA, але не AAA. Не блокер, але варто врахувати при наступному redesign.
+
+### G6. Home create-room button дублює `.mui-btn` як class soup
+- **Файл:** `app/pages/index.vue:126`
+- **Симптом:** єдина кнопка в проєкті, яка НЕ використовує `.mui-btn` — натомість ~19 утиліт + arbitrary `bg-[#607d8b]`/`shadow-[...]` inline (~600 байт). Інші 12 файлів через клас. Поведінка майже ідентична (різниця в `min-width`/`height`/`border-radius`).
+- **Fix:** замінити на `<button v-wave class="mui-btn">`, доклеїти `mui-btn-lg` модифікатор якщо потрібен інший розмір.
+
+### G7. Arbitrary px scale замість spacing/typography токенів
+- **Файли:** `app/pages/index.vue`, інші pages (~34 випадків `text-[22px]`, `text-[15px]`, `text-[13px]`, `h-[46px]`, `h-[51px]`, `mt-[11px]`, `mt-[19px]`, `mt-[30px]`, `mt-[60px]`, `max-w-[280px]`/`[460px]`/`[920px]` тощо).
+- **Симптом:** магічні MUI px-значення розкидані по коду; немає єдиного джерела розмірів кнопок/inputs.
+- **Підхід:** винести найчастіші у `theme.extend.spacing`/`fontSize`/`maxWidth` як named tokens (`mui-btn-h`, `mui-input-h`, etc.) АБО прийняти як неминучу transcription MUI specs і додати ESLint-disable з коментарем. Поточний стан — magic numbers без виправдання.
+
+### G8. `ConnectionBanner.vue` тримає єдиний `<style scoped>` блок
+- **Файл:** `app/components/ConnectionBanner.vue:23-51`
+- **Симптом:** ~30 рядків raw CSS включно зі `@keyframes spin`. Усе вкладається в утиліти: `fixed top-0 inset-x-0 h-8 flex items-center justify-center gap-2 bg-amber-500 text-black text-sm font-medium z-[9999]` + Tailwind built-in `animate-spin`.
+- **Fix:** конвертувати у utility classes + Vue Transition class (`banner-fade-*` → конфігурувати через Tailwind transition utilities або лишити мінімальний scoped block для transition).
+
+### G9. `* { font-family }` universal selector
+- **Файл:** `assets/css/main.css:82-84`
+- **Симптом:** universal-селектор для шрифту замість inheritance через `html`/`body`. Не критично, але anti-pattern.
+- **Fix:** перенести на `html, body { font-family: ... }` — інші елементи отримають `inherit`.
+
+### G10. Невикористаний icon-asset видалено + light-mode асет був un-staged
+- **Файл:** `assets/icons/light-mode.svg` (тепер staged), `assets/icons/trending-up.svg` (видалено), `assets/icons/node_modules/` (видалено)
+- **Симптом до фіксу:** `app:light-mode` referenced у `AppHeader.vue:168` — якби CI зробив deploy без commit, світла тема показала б порожню іконку.
+- **Подальше (опційно):** додати pre-commit/CI check, який валідує що всі `app:<name>` посилання мають відповідний `assets/icons/<name>.svg`. Або: розглянути міграцію з local `assets/icons/*.svg` на Iconify `material-symbols` колекцію (потрібен per-icon visual diff — геометрія MUI ≠ material-symbols 1:1, `moderator`/`deciding`/`offline` можуть не мати точних відповідників).
 
 ---
 

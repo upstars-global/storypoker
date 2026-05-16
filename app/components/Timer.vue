@@ -38,14 +38,15 @@ function formatDuration(ms: number) {
 
 const isPaused = computed(() => Boolean(props.pausedAt))
 
+const pivotMs = computed(() => {
+  if (props.phase === 'revealed' && revealedAt.value !== null) return revealedAt.value
+  if (props.pausedAt) return new Date(props.pausedAt).getTime()
+  return now.value
+})
+
 const elapsedMs = computed(() => {
   const start = new Date(props.roundStartedAt).getTime()
-  const pivot = props.phase === 'revealed' && revealedAt.value !== null
-    ? revealedAt.value
-    : props.pausedAt
-      ? new Date(props.pausedAt).getTime()
-      : now.value
-  return Math.max(0, pivot - start - (props.pausedElapsedMs ?? 0))
+  return Math.max(0, pivotMs.value - start - (props.pausedElapsedMs ?? 0))
 })
 
 const text = computed(() => {

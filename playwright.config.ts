@@ -4,9 +4,16 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __cfgDir = dirname(fileURLToPath(import.meta.url))
+const previewBlockedEnv = Object.fromEntries([
+  'SUPABASE_TEST_SERVICE_ROLE_KEY',
+  'SUPABASE_SECRET_KEY',
+  'E2E_SUPABASE_SERVICE_ROLE_KEY',
+  'E2E_TEST_USER_EMAIL',
+  'E2E_TEST_USER_PASSWORD',
+].map(key => [key, '']))
 
 if (!process.env.CI) {
-  loadDotenv({ path: resolve(__cfgDir, '.env/.env.test') })
+  loadDotenv({ path: resolve(__cfgDir, '.env/.env.test'), override: true })
 }
 
 export default defineConfig({
@@ -46,11 +53,7 @@ export default defineConfig({
         env: {
           SUPABASE_URL: process.env.SUPABASE_URL!,
           SUPABASE_KEY: process.env.SUPABASE_KEY!,
-          SUPABASE_TEST_SERVICE_ROLE_KEY: '',
-          SUPABASE_SECRET_KEY: '',
-          E2E_SUPABASE_SERVICE_ROLE_KEY: '',
-          E2E_TEST_USER_EMAIL: '',
-          E2E_TEST_USER_PASSWORD: '',
+          ...previewBlockedEnv,
         },
       },
 })

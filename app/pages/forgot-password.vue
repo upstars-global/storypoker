@@ -46,7 +46,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-body)]">
+  <div class="min-h-screen flex flex-col bg-app text-body">
     <AppHeader
       :online-count="0"
       :is-moderator="false"
@@ -63,16 +63,16 @@ async function onSubmit() {
 
         <div v-if="success" class="text-center mt-6">
           <p class="mui-body">{{ $t('forgotPassword.checkEmail') }}</p>
-          <NuxtLink to="/login" class="mui-caption underline hover:no-underline" style="color: var(--primary);">{{ $t('forgotPassword.backToSignIn') }}</NuxtLink>
+          <NuxtLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('forgotPassword.backToSignIn') }}</NuxtLink>
         </div>
 
         <form v-else class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
           <div>
             <input v-model.trim="form.email" type="email" autocomplete="email" :placeholder="$t('common.emailPlaceholder')" class="mui-input" :class="{ 'is-error': errors.email }" />
-            <p v-if="errors.email" class="text-sm mt-1" style="color: var(--danger);">{{ errors.email }}</p>
+            <p v-if="errors.email" class="text-sm mt-1 text-danger">{{ errors.email }}</p>
           </div>
 
-          <p v-if="errors.server" class="text-sm" style="color: var(--danger);">{{ errors.server }}</p>
+          <p v-if="errors.server" class="text-sm text-danger">{{ errors.server }}</p>
 
           <div class="flex justify-center mt-2">
             <button v-wave class="mui-btn" type="submit" :disabled="loading">
@@ -82,7 +82,7 @@ async function onSubmit() {
 
           <p class="mui-caption text-center mt-2">
             {{ $t('forgotPassword.rememberedPassword') }}
-            <NuxtLink to="/login" class="underline hover:no-underline" style="color: var(--primary);">{{ $t('common.signIn') }}</NuxtLink>
+            <NuxtLink to="/login" class="underline hover:no-underline text-primary">{{ $t('common.signIn') }}</NuxtLink>
           </p>
         </form>
       </section>

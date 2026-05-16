@@ -123,6 +123,42 @@ describe('roomStore actions', () => {
     expect(typeof hist?.arg.revealed_at).toBe('string')
   })
 
+  it('reveal() finalizes active pause duration before revealing', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-05-04T00:01:00Z'))
+    try {
+      const calls: Array<{ table: string; op: string; arg: any }> = []
+      setSupabase({
+        from: (table: string) => ({
+          update: (arg: any) => {
+            calls.push({ table, op: 'update', arg })
+            return { eq: vi.fn().mockResolvedValue({ error: null }) }
+          },
+          insert: (arg: any) => {
+            calls.push({ table, op: 'insert', arg })
+            return Promise.resolve({ error: null })
+          },
+        }),
+      } as any)
+      const store = useRoomStore()
+      store.roomId = 'r1'
+      store.roomState = fakeRoomState({
+        paused_at: '2026-05-04T00:00:30Z',
+        paused_elapsed_ms: 2000,
+      })
+      const players = usePlayersStore()
+      players.players = [fakePlayer({ id: 'p1', vote: '5' })]
+      await store.reveal()
+      expect(calls.find(c => c.table === 'room_state' && c.op === 'update')?.arg).toEqual({
+        phase: 'revealed',
+        paused_at: null,
+        paused_elapsed_ms: 32000,
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('startNewRound() resets player votes and sets phase=voting + round_started_at', async () => {
     const calls: Array<{ table: string; arg: any }> = []
     setSupabase({
@@ -257,5 +293,59 @@ describe('roomStore timer actions', () => {
     })
     await store.adjustTimer(-10000)
     expect(update).toHaveBeenCalledWith({ round_started_at: '2026-05-04T00:00:05.000Z' })
+  })
+
+  it('adjustTimer(-10000) caps at pivot minus accumulated pause time', async () => {
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
+    setSupabase({ from: () => ({ update }) } as any)
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    store.roomState = fakeRoomState({
+      round_started_at: '2026-05-04T00:00:00.000Z',
+      paused_at: '2026-05-04T00:00:05.000Z',
+      paused_elapsed_ms: 2000,
+    })
+    await store.adjustTimer(-10000)
+    expect(update).toHaveBeenCalledWith({ round_started_at: '2026-05-04T00:00:03.000Z' })
+  })
+
+  it('preserves adjusted start and accumulated pause across pause, resume, and reveal', async () => {
+    vi.useFakeTimers()
+    try {
+      const updates: any[] = []
+      const store = useRoomStore()
+      setSupabase({
+        from: () => ({
+          update: (arg: any) => {
+            updates.push(arg)
+            store.roomState = { ...store.roomState!, ...arg }
+            return { eq: vi.fn().mockResolvedValue({ error: null }) }
+          },
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        }),
+      } as any)
+      store.roomId = 'r1'
+      store.roomState = fakeRoomState({ round_started_at: '2026-05-04T00:00:00.000Z' })
+      const players = usePlayersStore()
+      players.players = [fakePlayer({ id: 'p1', vote: '5' })]
+
+      vi.setSystemTime(new Date('2026-05-04T00:00:10.000Z'))
+      await store.pauseTimer()
+      await store.adjustTimer(30000)
+      expect(store.roomState.round_started_at).toBe('2026-05-03T23:59:30.000Z')
+
+      vi.setSystemTime(new Date('2026-05-04T00:00:20.000Z'))
+      await store.resumeTimer()
+      expect(store.roomState.paused_at).toBeNull()
+      expect(store.roomState.paused_elapsed_ms).toBe(10000)
+
+      vi.setSystemTime(new Date('2026-05-04T00:01:00.000Z'))
+      await store.reveal()
+      expect(updates.at(-1)).toEqual({ phase: 'revealed' })
+      expect(store.roomState.round_started_at).toBe('2026-05-03T23:59:30.000Z')
+      expect(store.roomState.paused_elapsed_ms).toBe(10000)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

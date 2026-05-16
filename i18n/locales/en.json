@@ -15,7 +15,8 @@
     "renameRoom": "Rename Room",
     "configureCardDeck": "Configure Card Deck",
     "recentRooms": "Recent Rooms",
-    "lightTheme": "Light theme",
+    "lightTheme": "Light Theme",
+    "darkTheme": "Dark Theme",
     "currentUserAccount": "account of current user",
     "accountSettings": "Account Settings",
     "roomSettings": "Room settings"

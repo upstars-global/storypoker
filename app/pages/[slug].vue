@@ -445,7 +445,7 @@ async function submitRenameRoom() {
           autofocus
         />
         <p v-if="roomNameError" class="text-[13px] mt-2" style="color: #d32f2f;">{{ roomNameError }}</p>
-        <div v-else class="text-[13px] mt-2 flex flex-col gap-[2px]" style="color: var(--text-muted);">
+        <div v-else class="text-[13px] mt-2 flex flex-col gap-[2px] text-muted">
           <span v-if="roomNameInput.trim()">URL: {{ origin }}/{{ normalizeRoomSlug(roomNameInput) }}</span>
           <span>URL: {{ origin }}/{{ roomId }}</span>
         </div>
