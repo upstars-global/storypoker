@@ -9,6 +9,9 @@ import { useProfilesStore } from '~/stores/profiles'
 import { listRecentRooms, touchRecentRoom, type RecentRoomEntry } from '~/utils/recentRooms'
 import { relativeTime } from '~/utils/relativeTime'
 import { getSupabase } from '~/lib/supabase-instance'
+import AppHeader from '~/components/AppHeader.vue'
+import AuthModal from '~/components/AuthModal.vue'
+import UserSettingsModal from '~/components/UserSettingsModal.vue'
 
 const name = shallowRef('')
 const hasError = shallowRef(false)

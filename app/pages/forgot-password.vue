@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { validateEmail } from '~/utils/authValidation'
+import AppHeader from '~/components/AppHeader.vue'
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)

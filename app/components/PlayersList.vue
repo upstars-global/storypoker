@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import PlayerRow from '~/components/PlayerRow.vue'
 
 const props = defineProps<{
   players: Array<{

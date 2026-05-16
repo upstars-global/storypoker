@@ -14,6 +14,15 @@ import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
 import { detectRoleGroup } from '~/utils/playerRoles'
+import AppHeader from '~/components/AppHeader.vue'
+import AuthModal from '~/components/AuthModal.vue'
+import UserSettingsModal from '~/components/UserSettingsModal.vue'
+import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal.vue'
+import PlayersList from '~/components/PlayersList.vue'
+import Timer from '~/components/Timer.vue'
+import CardsArea from '~/components/CardsArea.vue'
+import ResultsArea from '~/components/ResultsArea.vue'
+import JoinOverlay from '~/components/JoinOverlay.vue'
 
 const route = useRoute()
 const router = useRouter()

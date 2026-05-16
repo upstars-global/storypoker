@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { getSupabase } from '~/lib/supabase-instance'
 import { useAuthStore } from '~/stores/auth'
 import { validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
+import AppHeader from '~/components/AppHeader.vue'
 
 const { t } = useI18n()
 
