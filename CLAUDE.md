@@ -64,12 +64,12 @@ CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck 
 Шаблон:
 
 ```bash
-SUPABASE_URL=...
-SUPABASE_KEY=...            # publishable client key
-# SUPABASE_SECRET_KEY=...   # server-side only, не класти в client bundle
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_KEY=...        # publishable client key
+# SUPABASE_SECRET_KEY=...    # server-side only, БЕЗ VITE_ префіксу
 ```
 
-`nuxt.config.ts` мапить ці змінні в `runtimeConfig.public.supabaseUrl/supabaseKey`; клієнтський код читає їх через `useRuntimeConfig().public`.
+Vite читає `.env/` через `envDir` у `vite.config.ts`; клієнтський код через `import.meta.env.VITE_*` (тільки `VITE_*` потрапляють у browser bundle).
 
 ## Database
 
@@ -121,7 +121,7 @@ Pinia stores у `app/stores/`:
 - `profiles.ts` — `user_profiles` cache, fetch/upsert, Realtime applyChange
 - `types.ts` — спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `UserProfile`)
 
-Stores беруть клієнт через `getSupabase()` з `app/lib/supabase-instance.ts`; `app/plugins/supabase.ts` робить `setSupabase(client)`. Тести інжектять mock через `setSupabase(mock)`.
+Stores беруть клієнт через `getSupabase()` з `app/lib/supabase-instance.ts`; `app/main.ts` ініціалізує клієнт через `initSupabase()`. Тести інжектять mock через `setSupabase(mock)`.
 
 ## Realtime
 
@@ -143,7 +143,7 @@ app/
 ├── components/   # AppHeader, CardsArea, PlayersList, modals, icons
 ├── composables/  # useTheme, useDylanAvatar
 ├── stores/       # auth, room, players, presence, profiles
-├── plugins/      # supabase, vWave, clickOutside
+├── plugins/      # vWave, clickOutside
 ├── lib/          # supabase-instance
 └── utils/        # roomId, cardDecks, authValidation, recentRooms, playerRoles, relativeTime
 assets/css/main.css
