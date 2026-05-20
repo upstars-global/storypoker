@@ -7,8 +7,10 @@ import { storeToRefs } from 'pinia'
 import { listRecentRooms, touchRecentRoom, type RecentRoomEntry } from '~/utils/recentRooms'
 import { relativeTime } from '~/utils/relativeTime'
 import { getSupabase } from '~/lib/supabase-instance'
+import { PLAYER_ROLES, formatPlayerName, type PlayerRole } from '~/utils/playerRoles'
 
 const name = shallowRef('')
+const role = shallowRef<PlayerRole>('DEV')
 const hasError = shallowRef(false)
 const router = useRouter()
 const roomStore = useRoomStore()
@@ -72,7 +74,7 @@ async function createRoom() {
   await authStore.init()
   const roomId = await roomStore.create()
   playersStore.roomId = roomId
-  const player = await playersStore.join(name.value.trim(), authStore.user?.id ?? null)
+  const player = await playersStore.join(formatPlayerName(role.value, name.value), authStore.user?.id ?? null)
   await playersStore.toggleModerator(player.id, true)
   touchRecentRoom(roomId, player.id, player.name)
   router.push(`/${roomId}`)
@@ -112,15 +114,24 @@ async function createRoom() {
           {{ $t('home.subtitle') }}
         </p>
         <div class="mt-[19px] flex flex-col items-center">
-          <input
-            v-model="name"
-            type="text"
-            :placeholder="$t('home.namePlaceholder')"
-            class="mui-input h-[51px] max-w-[280px]"
-            :class="{ 'is-error': hasError }"
-            data-testid="home-name-input"
-            @keyup.enter="createRoom"
-          />
+          <div class="flex w-full max-w-[360px] gap-3">
+            <select
+              v-model="role"
+              class="mui-input h-[51px] max-w-[104px]"
+              :aria-label="$t('players.role')"
+            >
+              <option v-for="r in PLAYER_ROLES" :key="r" :value="r">[{{ r }}]</option>
+            </select>
+            <input
+              v-model="name"
+              type="text"
+              :placeholder="$t('home.namePlaceholder')"
+              class="mui-input h-[51px] min-w-0 flex-1"
+              :class="{ 'is-error': hasError }"
+              data-testid="home-name-input"
+              @keyup.enter="createRoom"
+            />
+          </div>
           <button
             v-wave
             class="mui-btn mui-btn-md mt-[30px]"

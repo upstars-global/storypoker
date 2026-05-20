@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   votes: Record<string, number>
-  groupedVotes?: { dev: Record<string, number>; qa: Record<string, number> } | null
+  groupedVotes?: { dev: Record<string, number>; qa: Record<string, number>; sm: Record<string, number> } | null
   isModerator: boolean
 }>()
 
@@ -15,9 +15,11 @@ const groups = computed(() => {
   if (!props.groupedVotes) return null
   const devTotal = Object.values(props.groupedVotes.dev).reduce((a, b) => a + b, 0)
   const qaTotal = Object.values(props.groupedVotes.qa).reduce((a, b) => a + b, 0)
-  const out: { label: 'DEV' | 'QA'; votes: Record<string, number> }[] = []
+  const smTotal = Object.values(props.groupedVotes.sm).reduce((a, b) => a + b, 0)
+  const out: { label: 'DEV' | 'QA' | 'SM'; votes: Record<string, number> }[] = []
   if (devTotal) out.push({ label: 'DEV', votes: props.groupedVotes.dev })
   if (qaTotal) out.push({ label: 'QA', votes: props.groupedVotes.qa })
+  if (smTotal) out.push({ label: 'SM', votes: props.groupedVotes.sm })
   return out.length ? out : null
 })
 </script>
