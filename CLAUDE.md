@@ -18,14 +18,17 @@ Guidance for Claude Code working with this repository.
 
 ## Tech Stack
 
-- **Framework:** Vue 3.5 + Vite 6 SPA, Composition API `<script setup>`, `srcDir: app/`
+- **Framework:** Vue 3.5 + Vite 8 (Rolldown bundler) SPA, Composition API `<script setup>`, `srcDir: app/`
 - **Routing:** `vue-router@5` — явні маршрути в `app/router.ts`, без file-based routing
-- **Styling:** Tailwind v3 через PostCSS (autoprefixer), токени в `tailwind.config.ts`, MUI-like класи в `app/assets/css/main.css`
-  - utilities: `text-{primary,body,muted,disabled,inverse,danger,success}`, `bg-{app,appbar,paper,elevated,overlay,skeleton}`, `border` (DEFAULT = `var(--border)`), `shadow-{1..8}`
+- **Styling:** Tailwind v4 через PostCSS (`@tailwindcss/postcss` + autoprefixer), CSS-first config у `app/assets/css/main.css` (`@theme`, `@utility`, `@custom-variant dark`), MUI-like класи там само
+  - text utilities з `@theme --color-*`: `text-{primary,body,muted,disabled,inverse,danger,success,appbar-{subtle,muted,emphasis}}`
+  - bg utilities через `@utility`: `bg-{app,appbar,paper,elevated,overlay,skeleton}`
+  - дефолтний `border` зберігає колір `var(--border)` через `@layer base` override (v4 default — `currentColor`); `border-input` — явний `@utility`
+  - `shadow-{1..4,8}` — значення живуть у `@theme`; `text-mui-{h2,body,table,caption}` — `--text-mui-*` + `--line-height`/`--letter-spacing` modifiers
   - button modifiers (compose з `.mui-btn`): `.mui-btn-md` (180×46 / 23rad / `#607d8b`), `.mui-btn-sm`, `.mui-btn-text`, `.mui-btn-secondary`
 - **State:** Pinia 3 (без auto-imports — явні `from 'pinia'`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
-- **i18n:** `vue-i18n@10` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
+- **i18n:** `vue-i18n@11` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
 - **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`); custom collection `app:` для `moderator`, `deciding`, `offline`, `leave-room` — зареєстровано через `addCollection` у `app/lib/registerAppIcons.ts`; `v-wave`, DiceBear, Roboto 300–700
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 

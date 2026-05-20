@@ -16,12 +16,12 @@ Thumbs.db
 /supabase/*
 !/supabase/migrations
 
-# /.netlify/
+/.netlify/
 
 /.agents/
 /.claude/
 /memory/
-skills-lock.json
+# skills-lock.json
 
 /test-results/
 /playwright-report/
