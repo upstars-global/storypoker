@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
+import { ref, reactive } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
 
@@ -57,7 +59,7 @@ async function submit() {
         :aria-label="$t('common.close')"
         @click="emit('close')"
       >
-        <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="mui-h5 text-center">
         {{ mode === 'signin' ? $t('common.signIn') : $t('common.signUp') }}
@@ -85,9 +87,9 @@ async function submit() {
         <div>
           <div v-if="mode === 'signin'" class="flex items-center justify-between gap-3 mb-1">
             <span class="mui-caption">{{ $t('common.password') }}</span>
-            <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary" @click="emit('close')">
+            <RouterLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary" @click="emit('close')">
               {{ $t('auth.forgotPassword') }}
-            </NuxtLink>
+            </RouterLink>
           </div>
           <input
             v-model="password"
