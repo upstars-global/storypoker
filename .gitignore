@@ -16,7 +16,8 @@ Thumbs.db
 /supabase/*
 !/supabase/migrations
 
-/.netlify/
+/.netlify/*
+!/.netlify/state.json
 
 /.agents/
 /.claude/
