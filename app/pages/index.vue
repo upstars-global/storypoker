@@ -121,14 +121,14 @@ async function createRoom() {
             v-model="name"
             type="text"
             :placeholder="$t('home.namePlaceholder')"
-            class="mui-input h-[51px] max-w-[280px]"
+            class="mui-input max-w-[280px]"
             :class="{ 'is-error': hasError }"
             data-testid="home-name-input"
             @keyup.enter="createRoom"
           />
           <button
             v-wave
-            class="mui-btn mui-btn-md mt-[30px]"
+            class="mui-btn mt-[30px]"
             data-testid="home-create-room"
             @click="createRoom"
           >

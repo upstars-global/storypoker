@@ -91,7 +91,7 @@ async function save() {
           style="min-width: 120px;"
           @click="selectStyle(s)"
         >
-          {{ s === 'bottts' ? $t('userSettings.styleRobots') : $t('userSettings.styleDylan') }}
+          {{ s === 'bottts' ? $t('userSettings.styleRobots') : s === 'dylan' ? $t('userSettings.styleDylan') : $t('userSettings.styleMiniavs') }}
         </button>
       </div>
 
