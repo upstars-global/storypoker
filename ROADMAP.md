@@ -21,6 +21,28 @@
 
 ---
 
+## Vue + Vite migration ✅ DONE
+
+**Spec:** [`docs/superpowers/specs/2026-05-16-vue-vite-migration-design.md`](docs/superpowers/specs/2026-05-16-vue-vite-migration-design.md)
+**Plan:** [`docs/superpowers/plans/2026-05-16-vue-vite-migration.md`](docs/superpowers/plans/2026-05-16-vue-vite-migration.md)
+
+Pure Vue 3 + Vite 6 SPA замість Nuxt 4 SSG. Менший dep-surface, явні imports і router, vue-i18n runtime, @iconify/vue.
+
+---
+
+## Post-migration tech debt ⏳ planned
+
+### Tailwind v4
+Перенести з v3 (`@nuxtjs/tailwindcss` спадщина — вже зрізана) на native `@tailwindcss/vite` plugin з CSS-first `@theme` config. Перенести `tailwind.config.ts` у `app/assets/css/main.css`. Візуальна регресійна перевірка через Playwright screenshots (новий iter).
+
+### vue-i18n precompile
+Перейти з runtime compilation на `@intlify/unplugin-vue-i18n` (precompile messages у render-функції під час build). Швидший runtime + менший bundle + прибере dev warning `[intlify] Runtime compilation is being used`.
+
+### Bundle metrics
+Зафіксувати в репозиторії before/after сумарного розміру `dist/assets/*.js` після завершення міграції (PR-комент). Якщо bundle gorsche — діагностика через `rollup-plugin-visualizer`.
+
+---
+
 ## Design Gaps / Open Items
 
 Технічний борг по UI-шару — звіреано проти `assets/css/main.css`, `tailwind.config.ts` і компонентів.

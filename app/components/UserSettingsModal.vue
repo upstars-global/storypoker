@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
 import { useProfilesStore } from '~/stores/profiles'
@@ -73,7 +75,7 @@ async function save() {
         :aria-label="$t('common.close')"
         @click="emit('close')"
       >
-        <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="text-center text-mui-h2 font-bold text-primary">
         {{ $t('userSettings.title') }}
@@ -102,7 +104,7 @@ async function save() {
           :disabled="cursor === 0"
           @click="prev"
         >
-          <Icon class="mui-svg-icon" name="ic:baseline-navigate-before" style="font-size: 1.25rem;" />
+          <Icon class="mui-svg-icon" icon="ic:baseline-navigate-before" style="font-size: 1.25rem;" />
         </button>
         <img
           v-if="previewUri"
@@ -118,7 +120,7 @@ async function save() {
           :aria-label="$t('userSettings.nextAvatar')"
           @click="next"
         >
-          <Icon class="mui-svg-icon" name="ic:baseline-navigate-next" style="font-size: 1.25rem;" />
+          <Icon class="mui-svg-icon" icon="ic:baseline-navigate-next" style="font-size: 1.25rem;" />
         </button>
       </div>
 

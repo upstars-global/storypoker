@@ -16,4 +16,7 @@
   "[markdown]": {
     "editor.wordWrap": "off",
   },
+  "workbench.editor.empty.hint": "hidden",
+  "explorer.confirmPasteNative": false,
+  "terminal.integrated.defaultLocation": "editor",
 }

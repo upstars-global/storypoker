@@ -51,8 +51,8 @@ export default defineConfig({
         timeout: 180_000,
         reuseExistingServer: !process.env.CI,
         env: {
-          SUPABASE_URL: process.env.SUPABASE_URL!,
-          SUPABASE_KEY: process.env.SUPABASE_KEY!,
+          VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '',
+          VITE_SUPABASE_KEY: process.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY || '',
           ...previewBlockedEnv,
         },
       },

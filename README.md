@@ -8,7 +8,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 
 ### Used
 * [Vue.js](https://vuejs.org)
-* [Nuxt](https://nuxt.com)
+* [Vite](https://vitejs.dev)
 * [Supabase](https://supabase.com)
 * [Netlify](https://netlify.com)
 * [Tailwind](https://tailwindcss.com)

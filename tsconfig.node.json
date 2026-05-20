@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ES2022",
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "postcss.config.js", "tailwind.config.ts", "eslint.config.js"]
+}

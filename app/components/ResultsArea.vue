@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import PieChart from '~/components/PieChart.vue'
 
 const props = defineProps<{
   votes: Record<string, number>

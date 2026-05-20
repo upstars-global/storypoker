@@ -79,6 +79,8 @@ jobs:
 
       - name: E2E checks
         env:
+          VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
           SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
           SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
@@ -122,13 +124,13 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Build (static)
-        run: npm run generate
+      - name: Build
+        run: npm run build
 
       - name: Deploy to Netlify
         uses: netlify/actions/cli@master
         with:
-          args: deploy --dir=.output/public --prod
+          args: deploy --dir=dist --prod
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

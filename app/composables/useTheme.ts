@@ -1,3 +1,5 @@
+import { ref, computed } from 'vue'
+
 type Theme = 'light' | 'dark'
 const STORAGE_KEY = 'sp-theme'
 
@@ -5,17 +7,14 @@ const theme = ref<Theme>('dark')
 
 function apply(value: Theme, persist: boolean) {
   theme.value = value
-  if (import.meta.client) {
-    document.documentElement.setAttribute('data-theme', value)
-    if (persist) {
-      try { localStorage.setItem(STORAGE_KEY, value) } catch {}
-    }
+  document.documentElement.setAttribute('data-theme', value)
+  if (persist) {
+    try { localStorage.setItem(STORAGE_KEY, value) } catch {}
   }
 }
 
 export function useTheme() {
   function init() {
-    if (!import.meta.client) return
     let stored: string | null = null
     try { stored = localStorage.getItem(STORAGE_KEY) } catch {}
     if (stored === 'light' || stored === 'dark') {
