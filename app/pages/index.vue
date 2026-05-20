@@ -1,12 +1,17 @@
 <script setup lang="ts">
+import { ref, shallowRef, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { useAuthStore } from '~/stores/auth'
 import { useProfilesStore } from '~/stores/profiles'
-import { storeToRefs } from 'pinia'
 import { listRecentRooms, touchRecentRoom, type RecentRoomEntry } from '~/utils/recentRooms'
 import { relativeTime } from '~/utils/relativeTime'
 import { getSupabase } from '~/lib/supabase-instance'
+import AppHeader from '~/components/AppHeader.vue'
+import AuthModal from '~/components/AuthModal.vue'
+import UserSettingsModal from '~/components/UserSettingsModal.vue'
 
 const name = shallowRef('')
 const hasError = shallowRef(false)
@@ -148,9 +153,9 @@ async function createRoom() {
               class="border-t"
             >
               <td class="px-3 py-3 align-top">
-                <NuxtLink :to="`/${room.slug ?? room.roomId}`" class="underline hover:no-underline text-primary">
+                <RouterLink :to="`/${room.slug ?? room.roomId}`" class="underline hover:no-underline text-primary">
                   {{ room.name ?? room.slug ?? room.roomId }}
-                </NuxtLink>
+                </RouterLink>
               </td>
               <td class="px-3 py-3 align-top">
                 <span v-if="room.playerNames.length">{{ room.playerNames.join(', ') }}</span>

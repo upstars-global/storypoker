@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { reactive, shallowRef, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getSupabase } from '~/lib/supabase-instance'
 import { useAuthStore } from '~/stores/auth'
 import { validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
+import AppHeader from '~/components/AppHeader.vue'
 
 const { t } = useI18n()
-useHead({ title: t('resetPassword.pageTitle') })
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -83,12 +86,12 @@ async function onSubmit() {
 
         <div v-else-if="success" class="text-center mt-6">
           <p class="mui-body">{{ $t('resetPassword.updated') }}</p>
-          <NuxtLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('common.signIn') }}</NuxtLink>
+          <RouterLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('common.signIn') }}</RouterLink>
         </div>
 
         <div v-else-if="!canReset" class="text-center mt-6">
           <p class="mui-body">{{ errors.session }}</p>
-          <NuxtLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary">{{ $t('resetPassword.requestNewLink') }}</NuxtLink>
+          <RouterLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary">{{ $t('resetPassword.requestNewLink') }}</RouterLink>
         </div>
 
         <form v-else class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">

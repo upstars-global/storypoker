@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
+import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '~/stores/auth'
+import { useProfilesStore } from '~/stores/profiles'
+import { useDylanAvatar } from '~/composables/useDylanAvatar'
+import { useTheme } from '~/composables/useTheme'
+
 const props = defineProps<{
   onlineCount: number
   isModerator: boolean
@@ -16,15 +26,12 @@ const emit = defineEmits<{
   signOut: []
 }>()
 
-import { storeToRefs } from 'pinia'
-import { useAuthStore } from '~/stores/auth'
-import { useProfilesStore } from '~/stores/profiles'
 const router = useRouter()
 const { user } = storeToRefs(useAuthStore())
 const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 const { isLight, toggle: toggleTheme } = useTheme()
-const { locale, setLocale } = useI18n()
+const { locale } = useI18n()
 const showMenu = ref(false)
 const showRoomMenu = ref(false)
 
@@ -59,7 +66,7 @@ function goRecent() {
 }
 
 function toggleLocale() {
-  setLocale(locale.value === 'uk' ? 'en' : 'uk')
+  locale.value = locale.value === 'uk' ? 'en' : 'uk'
 }
 </script>
 
@@ -68,9 +75,9 @@ function toggleLocale() {
     class="sticky top-0 z-40 w-full flex items-center px-4 sm:px-6 bg-appbar text-white shadow-4"
     style="min-height: 56px;"
   >
-    <NuxtLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded text-white">
+    <RouterLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded text-white">
       Story Poker
-    </NuxtLink>
+    </RouterLink>
     <template v-if="roomName">
       <span class="mx-1.5 text-appbar-subtle">/</span>
       <span class="mui-h6 text-lg text-appbar-emphasis">{{ roomName }}</span>
@@ -82,7 +89,7 @@ function toggleLocale() {
           :aria-label="$t('header.roomSettings')"
           @click.stop="showRoomMenu = !showRoomMenu"
         >
-          <Icon class="mui-svg-icon" name="ic:baseline-settings" style="font-size: 1.2rem;" />
+          <Icon class="mui-svg-icon" icon="ic:baseline-settings" style="font-size: 1.2rem;" />
         </button>
         <ul
           v-if="showRoomMenu"
@@ -92,12 +99,12 @@ function toggleLocale() {
         >
           <li v-if="user">
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showRoomMenu = false">
-              <Icon class="mui-menu-icon" name="ic:baseline-edit" /> {{ $t('header.renameRoom') }}
+              <Icon class="mui-menu-icon" icon="ic:baseline-edit" /> {{ $t('header.renameRoom') }}
             </button>
           </li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showRoomMenu = false">
-              <Icon class="mui-menu-icon" name="ic:baseline-settings" /> {{ $t('header.configureCardDeck') }}
+              <Icon class="mui-menu-icon" icon="ic:baseline-settings" /> {{ $t('header.configureCardDeck') }}
             </button>
           </li>
         </ul>
@@ -134,7 +141,7 @@ function toggleLocale() {
             :alt="playerName"
             :style="{ opacity: profileFetched ? 1 : 0, transition: 'opacity 0.15s' }"
           />
-          <Icon v-else class="mui-svg-icon" name="ic:baseline-account-circle" style="font-size: 1.5rem;" />
+          <Icon v-else class="mui-svg-icon" icon="ic:baseline-account-circle" style="font-size: 1.5rem;" />
         </button>
 
         <ul
@@ -146,14 +153,14 @@ function toggleLocale() {
           <template v-if="user">
             <li>
               <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openAccountSettings'); showMenu = false">
-                <Icon class="mui-menu-icon" name="ic:baseline-settings" /> {{ $t('header.accountSettings') }}
+                <Icon class="mui-menu-icon" icon="ic:baseline-settings" /> {{ $t('header.accountSettings') }}
               </button>
             </li>
             <li><hr class="mui-divider" /></li>
           </template>
         <li>
           <button v-wave class="mui-menu-item whitespace-nowrap" @click="goRecent">
-            <Icon class="mui-menu-icon" name="ic:baseline-history" /> {{ $t('header.recentRooms') }}
+            <Icon class="mui-menu-icon" icon="ic:baseline-history" /> {{ $t('header.recentRooms') }}
           </button>
         </li>
         <li><hr class="mui-divider" /></li>
@@ -165,7 +172,7 @@ function toggleLocale() {
             :aria-checked="isLight"
             @click="toggleTheme"
           >
-            <Icon class="mui-menu-icon" :name="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'" />
+            <Icon class="mui-menu-icon" :icon="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'" />
             <span class="flex-1">{{ isLight ? $t('header.lightTheme') : $t('header.darkTheme') }}</span>
             <span class="mui-switch">
               <input type="checkbox" :checked="isLight" tabindex="-1" readonly />
@@ -178,12 +185,12 @@ function toggleLocale() {
           <li><hr class="mui-divider" /></li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" data-testid="auth-sign-in-menu-item" @click="emit('openSignIn'); showMenu = false">
-              <Icon class="mui-menu-icon" name="ic:baseline-login" /> {{ $t('common.signIn') }}
+              <Icon class="mui-menu-icon" icon="ic:baseline-login" /> {{ $t('common.signIn') }}
             </button>
           </li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openSignUp'); showMenu = false">
-              <Icon class="mui-menu-icon" name="ic:baseline-person-add" /> {{ $t('common.signUp') }}
+              <Icon class="mui-menu-icon" icon="ic:baseline-person-add" /> {{ $t('common.signUp') }}
             </button>
           </li>
         </template>
@@ -191,7 +198,7 @@ function toggleLocale() {
           <li><hr class="mui-divider" /></li>
           <li>
             <button v-wave class="mui-menu-item whitespace-nowrap" data-testid="auth-sign-out-menu-item" @click="emit('signOut'); showMenu = false">
-              <Icon class="mui-menu-icon" name="ic:baseline-logout" /> {{ $t('common.signOut') }}
+              <Icon class="mui-menu-icon" icon="ic:baseline-logout" /> {{ $t('common.signOut') }}
             </button>
           </li>
         </template>

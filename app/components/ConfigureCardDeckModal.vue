@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
 import { ref, computed, watch } from 'vue'
 import { DECK_PRESETS, getDeck, type DeckPresetId } from '~/utils/cardDecks'
 
@@ -51,7 +52,7 @@ function save() {
         :aria-label="$t('common.close')"
         @click="emit('close')"
       >
-        <Icon class="mui-svg-icon" name="ic:baseline-close" style="font-size: 1.5rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
       </button>
       <h2 class="text-center text-mui-h2 font-bold text-primary">
         {{ $t('deck.configure') }}
