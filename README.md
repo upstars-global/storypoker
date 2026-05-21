@@ -87,7 +87,7 @@ npx skills add wshobson/agents -s tailwind-design-system -a codex claude-code -y
 ```zsh
 npm i -g skillio
 
-skl used -p 3h
+skl usg -p 3h
 ```
 
 ### Have fun! ;)
