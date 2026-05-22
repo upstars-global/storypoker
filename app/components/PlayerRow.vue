@@ -148,8 +148,8 @@ function close() { emit('menuClose') }
     <template v-else>
       <span
         v-if="phase === 'revealed' && player.vote !== null"
-        class="text-base font-medium text-center text-disabled dark:text-muted"
-        style="width: 24px;"
+        class="text-base font-medium text-center"
+        style="width: 24px; color: var(--text-primary);"
       >{{ player.vote }}</span>
       <span
         v-else-if="phase === 'voting' && player.vote !== null"

@@ -58,6 +58,7 @@
   },
   "players": {
     "title": "Гравці",
+    "role": "Роль",
     "isModerator": "Модератор",
     "renamePlayer": "Перейменувати гравця",
     "leaveRoom": "Покинути кімнату",

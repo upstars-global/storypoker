@@ -13,7 +13,7 @@ import { getSupabase } from '~/lib/supabase-instance'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
-import { detectRoleGroup } from '~/utils/playerRoles'
+import { PLAYER_ROLES, detectRoleGroup, formatPlayerName, parsePlayerName, type PlayerRole } from '~/utils/playerRoles'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
@@ -48,6 +48,7 @@ const showCardDeck = ref(false)
 const showAccountSettings = ref(false)
 const renameTarget = ref<string | null>(null)
 const renameValue = ref('')
+const renameRole = ref<PlayerRole>('DEV')
 const showRenameRoom = ref(false)
 const roomNameInput = ref('')
 const roomNameError = ref<string | null>(null)
@@ -90,16 +91,17 @@ const groupedVoteCounts = computed(() => {
   if (!roomState.value) return null
   const dev: Record<string, number> = {}
   const qa: Record<string, number> = {}
+  const sm: Record<string, number> = {}
   let hasGroups = false
   for (const p of visiblePlayers.value) {
     if (!p.vote) continue
     const group = detectRoleGroup(p.name)
     if (!group) continue
     hasGroups = true
-    const target = group === 'DEV' ? dev : qa
+    const target = group === 'DEV' ? dev : group === 'QA' ? qa : sm
     target[p.vote] = (target[p.vote] ?? 0) + 1
   }
-  return hasGroups ? { dev, qa } : null
+  return hasGroups ? { dev, qa, sm } : null
 })
 
 let playersChannel: any = null
@@ -255,12 +257,14 @@ async function handleToggleModerator(id: string, value: boolean) {
 
 function handleRename(id: string) {
   renameTarget.value = id
-  renameValue.value = visiblePlayers.value.find(p => p.id === id)?.name ?? ''
+  const parsed = parsePlayerName(visiblePlayers.value.find(p => p.id === id)?.name ?? '')
+  renameRole.value = parsed.role ?? 'DEV'
+  renameValue.value = parsed.nickname
 }
 
 async function submitRename() {
   if (renameTarget.value && renameValue.value.trim()) {
-    await playersStore.rename(renameTarget.value, renameValue.value.trim())
+    await playersStore.rename(renameTarget.value, formatPlayerName(renameRole.value, renameValue.value))
     renameTarget.value = null
   }
 }
@@ -442,11 +446,16 @@ async function submitRenameRoom() {
           <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
         </button>
         <h2 class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</h2>
-        <input
-          v-model="renameValue"
-          class="mui-input"
-          autofocus
-        />
+        <div class="flex gap-3">
+          <select v-model="renameRole" class="mui-input max-w-[104px]" :aria-label="$t('players.role')">
+            <option v-for="r in PLAYER_ROLES" :key="r" :value="r">[{{ r }}]</option>
+          </select>
+          <input
+            v-model="renameValue"
+            class="mui-input min-w-0 flex-1"
+            autofocus
+          />
+        </div>
         <div class="flex justify-end mt-6">
           <button ref="renameSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">{{ $t('common.save') }}</button>
         </div>
