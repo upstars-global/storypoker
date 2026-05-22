@@ -22,7 +22,7 @@
   --shadow-4: 0px 2px 4px -1px rgba(0, 0, 0, 0.2), 0px 4px 5px 0px rgba(0, 0, 0, 0.14), 0px 1px 10px 0px rgba(0, 0, 0, 0.12);
   --shadow-8: 0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12);
 
-  --text-mui-h2: 22px;
+  --text-mui-h2: 24px;
   --text-mui-h2--line-height: 1.235;
   --text-mui-h2--letter-spacing: 0.00735em;
   --text-mui-body: 15px;
@@ -160,7 +160,7 @@ body {
     background-color: var(--bg-paper);
     background-image: var(--paper-overlay);
     border-radius: 5px;
-    overflow: hidden;
+    overflow: visible;
     transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -175,6 +175,7 @@ body {
     font-weight: 600;
     line-height: 1.6;
     letter-spacing: 0.0075em;
+    border-radius: 5px 5px 0 0;
   }
 
   .mui-btn {
@@ -310,6 +311,33 @@ body {
   .mui-icon-btn:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: -2px;
+  }
+
+  .mui-tooltip {
+    position: relative;
+  }
+  .mui-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(97, 97, 97, 0.92);
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+  }
+  .mui-tooltip:hover::after {
+    opacity: 1;
   }
 
   .mui-input {
@@ -506,16 +534,13 @@ body {
   .mui-modal-paper {
     background-color: var(--bg-paper);
     background-image: var(--paper-overlay);
-    color: var(--text-primary);
+    color: var(--text-body);
     border-radius: 4px;
     box-shadow: var(--shadow-8);
     padding: 24px;
     width: 100%;
     max-width: 28rem;
     position: relative;
-  }
-  html[data-theme='light'] .mui-modal-paper {
-    background-color: rgb(255, 255, 255);
   }
 
   .mui-h6 {
@@ -528,21 +553,11 @@ body {
   }
 
   .mui-h5 {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 600;
     line-height: 1.334;
     color: var(--text-primary);
     margin: 0;
-  }
-  @media (min-width: 600px) {
-    .mui-h5 {
-      font-size: 1.3118rem;
-    }
-  }
-  @media (min-width: 900px) {
-    .mui-h5 {
-      font-size: 1.4993rem;
-    }
   }
 
   .mui-body {

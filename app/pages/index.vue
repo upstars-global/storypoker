@@ -139,7 +139,7 @@ async function createRoom() {
           </div>
           <button
             v-wave
-            class="mui-btn mui-btn-md mt-[30px]"
+            class="mui-btn mt-[30px]"
             data-testid="home-create-room"
             @click="createRoom"
           >

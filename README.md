@@ -52,8 +52,6 @@ claude --dangerously-skip-permissions
 # FRONTEND
 npx skills add giuseppe-trisciuoglio/developer-kit -s tailwind-css-patterns -a codex claude-code -y
 npx skills add anthropics/skills -s frontend-design -a codex claude-code -y
-npx skills add better-auth/better-icons -s better-icons -a codex claude-code -y
-npx skills add wshobson/agents -s tailwind-design-system -a codex claude-code -y
 
 # TESTS
 npx skills add anthropics/skills -s webapp-testing -a codex claude-code -y
@@ -76,13 +74,20 @@ npx skills add obra/superpowers -s finishing-a-development-branch -a codex claud
 
 # META
 npx skills add anthropics/claude-plugins-official -s claude-md-improver -a codex claude-code -y
+
+# SUPABASE
+npx skills add supabase/agent-skills@supabase -a codex claude-code -y
+
+# DESIGN
+npx skills add better-auth/better-icons -s better-icons -a codex claude-code -y
+npx skills add wshobson/agents -s tailwind-design-system -a codex claude-code -y
 ```
 
 ### Як подивитись скільки і яких скілів використовували агенти
 ```zsh
 npm i -g skillio
 
-skl used -p 3h
+skl usg -p 3h
 ```
 
 ### Have fun! ;)

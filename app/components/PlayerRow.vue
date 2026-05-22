@@ -84,34 +84,46 @@ function close() { emit('menuClose') }
       >
         {{ player.name }}
       </span>
-      <Icon
+      <span
         v-if="player.is_moderator"
-        class="mui-svg-icon flex-none"
-        icon="app:moderator"
-        style="font-size: 1.5rem; color: var(--icon-player-color);"
-        :aria-label="$t('players.moderatorLabel')"
-        :title="$t('players.moderatorLabel')"
-      />
+        class="inline-flex flex-none mui-tooltip"
+        :data-tooltip="$t('players.moderatorOf', { name: player.name })"
+      >
+        <Icon
+          class="mui-svg-icon"
+          icon="app:moderator"
+          style="font-size: 1.5rem; color: var(--icon-player-color);"
+          :aria-label="$t('players.moderatorOf', { name: player.name })"
+        />
+      </span>
     </div>
 
     <template v-if="player.is_online">
       <template v-if="phase === 'voting'">
-        <Icon
+        <span
           v-if="player.vote !== null"
-          class="mui-svg-icon"
-          icon="ic:baseline-check-circle"
-          style="font-size: 1.5rem; color: var(--icon-player-color);"
-          :aria-label="$t('players.estimateGiven')"
-          :title="$t('players.estimateGiven')"
-        />
-        <Icon
+          class="inline-flex mui-tooltip"
+          :data-tooltip="$t('players.estimateGiven')"
+        >
+          <Icon
+            class="mui-svg-icon"
+            icon="ic:baseline-check-circle"
+            style="font-size: 1.5rem; color: var(--icon-player-color);"
+            :aria-label="$t('players.estimateGiven')"
+          />
+        </span>
+        <span
           v-else
-          class="mui-svg-icon"
-          icon="app:deciding"
-          style="font-size: 1.5rem; color: var(--icon-player-color);"
-          :aria-label="$t('players.playerDeciding')"
-          :title="$t('players.playerDeciding')"
-        />
+          class="inline-flex mui-tooltip"
+          :data-tooltip="$t('players.playerDeciding')"
+        >
+          <Icon
+            class="mui-svg-icon"
+            icon="app:deciding"
+            style="font-size: 1.5rem; color: var(--icon-player-color);"
+            :aria-label="$t('players.playerDeciding')"
+          />
+        </span>
       </template>
       <template v-else>
         <span
@@ -119,14 +131,18 @@ function close() { emit('menuClose') }
           class="text-base font-medium text-center"
           style="width: 24px; color: var(--text-primary);"
         >{{ player.vote }}</span>
-        <Icon
+        <span
           v-else
-          class="mui-svg-icon"
-          icon="ic:baseline-cancel"
-          style="font-size: 1.5rem; color: var(--icon-player-color);"
-          :aria-label="$t('players.noVote')"
-          :title="$t('players.noVote')"
-        />
+          class="inline-flex mui-tooltip"
+          :data-tooltip="$t('players.noVote')"
+        >
+          <Icon
+            class="mui-svg-icon"
+            icon="ic:baseline-cancel"
+            style="font-size: 1.5rem; color: var(--icon-player-color);"
+            :aria-label="$t('players.noVote')"
+          />
+        </span>
       </template>
     </template>
     <template v-else>
@@ -135,22 +151,30 @@ function close() { emit('menuClose') }
         class="text-base font-medium text-center"
         style="width: 24px; color: var(--text-primary);"
       >{{ player.vote }}</span>
-      <Icon
+      <span
         v-else-if="phase === 'voting' && player.vote !== null"
-        class="mui-svg-icon text-black/[0.26] dark:text-white/30"
-        icon="ic:baseline-check-circle"
-        style="font-size: 1.5rem;"
-        :aria-label="$t('players.estimateGiven')"
-        :title="$t('players.estimateGiven')"
-      />
-      <Icon
+        class="inline-flex mui-tooltip"
+        :data-tooltip="$t('players.estimateGiven')"
+      >
+        <Icon
+          class="mui-svg-icon text-black/[0.26] dark:text-white/30"
+          icon="ic:baseline-check-circle"
+          style="font-size: 1.5rem;"
+          :aria-label="$t('players.estimateGiven')"
+        />
+      </span>
+      <span
         v-else
-        class="mui-svg-icon text-black/[0.26] dark:text-white/30"
-        icon="app:offline"
-        style="font-size: 1.5rem;"
-        :aria-label="$t('players.inactive')"
-        :title="$t('players.inactive')"
-      />
+        class="inline-flex mui-tooltip"
+        :data-tooltip="$t('players.inactive')"
+      >
+        <Icon
+          class="mui-svg-icon text-black/[0.26] dark:text-white/30"
+          icon="app:offline"
+          style="font-size: 1.5rem;"
+          :aria-label="$t('players.inactive')"
+        />
+      </span>
     </template>
 
     <div class="flex items-center justify-center" style="width: 36px; height: 36px;">

@@ -69,58 +69,78 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
       <span>{{ $t('timer.title') }}</span>
     </div>
     <p class="mui-body px-4 py-3 text-body">{{ text }}</p>
-    <div v-if="showControls" class="flex flex-wrap justify-center gap-2 px-4 pb-3">
+    <div v-if="showControls" class="flex justify-between px-4 pb-3">
       <button
         v-wave
         type="button"
-        class="mui-btn mui-btn-secondary mui-btn-sm"
+        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
+        :data-tooltip="$t('timer.minus30')"
         :aria-label="$t('timer.minus30')"
-        :title="$t('timer.minus30')"
         @click="emit('adjust', -30000)"
       >
-        <Icon class="mui-svg-icon" icon="ic:baseline-replay-30" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-fast-rewind" style="font-size: 1.375rem;" />
+      </button>
+      <button
+        v-wave
+        type="button"
+        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
+        :data-tooltip="$t('timer.minus10')"
+        :aria-label="$t('timer.minus10')"
+        @click="emit('adjust', -10000)"
+      >
+        <Icon class="mui-svg-icon" icon="ic:baseline-skip-previous" style="font-size: 1.375rem;" />
+      </button>
+      <button
+        v-wave
+        type="button"
+        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
+        :data-tooltip="$t('timer.reset')"
+        :aria-label="$t('timer.reset')"
+        @click="emit('reset')"
+      >
+        <Icon class="mui-svg-icon" icon="ic:baseline-stop" style="font-size: 1.375rem;" />
       </button>
       <button
         v-if="!isPaused"
         v-wave
         type="button"
-        class="mui-btn mui-btn-secondary mui-btn-sm"
+        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
+        :data-tooltip="$t('timer.pause')"
         :aria-label="$t('timer.pause')"
-        :title="$t('timer.pause')"
         @click="emit('pause')"
       >
-        <Icon class="mui-svg-icon" icon="ic:baseline-pause" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-pause" style="font-size: 1.375rem;" />
       </button>
       <button
         v-else
         v-wave
         type="button"
-        class="mui-btn mui-btn-secondary mui-btn-sm"
+        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
+        :data-tooltip="$t('timer.continue')"
         :aria-label="$t('timer.continue')"
-        :title="$t('timer.continue')"
         @click="emit('resume')"
       >
-        <Icon class="mui-svg-icon" icon="ic:baseline-play-arrow" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-play-arrow" style="font-size: 1.375rem;" />
       </button>
       <button
         v-wave
         type="button"
-        class="mui-btn mui-btn-secondary mui-btn-sm"
-        :aria-label="$t('timer.reset')"
-        :title="$t('timer.reset')"
-        @click="emit('reset')"
+        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
+        :data-tooltip="$t('timer.plus10')"
+        :aria-label="$t('timer.plus10')"
+        @click="emit('adjust', 10000)"
       >
-        <Icon class="mui-svg-icon" icon="ic:baseline-replay" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-skip-next" style="font-size: 1.375rem;" />
       </button>
       <button
         v-wave
         type="button"
-        class="mui-btn mui-btn-secondary mui-btn-sm"
+        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
+        :data-tooltip="$t('timer.plus30')"
         :aria-label="$t('timer.plus30')"
-        :title="$t('timer.plus30')"
         @click="emit('adjust', 30000)"
       >
-        <Icon class="mui-svg-icon" icon="ic:baseline-forward-30" style="font-size: 1.125rem;" />
+        <Icon class="mui-svg-icon" icon="ic:baseline-fast-forward" style="font-size: 1.375rem;" />
       </button>
     </div>
   </div>

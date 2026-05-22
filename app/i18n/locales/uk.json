@@ -48,6 +48,8 @@
     "pause": "Пауза",
     "continue": "Продовжити",
     "minus30": "-30с",
+    "minus10": "-10с",
+    "plus10": "+10с",
     "plus30": "+30с"
   },
   "deck": {
@@ -62,10 +64,11 @@
     "leaveRoom": "Покинути кімнату",
     "kickPlayer": "Вилучити гравця",
     "moderatorLabel": "модератор",
-    "estimateGiven": "оцінку надано",
-    "playerDeciding": "гравець вирішує",
-    "inactive": "неактивний",
-    "noVote": "не голосував"
+    "moderatorOf": "{name} є модератором цієї кімнати",
+    "estimateGiven": "Оцінку надано",
+    "playerDeciding": "Ще не обрав оцінку",
+    "inactive": "Неактивний",
+    "noVote": "Потрачєно"
   },
   "room": {
     "renameTitle": "Перейменувати кімнату",
@@ -88,6 +91,7 @@
     "title": "Налаштування акаунту",
     "styleRobots": "Роботи",
     "styleDylan": "Dylan",
+    "styleMiniavs": "Miniavs",
     "previousAvatar": "Попередній аватар",
     "nextAvatar": "Наступний аватар",
     "avatarPreview": "Попередній перегляд аватара",

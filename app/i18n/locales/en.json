@@ -48,6 +48,8 @@
     "pause": "Pause",
     "continue": "Continue",
     "minus30": "-30s",
+    "minus10": "-10s",
+    "plus10": "+10s",
     "plus30": "+30s"
   },
   "deck": {
@@ -62,10 +64,11 @@
     "leaveRoom": "Leave Room",
     "kickPlayer": "Kick Player",
     "moderatorLabel": "moderator",
-    "estimateGiven": "estimate given",
-    "playerDeciding": "player deciding",
-    "inactive": "inactive",
-    "noVote": "no vote"
+    "moderatorOf": "{name} is moderator of this room",
+    "estimateGiven": "Estimate given",
+    "playerDeciding": "Not decided on an estimate yet",
+    "inactive": "Inactive",
+    "noVote": "Wasted"
   },
   "room": {
     "renameTitle": "Rename Room",
@@ -88,6 +91,7 @@
     "title": "Account Settings",
     "styleRobots": "Robots",
     "styleDylan": "Dylan",
+    "styleMiniavs": "Miniavs",
     "previousAvatar": "Previous avatar",
     "nextAvatar": "Next avatar",
     "avatarPreview": "Avatar preview",

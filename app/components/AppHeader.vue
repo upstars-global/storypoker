@@ -95,7 +95,7 @@ function toggleLocale() {
           v-if="showRoomMenu"
           v-click-outside="() => showRoomMenu = false"
           class="mui-menu absolute z-50"
-          style="min-width: 220px; left: 0; top: calc(100% + 4px);"
+          style="min-width: 220px; right: 0; top: calc(100% + 4px);"
         >
           <li v-if="user">
             <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showRoomMenu = false">
