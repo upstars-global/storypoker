@@ -38,6 +38,7 @@
   },
   "cards": {
     "reveal": "Reveal Estimates",
+    "revealCountdown": "Start Countdown",
     "startNewRound": "Start New Estimation Round"
   },
   "timer": {

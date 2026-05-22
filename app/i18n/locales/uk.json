@@ -38,6 +38,7 @@
   },
   "cards": {
     "reveal": "Розкрити оцінки",
+    "revealCountdown": "Зворотній відлік",
     "startNewRound": "Почати новий раунд"
   },
   "timer": {
