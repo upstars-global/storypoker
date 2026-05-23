@@ -14,11 +14,11 @@ const emit = defineEmits<{
   reveal: []
 }>()
 
-const { stopCountdown, startCountdown, countdownTimerCounter } = useCountdown()
+const { startCountdown, countdownTimerCounter, countdownReveal } = useCountdown()
 const isCountdownEnabled = getFeatureFlagValue('countdownEnabled')
 
 function reveal() {
-  stopCountdown()
+  countdownReveal()
   emit('reveal')
 }
 </script>
@@ -50,7 +50,7 @@ function reveal() {
       <button
         v-wave
         class="mui-btn"
-        :disabled="!hasVotes"
+        :disabled="!hasVotes || countdownTimerCounter > 0"
         data-testid="reveal-button"
         @click="reveal"
       >
