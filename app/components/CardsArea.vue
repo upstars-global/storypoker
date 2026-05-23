@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useCountdown } from '~/composables/useCountdown'
-import { getFeatureFlagValue } from '~/configs/featureFlags';
+import { getFeatureFlagValue } from '~/configs/featureFlags'
 
 defineProps<{
   activeCards: string[]

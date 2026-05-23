@@ -1,13 +1,13 @@
-const featureFlagsLSKey = 'FEATURE_FLAGS';
+const featureFlagsLSKey = 'FEATURE_FLAGS'
 
 export type FeatureFlagItem = {
-    enabled: boolean;
-    name: string;
-    description?: string;
+    enabled: boolean
+    name: string
+    description?: string
 }
 
-export type FeatureFlagKey = 'countdownEnabled' | 'example';
-export type FeatureFlags = Record<FeatureFlagKey, FeatureFlagItem>;
+export type FeatureFlagKey = 'countdownEnabled' | 'example'
+export type FeatureFlags = Record<FeatureFlagKey, FeatureFlagItem>
 
 export const featureFlags: FeatureFlags = {
     countdownEnabled: {
@@ -25,24 +25,24 @@ export const featureFlags: FeatureFlags = {
 function getFeaturesFlagsFromLS() {
     if (typeof window !== 'undefined') {
         try {
-            const data = window.localStorage.getItem(featureFlagsLSKey);
+            const data = window.localStorage.getItem(featureFlagsLSKey)
             if (data) {
-                return JSON.parse(data) as Record<string, boolean>;
+                return JSON.parse(data) as Record<string, boolean>
             }
         } catch (e) {
-            console.warn('error in getFeaturesFlagsFromLS', e);
+            console.warn('error in getFeaturesFlagsFromLS', e)
         }
     }
-    return {};
+    return {}
 }
 
 export function getFeatureFlags(): FeatureFlags {
-    const savedFlags = getFeaturesFlagsFromLS();
-    const featureFlagsCopy: FeatureFlags = JSON.parse(JSON.stringify(featureFlags));
+    const savedFlags = getFeaturesFlagsFromLS()
+    const featureFlagsCopy: FeatureFlags = JSON.parse(JSON.stringify(featureFlags))
     for (const flagKey in featureFlagsCopy) {
         let enabled = featureFlagsCopy[flagKey as FeatureFlagKey].enabled
         if (typeof savedFlags[flagKey] === 'boolean') {
-            enabled = savedFlags[flagKey];
+            enabled = savedFlags[flagKey]
         }
         featureFlagsCopy[flagKey as FeatureFlagKey] = {
             ...featureFlagsCopy[flagKey as FeatureFlagKey],
@@ -50,27 +50,27 @@ export function getFeatureFlags(): FeatureFlags {
         }
     }
 
-    return featureFlagsCopy;
+    return featureFlagsCopy
 }
 
 export function getFeatureFlagValue(key: FeatureFlagKey) {
-    const savedFlags = getFeaturesFlagsFromLS();
+    const savedFlags = getFeaturesFlagsFromLS()
     if (typeof savedFlags[key] === 'boolean') {
-        return savedFlags[key];
+        return savedFlags[key]
     }
-    return featureFlags[key].enabled;
+    return featureFlags[key].enabled
 }
 
 export function setFeatureFlagValue(key: FeatureFlagKey, value: boolean) {
     if (typeof window !== 'undefined') {
-        const savedFlags = getFeaturesFlagsFromLS();
-        savedFlags[key] = value;
-        window.localStorage.setItem(featureFlagsLSKey, JSON.stringify(savedFlags));
+        const savedFlags = getFeaturesFlagsFromLS()
+        savedFlags[key] = value
+        window.localStorage.setItem(featureFlagsLSKey, JSON.stringify(savedFlags))
     }
 }
 
 export function resetFeatureFlagValues() {
     if (typeof window !== 'undefined') {
-        window.localStorage.removeItem(featureFlagsLSKey);
+        window.localStorage.removeItem(featureFlagsLSKey)
     }
 }

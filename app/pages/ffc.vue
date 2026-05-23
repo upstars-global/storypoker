@@ -11,7 +11,7 @@ import {
   setFeatureFlagValue,
   type FeatureFlags,
   type FeatureFlagKey, resetFeatureFlagValues,
-} from '~/configs/featureFlags';
+} from '~/configs/featureFlags'
 
 const authStore = useAuthStore()
 
@@ -21,7 +21,7 @@ const showAccountSettings = ref(false)
 const profilesStore = useProfilesStore()
 const { user } = storeToRefs(authStore)
 
-const featureFlags = ref<FeatureFlags>(getFeatureFlags());
+const featureFlags = ref<FeatureFlags>(getFeatureFlags())
 
 onMounted(async () => {
   origin.value = window.location.origin
@@ -36,8 +36,8 @@ function toggleFeatureFlag(key: FeatureFlagKey) {
 }
 
 function resetFeatureFlags() {
-  resetFeatureFlagValues();
-  featureFlags.value = getFeatureFlags();
+  resetFeatureFlagValues()
+  featureFlags.value = getFeatureFlags()
 }
 
 </script>
