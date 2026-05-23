@@ -1,13 +1,27 @@
-export type RoleGroup = 'DEV' | 'QA' | null
+export const PLAYER_ROLES = ['DEV', 'QA', 'BE', 'FE', 'SV', 'SM'] as const
 
-const DEV_RE = /\b(FE|BE|DEV)\b/
-const QA_RE = /\b(AQA|QA)\b/
+export type PlayerRole = typeof PLAYER_ROLES[number]
+export type RoleGroup = 'DEV' | 'QA' | 'SM' | null
+
+const ROLE_RE = /^\[(DEV|QA|BE|FE|SV|SM)\]\s+(.+)$/
+
+export function formatPlayerName(role: PlayerRole, nickname: string): string {
+  return `[${role}] ${nickname.trim()}`
+}
+
+export function parsePlayerName(name: string): { role: PlayerRole | null; nickname: string } {
+  const trimmed = name.trim()
+  const match = trimmed.match(ROLE_RE)
+  if (!match) return { role: null, nickname: trimmed }
+  return { role: match[1] as PlayerRole, nickname: (match[2] ?? '').trim() }
+}
 
 export function detectRoleGroup(name: string): RoleGroup {
-  if (!name) return null
-  if (DEV_RE.test(name)) return 'DEV'
-  if (QA_RE.test(name)) return 'QA'
-  return null
+  const { role } = parsePlayerName(name)
+  if (!role) return null
+  if (role === 'QA') return 'QA'
+  if (role === 'SM') return 'SM'
+  return 'DEV'
 }
 
 export function hasRoleTags(names: string[]): boolean {

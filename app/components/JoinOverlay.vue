@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { ref } from 'vue'
+import { PLAYER_ROLES, formatPlayerName, type PlayerRole } from '~/utils/playerRoles'
 
 const emit = defineEmits<{
   join: [name: string]
@@ -8,6 +9,7 @@ const emit = defineEmits<{
 }>()
 
 const name = ref('')
+const role = ref<PlayerRole>('DEV')
 const hasError = ref(false)
 
 function submit() {
@@ -15,7 +17,7 @@ function submit() {
     hasError.value = true
     return
   }
-  emit('join', name.value.trim())
+  emit('join', formatPlayerName(role.value, name.value))
 }
 </script>
 
@@ -36,14 +38,19 @@ function submit() {
         {{ $t('join.subtitle') }}
       </p>
       <div class="flex flex-col gap-4 mt-6">
-        <input
-          v-model="name"
-          type="text"
-          :placeholder="$t('join.namePlaceholder')"
-          class="mui-input"
-          :class="{ 'is-error': hasError }"
-          @keyup.enter="submit"
-        />
+        <div class="flex gap-3">
+          <select v-model="role" class="mui-input max-w-[104px]" :aria-label="$t('players.role')">
+            <option v-for="r in PLAYER_ROLES" :key="r" :value="r">[{{ r }}]</option>
+          </select>
+          <input
+            v-model="name"
+            type="text"
+            :placeholder="$t('join.namePlaceholder')"
+            class="mui-input min-w-0 flex-1"
+            :class="{ 'is-error': hasError }"
+            @keyup.enter="submit"
+          />
+        </div>
         <div class="flex justify-center">
           <button class="mui-btn" @click="submit">{{ $t('join.joinRoom') }}</button>
         </div>

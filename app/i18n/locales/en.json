@@ -59,6 +59,7 @@
   },
   "players": {
     "title": "Players",
+    "role": "Role",
     "isModerator": "Is Moderator",
     "renamePlayer": "Rename Player",
     "leaveRoom": "Leave Room",
