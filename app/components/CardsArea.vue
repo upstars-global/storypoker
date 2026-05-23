@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useCountdown } from '~/composables/useCountdown'
+import { getFeatureFlagValue } from '~/configs/featureFlags'
+
 defineProps<{
   activeCards: string[]
   selectedVote: string | null
@@ -10,6 +13,14 @@ const emit = defineEmits<{
   vote: [card: string]
   reveal: []
 }>()
+
+const { stopCountdown, startCountdown, countdownTimerCounter } = useCountdown()
+const isCountdownEnabled = getFeatureFlagValue('countdownEnabled')
+
+function reveal() {
+  stopCountdown()
+  emit('reveal')
+}
 </script>
 
 <template>
@@ -35,8 +46,26 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <div v-if="isModerator" class="flex justify-center pt-8">
-      <button v-wave class="mui-btn" :disabled="!hasVotes" data-testid="reveal-button" @click="emit('reveal')">{{ $t('cards.reveal') }}</button>
+    <div v-if="isModerator" class="flex justify-center gap-4 pt-8">
+      <button
+        v-wave
+        class="mui-btn"
+        :disabled="!hasVotes"
+        data-testid="reveal-button"
+        @click="reveal"
+      >
+        {{ $t('cards.reveal') }}
+      </button>
+      <button
+        v-if="isCountdownEnabled"
+        v-wave
+        class="mui-btn"
+        :disabled="!hasVotes || countdownTimerCounter > 0"
+        data-testid="reveal-countdown-button"
+        @click="startCountdown"
+      >
+        {{ countdownTimerCounter || $t('cards.revealCountdown') }}
+      </button>
     </div>
   </div>
 </template>
