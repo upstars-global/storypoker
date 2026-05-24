@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
@@ -8,13 +8,20 @@ import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
 import { useTheme } from '~/composables/useTheme'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   onlineCount: number
   isModerator: boolean
   playerName: string
   playerUserId?: string | null
   roomName?: string
-}>()
+  countdownActive?: boolean
+  countdownCounter?: number
+  countdownTotal?: number
+}>(), {
+  countdownActive: false,
+  countdownCounter: 0,
+  countdownTotal: 0,
+})
 
 const emit = defineEmits<{
   openSignIn: []
@@ -32,6 +39,17 @@ const { isLight, toggle: toggleTheme } = useTheme()
 const { locale } = useI18n()
 const showMenu = ref(false)
 const showRoomMenu = ref(false)
+const countdownBarWidth = ref(0)
+
+watch(() => props.countdownActive, async (active) => {
+  if (!active) {
+    countdownBarWidth.value = 0
+    return
+  }
+  countdownBarWidth.value = 0
+  await nextTick()
+  requestAnimationFrame(() => { countdownBarWidth.value = 100 })
+})
 
 const myAvatarUri = computed(() => {
   const userIdForProfile = props.playerUserId ?? user.value?.id ?? null
@@ -198,5 +216,28 @@ function toggleLocale() {
         </ul>
       </div>
     </div>
+
+    <template v-if="countdownActive">
+      <div
+        class="absolute inset-x-0 bottom-0 h-1.5"
+        style="background-color: rgba(255, 255, 255, 0.16);"
+        data-testid="countdown-bar"
+      >
+        <div
+          class="h-full"
+          :style="{
+            width: `${countdownBarWidth}%`,
+            backgroundColor: 'var(--success)',
+            transition: `width ${countdownTotal}s linear`,
+          }"
+        />
+      </div>
+      <div
+        class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-mui-h2 font-bold tabular-nums text-white pointer-events-none"
+        data-testid="countdown-number"
+      >
+        {{ countdownCounter }}
+      </div>
+    </template>
   </header>
 </template>

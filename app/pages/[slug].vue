@@ -9,6 +9,7 @@ import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
 import { useProfilesStore } from '~/stores/profiles'
+import { useCountdown, type CountdownMode } from '~/composables/useCountdown'
 import { getSupabase } from '~/lib/supabase-instance'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
@@ -79,6 +80,17 @@ const playersForUi = computed(() =>
 
 const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
+const isConsensus = computed(() => {
+  const votes = playersForUi.value.map(p => p.vote).filter((v): v is string => v !== null)
+  return votes.length >= 2 && votes.every(v => v === votes[0])
+})
+
+const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown } = useCountdown()
+
+function broadcastCountdownStart(mode: CountdownMode) {
+  countdownChannel?.send({ type: 'broadcast', event: 'start', payload: { initiatorId: currentPlayerId.value, mode } })
+}
+
 const voteCounts = computed(() => {
   if (!roomState.value) return {}
   return visiblePlayers.value.reduce((acc, p) => {
@@ -108,6 +120,7 @@ let playersChannel: any = null
 let stateChannel: any = null
 let roomChannel: any = null
 let profilesChannel: any = null
+let countdownChannel: any = null
 
 onMounted(async () => {
   origin.value = window.location.origin
@@ -219,6 +232,18 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'user_profiles' },
       (payload) => profilesStore.applyChange(payload as any))
     .subscribe()
+  countdownChannel = supabase
+    .channel(`countdown:${roomId}`, { config: { broadcast: { self: true } } })
+    .on('broadcast', { event: 'start' }, ({ payload }: any) => {
+      const isInitiator = payload?.initiatorId === currentPlayerId.value
+      const mode: CountdownMode = payload?.mode === 'wet' || payload?.mode === 'silent' ? payload.mode : 'dry'
+      startCountdown(
+        mode,
+        isInitiator ? () => roomStore.reveal() : undefined,
+        () => isConsensus.value,
+      )
+    })
+    .subscribe()
 }
 
 function unsubscribe() {
@@ -226,6 +251,7 @@ function unsubscribe() {
   stateChannel?.unsubscribe()
   roomChannel?.unsubscribe()
   profilesChannel?.unsubscribe()
+  countdownChannel?.unsubscribe()
 }
 
 function getStoredSession(): { playerId: string; playerName: string } | null {
@@ -364,6 +390,9 @@ async function submitRenameRoom() {
       @open-rename-room="openRenameRoom"
       @open-account-settings="showAccountSettings = true"
       @sign-out="authStore.signOut()"
+      :countdown-active="countdownActive"
+      :countdown-counter="countdownTimerCounter"
+      :countdown-total="countdownTimerTotal"
     />
 
     <div class="flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto">
@@ -399,8 +428,11 @@ async function submitRenameRoom() {
           :selected-vote="currentPlayer ? playersStore.voteOf(currentPlayer.id) : null"
           :is-moderator="isModerator"
           :has-votes="hasVotes"
+          :countdown-counter="countdownTimerCounter"
+          :countdown-running="countdownRunning"
           @vote="handleVote"
           @reveal="roomStore.reveal()"
+          @start-countdown="broadcastCountdownStart"
         />
         <ResultsArea
           v-else-if="roomState?.phase === 'revealed'"

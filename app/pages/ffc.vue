@@ -74,7 +74,7 @@ function resetFeatureFlags() {
         >
           <div class="mui-paper-header">
             <div class="flex items-center justify-between w-full">
-              <div>{{ featureFlagValue.name }}</div>
+              <div>{{ $t(`ffc.flags.${featureFlagKey}.name`) }}</div>
               <span
                 class="mui-switch"
                 @click="toggleFeatureFlag(featureFlagKey)"
@@ -89,7 +89,18 @@ function resetFeatureFlags() {
             </div>
           </div>
           <div class="pl-4 pr-2 py-2 gap-2 flex flex-col">
-            <div>{{ featureFlagValue?.description || '' }}</div>
+            <div>{{ $t(`ffc.flags.${featureFlagKey}.description`) }}</div>
+          </div>
+        </div>
+        <div
+          v-if="featureFlags.example.enabled"
+          class="mui-paper"
+        >
+          <div class="mui-paper-header">
+            <div>{{ $t('ffc.exampleHeader') }}</div>
+          </div>
+          <div class="pl-4 pr-2 py-2">
+            {{ $t('ffc.exampleText') }}
           </div>
         </div>
       </div>
@@ -99,7 +110,7 @@ function resetFeatureFlags() {
           class="mui-btn"
           @click="resetFeatureFlags"
         >
-          Reset Feature Flags
+          {{ $t('ffc.resetFeatureFlags') }}
         </button>
       </div>
     </main>

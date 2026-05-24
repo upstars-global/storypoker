@@ -39,6 +39,9 @@
   "cards": {
     "reveal": "Reveal Estimates",
     "revealCountdown": "Start Countdown",
+    "countdownSilent": "Silent",
+    "countdownDry": "Dry",
+    "countdownWet": "Wet",
     "startNewRound": "Start New Estimation Round"
   },
   "timer": {
@@ -138,5 +141,20 @@
     "confirmNewPasswordPlaceholder": "Confirm new password",
     "updating": "Updating...",
     "updatePassword": "Update Password"
+  },
+  "ffc": {
+    "resetFeatureFlags": "Reset Feature Flags",
+    "exampleHeader": "Example",
+    "exampleText": "This is an example of how a feature flag works",
+    "flags": {
+      "countdownEnabled": {
+        "name": "Countdown (Easter Egg)",
+        "description": "Enable countdown button in the room with funny sound"
+      },
+      "example": {
+        "name": "Example Feature Flag",
+        "description": "Just to show how to make more feature flags"
+      }
+    }
   }
 }
