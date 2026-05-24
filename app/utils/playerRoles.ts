@@ -1,9 +1,9 @@
-export const PLAYER_ROLES = ['DEV', 'QA', 'BE', 'FE', 'SV', 'SM'] as const
+export const PLAYER_ROLES = ['DEV', 'BE', 'FE', 'QA', 'SM'] as const
 
 export type PlayerRole = typeof PLAYER_ROLES[number]
 export type RoleGroup = 'DEV' | 'QA' | 'SM' | null
 
-const ROLE_RE = /^\[(DEV|QA|BE|FE|SV|SM)\]\s+(.+)$/
+const ROLE_RE = /^\[(DEV|QA|BE|FE|SM)\]\s+(.+)$/
 
 export function formatPlayerName(role: PlayerRole, nickname: string): string {
   return `[${role}] ${nickname.trim()}`
