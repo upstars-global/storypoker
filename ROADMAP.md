@@ -237,12 +237,12 @@ Smoke pack (планується, спека: `docs/superpowers/specs/2026-05-15
 ## Cross-iter Open Questions
 
 - Mobile layout верифіковано лише empirically; референс із `examples/room.html` — desktop-only (1440 × 900). Окремий design pass для mobile/tablet?
-- Tooltip-стратегія: створити переоднаковлений `mui-tooltip` чи покладатися на native `title`? Впливає на G4 і будь-які майбутні status-icons.
+- ~~Tooltip-стратегія~~ ✅ вирішено: **interactive контроли** → Reka `Tooltip` (`.mui-tooltip-content` стиль + `TooltipProvider`); **декоративні status-іконки** (нефокусовані) → лишаються на CSS `mui-tooltip` / native `title`. Reka не обгортає нефокусовані індикатори, бо потребувало б штучного `tabindex`.
 - Чи мігрувати на MD3 / shadcn-стиль (ширші радіуси, surface tint), як пропонує DESIGN.md розд. 8? Зараз — Material Design 2.
 
 ---
 
-## Reka UI adoption ⚠️ IN PROGRESS
+## Reka UI adoption ✅ DONE
 
 **Контекст / навіщо:** замість важкого UI-фреймворку (Vuetify тощо) обрано headless-примітиви [Reka UI](https://reka-ui.com) (`reka-ui@2.9.8`) поверх наявних `mui-*` стилів. Мета — забрати **ручну a11y + positioning-логіку** (focus-trap, keyboard nav, collision-aware позиціювання, click-outside, Teleport), а власну дизайн-систему лишити без змін. Reka не приносить свого CSS.
 
@@ -252,12 +252,12 @@ Smoke pack (планується, спека: `docs/superpowers/specs/2026-05-15
 - ✅ Директиву `app/directives/clickOutside.ts` + реєстрацію в `main.ts` видалено — після обох міграцій споживачів не лишилось.
 - ✅ **Усі модалки → `Dialog`.** `AuthModal`, `UserSettingsModal`, `ConfigureCardDeckModal`, `JoinOverlay` + 3 інлайнові overlay у `[slug].vue` (rename player, rename room, kick). Патерн: `DialogContent` вкладено **всередину** `DialogOverlay` (а не sibling), щоб зберегти наявне flex-центрування + `overflow-y:auto` з `.mui-modal-overlay` без змін CSS — `DialogOverlay` рендерить слот і форсує inline `pointer-events:auto`, тож click-outside по padding overlay коректно ловиться як `pointerDownOutside`. `default-open` + `@update:open` → синхронізація з батьковим `v-if`. `h2`→`DialogTitle as="h2"`, subtitle→`DialogDescription`, X→`DialogClose` (з `v-wave`). X-кнопку перенесено в **кінець** DOM (лишається `absolute` вгорі-справа), щоб first-focus падав на input/перший контрол, а не на close. `JoinOverlay` — non-dismissable: `@escape-key-down.prevent` + `@interact-outside.prevent`, X лишається активним. Rename-player: `@open-auto-focus.prevent` + ручний `renameInput.focus()` (бо перший tabbable — role-`<select>`, а треба name-input). Прибрано ручні `@keydown.esc`/`@click.self`/`@keydown.enter.prevent`+save-btn refs; Enter тепер `@keyup.enter` на inputs (kick — нативний Enter на сфокусованій confirm-кнопці). Preset у `ConfigureCardDeckModal` лишився native `<select>` (свідомо — окрема `Select`-задача знята).
 
-**Залишилось** (за пріоритетом):
-- [ ] **Tooltips → `Tooltip`** (низький пріоритет). *Навіщо:* keyboard-focus + collision; зараз `mui-tooltip` через CSS `::after` без focus-підтримки. Це фактично рішення відкритого питання tooltip-стратегії (G4 / Cross-iter нижче). Зважити вартість (обгортки на десятки status-іконок) проти виграшу.
+- ✅ **Timer-tooltips → `Tooltip`.** 7 focusable timer-контролів (`Timer.vue`) обгорнуто в `TooltipRoot/Trigger(as-child)/Portal/Content`; `TooltipProvider :delay-duration="200"` в `App.vue`; стиль бульбашки — `.mui-tooltip-content` в `@layer components` (Reka позиціонує через floating-ui, CSS дає лише вигляд). `side="bottom"` + `:side-offset="6"` зберігає попереднє розташування, collision-flip — автоматичний. Виграш: keyboard-focus + collision. **PlayerRow status-іконки свідомо лишено** на CSS `mui-tooltip` (нефокусовані декоративні `<span>` — Reka-обгортка вимагала б штучного `tabindex`). CSS `.mui-tooltip` (`::after`) лишається для них.
 
 **Не верифіковано — блокер: немає test-Supabase** (див. [E2E P10](#p10-виділений-безкоштовний-supabase-test-проєкт-)):
 - [ ] Runtime-smoke `DropdownMenu` (PlayerRow + AppHeader): Portal-mount, focus-trap, клавіатура (↑↓/Esc/Home/End), click-outside, перемикання між сусідніми меню, `v-wave` ripple на Reka-компонентах, fallthrough `data-testid` на `DropdownMenuItem` (рендерить власний `<div role="menuitem">`).
 - [ ] Runtime-smoke `Dialog` (усі 7 модалок): Escape **і** click по padding overlay закривають (acceptance для вкладеного `DialogContent`-в-`DialogOverlay` — якщо хоч одне не спрацює, перейти на shadcn-sibling-layout: окремий fixed-`DialogOverlay` + центрований `DialogContent` з `max-h-[calc(100dvh-32px)] overflow-y-auto`); scroll-lock на body; first-focus (input, не close); Enter→submit; `JoinOverlay` не закривається по Escape/outside, лише по X; tall-контент на короткому viewport скролиться всередині overlay.
+- [ ] Runtime-smoke `Tooltip` (Timer-контроли, видимі лише модератору в кімнаті): hover **і** keyboard-focus показують бульбашку, `:delay-duration="200"`, collision-flip угору біля нижнього краю viewport, `v-wave` ripple на trigger-кнопці, стиль `.mui-tooltip-content` в light/dark.
 - [ ] Прогнати e2e `critical-flows` (account-menu signed-in/out) після створення test-проєкту — підтвердити новий ідемпотентний POM (`AuthPage.openAccountMenu` через `aria-expanded`).
 
 ---

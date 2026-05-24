@@ -340,6 +340,20 @@ body {
     opacity: 1;
   }
 
+  .mui-tooltip-content {
+    background-color: rgba(97, 97, 97, 0.92);
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    user-select: none;
+    z-index: 1400;
+  }
+
   .mui-input {
     width: 100%;
     color: var(--text-primary);

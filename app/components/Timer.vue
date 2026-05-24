@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import {
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipPortal,
+  TooltipContent,
+} from 'reka-ui'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
@@ -70,78 +76,132 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
     </div>
     <p class="mui-body px-4 py-3 text-body">{{ text }}</p>
     <div v-if="showControls" class="flex justify-between px-4 pb-3">
-      <button
-        v-wave
-        type="button"
-        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
-        :data-tooltip="$t('timer.minus30')"
-        :aria-label="$t('timer.minus30')"
-        @click="emit('adjust', -30000)"
-      >
-        <Icon class="mui-svg-icon" icon="ic:baseline-fast-rewind" style="font-size: 1.375rem;" />
-      </button>
-      <button
-        v-wave
-        type="button"
-        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
-        :data-tooltip="$t('timer.minus10')"
-        :aria-label="$t('timer.minus10')"
-        @click="emit('adjust', -10000)"
-      >
-        <Icon class="mui-svg-icon" icon="ic:baseline-skip-previous" style="font-size: 1.375rem;" />
-      </button>
-      <button
-        v-wave
-        type="button"
-        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
-        :data-tooltip="$t('timer.reset')"
-        :aria-label="$t('timer.reset')"
-        @click="emit('reset')"
-      >
-        <Icon class="mui-svg-icon" icon="ic:baseline-stop" style="font-size: 1.375rem;" />
-      </button>
-      <button
-        v-if="!isPaused"
-        v-wave
-        type="button"
-        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
-        :data-tooltip="$t('timer.pause')"
-        :aria-label="$t('timer.pause')"
-        @click="emit('pause')"
-      >
-        <Icon class="mui-svg-icon" icon="ic:baseline-pause" style="font-size: 1.375rem;" />
-      </button>
-      <button
-        v-else
-        v-wave
-        type="button"
-        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
-        :data-tooltip="$t('timer.continue')"
-        :aria-label="$t('timer.continue')"
-        @click="emit('resume')"
-      >
-        <Icon class="mui-svg-icon" icon="ic:baseline-play-arrow" style="font-size: 1.375rem;" />
-      </button>
-      <button
-        v-wave
-        type="button"
-        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
-        :data-tooltip="$t('timer.plus10')"
-        :aria-label="$t('timer.plus10')"
-        @click="emit('adjust', 10000)"
-      >
-        <Icon class="mui-svg-icon" icon="ic:baseline-skip-next" style="font-size: 1.375rem;" />
-      </button>
-      <button
-        v-wave
-        type="button"
-        class="mui-icon-btn mui-tooltip text-muted dark:text-inverse"
-        :data-tooltip="$t('timer.plus30')"
-        :aria-label="$t('timer.plus30')"
-        @click="emit('adjust', 30000)"
-      >
-        <Icon class="mui-svg-icon" icon="ic:baseline-fast-forward" style="font-size: 1.375rem;" />
-      </button>
+      <TooltipRoot>
+        <TooltipTrigger as-child>
+          <button
+            v-wave
+            type="button"
+            class="mui-icon-btn text-muted dark:text-inverse"
+            :aria-label="$t('timer.minus30')"
+            @click="emit('adjust', -30000)"
+          >
+            <Icon class="mui-svg-icon" icon="ic:baseline-fast-rewind" style="font-size: 1.375rem;" />
+          </button>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="bottom" :side-offset="6">
+            {{ $t('timer.minus30') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
+      <TooltipRoot>
+        <TooltipTrigger as-child>
+          <button
+            v-wave
+            type="button"
+            class="mui-icon-btn text-muted dark:text-inverse"
+            :aria-label="$t('timer.minus10')"
+            @click="emit('adjust', -10000)"
+          >
+            <Icon class="mui-svg-icon" icon="ic:baseline-skip-previous" style="font-size: 1.375rem;" />
+          </button>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="bottom" :side-offset="6">
+            {{ $t('timer.minus10') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
+      <TooltipRoot>
+        <TooltipTrigger as-child>
+          <button
+            v-wave
+            type="button"
+            class="mui-icon-btn text-muted dark:text-inverse"
+            :aria-label="$t('timer.reset')"
+            @click="emit('reset')"
+          >
+            <Icon class="mui-svg-icon" icon="ic:baseline-stop" style="font-size: 1.375rem;" />
+          </button>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="bottom" :side-offset="6">
+            {{ $t('timer.reset') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
+      <TooltipRoot v-if="!isPaused">
+        <TooltipTrigger as-child>
+          <button
+            v-wave
+            type="button"
+            class="mui-icon-btn text-muted dark:text-inverse"
+            :aria-label="$t('timer.pause')"
+            @click="emit('pause')"
+          >
+            <Icon class="mui-svg-icon" icon="ic:baseline-pause" style="font-size: 1.375rem;" />
+          </button>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="bottom" :side-offset="6">
+            {{ $t('timer.pause') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
+      <TooltipRoot v-else>
+        <TooltipTrigger as-child>
+          <button
+            v-wave
+            type="button"
+            class="mui-icon-btn text-muted dark:text-inverse"
+            :aria-label="$t('timer.continue')"
+            @click="emit('resume')"
+          >
+            <Icon class="mui-svg-icon" icon="ic:baseline-play-arrow" style="font-size: 1.375rem;" />
+          </button>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="bottom" :side-offset="6">
+            {{ $t('timer.continue') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
+      <TooltipRoot>
+        <TooltipTrigger as-child>
+          <button
+            v-wave
+            type="button"
+            class="mui-icon-btn text-muted dark:text-inverse"
+            :aria-label="$t('timer.plus10')"
+            @click="emit('adjust', 10000)"
+          >
+            <Icon class="mui-svg-icon" icon="ic:baseline-skip-next" style="font-size: 1.375rem;" />
+          </button>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="bottom" :side-offset="6">
+            {{ $t('timer.plus10') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
+      <TooltipRoot>
+        <TooltipTrigger as-child>
+          <button
+            v-wave
+            type="button"
+            class="mui-icon-btn text-muted dark:text-inverse"
+            :aria-label="$t('timer.plus30')"
+            @click="emit('adjust', 30000)"
+          >
+            <Icon class="mui-svg-icon" icon="ic:baseline-fast-forward" style="font-size: 1.375rem;" />
+          </button>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="bottom" :side-offset="6">
+            {{ $t('timer.plus30') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
     </div>
   </div>
 </template>
