@@ -22,7 +22,7 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   async function reveal() {
-    if (!roomId.value || !roomState.value) return
+    if (!roomId.value || !roomState.value || roomState.value.phase === 'revealed') return
     const supabase = getSupabase()
     const playersStore = usePlayersStore()
     const votes: RoundHistoryVote[] = playersStore.visiblePlayers

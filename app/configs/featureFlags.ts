@@ -2,8 +2,6 @@ const featureFlagsLSKey = 'FEATURE_FLAGS'
 
 export type FeatureFlagItem = {
     enabled: boolean
-    name: string
-    description?: string
 }
 
 export type FeatureFlagKey = 'countdownEnabled' | 'example'
@@ -11,14 +9,10 @@ export type FeatureFlags = Record<FeatureFlagKey, FeatureFlagItem>
 
 export const featureFlags: FeatureFlags = {
     countdownEnabled: {
-        enabled: false,
-        name: 'Countdown (Easter Egg)',
-        description: 'Enable countdown button in the room with funny sound'
+        enabled: true,
     },
     example: {
         enabled: false,
-        name: 'Example Feature Flag',
-        description: 'Just to show how to make more feature flags'
     },
 }
 

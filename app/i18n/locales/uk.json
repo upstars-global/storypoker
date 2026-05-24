@@ -39,6 +39,9 @@
   "cards": {
     "reveal": "Розкрити оцінки",
     "revealCountdown": "Зворотній відлік",
+    "countdownSilent": "Без звуку",
+    "countdownDry": "Dry",
+    "countdownWet": "Wet",
     "startNewRound": "Почати новий раунд"
   },
   "timer": {
@@ -138,5 +141,20 @@
     "confirmNewPasswordPlaceholder": "Підтвердіть новий пароль",
     "updating": "Оновлення…",
     "updatePassword": "Оновити пароль"
+  },
+  "ffc": {
+    "resetFeatureFlags": "Скинути фіче-флаги",
+    "exampleHeader": "Приклад",
+    "exampleText": "Це приклад роботи фіче флагу",
+    "flags": {
+      "countdownEnabled": {
+        "name": "Зворотній відлік (пасхалка)",
+        "description": "Вмикає кнопку зворотнього відліку в кімнаті з кумедним звуком"
+      },
+      "example": {
+        "name": "Приклад фіче-флагу",
+        "description": "Просто щоб показати, як додавати нові фіче-флаги"
+      }
+    }
   }
 }
