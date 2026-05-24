@@ -61,7 +61,6 @@
   },
   "players": {
     "title": "Players",
-    "role": "Role",
     "isModerator": "Is Moderator",
     "renamePlayer": "Rename Player",
     "leaveRoom": "Leave Room",
@@ -72,6 +71,55 @@
     "playerDeciding": "Not decided on an estimate yet",
     "inactive": "Inactive",
     "noVote": "Wasted"
+  },
+  "results": {
+    "general": "Team"
+  },
+  "chips": {
+    "title": "Pick your chips",
+    "subtitle": "{count} of {max} selected",
+    "choose": "Choose chips",
+    "groups": {
+      "frontend": "Frontend",
+      "backend": "Backend",
+      "qa": "QA",
+      "product": "Product",
+      "scrum": "Scrum Master",
+      "sre": "SRE / DevOps",
+      "lead": "Leads"
+    },
+    "labels": {
+      "js": "JavaScript",
+      "ts": "TypeScript",
+      "vue": "Vue",
+      "php": "PHP",
+      "go": "Go",
+      "csharp": "C#",
+      "dotnet": ".NET",
+      "mongo": "MongoDB",
+      "postgres": "PostgreSQL",
+      "qa": "QA",
+      "aqa": "AQA",
+      "generalQa": "General QA",
+      "manualQa": "Manual QA",
+      "playwright": "Playwright",
+      "qase": "Qase",
+      "strategy": "Strategy",
+      "roadmap": "Roadmap",
+      "userflow": "User Flow",
+      "velocity": "Velocity",
+      "healthcheck": "Health Check",
+      "retro": "Retro",
+      "scrum": "Scrum",
+      "kanban": "Kanban",
+      "agile": "Agile",
+      "kubernetes": "Kubernetes",
+      "terraform": "Terraform",
+      "docker": "Docker",
+      "head": "Head",
+      "lead": "Lead",
+      "supervisor": "Supervisor"
+    }
   },
   "room": {
     "renameTitle": "Rename Room",

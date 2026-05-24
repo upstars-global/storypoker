@@ -20,16 +20,15 @@ function getUnanimousVote(votes: VoteCounts): string | null {
 }
 
 export function shouldCelebrateGroupedVotes(groupedVotes: {
-  dev: VoteCounts
+  general: VoteCounts
   qa: VoteCounts
-  sm: VoteCounts
 } | null | undefined): boolean {
   if (!groupedVotes) return false
 
-  const devVote = getUnanimousVote(groupedVotes.dev)
+  const generalVote = getUnanimousVote(groupedVotes.general)
   const qaVote = getUnanimousVote(groupedVotes.qa)
 
-  return !!devVote && devVote === qaVote
+  return !!generalVote && generalVote === qaVote
 }
 
 export function createCelebrationParticles(count = 120, random = Math.random): CelebrationParticle[] {

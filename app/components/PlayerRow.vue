@@ -11,6 +11,7 @@ import {
 } from 'reka-ui'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
+import { getChip } from '~/utils/chips'
 
 const props = defineProps<{
   player: {
@@ -20,6 +21,7 @@ const props = defineProps<{
     vote: string | null
     is_online: boolean
     user_id: string | null
+    chips: string[]
     votePending: boolean
   }
   phase: 'voting' | 'revealed'
@@ -30,6 +32,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   rename: [id: string]
   toggleModerator: [id: string, value: boolean]
+  editChips: [id: string]
   leave: [id: string]
   kick: [id: string]
 }>()
@@ -38,6 +41,9 @@ const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
+const playerChips = computed(() =>
+  (props.player.chips ?? []).map(id => getChip(id)).filter((c): c is NonNullable<typeof c> => Boolean(c))
+)
 const playerAvatar = computed(() => {
   const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
   if (profile) return avatarDataUri(profile.avatar_seed, !props.player.is_online, profile.avatar_style)
@@ -78,6 +84,15 @@ const playerAvatar = computed(() => {
           style="font-size: 1.5rem; color: var(--icon-player-color);"
           :aria-label="$t('players.moderatorOf', { name: player.name })"
         />
+      </span>
+      <span
+        v-for="chip in playerChips"
+        :key="chip.id"
+        class="mui-chip-badge mui-tooltip"
+        :class="{ 'is-lead': chip.group === 'lead' }"
+        :data-tooltip="$t(chip.labelKey)"
+      >
+        <Icon :icon="chip.icon" style="font-size: 0.875rem;" :aria-label="$t(chip.labelKey)" />
       </span>
     </div>
 
@@ -217,6 +232,16 @@ const playerAvatar = computed(() => {
                   class="mui-menu-icon"
                   icon="ic:baseline-edit"
                 /> {{ $t('players.renamePlayer') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item"
+                @select="emit('editChips', player.id)"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-style"
+                /> {{ $t('chips.choose') }}
               </DropdownMenuItem>
               <DropdownMenuItem
                 v-wave

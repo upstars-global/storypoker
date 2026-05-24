@@ -2,22 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { createCelebrationParticles, shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
 
 describe('resultCelebration', () => {
-  it('celebrates when dev and qa are both unanimous and match', () => {
+  it('celebrates when general and qa are both unanimous and match', () => {
     expect(
       shouldCelebrateGroupedVotes({
-        dev: { '5': 3 },
+        general: { '5': 3 },
         qa: { '5': 2 },
-        sm: {},
       })
     ).toBe(true)
   })
 
-  it('does not celebrate when dev and qa are unanimous but different', () => {
+  it('does not celebrate when general and qa are unanimous but different', () => {
     expect(
       shouldCelebrateGroupedVotes({
-        dev: { '5': 3 },
+        general: { '5': 3 },
         qa: { '8': 2 },
-        sm: {},
       })
     ).toBe(false)
   })
@@ -25,9 +23,8 @@ describe('resultCelebration', () => {
   it('does not celebrate when one group has mixed estimates', () => {
     expect(
       shouldCelebrateGroupedVotes({
-        dev: { '5': 2, '8': 1 },
+        general: { '5': 2, '8': 1 },
         qa: { '5': 2 },
-        sm: {},
       })
     ).toBe(false)
   })

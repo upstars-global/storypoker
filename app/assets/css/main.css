@@ -87,6 +87,9 @@ html[data-theme='dark'] {
   --primary-soft: rgba(84, 110, 122, 0.16);
   --primary-soft-hover: rgba(84, 110, 122, 0.24);
 
+  --chip-lead: #d4a017;
+  --chip-lead-soft: rgba(212, 160, 23, 0.18);
+
   --danger: #c63f17;
   --success: #66bb6a;
 
@@ -121,6 +124,9 @@ html[data-theme='light'] {
   --primary-hover: #1c313a;
   --primary-soft: rgba(69, 90, 100, 0.12);
   --primary-soft-hover: rgba(69, 90, 100, 0.2);
+
+  --chip-lead: #a9791c;
+  --chip-lead-soft: rgba(169, 121, 28, 0.16);
 
   --danger: #c63f17;
   --success: #2e7d32;
@@ -352,6 +358,61 @@ body {
     white-space: nowrap;
     user-select: none;
     z-index: 1400;
+  }
+
+  .mui-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px 5px 10px;
+    border-radius: 9999px;
+    border: 1px solid var(--border-input);
+    background-color: transparent;
+    color: var(--text-body);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.25;
+    cursor: pointer;
+    transition: border-color 150ms, background-color 150ms, color 150ms;
+    user-select: none;
+  }
+  .mui-chip:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--text-primary);
+  }
+  .mui-chip:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+  .mui-chip.is-selected {
+    border-color: var(--primary);
+    background-color: var(--primary-soft);
+    color: var(--text-primary);
+  }
+  .mui-chip.is-lead {
+    border-color: var(--chip-lead);
+    color: var(--chip-lead);
+  }
+  .mui-chip.is-lead.is-selected {
+    background-color: var(--chip-lead-soft);
+  }
+
+  .mui-chip-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    border: 1px solid var(--border-input);
+    background-color: var(--primary-soft);
+    color: var(--text-primary);
+    flex: none;
+  }
+  .mui-chip-badge.is-lead {
+    border-color: var(--chip-lead);
+    background-color: var(--chip-lead-soft);
+    color: var(--chip-lead);
   }
 
   .mui-input {

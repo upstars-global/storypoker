@@ -61,7 +61,6 @@
   },
   "players": {
     "title": "Гравці",
-    "role": "Роль",
     "isModerator": "Модератор",
     "renamePlayer": "Перейменувати гравця",
     "leaveRoom": "Покинути кімнату",
@@ -72,6 +71,55 @@
     "playerDeciding": "Ще не обрав оцінку",
     "inactive": "Неактивний",
     "noVote": "Потрачєно"
+  },
+  "results": {
+    "general": "Команда"
+  },
+  "chips": {
+    "title": "Обери свої чіпси",
+    "subtitle": "Обрано {count} із {max}",
+    "choose": "Обрати чіпси",
+    "groups": {
+      "frontend": "Фронтенд",
+      "backend": "Бекенд",
+      "qa": "QA",
+      "product": "Продукт",
+      "scrum": "Scrum-майстер",
+      "sre": "SRE / DevOps",
+      "lead": "Ліди"
+    },
+    "labels": {
+      "js": "JavaScript",
+      "ts": "TypeScript",
+      "vue": "Vue",
+      "php": "PHP",
+      "go": "Go",
+      "csharp": "C#",
+      "dotnet": ".NET",
+      "mongo": "MongoDB",
+      "postgres": "PostgreSQL",
+      "qa": "QA",
+      "aqa": "AQA",
+      "generalQa": "General QA",
+      "manualQa": "Manual QA",
+      "playwright": "Playwright",
+      "qase": "Qase",
+      "strategy": "Стратегія",
+      "roadmap": "Роадмеп",
+      "userflow": "Юзерфлоу",
+      "velocity": "Velocity",
+      "healthcheck": "Health Check",
+      "retro": "Ретро",
+      "scrum": "Scrum",
+      "kanban": "Kanban",
+      "agile": "Agile",
+      "kubernetes": "Kubernetes",
+      "terraform": "Terraform",
+      "docker": "Docker",
+      "head": "Head",
+      "lead": "Lead",
+      "supervisor": "Supervisor"
+    }
   },
   "room": {
     "renameTitle": "Перейменувати кімнату",

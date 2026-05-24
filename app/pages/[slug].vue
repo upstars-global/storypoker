@@ -22,11 +22,12 @@ import { getSupabase } from '~/lib/supabase-instance'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
-import { PLAYER_ROLES, detectRoleGroup, formatPlayerName, parsePlayerName, type PlayerRole } from '~/utils/playerRoles'
+import { isQaPlayer } from '~/utils/chips'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal.vue'
+import ChipPickerModal from '~/components/ChipPickerModal.vue'
 import PlayersList from '~/components/PlayersList.vue'
 import Timer from '~/components/Timer.vue'
 import CardsArea from '~/components/CardsArea.vue'
@@ -57,7 +58,8 @@ const showCardDeck = ref(false)
 const showAccountSettings = ref(false)
 const renameTarget = ref<string | null>(null)
 const renameValue = ref('')
-const renameRole = ref<PlayerRole>('DEV')
+const chipsTargetId = ref<string | null>(null)
+const chipsTargetPlayer = computed(() => visiblePlayers.value.find(p => p.id === chipsTargetId.value) ?? null)
 const showRenameRoom = ref(false)
 const roomNameInput = ref('')
 const roomNameError = ref<string | null>(null)
@@ -107,19 +109,19 @@ const voteCounts = computed(() => {
 
 const groupedVoteCounts = computed(() => {
   if (!roomState.value) return null
-  const dev: Record<string, number> = {}
+  const general: Record<string, number> = {}
   const qa: Record<string, number> = {}
-  const sm: Record<string, number> = {}
-  let hasGroups = false
+  let hasQa = false
   for (const p of visiblePlayers.value) {
     if (!p.vote) continue
-    const group = detectRoleGroup(p.name)
-    if (!group) continue
-    hasGroups = true
-    const target = group === 'DEV' ? dev : group === 'QA' ? qa : sm
-    target[p.vote] = (target[p.vote] ?? 0) + 1
+    if (isQaPlayer(p.chips)) {
+      qa[p.vote] = (qa[p.vote] ?? 0) + 1
+      hasQa = true
+    } else {
+      general[p.vote] = (general[p.vote] ?? 0) + 1
+    }
   }
-  return hasGroups ? { dev, qa, sm } : null
+  return hasQa ? { general, qa } : null
 })
 
 let playersChannel: any = null
@@ -289,14 +291,25 @@ async function handleToggleModerator(id: string, value: boolean) {
 
 function handleRename(id: string) {
   renameTarget.value = id
-  const parsed = parsePlayerName(visiblePlayers.value.find(p => p.id === id)?.name ?? '')
-  renameRole.value = parsed.role ?? 'DEV'
-  renameValue.value = parsed.nickname
+  renameValue.value = visiblePlayers.value.find(p => p.id === id)?.name ?? ''
+}
+
+function handleEditChips(id: string) {
+  chipsTargetId.value = id
+}
+
+async function handleSaveChips(chips: string[]) {
+  if (!chipsTargetId.value) return
+  try {
+    await playersStore.setChips(chipsTargetId.value, chips)
+  } catch {
+  }
+  chipsTargetId.value = null
 }
 
 async function submitRename() {
   if (renameTarget.value && renameValue.value.trim()) {
-    await playersStore.rename(renameTarget.value, formatPlayerName(renameRole.value, renameValue.value))
+    await playersStore.rename(renameTarget.value, renameValue.value.trim())
     renameTarget.value = null
   }
 }
@@ -410,6 +423,7 @@ async function submitRenameRoom() {
           :current-user-is-authorized-moderator="isAuthorizedModerator"
           @rename="handleRename"
           @toggle-moderator="handleToggleModerator"
+          @edit-chips="handleEditChips"
           @leave="handleLeave"
           @kick="handleKick"
         />
@@ -467,6 +481,13 @@ async function submitRenameRoom() {
       @save="handleSaveCardDeck"
     />
 
+    <ChipPickerModal
+      v-if="chipsTargetPlayer"
+      :chips="chipsTargetPlayer.chips ?? []"
+      @close="chipsTargetId = null"
+      @save="handleSaveChips"
+    />
+
     <UserSettingsModal
       v-if="showAccountSettings && user"
       @close="showAccountSettings = false"
@@ -480,17 +501,12 @@ async function submitRenameRoom() {
             @open-auto-focus="(e) => { e.preventDefault(); renameInput?.focus() }"
           >
             <DialogTitle as="h2" class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</DialogTitle>
-            <div class="flex gap-3">
-              <select v-model="renameRole" class="mui-input max-w-[104px]" :aria-label="$t('players.role')">
-                <option v-for="r in PLAYER_ROLES" :key="r" :value="r">[{{ r }}]</option>
-              </select>
-              <input
-                ref="renameInput"
-                v-model="renameValue"
-                class="mui-input min-w-0 flex-1"
-                @keyup.enter="submitRename"
-              />
-            </div>
+            <input
+              ref="renameInput"
+              v-model="renameValue"
+              class="mui-input w-full"
+              @keyup.enter="submitRename"
+            />
             <div class="flex justify-end mt-6">
               <button v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">{{ $t('common.save') }}</button>
             </div>
