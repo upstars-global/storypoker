@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
@@ -9,13 +8,20 @@ import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
 import { useTheme } from '~/composables/useTheme'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   onlineCount: number
   isModerator: boolean
   playerName: string
   playerUserId?: string | null
   roomName?: string
-}>()
+  countdownActive?: boolean
+  countdownCounter?: number
+  countdownTotal?: number
+}>(), {
+  countdownActive: false,
+  countdownCounter: 0,
+  countdownTotal: 0,
+})
 
 const emit = defineEmits<{
   openSignIn: []
@@ -26,7 +32,6 @@ const emit = defineEmits<{
   signOut: []
 }>()
 
-const router = useRouter()
 const { user } = storeToRefs(useAuthStore())
 const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
@@ -34,6 +39,17 @@ const { isLight, toggle: toggleTheme } = useTheme()
 const { locale } = useI18n()
 const showMenu = ref(false)
 const showRoomMenu = ref(false)
+const countdownBarWidth = ref(0)
+
+watch(() => props.countdownActive, async (active) => {
+  if (!active) {
+    countdownBarWidth.value = 0
+    return
+  }
+  countdownBarWidth.value = 0
+  await nextTick()
+  requestAnimationFrame(() => { countdownBarWidth.value = 100 })
+})
 
 const myAvatarUri = computed(() => {
   const userIdForProfile = props.playerUserId ?? user.value?.id ?? null
@@ -60,11 +76,6 @@ watch(() => user.value?.id, async (id) => {
   profileFetched.value = true
 }, { immediate: true })
 
-function goRecent() {
-  showMenu.value = false
-  router.push('/')
-}
-
 function toggleLocale() {
   locale.value = locale.value === 'uk' ? 'en' : 'uk'
 }
@@ -75,9 +86,15 @@ function toggleLocale() {
     class="sticky top-0 z-40 w-full flex items-center px-4 sm:px-6 bg-appbar text-white shadow-4"
     style="min-height: 56px;"
   >
-    <RouterLink v-wave to="/" class="mui-h6 text-lg inline-flex items-center px-2 py-1 -mx-2 rounded text-white">
-      Story Poker
+    <RouterLink
+      v-wave
+      to="/"
+      class="mui-icon-btn text-appbar-emphasis"
+      style="--hover-bg: rgba(255,255,255,0.08);"
+    >
+      <Icon icon="app:fibonacci" style="font-size: 1.75rem; transform: rotate(-90deg);" />
     </RouterLink>
+    <span v-if="!roomName" class="mui-h6 text-lg px-2 text-white">Story Poker</span>
     <template v-if="roomName">
       <span class="mx-1.5 text-appbar-subtle">/</span>
       <span class="mui-h6 text-lg text-appbar-emphasis">{{ roomName }}</span>
@@ -159,12 +176,6 @@ function toggleLocale() {
             <li><hr class="mui-divider" /></li>
           </template>
         <li>
-          <button v-wave class="mui-menu-item whitespace-nowrap" @click="goRecent">
-            <Icon class="mui-menu-icon" icon="ic:baseline-history" /> {{ $t('header.recentRooms') }}
-          </button>
-        </li>
-        <li><hr class="mui-divider" /></li>
-        <li>
           <button
             v-wave
             class="mui-menu-item whitespace-nowrap"
@@ -205,5 +216,28 @@ function toggleLocale() {
         </ul>
       </div>
     </div>
+
+    <template v-if="countdownActive">
+      <div
+        class="absolute inset-x-0 bottom-0 h-1.5"
+        style="background-color: rgba(255, 255, 255, 0.16);"
+        data-testid="countdown-bar"
+      >
+        <div
+          class="h-full"
+          :style="{
+            width: `${countdownBarWidth}%`,
+            backgroundColor: 'var(--success)',
+            transition: `width ${countdownTotal}s linear`,
+          }"
+        />
+      </div>
+      <div
+        class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-mui-h2 font-bold tabular-nums text-white pointer-events-none"
+        data-testid="countdown-number"
+      >
+        {{ countdownCounter }}
+      </div>
+    </template>
   </header>
 </template>

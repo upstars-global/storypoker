@@ -3,6 +3,9 @@ import moderatorSvg from '~/assets/icons/moderator.svg?raw'
 import decidingSvg from '~/assets/icons/deciding.svg?raw'
 import offlineSvg from '~/assets/icons/offline.svg?raw'
 import leaveRoomSvg from '~/assets/icons/leave-room.svg?raw'
+import bankSvg from '~/assets/icons/bank.svg?raw'
+import townHallSvg from '~/assets/icons/town-hall.svg?raw'
+import fibonacciSvg from '~/assets/icons/fibonacci.svg?raw'
 
 function parseSvg(svg: string): { body: string; width: number; height: number } {
   let width = 24
@@ -32,6 +35,9 @@ export function registerAppIcons(): void {
       deciding: parseSvg(decidingSvg),
       offline: parseSvg(offlineSvg),
       'leave-room': parseSvg(leaveRoomSvg),
+      bank: parseSvg(bankSvg),
+      'town-hall': parseSvg(townHallSvg),
+      fibonacci: parseSvg(fibonacciSvg),
     },
   })
 }

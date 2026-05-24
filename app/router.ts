@@ -4,6 +4,7 @@ import LoginPage from '~/pages/login.vue'
 import SignupPage from '~/pages/signup.vue'
 import ForgotPasswordPage from '~/pages/forgot-password.vue'
 import ResetPasswordPage from '~/pages/reset-password.vue'
+import FeatureFlags from '~/pages/ffc.vue'
 import RoomPage from '~/pages/[slug].vue'
 
 const routes: RouteRecordRaw[] = [
@@ -12,6 +13,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/signup', component: SignupPage, meta: { title: 'Sign up' } },
   { path: '/forgot-password', component: ForgotPasswordPage, meta: { title: 'Forgot password' } },
   { path: '/reset-password', component: ResetPasswordPage, meta: { title: 'Reset password' } },
+  { path: '/ffc', component: FeatureFlags, meta: { title: 'Feature flags' } },
   { path: '/:slug', component: RoomPage },
 ]
 

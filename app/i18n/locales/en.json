@@ -7,8 +7,8 @@
     "signUp": "Sign Up",
     "signOut": "Sign Out",
     "password": "Password",
-    "emailPlaceholder": "Please enter business email",
-    "passwordPlaceholder": "Please enter password",
+    "emailPlaceholder": "Please enter your email",
+    "passwordPlaceholder": "Please enter your password",
     "confirmPasswordPlaceholder": "Confirm password"
   },
   "header": {
@@ -38,6 +38,10 @@
   },
   "cards": {
     "reveal": "Reveal Estimates",
+    "revealCountdown": "Start Countdown",
+    "countdownSilent": "Silent",
+    "countdownDry": "Dry",
+    "countdownWet": "Wet",
     "startNewRound": "Start New Estimation Round"
   },
   "timer": {
@@ -72,7 +76,7 @@
   },
   "room": {
     "renameTitle": "Rename Room",
-    "renamePlaceholder": "e.g. backoffice",
+    "renamePlaceholder": "e.g. Agile Office",
     "renameHint": "Leave empty to remove the custom name.",
     "renamePlayer": "Rename Player",
     "slugError": "Use 2–32 chars: letters, numbers, dashes",
@@ -137,5 +141,20 @@
     "confirmNewPasswordPlaceholder": "Confirm new password",
     "updating": "Updating...",
     "updatePassword": "Update Password"
+  },
+  "ffc": {
+    "resetFeatureFlags": "Reset Feature Flags",
+    "exampleHeader": "Example",
+    "exampleText": "This is an example of how a feature flag works",
+    "flags": {
+      "countdownEnabled": {
+        "name": "Countdown (Easter Egg)",
+        "description": "Enable countdown button in the room with funny sound"
+      },
+      "example": {
+        "name": "Example Feature Flag",
+        "description": "Just to show how to make more feature flags"
+      }
+    }
   }
 }
