@@ -262,6 +262,26 @@ Smoke pack (планується, спека: `docs/superpowers/specs/2026-05-15
 
 ---
 
+## Player chips ⚠️ DEPLOY-BLOCKED НА МІГРАЦІЇ
+
+**Контекст / навіщо:** замінено роль-у-імені (`[DEV] Alice`) на self-serve **чіпи** (до 2 на гравця) з brand-логотипами стеку. Кожен обирає сам у кімнаті; голос іде в **загальну пілу**, окрім носіїв QA-дисципліна-чіпа → **окрема QA-піла**. Мета — гравці «з гордістю» позначають свій стек, а QA-оцінки лишаються відокремленими.
+
+**Зроблено** (гілка `reka-ui-playerrow`, коміти `52cc0fb` міграція + `26e7e37` фіча):
+- ✅ `app/utils/chips.ts` — каталог (7 груп: frontend/backend/qa/product/scrum/sre/lead) з `simple-icons:*` (brand) + `ic:*` (абстрактні), через Iconify API як наявні `ic:` (без нової залежності). `isQaPlayer()` — **whitelist 4 чіпів** {qa,aqa,general-qa,manual-qa}, НЕ `group==='qa'` (playwright/qase косметичні). `playerRoles.ts` + тест видалено, додано `chips.spec.ts`.
+- ✅ `players.chips text[]` (тип + `setChips` з optimistic+refetch-rollback); агрегація `[slug].vue` → `{general, qa}`; `ResultsArea`/`resultCelebration` на нову форму.
+- ✅ Role-select прибрано з home/JoinOverlay/rename-player; імена тепер чисті.
+- ✅ `ChipPickerModal` (Reka Dialog, до 2, lead-чіпи золоті/відмінні), chip-badges у `PlayerRow` (тригер — власне row-меню), `.mui-chip`/`.mui-chip-badge` + `--chip-lead*` токени, i18n uk/en.
+- ✅ Захисний `?? []` у `PlayerRow`/пікері — UI не падає у deploy-вікні до накату колонки.
+
+**Блокер деплою:** міграцію `008_player_chips.sql` треба накатати вручну (Supabase SQL Editor) **перед** деплоєм коміту `26e7e37`. До накату `select('*')` повертає рядки без `chips` → фіча інертна (але не падає).
+
+**Не верифіковано наживо — блокер: міграція не накатана на dev-Supabase:**
+- [ ] Після накату 008: створити кімнату, відкрити пікер з row-меню, обрати ≤2 чіпи, побачити badges біля імені; перевірити читабельність brand-логотипів у 22px badge (інакше підняти до 24–26px / icon 1rem).
+- [ ] Перевірити агрегацію: гравець з `manual-qa` → QA-піла; з `playwright`+`vue` → general; celebration коли general і QA однаголосні й збігаються.
+- [ ] Прогнати оновлений `smoke.spec.ts` (чисті імена без `[DEV]`).
+
+---
+
 ## Посилання
 
 - [`DESIGN.md`](DESIGN.md) — повна дизайн-специфікація + audit
