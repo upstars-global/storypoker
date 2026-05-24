@@ -4,6 +4,14 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
+import {
+  DialogRoot,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogClose,
+} from 'reka-ui'
 import { useAuthStore } from '~/stores/auth'
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
@@ -59,9 +67,7 @@ const origin = ref('')
 const kickTargetId = ref<string | null>(null)
 const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === kickTargetId.value)?.name ?? '')
 
-const renameSaveBtn = ref<HTMLButtonElement | null>(null)
-const roomSaveBtn = ref<HTMLButtonElement | null>(null)
-const kickConfirmBtn = ref<HTMLButtonElement | null>(null)
+const renameInput = ref<HTMLInputElement | null>(null)
 
 const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
@@ -466,80 +472,93 @@ async function submitRenameRoom() {
       @close="showAccountSettings = false"
     />
 
-    <div v-if="renameTarget" class="mui-modal-overlay" @click.self="renameTarget = null" @keydown.esc="renameTarget = null" @keydown.enter.prevent="renameSaveBtn?.click()">
-      <div class="mui-modal-paper relative">
-        <button
-          v-wave
-          class="mui-icon-btn absolute"
-          style="top: 8px; right: 8px;"
-          :aria-label="$t('common.close')"
-          @click="renameTarget = null"
-        >
-          <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-        </button>
-        <h2 class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</h2>
-        <div class="flex gap-3">
-          <select v-model="renameRole" class="mui-input max-w-[104px]" :aria-label="$t('players.role')">
-            <option v-for="r in PLAYER_ROLES" :key="r" :value="r">[{{ r }}]</option>
-          </select>
-          <input
-            v-model="renameValue"
-            class="mui-input min-w-0 flex-1"
-            autofocus
-          />
-        </div>
-        <div class="flex justify-end mt-6">
-          <button ref="renameSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">{{ $t('common.save') }}</button>
-        </div>
-      </div>
-    </div>
+    <DialogRoot v-if="renameTarget" default-open @update:open="(open) => { if (!open) renameTarget = null }">
+      <DialogPortal>
+        <DialogOverlay class="mui-modal-overlay">
+          <DialogContent
+            class="mui-modal-paper"
+            @open-auto-focus="(e) => { e.preventDefault(); renameInput?.focus() }"
+          >
+            <DialogTitle as="h2" class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</DialogTitle>
+            <div class="flex gap-3">
+              <select v-model="renameRole" class="mui-input max-w-[104px]" :aria-label="$t('players.role')">
+                <option v-for="r in PLAYER_ROLES" :key="r" :value="r">[{{ r }}]</option>
+              </select>
+              <input
+                ref="renameInput"
+                v-model="renameValue"
+                class="mui-input min-w-0 flex-1"
+                @keyup.enter="submitRename"
+              />
+            </div>
+            <div class="flex justify-end mt-6">
+              <button v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">{{ $t('common.save') }}</button>
+            </div>
+            <DialogClose
+              v-wave
+              class="mui-icon-btn absolute"
+              style="top: 8px; right: 8px;"
+              :aria-label="$t('common.close')"
+            >
+              <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+            </DialogClose>
+          </DialogContent>
+        </DialogOverlay>
+      </DialogPortal>
+    </DialogRoot>
 
-    <div v-if="showRenameRoom" class="mui-modal-overlay" @click.self="showRenameRoom = false" @keydown.esc="showRenameRoom = false" @keydown.enter.prevent="roomSaveBtn?.click()">
-      <div class="mui-modal-paper relative">
-        <button
-          v-wave
-          class="mui-icon-btn absolute"
-          style="top: 8px; right: 8px;"
-          :aria-label="$t('common.close')"
-          @click="showRenameRoom = false"
-        >
-          <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-        </button>
-        <h2 class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</h2>
-        <input
-          v-model="roomNameInput"
-          class="mui-input"
-          :placeholder="$t('room.renamePlaceholder')"
-          autofocus
-        />
-        <p v-if="roomNameError" class="text-mui-caption mt-2 text-danger">{{ roomNameError }}</p>
-        <div v-else class="text-mui-caption mt-2 flex flex-col gap-[2px] text-muted">
-          <span v-if="roomNameInput.trim()">URL: {{ origin }}/{{ normalizeRoomSlug(roomNameInput) }}</span>
-          <span>URL: {{ origin }}/{{ roomId }}</span>
-        </div>
-        <div class="flex justify-end mt-6">
-          <button ref="roomSaveBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">{{ $t('common.save') }}</button>
-        </div>
-      </div>
-    </div>
+    <DialogRoot v-if="showRenameRoom" default-open @update:open="(open) => { if (!open) showRenameRoom = false }">
+      <DialogPortal>
+        <DialogOverlay class="mui-modal-overlay">
+          <DialogContent class="mui-modal-paper">
+            <DialogTitle as="h2" class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</DialogTitle>
+            <input
+              v-model="roomNameInput"
+              class="mui-input"
+              :placeholder="$t('room.renamePlaceholder')"
+              @keyup.enter="submitRenameRoom"
+            />
+            <p v-if="roomNameError" class="text-mui-caption mt-2 text-danger">{{ roomNameError }}</p>
+            <div v-else class="text-mui-caption mt-2 flex flex-col gap-[2px] text-muted">
+              <span v-if="roomNameInput.trim()">URL: {{ origin }}/{{ normalizeRoomSlug(roomNameInput) }}</span>
+              <span>URL: {{ origin }}/{{ roomId }}</span>
+            </div>
+            <div class="flex justify-end mt-6">
+              <button v-wave class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">{{ $t('common.save') }}</button>
+            </div>
+            <DialogClose
+              v-wave
+              class="mui-icon-btn absolute"
+              style="top: 8px; right: 8px;"
+              :aria-label="$t('common.close')"
+            >
+              <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+            </DialogClose>
+          </DialogContent>
+        </DialogOverlay>
+      </DialogPortal>
+    </DialogRoot>
 
-    <div v-if="kickTargetId" class="mui-modal-overlay" @click.self="kickTargetId = null" @keydown.esc="kickTargetId = null" @keydown.enter.prevent="kickConfirmBtn?.click()">
-      <div class="mui-modal-paper relative">
-        <button
-          v-wave
-          class="mui-icon-btn absolute"
-          style="top: 8px; right: 8px;"
-          :aria-label="$t('common.close')"
-          @click="kickTargetId = null"
-        >
-          <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-        </button>
-        <h2 class="mui-h5 mb-4">{{ $t('room.kickTitle') }}</h2>
-        <p class="text-body">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>
-        <div class="flex justify-end mt-6">
-          <button ref="kickConfirmBtn" v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">{{ $t('room.kickButton') }}</button>
-        </div>
-      </div>
-    </div>
+    <DialogRoot v-if="kickTargetId" default-open @update:open="(open) => { if (!open) kickTargetId = null }">
+      <DialogPortal>
+        <DialogOverlay class="mui-modal-overlay">
+          <DialogContent class="mui-modal-paper">
+            <DialogTitle as="h2" class="mui-h5 mb-4">{{ $t('room.kickTitle') }}</DialogTitle>
+            <p class="text-body">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>
+            <div class="flex justify-end mt-6">
+              <button v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">{{ $t('room.kickButton') }}</button>
+            </div>
+            <DialogClose
+              v-wave
+              class="mui-icon-btn absolute"
+              style="top: 8px; right: 8px;"
+              :aria-label="$t('common.close')"
+            >
+              <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+            </DialogClose>
+          </DialogContent>
+        </DialogOverlay>
+      </DialogPortal>
+    </DialogRoot>
   </div>
 </template>
