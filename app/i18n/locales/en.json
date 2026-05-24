@@ -7,8 +7,8 @@
     "signUp": "Sign Up",
     "signOut": "Sign Out",
     "password": "Password",
-    "emailPlaceholder": "Please enter business email",
-    "passwordPlaceholder": "Please enter password",
+    "emailPlaceholder": "Please enter your email",
+    "passwordPlaceholder": "Please enter your password",
     "confirmPasswordPlaceholder": "Confirm password"
   },
   "header": {
@@ -73,7 +73,7 @@
   },
   "room": {
     "renameTitle": "Rename Room",
-    "renamePlaceholder": "e.g. backoffice",
+    "renamePlaceholder": "e.g. Agile Office",
     "renameHint": "Leave empty to remove the custom name.",
     "renamePlayer": "Rename Player",
     "slugError": "Use 2–32 chars: letters, numbers, dashes",

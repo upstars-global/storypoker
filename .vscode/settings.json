@@ -19,4 +19,6 @@
   "workbench.editor.empty.hint": "hidden",
   "explorer.confirmPasteNative": false,
   "terminal.integrated.defaultLocation": "editor",
+  "workbench.browser.openLocalhostLinks": false,
+  "workbench.editor.openSideBySideDirection": "right"
 }
