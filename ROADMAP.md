@@ -211,6 +211,10 @@ DB-схема `round_history` уже існує (`001_initial_schema.sql`, `reve
 - **Файл:** `tests/e2e/critical-flows.spec.ts:16-26`
 - **Action:** `login persistent user` тест використовує один shared акаунт через env. `fullyParallel: true` працює бо тільки 1 тест його займає. До появи кількох login-залежних тестів — впровадити per-worker account factory.
 
+### P10. Виділений безкоштовний Supabase test-проєкт ⏳
+- **Контекст:** окремого dev/test Supabase-оточення в проєкті немає — єдина БД це прод. E2E потребує `.env/.env.test` із `SUPABASE_URL` + `SUPABASE_TEST_SERVICE_ROLE_KEY` (`tests/support/helpers/supabase-admin.ts`) для cleanup кімнат у teardown (`tests/fixtures/room.ts`). Тестувати проти прода ризиковано: public read/write RLS = нульова ізоляція даних, потреба класти prod service-role у CI, і відсутність cleanup для auth-юзерів/`user_profiles` → постійне засмічення.
+- **Action:** створити окремий безкоштовний Supabase-проєкт (free tier дозволяє кілька), накотити міграції `001`–`007` через SQL Editor, скласти креди в `.env/.env.test` і CI-секрети. Розблоковує локальний `npm run test:e2e` і e2e в CI без ризику для прода.
+
 ---
 
 ## E2E Test Coverage — beyond smoke ⏳ planned

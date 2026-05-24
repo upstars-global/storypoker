@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import PlayerRow from '~/components/PlayerRow.vue'
 
 const props = defineProps<{
@@ -26,12 +26,13 @@ const emit = defineEmits<{
 
 const onlineCount = computed(() => props.players.filter(p => p.is_online).length)
 const totalCount = computed(() => props.players.length)
-
-const openMenuId = ref<string | null>(null)
 </script>
 
 <template>
-  <div data-testid="players-list" class="mui-paper">
+  <div
+    data-testid="players-list"
+    class="mui-paper"
+  >
     <div class="mui-paper-header flex items-center justify-center gap-2">
       <span>{{ $t('players.title') }}</span>
       <span class="text-sm font-normal">
@@ -46,13 +47,10 @@ const openMenuId = ref<string | null>(null)
         :phase="phase"
         :current-player-id="currentPlayerId"
         :current-user-is-authorized-moderator="currentUserIsAuthorizedModerator"
-        :open-menu-id="openMenuId"
         @rename="emit('rename', $event)"
         @toggle-moderator="(id: string, val: boolean) => emit('toggleModerator', id, val)"
         @leave="emit('leave', $event)"
         @kick="emit('kick', $event)"
-        @menu-open="openMenuId = $event"
-        @menu-close="openMenuId = null"
       />
     </div>
   </div>
