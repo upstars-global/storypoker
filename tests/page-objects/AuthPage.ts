@@ -1,19 +1,26 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 
 export class AuthPage {
   constructor(private readonly page: Page) {}
+
+  private get accountMenuButton(): Locator {
+    return this.page.getByTestId('account-menu-button')
+  }
 
   async login(email: string, password: string) {
     await this.page.goto('/login')
     await this.page.getByTestId('login-email').fill(email)
     await this.page.getByTestId('login-password').fill(password)
     await this.page.getByTestId('login-submit').click()
-    await this.page.waitForURL((url) => url.pathname === '/')
+    await this.page.waitForURL('/')
   }
 
   async openAccountMenu() {
-    await this.page.getByTestId('account-menu-button').click()
+    if ((await this.accountMenuButton.getAttribute('aria-expanded')) !== 'true') {
+      await this.accountMenuButton.click()
+    }
+    await expect(this.page.getByRole('menu')).toBeVisible()
   }
 
   async expectSignedIn() {

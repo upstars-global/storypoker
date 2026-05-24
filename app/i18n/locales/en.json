@@ -18,8 +18,7 @@
     "lightTheme": "Light Theme",
     "darkTheme": "Dark Theme",
     "currentUserAccount": "account of current user",
-    "accountSettings": "Account Settings",
-    "roomSettings": "Room settings"
+    "accountSettings": "Account Settings"
   },
   "home": {
     "title": "Create a planning poker room",

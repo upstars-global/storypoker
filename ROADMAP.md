@@ -191,9 +191,9 @@ DB-схема `round_history` уже існує (`001_initial_schema.sql`, `reve
 - **Файл:** `tests/e2e/smoke.spec.ts:5, :33`
 - **Action:** `{ auto: true }` у `console.ts` гарантує тригер без явного запиту в параметрах. Прибрати `_consoleErrors` з обох тестів.
 
-### P5. `waitForURL` лямбда замість рядка (nitpick) ⏳
-- **Файл:** `tests/page-objects/AuthPage.ts:12`
-- **Action:** `waitForURL((url) => url.pathname === '/')` → `waitForURL('/')`.
+### P5. `waitForURL` лямбда замість рядка (nitpick) ✅
+- **Файл:** `tests/page-objects/AuthPage.ts`
+- **Fix (2026-05-24):** `waitForURL((url) => url.pathname === '/')` → `waitForURL('/')`. Разом — `openAccountMenu` зроблено ідемпотентним через `aria-expanded` (Reka DropdownMenu виставляє його), що прибрало toggle-крихкість при повторних відкриттях меню.
 
 ### P6. `reuseExistingServer` + різні build modes ⏳
 - **Файл:** `playwright.config.ts:48-52`
@@ -239,6 +239,26 @@ Smoke pack (планується, спека: `docs/superpowers/specs/2026-05-15
 - Mobile layout верифіковано лише empirically; референс із `examples/room.html` — desktop-only (1440 × 900). Окремий design pass для mobile/tablet?
 - Tooltip-стратегія: створити переоднаковлений `mui-tooltip` чи покладатися на native `title`? Впливає на G4 і будь-які майбутні status-icons.
 - Чи мігрувати на MD3 / shadcn-стиль (ширші радіуси, surface tint), як пропонує DESIGN.md розд. 8? Зараз — Material Design 2.
+
+---
+
+## Reka UI adoption ⚠️ IN PROGRESS
+
+**Контекст / навіщо:** замість важкого UI-фреймворку (Vuetify тощо) обрано headless-примітиви [Reka UI](https://reka-ui.com) (`reka-ui@2.9.8`) поверх наявних `mui-*` стилів. Мета — забрати **ручну a11y + positioning-логіку** (focus-trap, keyboard nav, collision-aware позиціювання, click-outside, Teleport), а власну дизайн-систему лишити без змін. Reka не приносить свого CSS.
+
+**Зроблено** (гілка `reka-ui-playerrow`):
+- ✅ `PlayerRow` меню → `DropdownMenu` — прибрано ручне `getBoundingClientRect`-позиціювання, `Teleport`, `v-click-outside`, `openMenuId`-координацію в `PlayersList`. Виграш: клавіатура, focus-trap, collision-aware позиціювання, ARIA.
+- ✅ `AppHeader` account-меню → `DropdownMenu`; налаштування кімнати (Configure Card Deck + Rename room) перенесено в account-меню окремою секцією, gear-кнопку біля назви кімнати видалено. Theme-toggle тримає меню відкритим (`@select.prevent`), решта пунктів закривають.
+- ✅ Директиву `app/directives/clickOutside.ts` + реєстрацію в `main.ts` видалено — після обох міграцій споживачів не лишилось.
+
+**Залишилось** (за пріоритетом):
+- [ ] **Модалки → `Dialog`.** *Навіщо:* focus-trap, Escape, scroll-lock, `aria-labelledby/describedby` зараз ручні або відсутні. *Файли:* `AuthModal`, `UserSettingsModal`, `ConfigureCardDeckModal`, `JoinOverlay` (+ overlay-вжитки в auth-сторінках і `[slug].vue`). Мапінг: `mui-modal-overlay`→`DialogOverlay`, `mui-modal-paper`→`DialogContent`. Робити **по одній модалці за раз** (кожна ізольована). `JoinOverlay` — non-dismissable gate, `Dialog` без close-тригера.
+- [ ] **Preset-селектор у `ConfigureCardDeckModal` → `Select`** (умовно). *Навіщо:* клавіатура + typeahead + a11y. *Спершу:* глянути шаблон — якщо там native `<select>`, не чіпати.
+- [ ] **Tooltips → `Tooltip`** (низький пріоритет). *Навіщо:* keyboard-focus + collision; зараз `mui-tooltip` через CSS `::after` без focus-підтримки. Це фактично рішення відкритого питання tooltip-стратегії (G4 / Cross-iter нижче). Зважити вартість (обгортки на десятки status-іконок) проти виграшу.
+
+**Не верифіковано — блокер: немає test-Supabase** (див. [E2E P10](#p10-виділений-безкоштовний-supabase-test-проєкт-)):
+- [ ] Runtime-smoke `DropdownMenu` (PlayerRow + AppHeader): Portal-mount, focus-trap, клавіатура (↑↓/Esc/Home/End), click-outside, перемикання між сусідніми меню, `v-wave` ripple на Reka-компонентах, fallthrough `data-testid` на `DropdownMenuItem` (рендерить власний `<div role="menuitem">`).
+- [ ] Прогнати e2e `critical-flows` (account-menu signed-in/out) після створення test-проєкту — підтвердити новий ідемпотентний POM (`AuthPage.openAccountMenu` через `aria-expanded`).
 
 ---
 
