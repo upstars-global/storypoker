@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
@@ -40,6 +40,23 @@ const { locale } = useI18n()
 const showMenu = ref(false)
 const showRoomMenu = ref(false)
 const countdownBarWidth = ref(0)
+const roomMenuEl = ref<HTMLElement | null>(null)
+const accountMenuEl = ref<HTMLElement | null>(null)
+
+async function clampToViewport(elRef: Ref<HTMLElement | null>) {
+  await nextTick()
+  const el = elRef.value
+  if (!el) return
+  el.style.transform = ''
+  const rect = el.getBoundingClientRect()
+  const rightOverflow = rect.right - (window.innerWidth - 8)
+  const leftOverflow = 8 - rect.left
+  if (rightOverflow > 0) el.style.transform = `translateX(-${rightOverflow}px)`
+  else if (leftOverflow > 0) el.style.transform = `translateX(${leftOverflow}px)`
+}
+
+watch(showRoomMenu, val => { if (val) clampToViewport(roomMenuEl) })
+watch(showMenu, val => { if (val) clampToViewport(accountMenuEl) })
 
 watch(() => props.countdownActive, async (active) => {
   if (!active) {
@@ -110,6 +127,7 @@ function toggleLocale() {
         </button>
         <ul
           v-if="showRoomMenu"
+          ref="roomMenuEl"
           v-click-outside="() => showRoomMenu = false"
           class="mui-menu absolute z-50"
           style="min-width: 220px; right: 0; top: calc(100% + 4px);"
@@ -163,6 +181,7 @@ function toggleLocale() {
 
         <ul
           v-if="showMenu"
+          ref="accountMenuEl"
           v-click-outside="() => showMenu = false"
           class="mui-menu absolute z-50"
           style="min-width: 240px; right: 0; top: calc(100% + 4px);"

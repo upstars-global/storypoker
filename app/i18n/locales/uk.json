@@ -40,8 +40,8 @@
     "reveal": "Показати оцінки",
     "revealCountdown": "Зворотній відлік",
     "countdownSilent": "Без звуку",
-    "countdownDry": "Dry",
-    "countdownWet": "Wet",
+    "countdownDry": "Звук 1",
+    "countdownWet": "Звук 2",
     "startNewRound": "Почати новий раунд"
   },
   "timer": {
