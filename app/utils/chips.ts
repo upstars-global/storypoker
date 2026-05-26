@@ -49,7 +49,7 @@ export const CHIP_CATALOG: Chip[] = [
   { id: 'terraform', labelKey: 'chips.labels.terraform', icon: 'simple-icons:terraform', group: 'sre' },
   { id: 'docker', labelKey: 'chips.labels.docker', icon: 'simple-icons:docker', group: 'sre' },
 
-  { id: 'head', labelKey: 'chips.labels.head', icon: 'ic:baseline-workspace-premium', group: 'lead' },
+  { id: 'head', labelKey: 'chips.labels.head', icon: 'mingcute:moai-fill', group: 'lead' },
   { id: 'lead', labelKey: 'chips.labels.lead', icon: 'ic:baseline-star', group: 'lead' },
   { id: 'supervisor', labelKey: 'chips.labels.supervisor', icon: 'ic:baseline-shield', group: 'lead' },
 ]

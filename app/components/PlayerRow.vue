@@ -68,6 +68,18 @@ const playerAvatar = computed(() => {
     >
     <div class="flex items-center gap-1.5 min-w-0">
       <span
+        v-for="chip in playerChips"
+        :key="chip.id"
+        class="inline-flex flex-none mui-tooltip"
+        :data-tooltip="$t(chip.labelKey)"
+      >
+        <Icon
+          :icon="chip.icon"
+          :style="{ fontSize: '1.125rem', color: chip.group === 'lead' ? 'var(--chip-lead)' : 'var(--icon-player-color)' }"
+          :aria-label="$t(chip.labelKey)"
+        />
+      </span>
+      <span
         class="truncate text-base"
         :style="{ color: player.is_online ? 'var(--text-primary)' : 'var(--text-muted)' }"
       >
@@ -84,15 +96,6 @@ const playerAvatar = computed(() => {
           style="font-size: 1.5rem; color: var(--icon-player-color);"
           :aria-label="$t('players.moderatorOf', { name: player.name })"
         />
-      </span>
-      <span
-        v-for="chip in playerChips"
-        :key="chip.id"
-        class="mui-chip-badge mui-tooltip"
-        :class="{ 'is-lead': chip.group === 'lead' }"
-        :data-tooltip="$t(chip.labelKey)"
-      >
-        <Icon :icon="chip.icon" style="font-size: 0.875rem;" :aria-label="$t(chip.labelKey)" />
       </span>
     </div>
 
