@@ -22,12 +22,12 @@ import { getSupabase } from '~/lib/supabase-instance'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
-import { isQaPlayer } from '~/utils/chips'
+import { isQaPlayer } from '~/utils/shields'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal.vue'
-import ChipPickerModal from '~/components/ChipPickerModal.vue'
+import ShieldPickerModal from '~/components/ShieldPickerModal.vue'
 import PlayersList from '~/components/PlayersList.vue'
 import Timer from '~/components/Timer.vue'
 import CardsArea from '~/components/CardsArea.vue'
@@ -58,8 +58,8 @@ const showCardDeck = ref(false)
 const showAccountSettings = ref(false)
 const renameTarget = ref<string | null>(null)
 const renameValue = ref('')
-const chipsTargetId = ref<string | null>(null)
-const chipsTargetPlayer = computed(() => visiblePlayers.value.find(p => p.id === chipsTargetId.value) ?? null)
+const shieldsTargetId = ref<string | null>(null)
+const shieldsTargetPlayer = computed(() => visiblePlayers.value.find(p => p.id === shieldsTargetId.value) ?? null)
 const showRenameRoom = ref(false)
 const roomNameInput = ref('')
 const roomNameError = ref<string | null>(null)
@@ -114,7 +114,7 @@ const groupedVoteCounts = computed(() => {
   let hasQa = false
   for (const p of visiblePlayers.value) {
     if (!p.vote) continue
-    if (isQaPlayer(p.chips)) {
+    if (isQaPlayer(p.shields)) {
       qa[p.vote] = (qa[p.vote] ?? 0) + 1
       hasQa = true
     } else {
@@ -294,17 +294,17 @@ function handleRename(id: string) {
   renameValue.value = visiblePlayers.value.find(p => p.id === id)?.name ?? ''
 }
 
-function handleEditChips(id: string) {
-  chipsTargetId.value = id
+function handleEditShields(id: string) {
+  shieldsTargetId.value = id
 }
 
-async function handleSaveChips(chips: string[]) {
-  if (!chipsTargetId.value) return
+async function handleSaveShields(shields: string[]) {
+  if (!shieldsTargetId.value) return
   try {
-    await playersStore.setChips(chipsTargetId.value, chips)
+    await playersStore.setShields(shieldsTargetId.value, shields)
   } catch {
   }
-  chipsTargetId.value = null
+  shieldsTargetId.value = null
 }
 
 async function submitRename() {
@@ -423,7 +423,7 @@ async function submitRenameRoom() {
           :current-user-is-authorized-moderator="isAuthorizedModerator"
           @rename="handleRename"
           @toggle-moderator="handleToggleModerator"
-          @edit-chips="handleEditChips"
+          @edit-shields="handleEditShields"
           @leave="handleLeave"
           @kick="handleKick"
         />
@@ -433,7 +433,7 @@ async function submitRenameRoom() {
           :phase="roomState.phase ?? 'voting'"
           :paused-at="roomState.paused_at ?? null"
           :paused-elapsed-ms="roomState.paused_elapsed_ms ?? 0"
-          :can-control="isAuthorizedModerator"
+          :can-control="isModerator"
           @reset="roomStore.resetTimer"
           @pause="roomStore.pauseTimer"
           @resume="roomStore.resumeTimer"
@@ -481,11 +481,11 @@ async function submitRenameRoom() {
       @save="handleSaveCardDeck"
     />
 
-    <ChipPickerModal
-      v-if="chipsTargetPlayer"
-      :chips="chipsTargetPlayer.chips ?? []"
-      @close="chipsTargetId = null"
-      @save="handleSaveChips"
+    <ShieldPickerModal
+      v-if="shieldsTargetPlayer"
+      :shields="shieldsTargetPlayer.shields ?? []"
+      @close="shieldsTargetId = null"
+      @save="handleSaveShields"
     />
 
     <UserSettingsModal

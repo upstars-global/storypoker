@@ -8,6 +8,14 @@ import {
   DialogContent,
   DialogTitle,
   DialogClose,
+  SelectRoot,
+  SelectTrigger,
+  SelectValue,
+  SelectPortal,
+  SelectContent,
+  SelectViewport,
+  SelectItem,
+  SelectItemText,
 } from 'reka-ui'
 import { DECK_PRESETS, getDeck, type DeckPresetId } from '~/utils/cardDecks'
 
@@ -60,14 +68,38 @@ function save() {
           </DialogTitle>
 
           <div class="mt-7 flex justify-center">
-            <select
-              :value="presetId"
-              class="rounded border bg-transparent px-3 py-2 text-mui-body text-primary focus:outline-none focus:ring-1 focus:ring-[#546e7a]"
-              style="min-width: 240px;"
-              @change="applyPreset(($event.target as HTMLSelectElement).value as DeckPresetId)"
+            <SelectRoot
+              :model-value="presetId"
+              @update:model-value="(v) => applyPreset(v as DeckPresetId)"
             >
-              <option v-for="p in DECK_PRESETS" :key="p.id" :value="p.id">{{ p.name }}</option>
-            </select>
+              <SelectTrigger
+                class="flex items-center justify-between gap-2 rounded border bg-transparent px-3 py-2 text-mui-body text-primary focus:outline-none focus:ring-1 focus:ring-[#546e7a]"
+                style="min-width: 240px;"
+                :aria-label="$t('deck.configure')"
+              >
+                <SelectValue />
+                <Icon icon="ic:baseline-arrow-drop-down" style="font-size: 1.25rem;" />
+              </SelectTrigger>
+              <SelectPortal>
+                <SelectContent
+                  class="mui-menu"
+                  position="popper"
+                  :side-offset="4"
+                  style="z-index: 1500; min-width: var(--reka-select-trigger-width);"
+                >
+                  <SelectViewport>
+                    <SelectItem
+                      v-for="p in DECK_PRESETS"
+                      :key="p.id"
+                      :value="p.id"
+                      class="mui-menu-item cursor-pointer"
+                    >
+                      <SelectItemText>{{ p.name }}</SelectItemText>
+                    </SelectItem>
+                  </SelectViewport>
+                </SelectContent>
+              </SelectPortal>
+            </SelectRoot>
           </div>
 
           <div class="grid grid-cols-3 gap-x-8 gap-y-3 mt-8 mb-2 mx-auto" style="max-width: 380px;">

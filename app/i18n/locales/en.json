@@ -75,50 +75,20 @@
   "results": {
     "general": "Team"
   },
-  "chips": {
-    "title": "Pick your chips",
+  "shields": {
+    "title": "Pick your shields",
     "subtitle": "{count} of {max} selected",
-    "choose": "Choose chips",
+    "choose": "Choose shields",
     "groups": {
-      "frontend": "Frontend",
-      "backend": "Backend",
-      "qa": "QA",
-      "product": "Product",
-      "scrum": "Scrum Master",
-      "sre": "SRE / DevOps",
-      "lead": "Leads"
+      "discipline": "Discipline",
+      "lead": "Leadership"
     },
     "labels": {
-      "js": "JavaScript",
-      "ts": "TypeScript",
-      "vue": "Vue",
-      "php": "PHP",
-      "go": "Go",
-      "csharp": "C#",
-      "dotnet": ".NET",
-      "mongo": "MongoDB",
-      "postgres": "PostgreSQL",
+      "dev": "Dev",
       "qa": "QA",
-      "aqa": "AQA",
-      "generalQa": "General QA",
-      "manualQa": "Manual QA",
-      "playwright": "Playwright",
-      "qase": "Qase",
-      "strategy": "Strategy",
-      "roadmap": "Roadmap",
-      "userflow": "User Flow",
-      "velocity": "Velocity",
-      "healthcheck": "Health Check",
-      "retro": "Retro",
-      "scrum": "Scrum",
-      "kanban": "Kanban",
-      "agile": "Agile",
-      "kubernetes": "Kubernetes",
-      "terraform": "Terraform",
-      "docker": "Docker",
       "head": "Head",
-      "lead": "Lead",
-      "supervisor": "Supervisor"
+      "tl": "TL",
+      "sv": "SV"
     }
   },
   "room": {

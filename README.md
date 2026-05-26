@@ -55,7 +55,7 @@ npx skills add anthropics/skills -s frontend-design -a codex -a claude-code -y
 
 # TESTS
 npx skills add anthropics/skills -s webapp-testing -a codex -a claude-code -y
-npx skills add antfu/skills@vitest -a codex -a claude-code -y
+npx skills add antfu/skills -s vitest -a codex -a claude-code -y
 npx skills add currents-dev/playwright-best-practices-skill -a codex -a claude-code -y
 
 # WORKFLOW

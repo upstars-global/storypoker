@@ -11,7 +11,7 @@ import {
 } from 'reka-ui'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
-import { getChip } from '~/utils/chips'
+import { getShield } from '~/utils/shields'
 
 const props = defineProps<{
   player: {
@@ -21,7 +21,7 @@ const props = defineProps<{
     vote: string | null
     is_online: boolean
     user_id: string | null
-    chips: string[]
+    shields: string[]
     votePending: boolean
   }
   phase: 'voting' | 'revealed'
@@ -32,7 +32,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   rename: [id: string]
   toggleModerator: [id: string, value: boolean]
-  editChips: [id: string]
+  editShields: [id: string]
   leave: [id: string]
   kick: [id: string]
 }>()
@@ -41,8 +41,8 @@ const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
-const playerChips = computed(() =>
-  (props.player.chips ?? []).map(id => getChip(id)).filter((c): c is NonNullable<typeof c> => Boolean(c))
+const playerShields = computed(() =>
+  (props.player.shields ?? []).map(id => getShield(id)).filter((s): s is NonNullable<typeof s> => Boolean(s))
 )
 const playerAvatar = computed(() => {
   const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
@@ -68,16 +68,12 @@ const playerAvatar = computed(() => {
     >
     <div class="flex items-center gap-1.5 min-w-0">
       <span
-        v-for="chip in playerChips"
-        :key="chip.id"
-        class="inline-flex flex-none mui-tooltip"
-        :data-tooltip="$t(chip.labelKey)"
+        v-for="shield in playerShields"
+        :key="shield.id"
+        class="mui-shield-badge flex-none"
       >
-        <Icon
-          :icon="chip.icon"
-          :style="{ fontSize: '1.125rem', color: chip.group === 'lead' ? 'var(--chip-lead)' : 'var(--icon-player-color)' }"
-          :aria-label="$t(chip.labelKey)"
-        />
+        <Icon :icon="shield.icon" style="font-size: 0.875rem;" />
+        {{ $t(shield.labelKey) }}
       </span>
       <span
         class="truncate text-base"
@@ -239,12 +235,12 @@ const playerAvatar = computed(() => {
               <DropdownMenuItem
                 v-wave
                 class="mui-menu-item"
-                @select="emit('editChips', player.id)"
+                @select="emit('editShields', player.id)"
               >
                 <Icon
                   class="mui-menu-icon"
-                  icon="ic:baseline-style"
-                /> {{ $t('chips.choose') }}
+                  icon="ic:baseline-shield"
+                /> {{ $t('shields.choose') }}
               </DropdownMenuItem>
               <DropdownMenuItem
                 v-wave

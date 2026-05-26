@@ -10,7 +10,7 @@ const props = defineProps<{
     vote: string | null
     is_online: boolean
     user_id: string | null
-    chips: string[]
+    shields: string[]
     votePending: boolean
   }>
   phase: 'voting' | 'revealed'
@@ -21,7 +21,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   rename: [id: string]
   toggleModerator: [id: string, value: boolean]
-  editChips: [id: string]
+  editShields: [id: string]
   leave: [id: string]
   kick: [id: string]
 }>()
@@ -51,7 +51,7 @@ const totalCount = computed(() => props.players.length)
         :current-user-is-authorized-moderator="currentUserIsAuthorizedModerator"
         @rename="emit('rename', $event)"
         @toggle-moderator="(id: string, val: boolean) => emit('toggleModerator', id, val)"
-        @edit-chips="emit('editChips', $event)"
+        @edit-shields="emit('editShields', $event)"
         @leave="emit('leave', $event)"
         @kick="emit('kick', $event)"
       />

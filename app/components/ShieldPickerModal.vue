@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import {
   DialogRoot,
   DialogPortal,
@@ -10,27 +10,26 @@ import {
   DialogDescription,
   DialogClose,
 } from 'reka-ui'
-import { CHIP_GROUPS, MAX_CHIPS, chipsForGroup } from '~/utils/chips'
+import { SHIELD_GROUPS, MAX_SHIELDS, shieldsForGroup, type Shield } from '~/utils/shields'
 
 const props = defineProps<{
-  chips: string[]
+  shields: string[]
 }>()
 
 const emit = defineEmits<{
-  save: [chips: string[]]
+  save: [shields: string[]]
   close: []
 }>()
 
-const selected = ref<string[]>([...props.chips])
+const selected = ref<string[]>([...props.shields])
 
-const isFull = computed(() => selected.value.length >= MAX_CHIPS)
-
-function toggle(id: string) {
-  if (selected.value.includes(id)) {
-    selected.value = selected.value.filter(c => c !== id)
-  } else if (!isFull.value) {
-    selected.value = [...selected.value, id]
+function toggle(shield: Shield) {
+  if (selected.value.includes(shield.id)) {
+    selected.value = selected.value.filter(id => id !== shield.id)
+    return
   }
+  const groupIds = shieldsForGroup(shield.group).map(s => s.id)
+  selected.value = [...selected.value.filter(id => !groupIds.includes(id)), shield.id]
 }
 
 function save() {
@@ -44,30 +43,29 @@ function save() {
       <DialogOverlay class="mui-modal-overlay">
         <DialogContent class="mui-modal-paper" style="max-width: 600px; padding: 32px 40px 40px;">
           <DialogTitle as="h2" class="text-center text-mui-h2 font-bold text-primary">
-            {{ $t('chips.title') }}
+            {{ $t('shields.title') }}
           </DialogTitle>
           <DialogDescription as="p" class="mui-caption text-center mt-2 text-muted">
-            {{ $t('chips.subtitle', { count: selected.length, max: MAX_CHIPS }) }}
+            {{ $t('shields.subtitle', { count: selected.length, max: MAX_SHIELDS }) }}
           </DialogDescription>
 
           <div class="mt-6 flex flex-col gap-5">
-            <section v-for="group in CHIP_GROUPS" :key="group">
+            <section v-for="group in SHIELD_GROUPS" :key="group">
               <h3 class="text-mui-caption font-semibold uppercase tracking-wide text-muted mb-2">
-                {{ $t(`chips.groups.${group}`) }}
+                {{ $t(`shields.groups.${group}`) }}
               </h3>
               <div class="flex flex-wrap gap-2">
                 <button
-                  v-for="chip in chipsForGroup(group)"
-                  :key="chip.id"
+                  v-for="shield in shieldsForGroup(group)"
+                  :key="shield.id"
                   v-wave
                   type="button"
-                  class="mui-chip"
-                  :class="{ 'is-selected': selected.includes(chip.id), 'is-lead': group === 'lead' }"
-                  :disabled="isFull && !selected.includes(chip.id)"
-                  @click="toggle(chip.id)"
+                  class="mui-shield"
+                  :class="{ 'is-selected': selected.includes(shield.id) }"
+                  @click="toggle(shield)"
                 >
-                  <Icon :icon="chip.icon" style="font-size: 1.125rem;" />
-                  {{ $t(chip.labelKey) }}
+                  <Icon :icon="shield.icon" style="font-size: 1.125rem;" />
+                  {{ $t(shield.labelKey) }}
                 </button>
               </div>
             </section>

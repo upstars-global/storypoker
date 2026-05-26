@@ -11,7 +11,7 @@ function fakePlayer(overrides: Partial<Player> = {}): Player {
     is_moderator: false,
     vote: null,
     user_id: null,
-    chips: [],
+    shields: [],
     created_at: '2026-05-04T00:00:00Z',
     left_at: null,
     ...overrides,
