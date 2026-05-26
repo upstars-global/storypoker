@@ -39,8 +39,8 @@
     "reveal": "Reveal Estimates",
     "revealCountdown": "Start Countdown",
     "countdownSilent": "Silent",
-    "countdownDry": "Dry",
-    "countdownWet": "Wet",
+    "countdownDry": "Sound 1",
+    "countdownWet": "Sound 2",
     "startNewRound": "Start New Estimation Round"
   },
   "timer": {

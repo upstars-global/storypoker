@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import { getFeatureFlagValue } from '~/configs/featureFlags'
 import type { CountdownMode } from '~/composables/useCountdown'
 
 defineProps<{
@@ -18,8 +17,6 @@ const emit = defineEmits<{
   reveal: []
   startCountdown: [mode: CountdownMode]
 }>()
-
-const isCountdownEnabled = getFeatureFlagValue('countdownEnabled')
 
 const countdownModeLSKey = 'sp-countdown-mode'
 const countdownModeOptions: { value: CountdownMode; icon: string; label: string }[] = [
@@ -70,7 +67,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
       >
         {{ $t('cards.reveal') }}
       </button>
-      <div v-if="isCountdownEnabled" class="flex flex-col items-center gap-2">
+      <div class="flex flex-col items-center gap-2">
         <div
           class="flex items-center gap-1"
           :class="{ 'pointer-events-none opacity-50': countdownRunning }"
@@ -98,7 +95,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
         <button
           v-wave
           class="mui-btn"
-          :disabled="!hasVotes || countdownRunning"
+          :disabled="countdownRunning"
           data-testid="reveal-countdown-button"
           @click="emit('startCountdown', countdownMode)"
         >
