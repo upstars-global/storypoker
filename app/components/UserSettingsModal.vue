@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { ref, computed } from 'vue'
+import {
+  DialogRoot,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogClose,
+} from 'reka-ui'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
@@ -66,71 +74,74 @@ async function save() {
 </script>
 
 <template>
-  <div class="mui-modal-overlay" @click.self="emit('close')">
-    <div class="mui-modal-paper relative" style="max-width: 420px; padding: 32px 40px 40px;">
-      <button
-        v-wave
-        class="mui-icon-btn absolute"
-        style="top: 12px; right: 12px;"
-        :aria-label="$t('common.close')"
-        @click="emit('close')"
-      >
-        <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-      </button>
-      <h2 class="text-center text-mui-h2 font-bold text-primary">
-        {{ $t('userSettings.title') }}
-      </h2>
+  <DialogRoot default-open @update:open="(open) => { if (!open) emit('close') }">
+    <DialogPortal>
+      <DialogOverlay class="mui-modal-overlay">
+        <DialogContent class="mui-modal-paper" style="max-width: 420px; padding: 32px 40px 40px;" @pointerdown.stop>
+          <DialogTitle as="h2" class="text-center text-mui-h2 font-bold text-primary">
+            {{ $t('userSettings.title') }}
+          </DialogTitle>
 
-      <div class="mt-6 flex justify-center gap-2">
-        <button
-          v-for="s in AVATAR_STYLES"
-          :key="s"
-          v-wave
-          class="mui-btn"
-          :class="{ 'mui-btn-secondary': style !== s }"
-          style="min-width: 120px;"
-          @click="selectStyle(s)"
-        >
-          {{ s === 'bottts' ? $t('userSettings.styleRobots') : s === 'dylan' ? $t('userSettings.styleDylan') : $t('userSettings.styleMiniavs') }}
-        </button>
-      </div>
+          <div class="mt-6 flex justify-center gap-2">
+            <button
+              v-for="s in AVATAR_STYLES"
+              :key="s"
+              v-wave
+              class="mui-btn"
+              :class="{ 'mui-btn-secondary': style !== s }"
+              style="min-width: 120px;"
+              @click="selectStyle(s)"
+            >
+              {{ s === 'bottts' ? $t('userSettings.styleRobots') : s === 'dylan' ? $t('userSettings.styleDylan') : $t('userSettings.styleMiniavs') }}
+            </button>
+          </div>
 
-      <div class="mt-6 flex items-center justify-center gap-4">
-        <button
-          v-wave
-          class="mui-btn mui-btn-secondary"
-          style="min-width: inherit;"
-          :aria-label="$t('userSettings.previousAvatar')"
-          :disabled="cursor === 0"
-          @click="prev"
-        >
-          <Icon class="mui-svg-icon" icon="ic:baseline-navigate-before" style="font-size: 1.25rem;" />
-        </button>
-        <img
-          v-if="previewUri"
-          :src="previewUri"
-          :alt="$t('userSettings.avatarPreview')"
-          class="rounded-full"
-          style="width: 144px; height: 144px;"
-        >
-        <button
-          v-wave
-          class="mui-btn mui-btn-secondary"
-          style="min-width: inherit;"
-          :aria-label="$t('userSettings.nextAvatar')"
-          @click="next"
-        >
-          <Icon class="mui-svg-icon" icon="ic:baseline-navigate-next" style="font-size: 1.25rem;" />
-        </button>
-      </div>
+          <div class="mt-6 flex items-center justify-center gap-4">
+            <button
+              v-wave
+              class="mui-btn mui-btn-secondary"
+              style="min-width: inherit;"
+              :aria-label="$t('userSettings.previousAvatar')"
+              :disabled="cursor === 0"
+              @click="prev"
+            >
+              <Icon class="mui-svg-icon" icon="ic:baseline-navigate-before" style="font-size: 1.25rem;" />
+            </button>
+            <img
+              v-if="previewUri"
+              :src="previewUri"
+              :alt="$t('userSettings.avatarPreview')"
+              class="rounded-full"
+              style="width: 144px; height: 144px;"
+            >
+            <button
+              v-wave
+              class="mui-btn mui-btn-secondary"
+              style="min-width: inherit;"
+              :aria-label="$t('userSettings.nextAvatar')"
+              @click="next"
+            >
+              <Icon class="mui-svg-icon" icon="ic:baseline-navigate-next" style="font-size: 1.25rem;" />
+            </button>
+          </div>
 
-      <p v-if="error" class="text-mui-caption mt-4 text-center text-danger">{{ error }}</p>
+          <p v-if="error" class="text-mui-caption mt-4 text-center text-danger">{{ error }}</p>
 
-      <div class="flex justify-center mt-8">
-        <button v-wave class="mui-btn" style="min-width: 120px;" :disabled="saving" @click="save">
-          {{ $t('common.save') }}
-        </button>
-      </div>
-    </div>
-  </div>
+          <div class="flex justify-center mt-8">
+            <button v-wave class="mui-btn" style="min-width: 120px;" :disabled="saving" @click="save">
+              {{ $t('common.save') }}
+            </button>
+          </div>
+          <DialogClose
+            v-wave
+            class="mui-icon-btn absolute"
+            style="top: 12px; right: 12px;"
+            :aria-label="$t('common.close')"
+          >
+            <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+          </DialogClose>
+        </DialogContent>
+      </DialogOverlay>
+    </DialogPortal>
+  </DialogRoot>
 </template>

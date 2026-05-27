@@ -29,7 +29,7 @@ Guidance for Claude Code working with this repository.
 - **State:** Pinia 3 (без auto-imports — явні `from 'pinia'`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **i18n:** `vue-i18n@11` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
-- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`); custom collection `app:` для `moderator`, `deciding`, `offline`, `leave-room` — зареєстровано через `addCollection` у `app/lib/registerAppIcons.ts`; `v-wave`, DiceBear, Roboto 300–700
+- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`, єдина offline-колекція); `simple-icons:*`/`game-icons:*` резолвляться через Iconify API; custom collection `app:` (`moderator`, `deciding`, `offline`, `leave-room`, `bank`, `town-hall`, `fibonacci`, `scrum`) через `addCollection` у `app/lib/registerAppIcons.ts`; `v-wave`, DiceBear, Roboto 300–700
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
 ## Common Commands
@@ -72,10 +72,10 @@ VITE_SUPABASE_KEY=...        # publishable client key
 
 ## Database
 
-Міграції в `supabase/migrations/` — накатуються вручну через Supabase SQL Editor (`001`–`007`: schema, RLS, Realtime, timer, user_profiles). Таблиці:
+Міграції в `supabase/migrations/` — накатуються вручну через Supabase SQL Editor (`001`–`008`: schema, RLS, Realtime, timer, user_profiles, player shields). Таблиці:
 - `rooms (id text PK, slug text unique, name text, created_at)`
 - `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms)`
-- `players (id uuid PK, room_id, name, is_moderator, vote, user_id, created_at, left_at)`
+- `players (id uuid PK, room_id, name, is_moderator, vote, user_id, shields text[], created_at, left_at)`
 - `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, created_at)`
 - `user_profiles (user_id uuid PK, avatar_style, avatar_seed, updated_at)`
 
@@ -105,7 +105,7 @@ Pinia stores у `app/stores/`:
 
 - `auth.ts` — Supabase session, sign in/up/out, password reset/update
 - `room.ts` — room state, create, reveal, new round, deck, resolve, room name/slug
-- `players.ts` — players, optimistic votes, join/rejoin, rename, moderator toggle, kick/leave, link user
+- `players.ts` — players, optimistic votes, join/rejoin, rename, moderator toggle, set shields, kick/leave, link user
 - `presence.ts` — online `Set<playerId>` через Supabase Presence і reconnect/visibility handlers
 - `profiles.ts` — `user_profiles` cache, fetch/upsert, Realtime applyChange
 - `types.ts` — спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `UserProfile`)
@@ -148,7 +148,7 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 │   ├── stores/            # auth, room, players, presence, profiles
 │   ├── directives/        # clickOutside
 │   ├── lib/               # supabase-instance, registerAppIcons
-│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, playerRoles, relativeTime
+│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, shields, resultCelebration, relativeTime
 │   ├── i18n/locales/{uk,en}.json
 │   └── assets/css/main.css, assets/icons/
 ├── supabase/migrations/*.sql
@@ -188,6 +188,7 @@ Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `ap
 - **Player:** vote, rename self, leave room
 - **Moderator:** reveal, start new round, configure deck; own moderator toggle доступний у меню гравця
 - **Authorized moderator:** rename room, rename/kick other players, set slug/name; контролі таймера (reset/pause/resume/±30s)
+- **Shields:** каталог `app/utils/shields.ts` (групи role/focus/stack/qa/lead → `players.shields`); `isQaPlayer()` виводить QA-гравців в окрему пилу; PlayerEditModal зберігає роль через radio, icon-picker задісейблено
 
 ## Security
 

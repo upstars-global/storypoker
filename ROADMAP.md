@@ -191,9 +191,9 @@ DB-схема `round_history` уже існує (`001_initial_schema.sql`, `reve
 - **Файл:** `tests/e2e/smoke.spec.ts:5, :33`
 - **Action:** `{ auto: true }` у `console.ts` гарантує тригер без явного запиту в параметрах. Прибрати `_consoleErrors` з обох тестів.
 
-### P5. `waitForURL` лямбда замість рядка (nitpick) ⏳
-- **Файл:** `tests/page-objects/AuthPage.ts:12`
-- **Action:** `waitForURL((url) => url.pathname === '/')` → `waitForURL('/')`.
+### P5. `waitForURL` лямбда замість рядка (nitpick) ✅
+- **Файл:** `tests/page-objects/AuthPage.ts`
+- **Fix (2026-05-24):** `waitForURL((url) => url.pathname === '/')` → `waitForURL('/')`. Разом — `openAccountMenu` зроблено ідемпотентним через `aria-expanded` (Reka DropdownMenu виставляє його), що прибрало toggle-крихкість при повторних відкриттях меню.
 
 ### P6. `reuseExistingServer` + різні build modes ⏳
 - **Файл:** `playwright.config.ts:48-52`
@@ -210,6 +210,10 @@ DB-схема `round_history` уже існує (`001_initial_schema.sql`, `reve
 ### P9. Shared E2E_TEST_USER акаунт ⏳ (поки не блокер)
 - **Файл:** `tests/e2e/critical-flows.spec.ts:16-26`
 - **Action:** `login persistent user` тест використовує один shared акаунт через env. `fullyParallel: true` працює бо тільки 1 тест його займає. До появи кількох login-залежних тестів — впровадити per-worker account factory.
+
+### P10. Виділений безкоштовний Supabase test-проєкт ⏳
+- **Контекст:** окремого dev/test Supabase-оточення в проєкті немає — єдина БД це прод. E2E потребує `.env/.env.test` із `SUPABASE_URL` + `SUPABASE_TEST_SERVICE_ROLE_KEY` (`tests/support/helpers/supabase-admin.ts`) для cleanup кімнат у teardown (`tests/fixtures/room.ts`). Тестувати проти прода ризиковано: public read/write RLS = нульова ізоляція даних, потреба класти prod service-role у CI, і відсутність cleanup для auth-юзерів/`user_profiles` → постійне засмічення.
+- **Action:** створити окремий безкоштовний Supabase-проєкт (free tier дозволяє кілька), накотити міграції `001`–`007` через SQL Editor, скласти креди в `.env/.env.test` і CI-секрети. Розблоковує локальний `npm run test:e2e` і e2e в CI без ризику для прода.
 
 ---
 
@@ -233,8 +237,47 @@ Smoke pack (планується, спека: `docs/superpowers/specs/2026-05-15
 ## Cross-iter Open Questions
 
 - Mobile layout верифіковано лише empirically; референс із `examples/room.html` — desktop-only (1440 × 900). Окремий design pass для mobile/tablet?
-- Tooltip-стратегія: створити переоднаковлений `mui-tooltip` чи покладатися на native `title`? Впливає на G4 і будь-які майбутні status-icons.
+- ~~Tooltip-стратегія~~ ✅ вирішено: **interactive контроли** → Reka `Tooltip` (`.mui-tooltip-content` стиль + `TooltipProvider`); **декоративні status-іконки** (нефокусовані) → лишаються на CSS `mui-tooltip` / native `title`. Reka не обгортає нефокусовані індикатори, бо потребувало б штучного `tabindex`.
 - Чи мігрувати на MD3 / shadcn-стиль (ширші радіуси, surface tint), як пропонує DESIGN.md розд. 8? Зараз — Material Design 2.
+
+---
+
+## Reka UI adoption ✅ DONE
+
+**Контекст / навіщо:** замість важкого UI-фреймворку (Vuetify тощо) обрано headless-примітиви [Reka UI](https://reka-ui.com) (`reka-ui@2.9.8`) поверх наявних `mui-*` стилів. Мета — забрати **ручну a11y + positioning-логіку** (focus-trap, keyboard nav, collision-aware позиціювання, click-outside, Teleport), а власну дизайн-систему лишити без змін. Reka не приносить свого CSS.
+
+**Зроблено** (гілка `reka-ui-playerrow`):
+- ✅ `PlayerRow` меню → `DropdownMenu` — прибрано ручне `getBoundingClientRect`-позиціювання, `Teleport`, `v-click-outside`, `openMenuId`-координацію в `PlayersList`. Виграш: клавіатура, focus-trap, collision-aware позиціювання, ARIA.
+- ✅ `AppHeader` account-меню → `DropdownMenu`; налаштування кімнати (Configure Card Deck + Rename room) перенесено в account-меню окремою секцією, gear-кнопку біля назви кімнати видалено. Theme-toggle тримає меню відкритим (`@select.prevent`), решта пунктів закривають.
+- ✅ Директиву `app/directives/clickOutside.ts` + реєстрацію в `main.ts` видалено — після обох міграцій споживачів не лишилось.
+- ✅ **Усі модалки → `Dialog`.** `AuthModal`, `UserSettingsModal`, `ConfigureCardDeckModal`, `JoinOverlay` + 3 інлайнові overlay у `[slug].vue` (rename player, rename room, kick). Патерн: `DialogContent` вкладено **всередину** `DialogOverlay` (а не sibling), щоб зберегти наявне flex-центрування + `overflow-y:auto` з `.mui-modal-overlay` без змін CSS — `DialogOverlay` рендерить слот і форсує inline `pointer-events:auto`, тож click-outside по padding overlay коректно ловиться як `pointerDownOutside`. `default-open` + `@update:open` → синхронізація з батьковим `v-if`. `h2`→`DialogTitle as="h2"`, subtitle→`DialogDescription`, X→`DialogClose` (з `v-wave`). X-кнопку перенесено в **кінець** DOM (лишається `absolute` вгорі-справа), щоб first-focus падав на input/перший контрол, а не на close. `JoinOverlay` — non-dismissable: `@escape-key-down.prevent` + `@interact-outside.prevent`, X лишається активним. Rename-player: `@open-auto-focus.prevent` + ручний `renameInput.focus()` (бо перший tabbable — role-`<select>`, а треба name-input). Прибрано ручні `@keydown.esc`/`@click.self`/`@keydown.enter.prevent`+save-btn refs; Enter тепер `@keyup.enter` на inputs (kick — нативний Enter на сфокусованій confirm-кнопці). Preset у `ConfigureCardDeckModal` лишився native `<select>` (свідомо — окрема `Select`-задача знята).
+
+- ✅ **Timer-tooltips → `Tooltip`.** 7 focusable timer-контролів (`Timer.vue`) обгорнуто в `TooltipRoot/Trigger(as-child)/Portal/Content`; `TooltipProvider :delay-duration="200"` в `App.vue`; стиль бульбашки — `.mui-tooltip-content` в `@layer components` (Reka позиціонує через floating-ui, CSS дає лише вигляд). `side="bottom"` + `:side-offset="6"` зберігає попереднє розташування, collision-flip — автоматичний. Виграш: keyboard-focus + collision. **PlayerRow status-іконки свідомо лишено** на CSS `mui-tooltip` (нефокусовані декоративні `<span>` — Reka-обгортка вимагала б штучного `tabindex`). CSS `.mui-tooltip` (`::after`) лишається для них.
+
+**Не верифіковано — блокер: немає test-Supabase** (див. [E2E P10](#p10-виділений-безкоштовний-supabase-test-проєкт-)):
+- [ ] Runtime-smoke `DropdownMenu` (PlayerRow + AppHeader): Portal-mount, focus-trap, клавіатура (↑↓/Esc/Home/End), click-outside, перемикання між сусідніми меню, `v-wave` ripple на Reka-компонентах, fallthrough `data-testid` на `DropdownMenuItem` (рендерить власний `<div role="menuitem">`).
+- [ ] Runtime-smoke `Dialog` (усі 7 модалок): Escape **і** click по padding overlay закривають (acceptance для вкладеного `DialogContent`-в-`DialogOverlay` — якщо хоч одне не спрацює, перейти на shadcn-sibling-layout: окремий fixed-`DialogOverlay` + центрований `DialogContent` з `max-h-[calc(100dvh-32px)] overflow-y-auto`); scroll-lock на body; first-focus (input, не close); Enter→submit; `JoinOverlay` не закривається по Escape/outside, лише по X; tall-контент на короткому viewport скролиться всередині overlay.
+- [ ] Runtime-smoke `Tooltip` (Timer-контроли, видимі лише модератору в кімнаті): hover **і** keyboard-focus показують бульбашку, `:delay-duration="200"`, collision-flip угору біля нижнього краю viewport, `v-wave` ripple на trigger-кнопці, стиль `.mui-tooltip-content` в light/dark.
+- [ ] Прогнати e2e `critical-flows` (account-menu signed-in/out) після створення test-проєкту — підтвердити новий ідемпотентний POM (`AuthPage.openAccountMenu` через `aria-expanded`).
+
+---
+
+## Player shields ⚠️ DEPLOY-BLOCKED НА МІГРАЦІЇ
+
+**Контекст / навіщо:** замість роль-у-імені (`[DEV] Alice`) — self-serve **щити**: до 2 на гравця (1 дисципліна `dev`/`qa` + 1 опційний lead `Head`/`TL`/`SV`), імена лишаються чистими. Голос носія `qa`-щита іде в **окрему QA-пілу**, решта → загальна. Відображення — shields.io-стиль (іконка + назва, монохром) між аватаркою й іменем.
+
+**Зроблено** (гілка `reka-ui-playerrow`):
+- ✅ `app/utils/shields.ts` — каталог: discipline `{dev, qa}` + lead `{head, tl, sv}`; `ic:*` + `mingcute:moai-fill` (Head) через Iconify API (без нової залежності). `isQaPlayer = shields.includes('qa')`. `playerRoles.ts` + тест видалено, додано `shields.spec.ts`.
+- ✅ `players.shields text[]` (тип + `setShields` з optimistic+refetch-rollback); агрегація `[slug].vue` → `{general, qa}`; `ResultsArea`/`resultCelebration` на цю форму.
+- ✅ Role-select прибрано з home/JoinOverlay/rename-player; імена чисті.
+- ✅ `ShieldPickerModal` (Reka Dialog, per-group single-select), shield-badges у `PlayerRow` (тригер — власне row-меню), `.mui-shield`/`.mui-shield-badge`, i18n uk/en.
+- ✅ Захисний `?? []` у `PlayerRow`/пікері — UI не падає у deploy-вікні до накату колонки.
+
+**Блокер деплою:** міграцію `008_player_shields.sql` накатати вручну (Supabase SQL Editor) **перед** деплоєм. До накату `select('*')` повертає рядки без `shields` → фіча інертна (але не падає).
+
+**Не верифіковано наживо — блокер: міграція не накатана на dev-Supabase:**
+- [ ] Після накату 008: відкрити пікер з row-меню, обрати дисципліну + lead, побачити shield-badges біля імені.
+- [ ] Агрегація: гравець з `qa` → QA-піла; `dev`/без щита → general; celebration коли обидві піли однаголосні й збігаються.
 
 ---
 

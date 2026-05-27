@@ -7,7 +7,7 @@ test('home → create room → joined as moderator with auto-rejoin', async ({ p
   await home.goto()
   const roomId = await home.createRoom('E2E Tester')
   trackedRoomIds.push(roomId)
-  const playerName = '[DEV] E2E Tester'
+  const playerName = 'E2E Tester'
 
   await expect(
     page.locator(`[data-testid="player-row"][data-player-name="${playerName}"]`),
@@ -40,7 +40,7 @@ test('moderator votes, reveals, starts new round', async ({ page, trackedRoomIds
   trackedRoomIds.push(roomId)
 
   await room.castVote('5')
-  await room.waitVoteConfirmed(`[DEV] ${NAME}`)
+  await room.waitVoteConfirmed(NAME)
 
   await room.reveal()
   await expect(room.resultsArea()).toContainText('5')

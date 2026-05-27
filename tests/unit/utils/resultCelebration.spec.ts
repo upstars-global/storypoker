@@ -2,22 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { createCelebrationParticles, shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
 
 describe('resultCelebration', () => {
-  it('celebrates when dev and qa are both unanimous and match', () => {
+  it('celebrates when general and qa are both unanimous and match', () => {
     expect(
       shouldCelebrateGroupedVotes({
-        dev: { '5': 3 },
+        general: { '5': 3 },
         qa: { '5': 2 },
-        sm: {},
       })
     ).toBe(true)
   })
 
-  it('does not celebrate when dev and qa are unanimous but different', () => {
+  it('does not celebrate when general and qa are unanimous but different', () => {
     expect(
       shouldCelebrateGroupedVotes({
-        dev: { '5': 3 },
+        general: { '5': 3 },
         qa: { '8': 2 },
-        sm: {},
       })
     ).toBe(false)
   })
@@ -25,34 +23,27 @@ describe('resultCelebration', () => {
   it('does not celebrate when one group has mixed estimates', () => {
     expect(
       shouldCelebrateGroupedVotes({
-        dev: { '5': 2, '8': 1 },
+        general: { '5': 2, '8': 1 },
         qa: { '5': 2 },
-        sm: {},
       })
     ).toBe(false)
   })
 
-  it('celebrates when only dev group is unanimous', () => {
+  it('celebrates when only general group is unanimous', () => {
     expect(
-      shouldCelebrateGroupedVotes({ dev: { '5': 3 }, qa: {}, sm: {} })
+      shouldCelebrateGroupedVotes({ general: { '5': 3 }, qa: {} })
     ).toBe(true)
   })
 
   it('celebrates when only qa group is unanimous', () => {
     expect(
-      shouldCelebrateGroupedVotes({ dev: {}, qa: { '8': 2 }, sm: {} })
+      shouldCelebrateGroupedVotes({ general: {}, qa: { '8': 2 } })
     ).toBe(true)
   })
 
-  it('does not celebrate when only sm group has votes', () => {
+  it('does not celebrate when only general group is not unanimous', () => {
     expect(
-      shouldCelebrateGroupedVotes({ dev: {}, qa: {}, sm: { '5': 1 } })
-    ).toBe(false)
-  })
-
-  it('does not celebrate when only dev group is not unanimous', () => {
-    expect(
-      shouldCelebrateGroupedVotes({ dev: { '5': 2, '8': 1 }, qa: {}, sm: {} })
+      shouldCelebrateGroupedVotes({ general: { '5': 2, '8': 1 }, qa: {} })
     ).toBe(false)
   })
 

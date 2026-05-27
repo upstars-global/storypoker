@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, computed, watch, nextTick, type Ref } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
+import {
+  DropdownMenuRoot,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+} from 'reka-ui'
 import { useAuthStore } from '~/stores/auth'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
@@ -37,26 +46,7 @@ const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 const { isLight, toggle: toggleTheme } = useTheme()
 const { locale } = useI18n()
-const showMenu = ref(false)
-const showRoomMenu = ref(false)
 const countdownBarWidth = ref(0)
-const roomMenuEl = ref<HTMLElement | null>(null)
-const accountMenuEl = ref<HTMLElement | null>(null)
-
-async function clampToViewport(elRef: Ref<HTMLElement | null>) {
-  await nextTick()
-  const el = elRef.value
-  if (!el) return
-  el.style.transform = ''
-  const rect = el.getBoundingClientRect()
-  const rightOverflow = rect.right - (window.innerWidth - 8)
-  const leftOverflow = 8 - rect.left
-  if (rightOverflow > 0) el.style.transform = `translateX(-${rightOverflow}px)`
-  else if (leftOverflow > 0) el.style.transform = `translateX(${leftOverflow}px)`
-}
-
-watch(showRoomMenu, val => { if (val) clampToViewport(roomMenuEl) })
-watch(showMenu, val => { if (val) clampToViewport(accountMenuEl) })
 
 watch(() => props.countdownActive, async (active) => {
   if (!active) {
@@ -109,41 +99,18 @@ function toggleLocale() {
       class="mui-icon-btn text-appbar-emphasis"
       style="--hover-bg: rgba(255,255,255,0.08);"
     >
-      <Icon icon="app:fibonacci" style="font-size: 1.75rem; transform: rotate(-90deg);" />
+      <Icon
+        icon="app:fibonacci"
+        style="font-size: 1.75rem; transform: rotate(-90deg);"
+      />
     </RouterLink>
-    <span v-if="!roomName" class="mui-h6 text-lg px-2 text-white">Story Poker</span>
+    <span class="mx-1.5 text-appbar-subtle">•</span>
+    <span
+      v-if="!roomName"
+      class="mui-h6 text-lg px-2 text-white"
+    >Story Poker</span>
     <template v-if="roomName">
-      <span class="mx-1.5 text-appbar-subtle">/</span>
       <span class="mui-h6 text-lg text-appbar-emphasis">{{ roomName }}</span>
-      <div v-if="isModerator" class="relative ml-1">
-        <button
-          v-wave
-          class="mui-icon-btn text-appbar-muted"
-          style="--hover-bg: rgba(255,255,255,0.08);"
-          :aria-label="$t('header.roomSettings')"
-          @click.stop="showRoomMenu = !showRoomMenu"
-        >
-          <Icon class="mui-svg-icon" icon="ic:baseline-settings" style="font-size: 1.2rem;" />
-        </button>
-        <ul
-          v-if="showRoomMenu"
-          ref="roomMenuEl"
-          v-click-outside="() => showRoomMenu = false"
-          class="mui-menu absolute z-50"
-          style="min-width: 220px; right: 0; top: calc(100% + 4px);"
-        >
-          <li v-if="user">
-            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openRenameRoom'); showRoomMenu = false">
-              <Icon class="mui-menu-icon" icon="ic:baseline-edit" /> {{ $t('header.renameRoom') }}
-            </button>
-          </li>
-          <li>
-            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openCardDeck'); showRoomMenu = false">
-              <Icon class="mui-menu-icon" icon="ic:baseline-settings" /> {{ $t('header.configureCardDeck') }}
-            </button>
-          </li>
-        </ul>
-      </div>
     </template>
     <div class="flex-1" />
 
@@ -156,84 +123,147 @@ function toggleLocale() {
       >
         {{ locale === 'uk' ? 'EN' : 'UA' }}
       </button>
-      <span v-if="headerLabel" class="text-sm text-appbar-emphasis">
+      <span
+        v-if="headerLabel"
+        class="text-sm text-appbar-emphasis"
+      >
         {{ headerLabel }}
       </span>
-      <div class="relative">
-        <button
-          v-wave
-          class="mui-icon-btn text-white"
-          style="--hover-bg: rgba(255,255,255,0.08);"
-          :aria-label="$t('header.currentUserAccount')"
-          aria-haspopup="true"
-          data-testid="account-menu-button"
-          @click.stop="showMenu = !showMenu"
-        >
-          <img
-            v-if="myAvatarUri"
-            :src="myAvatarUri"
-            class="w-7 h-7 rounded-full"
-            :alt="playerName"
-            :style="{ opacity: profileFetched ? 1 : 0, transition: 'opacity 0.15s' }"
-          />
-          <Icon v-else class="mui-svg-icon" icon="ic:baseline-account-circle" style="font-size: 1.5rem;" />
-        </button>
-
-        <ul
-          v-if="showMenu"
-          ref="accountMenuEl"
-          v-click-outside="() => showMenu = false"
-          class="mui-menu absolute z-50"
-          style="min-width: 240px; right: 0; top: calc(100% + 4px);"
-        >
-          <template v-if="user">
-            <li>
-              <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openAccountSettings'); showMenu = false">
-                <Icon class="mui-menu-icon" icon="ic:baseline-settings" /> {{ $t('header.accountSettings') }}
-              </button>
-            </li>
-            <li><hr class="mui-divider" /></li>
-          </template>
-        <li>
+      <DropdownMenuRoot>
+        <DropdownMenuTrigger as-child>
           <button
             v-wave
-            class="mui-menu-item whitespace-nowrap"
-            role="menuitemcheckbox"
-            :aria-checked="isLight"
-            @click="toggleTheme"
+            class="mui-icon-btn text-white"
+            style="--hover-bg: rgba(255,255,255,0.08);"
+            :aria-label="$t('header.currentUserAccount')"
+            data-testid="account-menu-button"
           >
-            <Icon class="mui-menu-icon" :icon="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'" />
-            <span class="flex-1">{{ isLight ? $t('header.lightTheme') : $t('header.darkTheme') }}</span>
-            <span class="mui-switch">
-              <input type="checkbox" :checked="isLight" tabindex="-1" readonly />
-              <span class="track" />
-              <span class="thumb" />
-            </span>
+            <img
+              v-if="myAvatarUri"
+              :src="myAvatarUri"
+              class="w-7 h-7 rounded-full"
+              :alt="playerName"
+              :style="{ opacity: profileFetched ? 1 : 0, transition: 'opacity 0.15s' }"
+            >
+            <Icon
+              v-else
+              class="mui-svg-icon"
+              icon="ic:baseline-account-circle"
+              style="font-size: 1.5rem;"
+            />
           </button>
-        </li>
-        <template v-if="!user">
-          <li><hr class="mui-divider" /></li>
-          <li>
-            <button v-wave class="mui-menu-item whitespace-nowrap" data-testid="auth-sign-in-menu-item" @click="emit('openSignIn'); showMenu = false">
-              <Icon class="mui-menu-icon" icon="ic:baseline-login" /> {{ $t('common.signIn') }}
-            </button>
-          </li>
-          <li>
-            <button v-wave class="mui-menu-item whitespace-nowrap" @click="emit('openSignUp'); showMenu = false">
-              <Icon class="mui-menu-icon" icon="ic:baseline-person-add" /> {{ $t('common.signUp') }}
-            </button>
-          </li>
-        </template>
-        <template v-else>
-          <li><hr class="mui-divider" /></li>
-          <li>
-            <button v-wave class="mui-menu-item whitespace-nowrap" data-testid="auth-sign-out-menu-item" @click="emit('signOut'); showMenu = false">
-              <Icon class="mui-menu-icon" icon="ic:baseline-logout" /> {{ $t('common.signOut') }}
-            </button>
-          </li>
-        </template>
-        </ul>
-      </div>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuPortal>
+          <DropdownMenuContent
+            class="mui-menu z-50"
+            style="min-width: 240px;"
+            align="end"
+            :side-offset="4"
+          >
+            <template v-if="isModerator">
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item whitespace-nowrap"
+                @select="emit('openCardDeck')"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-settings"
+                /> {{ $t('header.configureCardDeck') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                v-if="user"
+                v-wave
+                class="mui-menu-item whitespace-nowrap"
+                @select="emit('openRenameRoom')"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-edit"
+                /> {{ $t('header.renameRoom') }}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator class="mui-divider" />
+            </template>
+
+            <template v-if="user">
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item whitespace-nowrap"
+                @select="emit('openAccountSettings')"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-settings"
+                /> {{ $t('header.accountSettings') }}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator class="mui-divider" />
+            </template>
+
+            <DropdownMenuCheckboxItem
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              :model-value="isLight"
+              @select.prevent="toggleTheme"
+            >
+              <Icon
+                class="mui-menu-icon"
+                :icon="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'"
+              />
+              <span class="flex-1">{{ isLight ? $t('header.lightTheme') : $t('header.darkTheme') }}</span>
+              <span class="mui-switch">
+                <input
+                  type="checkbox"
+                  :checked="isLight"
+                  tabindex="-1"
+                  readonly
+                >
+                <span class="track" />
+                <span class="thumb" />
+              </span>
+            </DropdownMenuCheckboxItem>
+
+            <template v-if="!user">
+              <DropdownMenuSeparator class="mui-divider" />
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item whitespace-nowrap"
+                data-testid="auth-sign-in-menu-item"
+                @select="emit('openSignIn')"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-login"
+                /> {{ $t('common.signIn') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item whitespace-nowrap"
+                @select="emit('openSignUp')"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-person-add"
+                /> {{ $t('common.signUp') }}
+              </DropdownMenuItem>
+            </template>
+            <template v-else>
+              <DropdownMenuSeparator class="mui-divider" />
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item whitespace-nowrap"
+                data-testid="auth-sign-out-menu-item"
+                @select="emit('signOut')"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-logout"
+                /> {{ $t('common.signOut') }}
+              </DropdownMenuItem>
+            </template>
+          </DropdownMenuContent>
+        </DropdownMenuPortal>
+      </DropdownMenuRoot>
     </div>
 
     <template v-if="countdownActive">

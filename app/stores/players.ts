@@ -72,6 +72,16 @@ export const usePlayersStore = defineStore('players', () => {
     await getSupabase().from('players').update({ is_moderator: value }).eq('id', playerId)
   }
 
+  async function setShields(playerId: string, shields: string[]) {
+    const idx = players.value.findIndex(p => p.id === playerId)
+    if (idx >= 0) players.value[idx] = { ...players.value[idx], shields }
+    const { error } = await getSupabase().from('players').update({ shields }).eq('id', playerId)
+    if (error) {
+      if (roomId.value) await fetchAll(roomId.value)
+      throw error
+    }
+  }
+
   async function kick(playerId: string) {
     await getSupabase()
       .from('players')
@@ -164,6 +174,6 @@ export const usePlayersStore = defineStore('players', () => {
   return {
     roomId, players, pendingVotes, visiblePlayers,
     applyChange, voteOf, castVote, clearPendingVotes,
-    rename, toggleModerator, kick, leave, join, rejoin, findExistingPlayer, linkUser, fetchAll,
+    rename, toggleModerator, setShields, kick, leave, join, rejoin, findExistingPlayer, linkUser, fetchAll,
   }
 })

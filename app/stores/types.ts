@@ -7,6 +7,7 @@ export interface Player {
   is_moderator: boolean
   vote: string | null
   user_id: string | null
+  shields: string[]
   created_at: string
   left_at: string | null
 }

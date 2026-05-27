@@ -4,7 +4,6 @@ import VWave from 'v-wave'
 import App from './App.vue'
 import { router } from './router'
 import { i18n } from './i18n'
-import { clickOutside } from './directives/clickOutside'
 import { initSupabase } from './lib/supabase-instance'
 import { registerAppIcons } from './lib/registerAppIcons'
 import '~/assets/css/main.css'
@@ -23,5 +22,4 @@ createApp(App)
     duration: 0.4,
     easing: 'ease-out',
   })
-  .directive('click-outside', clickOutside)
   .mount('#app')

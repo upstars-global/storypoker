@@ -339,7 +339,76 @@ body {
   .mui-tooltip:hover::after {
     opacity: 1;
   }
+  .mui-tooltip-top::after {
+    top: auto;
+    bottom: calc(100% + 6px);
+  }
 
+  .mui-tooltip-content {
+    background-color: rgba(97, 97, 97, 0.92);
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    user-select: none;
+    z-index: 1400;
+  }
+
+  .mui-shield {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border-input);
+    background-color: transparent;
+    color: var(--text-body);
+    cursor: pointer;
+    transition: border-color 150ms, background-color 150ms, color 150ms;
+    user-select: none;
+  }
+  .mui-shield:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--text-primary);
+  }
+  .mui-shield:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+  .mui-shield.is-selected {
+    border-color: var(--primary);
+    background-color: var(--primary-soft);
+    color: var(--text-primary);
+  }
+  .mui-shield-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-input);
+    color: var(--icon-player-color);
+  }
+  .mui-role-tag {
+    display: inline-flex;
+    align-items: center;
+    max-width: 8ch;
+    padding: 1px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border-input);
+    color: var(--icon-player-color);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .mui-input {
     width: 100%;
     color: var(--text-primary);
@@ -367,6 +436,22 @@ body {
   }
   .mui-input.is-error {
     border-color: var(--danger);
+  }
+
+  .mui-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-body);
+    font-size: 0.9375rem;
+  }
+  .mui-radio input {
+    accent-color: var(--primary);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
   }
 
   .mui-card {

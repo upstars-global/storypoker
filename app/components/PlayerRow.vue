@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
+import {
+  DropdownMenuRoot,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+} from 'reka-ui'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
+import { roleTagForShields } from '~/utils/shields'
 
 const props = defineProps<{
   player: {
@@ -12,54 +21,31 @@ const props = defineProps<{
     vote: string | null
     is_online: boolean
     user_id: string | null
+    shields: string[]
     votePending: boolean
   }
   phase: 'voting' | 'revealed'
   currentPlayerId: string | null
   currentUserIsAuthorizedModerator: boolean
-  openMenuId: string | null
 }>()
 
 const emit = defineEmits<{
-  rename: [id: string]
+  edit: [id: string]
   toggleModerator: [id: string, value: boolean]
   leave: [id: string]
   kick: [id: string]
-  menuOpen: [id: string]
-  menuClose: []
 }>()
 
 const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
-const showMenu = computed(() => props.openMenuId === props.player.id)
+const roleTag = computed(() => roleTagForShields(props.player.shields))
 const playerAvatar = computed(() => {
   const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
   if (profile) return avatarDataUri(profile.avatar_seed, !props.player.is_online, profile.avatar_style)
   return avatarDataUri(props.player.name, !props.player.is_online, 'bottts')
 })
-const triggerEl = ref<HTMLButtonElement | null>(null)
-const menuStyle = ref<Record<string, string>>({})
-
-function toggleMenu() {
-  if (showMenu.value) {
-    emit('menuClose')
-  } else {
-    if (triggerEl.value) {
-      const rect = triggerEl.value.getBoundingClientRect()
-      menuStyle.value = {
-        position: 'fixed',
-        top: `${rect.bottom + 4}px`,
-        right: `${window.innerWidth - rect.right}px`,
-        minWidth: '200px',
-      }
-    }
-    emit('menuOpen', props.player.id)
-  }
-}
-
-function close() { emit('menuClose') }
 </script>
 
 <template>
@@ -76,8 +62,12 @@ function close() { emit('menuClose') }
       :alt="player.name"
       class="rounded-full"
       style="width: 28px; height: 28px;"
-    />
+    >
     <div class="flex items-center gap-1.5 min-w-0">
+      <span
+        v-if="roleTag"
+        class="flex-none mui-role-tag"
+      >{{ roleTag }}</span>
       <span
         class="truncate text-base"
         :style="{ color: player.is_online ? 'var(--text-primary)' : 'var(--text-muted)' }"
@@ -177,68 +167,100 @@ function close() { emit('menuClose') }
       </span>
     </template>
 
-    <div class="flex items-center justify-center" style="width: 36px; height: 36px;">
-      <template v-if="isOwn || currentUserIsAuthorizedModerator">
-        <button
-          ref="triggerEl"
-          v-wave
-          class="mui-icon-btn"
-          style="padding: 4px;"
-          @click.stop="toggleMenu"
-        >
-          <Icon class="mui-svg-icon text-muted dark:text-inverse" icon="ic:baseline-more-vert" style="font-size: 1.5rem;" />
-        </button>
-        <Teleport to="body">
-          <ul
-            v-if="showMenu"
-            v-click-outside="close"
+    <div
+      class="flex items-center justify-center"
+      style="width: 36px; height: 36px;"
+    >
+      <DropdownMenuRoot v-if="isOwn || currentUserIsAuthorizedModerator">
+        <DropdownMenuTrigger as-child>
+          <button
+            v-wave
+            class="mui-icon-btn"
+            style="padding: 4px;"
+          >
+            <Icon
+              class="mui-svg-icon text-muted dark:text-inverse"
+              icon="ic:baseline-more-vert"
+              style="font-size: 1.5rem;"
+            />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuPortal>
+          <DropdownMenuContent
             class="mui-menu z-50"
-            :style="menuStyle"
+            style="min-width: 200px;"
+            align="end"
+            :side-offset="4"
           >
             <template v-if="isOwn">
-              <li>
-                <button
-                  v-wave
-                  class="mui-menu-item"
-                  role="menuitemcheckbox"
-                  :aria-checked="player.is_moderator"
-                  @click="emit('toggleModerator', player.id, !player.is_moderator); close()"
-                >
-                  <Icon class="mui-menu-icon" icon="app:moderator" />
-                  <span class="flex-1">{{ $t('players.isModerator') }}</span>
-                  <span class="mui-switch">
-                    <input type="checkbox" :checked="player.is_moderator" tabindex="-1" readonly />
-                    <span class="track" />
-                    <span class="thumb" />
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button v-wave class="mui-menu-item" @click="emit('rename', player.id); close()">
-                  <Icon class="mui-menu-icon" icon="ic:baseline-edit" /> {{ $t('players.renamePlayer') }}
-                </button>
-              </li>
-              <li>
-                <button v-wave class="mui-menu-item" @click="emit('leave', player.id); close()">
-                  <Icon class="mui-menu-icon" icon="app:leave-room" /> {{ $t('players.leaveRoom') }}
-                </button>
-              </li>
+              <DropdownMenuCheckboxItem
+                v-wave
+                class="mui-menu-item"
+                :model-value="player.is_moderator"
+                @update:model-value="emit('toggleModerator', player.id, $event)"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="app:moderator"
+                />
+                <span class="flex-1">{{ $t('players.isModerator') }}</span>
+                <span class="mui-switch">
+                  <input
+                    type="checkbox"
+                    :checked="player.is_moderator"
+                    tabindex="-1"
+                    readonly
+                  >
+                  <span class="track" />
+                  <span class="thumb" />
+                </span>
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item"
+                @select="emit('edit', player.id)"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-edit"
+                /> {{ $t('players.edit') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item"
+                @select="emit('leave', player.id)"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="app:leave-room"
+                /> {{ $t('players.leaveRoom') }}
+              </DropdownMenuItem>
             </template>
             <template v-else-if="currentUserIsAuthorizedModerator">
-              <li>
-                <button v-wave class="mui-menu-item" @click="emit('rename', player.id); close()">
-                  <Icon class="mui-menu-icon" icon="ic:baseline-edit" /> {{ $t('players.renamePlayer') }}
-                </button>
-              </li>
-              <li>
-                <button v-wave class="mui-menu-item" @click="emit('kick', player.id); close()">
-                  <Icon class="mui-menu-icon" icon="ic:baseline-person-remove" /> {{ $t('players.kickPlayer') }}
-                </button>
-              </li>
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item"
+                @select="emit('edit', player.id)"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-edit"
+                /> {{ $t('players.edit') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                v-wave
+                class="mui-menu-item"
+                @select="emit('kick', player.id)"
+              >
+                <Icon
+                  class="mui-menu-icon"
+                  icon="ic:baseline-person-remove"
+                /> {{ $t('players.kickPlayer') }}
+              </DropdownMenuItem>
             </template>
-          </ul>
-        </Teleport>
-      </template>
+          </DropdownMenuContent>
+        </DropdownMenuPortal>
+      </DropdownMenuRoot>
     </div>
   </div>
 </template>

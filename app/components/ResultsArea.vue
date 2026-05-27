@@ -3,9 +3,11 @@ import { computed, ref, watch } from 'vue'
 import PieChart from '~/components/PieChart.vue'
 import { createCelebrationParticles, shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
 
+import { useI18n } from 'vue-i18n'
+
 const props = defineProps<{
   votes: Record<string, number>
-  groupedVotes?: { dev: Record<string, number>; qa: Record<string, number>; sm: Record<string, number> } | null
+  groupedVotes?: { general: Record<string, number>; qa: Record<string, number> } | null
   isModerator: boolean
 }>()
 
@@ -13,15 +15,15 @@ const emit = defineEmits<{
   startNewRound: []
 }>()
 
+const { t } = useI18n()
+
 const groups = computed(() => {
   if (!props.groupedVotes) return null
-  const devTotal = Object.values(props.groupedVotes.dev).reduce((a, b) => a + b, 0)
+  const generalTotal = Object.values(props.groupedVotes.general).reduce((a, b) => a + b, 0)
   const qaTotal = Object.values(props.groupedVotes.qa).reduce((a, b) => a + b, 0)
-  const smTotal = Object.values(props.groupedVotes.sm).reduce((a, b) => a + b, 0)
-  const out: { label: 'DEV' | 'QA' | 'SM'; votes: Record<string, number> }[] = []
-  if (devTotal) out.push({ label: 'DEV', votes: props.groupedVotes.dev })
+  const out: { label: string; votes: Record<string, number> }[] = []
+  if (generalTotal) out.push({ label: t('results.general'), votes: props.groupedVotes.general })
   if (qaTotal) out.push({ label: 'QA', votes: props.groupedVotes.qa })
-  if (smTotal) out.push({ label: 'SM', votes: props.groupedVotes.sm })
   return out.length ? out : null
 })
 

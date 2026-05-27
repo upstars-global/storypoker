@@ -23,19 +23,18 @@ function hasVotes(votes: VoteCounts): boolean {
 }
 
 export function shouldCelebrateGroupedVotes(groupedVotes: {
-  dev: VoteCounts
+  general: VoteCounts
   qa: VoteCounts
-  sm: VoteCounts
 } | null | undefined): boolean {
   if (!groupedVotes) return false
 
-  const devVote = getUnanimousVote(groupedVotes.dev)
+  const generalVote = getUnanimousVote(groupedVotes.general)
   const qaVote = getUnanimousVote(groupedVotes.qa)
-  const hasDevVotes = hasVotes(groupedVotes.dev)
+  const hasGeneralVotes = hasVotes(groupedVotes.general)
   const hasQaVotes = hasVotes(groupedVotes.qa)
 
-  if (hasDevVotes && hasQaVotes) return !!devVote && devVote === qaVote
-  if (hasDevVotes) return !!devVote
+  if (hasGeneralVotes && hasQaVotes) return !!generalVote && generalVote === qaVote
+  if (hasGeneralVotes) return !!generalVote
   if (hasQaVotes) return !!qaVote
   return false
 }
