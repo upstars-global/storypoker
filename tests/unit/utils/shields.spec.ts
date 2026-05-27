@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SHIELD_CATALOG, SHIELD_GROUPS, getShield, isQaPlayer, shieldsForGroup } from '~/utils/shields'
+import { PLAYER_ROLES, SHIELD_CATALOG, SHIELD_GROUPS, getShield, isQaPlayer, roleTagForShields, shieldsForGroup, toggleShield } from '~/utils/shields'
 
 describe('shields', () => {
   it('exposes a unique shield id per catalog entry', () => {
@@ -8,16 +8,17 @@ describe('shields', () => {
   })
 
   it('resolves a shield by id', () => {
-    expect(getShield('qa')?.group).toBe('discipline')
+    expect(getShield('qa')?.group).toBe('role')
+    expect(getShield('vue')?.group).toBe('stack')
     expect(getShield('head')?.group).toBe('lead')
     expect(getShield('unknown')).toBeUndefined()
   })
 
-  it('routes to QA only when the qa shield is worn', () => {
+  it('routes to QA when a QA discipline shield is worn', () => {
     expect(isQaPlayer(['qa'])).toBe(true)
-    expect(isQaPlayer(['qa', 'tl'])).toBe(true)
-    expect(isQaPlayer(['dev'])).toBe(false)
-    expect(isQaPlayer(['head'])).toBe(false)
+    expect(isQaPlayer(['aqa'])).toBe(true)
+    expect(isQaPlayer(['dev', 'vue'])).toBe(false)
+    expect(isQaPlayer(['playwright'])).toBe(false)
   })
 
   it('treats empty or missing shields as general', () => {
@@ -26,9 +27,38 @@ describe('shields', () => {
     expect(isQaPlayer(undefined)).toBe(false)
   })
 
+  it('wears at most one skill shield plus one leadership shield, skill first', () => {
+    const dev = getShield('dev')!
+    const vue = getShield('vue')!
+    const head = getShield('head')!
+    const tl = getShield('tl')!
+
+    expect(toggleShield([], head)).toEqual(['head'])
+    expect(toggleShield(['head'], dev)).toEqual(['dev', 'head'])
+    expect(toggleShield(['dev'], vue)).toEqual(['vue'])
+    expect(toggleShield(['dev', 'head'], dev)).toEqual(['head'])
+    expect(toggleShield(['dev', 'head'], tl)).toEqual(['dev', 'tl'])
+  })
+
+  it('derives the role tag from a player shield', () => {
+    expect(roleTagForShields(['dev'])).toBe('DEV')
+    expect(roleTagForShields(['be'])).toBe('BE')
+    expect(roleTagForShields(['qa'])).toBe('QA')
+    expect(roleTagForShields([])).toBeNull()
+    expect(roleTagForShields(null)).toBeNull()
+    expect(roleTagForShields(['vue'])).toBeNull()
+  })
+
+  it('maps every role tag to a real catalog shield', () => {
+    for (const { shield } of PLAYER_ROLES) {
+      expect(getShield(shield)).toBeDefined()
+    }
+  })
+
   it('groups shields by category', () => {
-    expect(shieldsForGroup('discipline').map(s => s.id)).toEqual(['dev', 'qa'])
-    expect(shieldsForGroup('lead').every(s => s.group === 'lead')).toBe(true)
-    expect(SHIELD_GROUPS).toEqual(['discipline', 'lead'])
+    expect(SHIELD_GROUPS).toEqual(['role', 'focus', 'stack', 'qa', 'lead'])
+    expect(shieldsForGroup('role').map(s => s.id)).toEqual(['dev', 'qa', 'po', 'sm'])
+    expect(shieldsForGroup('qa').map(s => s.id)).toContain('vitest')
+    expect(shieldsForGroup('stack').every(s => s.group === 'stack')).toBe(true)
   })
 })

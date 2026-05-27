@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import {
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipPortal,
+  TooltipContent,
+} from 'reka-ui'
 import type { CountdownMode } from '~/composables/useCountdown'
 
 defineProps<{
@@ -74,23 +80,32 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           role="radiogroup"
           data-testid="countdown-mode"
         >
-          <label
+          <TooltipRoot
             v-for="option in countdownModeOptions"
             :key="option.value"
-            class="cursor-pointer flex items-center justify-center rounded p-1.5 transition-colors"
-            :class="countdownMode === option.value ? 'text-primary' : 'text-muted'"
-            :title="$t(option.label)"
           >
-            <input
-              v-model="countdownMode"
-              type="radio"
-              name="countdown-mode"
-              class="sr-only"
-              :value="option.value"
-              :disabled="countdownRunning"
-            >
-            <Icon class="text-xl" :icon="option.icon" />
-          </label>
+            <TooltipTrigger as-child>
+              <label
+                class="cursor-pointer flex items-center justify-center rounded p-1.5 transition-colors"
+                :class="countdownMode === option.value ? 'text-primary' : 'text-muted'"
+              >
+                <input
+                  v-model="countdownMode"
+                  type="radio"
+                  name="countdown-mode"
+                  class="sr-only"
+                  :value="option.value"
+                  :disabled="countdownRunning"
+                >
+                <Icon class="text-xl" :icon="option.icon" />
+              </label>
+            </TooltipTrigger>
+            <TooltipPortal>
+              <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+                {{ $t(option.label) }}
+              </TooltipContent>
+            </TooltipPortal>
+          </TooltipRoot>
         </div>
         <button
           v-wave

@@ -63,7 +63,7 @@ async function submit() {
   <DialogRoot default-open @update:open="(open) => { if (!open) emit('close') }">
     <DialogPortal>
       <DialogOverlay class="mui-modal-overlay">
-        <DialogContent class="mui-modal-paper">
+        <DialogContent class="mui-modal-paper" @pointerdown.stop>
           <DialogTitle as="h2" class="mui-h5 text-center">
             {{ mode === 'signin' ? $t('common.signIn') : $t('common.signUp') }}
           </DialogTitle>

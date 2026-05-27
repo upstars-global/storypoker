@@ -62,7 +62,7 @@ function save() {
   <DialogRoot default-open @update:open="(open) => { if (!open) emit('close') }">
     <DialogPortal>
       <DialogOverlay class="mui-modal-overlay">
-        <DialogContent class="mui-modal-paper" style="max-width: 560px; padding: 32px 40px 40px;">
+        <DialogContent class="mui-modal-paper" style="max-width: 560px; padding: 32px 40px 40px;" @pointerdown.stop>
           <DialogTitle as="h2" class="text-center text-mui-h2 font-bold text-primary">
             {{ $t('deck.configure') }}
           </DialogTitle>

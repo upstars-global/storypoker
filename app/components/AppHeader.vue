@@ -104,12 +104,12 @@ function toggleLocale() {
         style="font-size: 1.75rem; transform: rotate(-90deg);"
       />
     </RouterLink>
+    <span class="mx-1.5 text-appbar-subtle">•</span>
     <span
       v-if="!roomName"
       class="mui-h6 text-lg px-2 text-white"
     >Story Poker</span>
     <template v-if="roomName">
-      <span class="mx-1.5 text-appbar-subtle">/</span>
       <span class="mui-h6 text-lg text-appbar-emphasis">{{ roomName }}</span>
     </template>
     <div class="flex-1" />

@@ -19,9 +19,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  rename: [id: string]
+  edit: [id: string]
   toggleModerator: [id: string, value: boolean]
-  editShields: [id: string]
   leave: [id: string]
   kick: [id: string]
 }>()
@@ -49,9 +48,8 @@ const totalCount = computed(() => props.players.length)
         :phase="phase"
         :current-player-id="currentPlayerId"
         :current-user-is-authorized-moderator="currentUserIsAuthorizedModerator"
-        @rename="emit('rename', $event)"
+        @edit="emit('edit', $event)"
         @toggle-moderator="(id: string, val: boolean) => emit('toggleModerator', id, val)"
-        @edit-shields="emit('editShields', $event)"
         @leave="emit('leave', $event)"
         @kick="emit('kick', $event)"
       />

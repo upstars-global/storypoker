@@ -6,6 +6,7 @@ import leaveRoomSvg from '~/assets/icons/leave-room.svg?raw'
 import bankSvg from '~/assets/icons/bank.svg?raw'
 import townHallSvg from '~/assets/icons/town-hall.svg?raw'
 import fibonacciSvg from '~/assets/icons/fibonacci.svg?raw'
+import scrumSvg from '~/assets/icons/scrum.svg?raw'
 
 function parseSvg(svg: string): { body: string; width: number; height: number } {
   let width = 24
@@ -38,6 +39,7 @@ export function registerAppIcons(): void {
       bank: parseSvg(bankSvg),
       'town-hall': parseSvg(townHallSvg),
       fibonacci: parseSvg(fibonacciSvg),
+      scrum: parseSvg(scrumSvg),
     },
   })
 }

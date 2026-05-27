@@ -33,6 +33,7 @@ function submit() {
       <DialogOverlay class="mui-modal-overlay">
         <DialogContent
           class="mui-modal-paper"
+          @pointerdown.stop
           @escape-key-down="(e) => e.preventDefault()"
           @interact-outside="(e) => e.preventDefault()"
         >

@@ -11,7 +11,7 @@ import {
 } from 'reka-ui'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
-import { getShield } from '~/utils/shields'
+import { roleTagForShields } from '~/utils/shields'
 
 const props = defineProps<{
   player: {
@@ -30,9 +30,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  rename: [id: string]
+  edit: [id: string]
   toggleModerator: [id: string, value: boolean]
-  editShields: [id: string]
   leave: [id: string]
   kick: [id: string]
 }>()
@@ -41,9 +40,7 @@ const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
-const playerShields = computed(() =>
-  (props.player.shields ?? []).map(id => getShield(id)).filter((s): s is NonNullable<typeof s> => Boolean(s))
-)
+const roleTag = computed(() => roleTagForShields(props.player.shields))
 const playerAvatar = computed(() => {
   const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
   if (profile) return avatarDataUri(profile.avatar_seed, !props.player.is_online, profile.avatar_style)
@@ -68,13 +65,9 @@ const playerAvatar = computed(() => {
     >
     <div class="flex items-center gap-1.5 min-w-0">
       <span
-        v-for="shield in playerShields"
-        :key="shield.id"
-        class="mui-shield-badge flex-none"
-      >
-        <Icon :icon="shield.icon" style="font-size: 0.875rem;" />
-        {{ $t(shield.labelKey) }}
-      </span>
+        v-if="roleTag"
+        class="flex-none mui-role-tag"
+      >{{ roleTag }}</span>
       <span
         class="truncate text-base"
         :style="{ color: player.is_online ? 'var(--text-primary)' : 'var(--text-muted)' }"
@@ -225,22 +218,12 @@ const playerAvatar = computed(() => {
               <DropdownMenuItem
                 v-wave
                 class="mui-menu-item"
-                @select="emit('rename', player.id)"
+                @select="emit('edit', player.id)"
               >
                 <Icon
                   class="mui-menu-icon"
                   icon="ic:baseline-edit"
-                /> {{ $t('players.renamePlayer') }}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                v-wave
-                class="mui-menu-item"
-                @select="emit('editShields', player.id)"
-              >
-                <Icon
-                  class="mui-menu-icon"
-                  icon="ic:baseline-shield"
-                /> {{ $t('shields.choose') }}
+                /> {{ $t('players.edit') }}
               </DropdownMenuItem>
               <DropdownMenuItem
                 v-wave
@@ -257,12 +240,12 @@ const playerAvatar = computed(() => {
               <DropdownMenuItem
                 v-wave
                 class="mui-menu-item"
-                @select="emit('rename', player.id)"
+                @select="emit('edit', player.id)"
               >
                 <Icon
                   class="mui-menu-icon"
                   icon="ic:baseline-edit"
-                /> {{ $t('players.renamePlayer') }}
+                /> {{ $t('players.edit') }}
               </DropdownMenuItem>
               <DropdownMenuItem
                 v-wave

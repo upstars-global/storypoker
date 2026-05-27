@@ -85,7 +85,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.minus30')"
             @click="emit('adjust', -30000)"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-fast-rewind" style="font-size: 1.375rem;" />
+            <Icon class="mui-svg-icon" icon="ic:baseline-fast-rewind" style="font-size: 1.5rem;" />
           </button>
         </TooltipTrigger>
         <TooltipPortal>
@@ -103,7 +103,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.minus10')"
             @click="emit('adjust', -10000)"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-skip-previous" style="font-size: 1.375rem;" />
+            <Icon class="mui-svg-icon" icon="ic:baseline-skip-previous" style="font-size: 1.5rem;" />
           </button>
         </TooltipTrigger>
         <TooltipPortal>
@@ -121,7 +121,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.reset')"
             @click="emit('reset')"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-stop" style="font-size: 1.375rem;" />
+            <Icon class="mui-svg-icon" icon="ic:baseline-stop" style="font-size: 1.5rem;" />
           </button>
         </TooltipTrigger>
         <TooltipPortal>
@@ -139,7 +139,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.pause')"
             @click="emit('pause')"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-pause" style="font-size: 1.375rem;" />
+            <Icon class="mui-svg-icon" icon="ic:baseline-pause" style="font-size: 1.5rem;" />
           </button>
         </TooltipTrigger>
         <TooltipPortal>
@@ -157,7 +157,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.continue')"
             @click="emit('resume')"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-play-arrow" style="font-size: 1.375rem;" />
+            <Icon class="mui-svg-icon" icon="ic:baseline-play-arrow" style="font-size: 1.5rem;" />
           </button>
         </TooltipTrigger>
         <TooltipPortal>
@@ -175,7 +175,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.plus10')"
             @click="emit('adjust', 10000)"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-skip-next" style="font-size: 1.375rem;" />
+            <Icon class="mui-svg-icon" icon="ic:baseline-skip-next" style="font-size: 1.5rem;" />
           </button>
         </TooltipTrigger>
         <TooltipPortal>
@@ -193,7 +193,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.plus30')"
             @click="emit('adjust', 30000)"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-fast-forward" style="font-size: 1.375rem;" />
+            <Icon class="mui-svg-icon" icon="ic:baseline-fast-forward" style="font-size: 1.5rem;" />
           </button>
         </TooltipTrigger>
         <TooltipPortal>

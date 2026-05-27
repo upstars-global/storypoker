@@ -27,7 +27,7 @@ import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal.vue'
-import ShieldPickerModal from '~/components/ShieldPickerModal.vue'
+import PlayerEditModal from '~/components/PlayerEditModal.vue'
 import PlayersList from '~/components/PlayersList.vue'
 import Timer from '~/components/Timer.vue'
 import CardsArea from '~/components/CardsArea.vue'
@@ -56,10 +56,8 @@ const showJoin = ref(false)
 const showAuth = ref<'signin' | 'signup' | null>(null)
 const showCardDeck = ref(false)
 const showAccountSettings = ref(false)
-const renameTarget = ref<string | null>(null)
-const renameValue = ref('')
-const shieldsTargetId = ref<string | null>(null)
-const shieldsTargetPlayer = computed(() => visiblePlayers.value.find(p => p.id === shieldsTargetId.value) ?? null)
+const editTargetId = ref<string | null>(null)
+const editTargetPlayer = computed(() => visiblePlayers.value.find(p => p.id === editTargetId.value) ?? null)
 const showRenameRoom = ref(false)
 const roomNameInput = ref('')
 const roomNameError = ref<string | null>(null)
@@ -68,8 +66,6 @@ const currentRoomName = ref<string | null>(null)
 const origin = ref('')
 const kickTargetId = ref<string | null>(null)
 const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === kickTargetId.value)?.name ?? '')
-
-const renameInput = ref<HTMLInputElement | null>(null)
 
 const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
@@ -289,29 +285,21 @@ async function handleToggleModerator(id: string, value: boolean) {
   await playersStore.toggleModerator(id, value)
 }
 
-function handleRename(id: string) {
-  renameTarget.value = id
-  renameValue.value = visiblePlayers.value.find(p => p.id === id)?.name ?? ''
+function handleEdit(id: string) {
+  requestAnimationFrame(() => { editTargetId.value = id })
 }
 
-function handleEditShields(id: string) {
-  shieldsTargetId.value = id
-}
-
-async function handleSaveShields(shields: string[]) {
-  if (!shieldsTargetId.value) return
+async function handleSaveEdit(payload: { name: string; shields: string[] }) {
+  const target = editTargetPlayer.value
+  if (!target) return
   try {
-    await playersStore.setShields(shieldsTargetId.value, shields)
+    if (payload.name !== target.name) {
+      await playersStore.rename(target.id, payload.name)
+    }
+    await playersStore.setShields(target.id, payload.shields)
   } catch {
   }
-  shieldsTargetId.value = null
-}
-
-async function submitRename() {
-  if (renameTarget.value && renameValue.value.trim()) {
-    await playersStore.rename(renameTarget.value, renameValue.value.trim())
-    renameTarget.value = null
-  }
+  editTargetId.value = null
 }
 
 async function handleLeave(id: string) {
@@ -321,7 +309,7 @@ async function handleLeave(id: string) {
 }
 
 function handleKick(id: string) {
-  kickTargetId.value = id
+  requestAnimationFrame(() => { kickTargetId.value = id })
 }
 
 async function confirmKick() {
@@ -421,9 +409,8 @@ async function submitRenameRoom() {
           :phase="roomState?.phase ?? 'voting'"
           :current-player-id="currentPlayerId"
           :current-user-is-authorized-moderator="isAuthorizedModerator"
-          @rename="handleRename"
+          @edit="handleEdit"
           @toggle-moderator="handleToggleModerator"
-          @edit-shields="handleEditShields"
           @leave="handleLeave"
           @kick="handleKick"
         />
@@ -481,11 +468,12 @@ async function submitRenameRoom() {
       @save="handleSaveCardDeck"
     />
 
-    <ShieldPickerModal
-      v-if="shieldsTargetPlayer"
-      :shields="shieldsTargetPlayer.shields ?? []"
-      @close="shieldsTargetId = null"
-      @save="handleSaveShields"
+    <PlayerEditModal
+      v-if="editTargetPlayer"
+      :name="editTargetPlayer.name"
+      :shields="editTargetPlayer.shields ?? []"
+      @close="editTargetId = null"
+      @save="handleSaveEdit"
     />
 
     <UserSettingsModal
@@ -493,40 +481,10 @@ async function submitRenameRoom() {
       @close="showAccountSettings = false"
     />
 
-    <DialogRoot v-if="renameTarget" default-open @update:open="(open) => { if (!open) renameTarget = null }">
-      <DialogPortal>
-        <DialogOverlay class="mui-modal-overlay">
-          <DialogContent
-            class="mui-modal-paper"
-            @open-auto-focus="(e) => { e.preventDefault(); renameInput?.focus() }"
-          >
-            <DialogTitle as="h2" class="mui-h5 mb-4">{{ $t('room.renamePlayer') }}</DialogTitle>
-            <input
-              ref="renameInput"
-              v-model="renameValue"
-              class="mui-input w-full"
-              @keyup.enter="submitRename"
-            />
-            <div class="flex justify-end mt-6">
-              <button v-wave class="mui-btn" style="min-width: 120px;" @click="submitRename">{{ $t('common.save') }}</button>
-            </div>
-            <DialogClose
-              v-wave
-              class="mui-icon-btn absolute"
-              style="top: 8px; right: 8px;"
-              :aria-label="$t('common.close')"
-            >
-              <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-            </DialogClose>
-          </DialogContent>
-        </DialogOverlay>
-      </DialogPortal>
-    </DialogRoot>
-
     <DialogRoot v-if="showRenameRoom" default-open @update:open="(open) => { if (!open) showRenameRoom = false }">
       <DialogPortal>
         <DialogOverlay class="mui-modal-overlay">
-          <DialogContent class="mui-modal-paper">
+          <DialogContent class="mui-modal-paper" @pointerdown.stop>
             <DialogTitle as="h2" class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</DialogTitle>
             <input
               v-model="roomNameInput"
@@ -558,7 +516,7 @@ async function submitRenameRoom() {
     <DialogRoot v-if="kickTargetId" default-open @update:open="(open) => { if (!open) kickTargetId = null }">
       <DialogPortal>
         <DialogOverlay class="mui-modal-overlay">
-          <DialogContent class="mui-modal-paper">
+          <DialogContent class="mui-modal-paper" @pointerdown.stop>
             <DialogTitle as="h2" class="mui-h5 mb-4">{{ $t('room.kickTitle') }}</DialogTitle>
             <p class="text-body">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>
             <div class="flex justify-end mt-6">
