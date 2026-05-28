@@ -23,6 +23,7 @@ import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
 import { isQaPlayer } from '~/utils/shields'
+import { shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
@@ -85,6 +86,8 @@ const playersForUi = computed(() =>
 const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
 const isConsensus = computed(() => {
+  const grouped = groupedVoteCounts.value
+  if (grouped) return shouldCelebrateGroupedVotes(grouped)
   const votes = playersForUi.value.map(p => p.vote).filter((v): v is string => v !== null)
   return votes.length >= 2 && votes.every(v => v === votes[0])
 })
