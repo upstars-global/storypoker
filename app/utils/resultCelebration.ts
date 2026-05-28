@@ -33,9 +33,8 @@ export function shouldCelebrateGroupedVotes(groupedVotes: {
   const hasGeneralVotes = hasVotes(groupedVotes.general)
   const hasQaVotes = hasVotes(groupedVotes.qa)
 
-  if (hasGeneralVotes && hasQaVotes) return !!generalVote && generalVote === qaVote
-  if (hasGeneralVotes) return !!generalVote
-  if (hasQaVotes) return !!qaVote
+  if (hasGeneralVotes && !!generalVote) return true
+  if (hasQaVotes && !!qaVote) return true
   return false
 }
 

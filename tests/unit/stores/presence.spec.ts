@@ -88,32 +88,67 @@ describe('presenceStore — presence sync', () => {
 describe('presenceStore — visibility handler', () => {
   beforeEach(() => resetSupabase())
 
-  it('hidden visibility → status becomes offline + untrack called', async () => {
-    const ch = makeFakeChannel()
-    setSupabase(fakeSupabase(ch) as any)
-    const store = usePresenceStore()
-    await store.start('r1', 'p1')
-    await new Promise(r => setTimeout(r, 5))
-    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
-    document.dispatchEvent(new Event('visibilitychange'))
-    await new Promise(r => setTimeout(r, 5))
-    expect(ch.untrack).toHaveBeenCalled()
-    expect(store.status).toBe('offline')
+  it('hidden visibility → stays online until 5 min pass, then untrack + offline', async () => {
+    vi.useFakeTimers()
+    try {
+      const ch = makeFakeChannel()
+      setSupabase(fakeSupabase(ch) as any)
+      const store = usePresenceStore()
+      await store.start('r1', 'p1')
+      await vi.advanceTimersByTimeAsync(5)
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(ch.untrack).not.toHaveBeenCalled()
+      expect(store.status).toBe('online')
+      await vi.advanceTimersByTimeAsync(5 * 60_000)
+      expect(ch.untrack).toHaveBeenCalled()
+      expect(store.status).toBe('offline')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
-  it('visible visibility → re-enters connecting then online', async () => {
-    const ch = makeFakeChannel()
-    setSupabase(fakeSupabase(ch) as any)
-    const store = usePresenceStore()
-    await store.start('r1', 'p1')
-    await new Promise(r => setTimeout(r, 5))
-    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
-    document.dispatchEvent(new Event('visibilitychange'))
-    await new Promise(r => setTimeout(r, 5))
-    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
-    document.dispatchEvent(new Event('visibilitychange'))
-    await new Promise(r => setTimeout(r, 30))
-    expect(store.status).toBe('online')
+  it('visible before 5 min → away timer cancelled, stays online', async () => {
+    vi.useFakeTimers()
+    try {
+      const ch = makeFakeChannel()
+      setSupabase(fakeSupabase(ch) as any)
+      const store = usePresenceStore()
+      await store.start('r1', 'p1')
+      await vi.advanceTimersByTimeAsync(5)
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+      await vi.advanceTimersByTimeAsync(60_000)
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+      await vi.advanceTimersByTimeAsync(10 * 60_000)
+      expect(ch.untrack).not.toHaveBeenCalled()
+      expect(store.status).toBe('online')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('visible after 5 min offline → re-enters connecting then online', async () => {
+    vi.useFakeTimers()
+    try {
+      const ch = makeFakeChannel()
+      setSupabase(fakeSupabase(ch) as any)
+      const store = usePresenceStore()
+      await store.start('r1', 'p1')
+      await vi.advanceTimersByTimeAsync(5)
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+      await vi.advanceTimersByTimeAsync(5 * 60_000)
+      expect(store.status).toBe('offline')
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+      document.dispatchEvent(new Event('visibilitychange'))
+      await vi.advanceTimersByTimeAsync(30)
+      expect(store.status).toBe('online')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 

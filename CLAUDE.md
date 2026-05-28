@@ -10,16 +10,12 @@ Guidance for Claude Code working with this repository.
 
 **Story Poker** — Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 5 пресетів або кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
 
-Джерела контексту:
-- `DESIGN.md` — дизайн-специфікація + audit (розділ 10)
-- `ROADMAP.md` — статус, design gaps, iter-цілі
-- `docs/superpowers/plans/` і `docs/superpowers/specs/` — iter-плани і специфікації окремих фіч
-- `examples/` — ескізи, gitignored
+Джерела контексту: `DESIGN.md` (дизайн + audit §10), `ROADMAP.md` (статус, gaps, iter-цілі), `docs/superpowers/{plans,specs}/` (iter-плани і специфікації), `examples/` (ескізи, gitignored).
 
 ## Tech Stack
 
 - **Framework:** Vue 3.5 + Vite 8 (Rolldown bundler) SPA, Composition API `<script setup>`, `srcDir: app/`
-- **Routing:** `vue-router@5` — явні маршрути в `app/router.ts`, без file-based routing
+- **Routing:** `vue-router@5` — явні маршрути в `app/router.ts` (7 routes, без file-based routing)
 - **Styling:** Tailwind v4 через PostCSS (`@tailwindcss/postcss` + autoprefixer), CSS-first config у `app/assets/css/main.css` (`@theme`, `@utility`, `@custom-variant dark`), MUI-like класи там само
   - text utilities з `@theme --color-*`: `text-{primary,body,muted,disabled,inverse,danger,success,appbar-{subtle,muted,emphasis}}`
   - bg utilities через `@utility`: `bg-{app,appbar,paper,elevated,overlay,skeleton}`
@@ -48,7 +44,9 @@ npm run test:unit:watch
 npm run test:unit:coverage
 npm run test:e2e
 npm run test:e2e:smoke
+npm run test:e2e:ui  # Playwright UI mode
 npm run test:ci      # lint + typecheck + unit + build (CI runs this)
+npm run deploy:{stage,prod}   # Netlify alias / prod deploy
 ```
 
 CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); E2E runs when E2E secrets exist; deploy runs `npm run build` on `main` when checks pass and Netlify secrets exist.
@@ -142,12 +140,13 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 │   ├── router.ts          # явні 6 routes
 │   ├── i18n.ts            # createI18n
 │   ├── App.vue            # <RouterView />
-│   ├── pages/             # index, [slug], login, signup, forgot-password, reset-password
+│   ├── pages/             # index, [slug], login, signup, forgot-password, reset-password, ffc
 │   ├── components/        # AppHeader, CardsArea, PlayersList, modals, icons
-│   ├── composables/       # useTheme, useDylanAvatar
+│   ├── composables/       # useTheme, useDylanAvatar, useCountdown
 │   ├── stores/            # auth, room, players, presence, profiles
 │   ├── directives/        # clickOutside
 │   ├── lib/               # supabase-instance, registerAppIcons
+│   ├── configs/           # featureFlags (runtime toggles з localStorage)
 │   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, shields, resultCelebration, relativeTime
 │   ├── i18n/locales/{uk,en}.json
 │   └── assets/css/main.css, assets/icons/
@@ -167,6 +166,7 @@ Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `ap
 - `/<roomId>` — кімната за 8-символьним id
 - `/<slug>` — alias кімнати; якщо slug існує, URL з id редиректиться на slug
 - `/login`, `/signup`, `/forgot-password`, `/reset-password` — auth routes
+- `/ffc` — Feature Flags console (override з localStorage, key `FEATURE_FLAGS`)
 
 `normalizeRoomSlug()` / `isValidRoomSlug()` приймають 2–32 символи `[a-z0-9-]`, без дефісу на початку/кінці. Нові top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або вводь префікс.
 
@@ -174,6 +174,7 @@ Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `ap
 
 - `storypoker_session_<roomId>` — `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms
 - `sp-theme` — `light | dark`; inline script у `index.html` застосовує тему до завантаження JS
+- `FEATURE_FLAGS` — override flags з `app/configs/featureFlags.ts` (керується на `/ffc`)
 
 ## Code Style
 

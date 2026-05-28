@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { getSupabase } from '~/lib/supabase-instance'
 import type { ConnectionStatus } from './types'
 
+const AWAY_TIMEOUT_MS = 5 * 60 * 1000
+
 export const usePresenceStore = defineStore('presence', () => {
   const status = ref<ConnectionStatus>('connecting')
   const online = ref<Set<string>>(new Set())
@@ -13,6 +15,14 @@ export const usePresenceStore = defineStore('presence', () => {
   let visibilityHandler: (() => void) | null = null
   let onlineHandler: (() => void) | null = null
   let offlineHandler: (() => void) | null = null
+  let awayTimer: ReturnType<typeof setTimeout> | null = null
+
+  function clearAwayTimer() {
+    if (awayTimer !== null) {
+      clearTimeout(awayTimer)
+      awayTimer = null
+    }
+  }
 
   async function start(roomId: string, playerId: string) {
     currentRoomId = roomId
@@ -54,19 +64,25 @@ export const usePresenceStore = defineStore('presence', () => {
 
   async function stop() {
     detachWindowHandlers()
+    clearAwayTimer()
     await closeChannel()
     status.value = 'offline'
   }
 
   function attachWindowHandlers() {
     if (typeof document === 'undefined') return
-    visibilityHandler = async () => {
+    visibilityHandler = () => {
       if (document.visibilityState === 'hidden') {
-        await closeChannel()
-        status.value = 'offline'
+        if (awayTimer !== null) return
+        awayTimer = setTimeout(async () => {
+          awayTimer = null
+          await closeChannel()
+          status.value = 'offline'
+        }, AWAY_TIMEOUT_MS)
       } else if (document.visibilityState === 'visible') {
+        clearAwayTimer()
         if (status.value === 'offline' || status.value === 'reconnecting') {
-          await openChannel()
+          openChannel()
         }
       }
     }

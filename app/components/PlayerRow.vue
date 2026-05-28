@@ -147,9 +147,9 @@ const playerAvatar = computed(() => {
         :data-tooltip="$t('players.estimateGiven')"
       >
         <Icon
-          class="mui-svg-icon text-black/[0.26] dark:text-white/30"
+          class="mui-svg-icon"
           icon="ic:baseline-check-circle"
-          style="font-size: 1.5rem;"
+          style="font-size: 1.5rem; color: var(--icon-player-color);"
           :aria-label="$t('players.estimateGiven')"
         />
       </span>

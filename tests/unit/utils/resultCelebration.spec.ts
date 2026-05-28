@@ -11,20 +11,29 @@ describe('resultCelebration', () => {
     ).toBe(true)
   })
 
-  it('does not celebrate when general and qa are unanimous but different', () => {
+  it('celebrates when general and qa are unanimous but different', () => {
     expect(
       shouldCelebrateGroupedVotes({
         general: { '5': 3 },
         qa: { '8': 2 },
       })
-    ).toBe(false)
+    ).toBe(true)
   })
 
-  it('does not celebrate when one group has mixed estimates', () => {
+  it('celebrates when only one group is unanimous and the other is mixed', () => {
     expect(
       shouldCelebrateGroupedVotes({
         general: { '5': 2, '8': 1 },
         qa: { '5': 2 },
+      })
+    ).toBe(true)
+  })
+
+  it('does not celebrate when both groups have mixed estimates', () => {
+    expect(
+      shouldCelebrateGroupedVotes({
+        general: { '5': 2, '8': 1 },
+        qa: { '5': 1, '8': 1 },
       })
     ).toBe(false)
   })
