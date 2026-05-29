@@ -51,8 +51,6 @@
     "pause": "Пауза",
     "continue": "Продовжити",
     "minus30": "-30с",
-    "minus10": "-10с",
-    "plus10": "+10с",
     "plus30": "+30с"
   },
   "deck": {
@@ -72,10 +70,22 @@
     "kickPlayer": "Вилучити гравця",
     "moderatorLabel": "модератор",
     "moderatorOf": "{name} є модератором цієї кімнати",
+    "moderator": "Модератор",
     "estimateGiven": "Оцінку надано",
     "playerDeciding": "Ще не обрав оцінку",
     "inactive": "Неактивний",
-    "noVote": "Потрачєно"
+    "noVote": "Потрачєно",
+    "avatarAuthHint": "Заміна аватар доступна авторизованим користувачам",
+    "roleNames": {
+      "SM": "Scrum Master",
+      "PO": "Product Owner",
+      "BE": "Backend",
+      "FE": "Frontend",
+      "DEV": "Developer",
+      "QA": "Quality Assurance",
+      "AQA": "Automated Quality Assurance",
+      "GQA": "General Quality Assurance"
+    }
   },
   "results": {
     "general": "DEV"
@@ -97,6 +107,7 @@
       "fe": "Фронтенд",
       "be": "Бекенд",
       "aqa": "Automation QA",
+      "gqa": "General QA",
       "sre": "SRE / DevOps",
       "js": "JavaScript",
       "ts": "TypeScript",
@@ -212,6 +223,7 @@
     "updatePassword": "Оновити пароль"
   },
   "ffc": {
+    "title": "Feature Flags",
     "resetFeatureFlags": "Скинути фіче-флаги",
     "exampleHeader": "Приклад",
     "exampleText": "Це приклад роботи фіче флагу",
@@ -219,6 +231,14 @@
       "countdownEnabled": {
         "name": "Зворотній відлік (пасхалка)",
         "description": "Вмикає кнопку зворотнього відліку в кімнаті з кумедним звуком"
+      },
+      "iconsLucide": {
+        "name": "Іконки Lucide",
+        "description": "Замінює іконки Material Design на Lucide (потрібне перезавантаження сторінки)"
+      },
+      "iconsRounded": {
+        "name": "Material Rounded",
+        "description": "Використовує округлений варіант іконок Material Design (потрібне перезавантаження сторінки)"
       },
       "example": {
         "name": "Приклад фіче-флагу",

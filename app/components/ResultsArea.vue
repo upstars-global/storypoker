@@ -15,7 +15,7 @@ const emit = defineEmits<{
   startNewRound: []
 }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 
 function voteToNumber(v: string): number | null {
   const trimmed = v.replace(/\s*\*$/, '').replace(/h$/i, '')
@@ -34,17 +34,18 @@ function averageOf(votes: Record<string, number>): string | null {
     count += c
   }
   if (count === 0) return null
-  return (sum / count).toLocaleString(locale.value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+  return (sum / count).toFixed(1)
 }
 
 const groups = computed(() => {
-  if (!props.groupedVotes) return null
-  const generalTotal = Object.values(props.groupedVotes.general).reduce((a, b) => a + b, 0)
-  const qaTotal = Object.values(props.groupedVotes.qa).reduce((a, b) => a + b, 0)
   const out: { label: string; votes: Record<string, number>; average: string | null }[] = []
-  if (generalTotal) out.push({ label: t('results.general'), votes: props.groupedVotes.general, average: averageOf(props.groupedVotes.general) })
-  if (qaTotal) out.push({ label: 'QA', votes: props.groupedVotes.qa, average: averageOf(props.groupedVotes.qa) })
-  return out.length ? out : null
+  const devVotes = props.groupedVotes ? props.groupedVotes.general : props.votes
+  out.push({ label: t('results.general'), votes: devVotes, average: averageOf(devVotes) })
+  if (props.groupedVotes) {
+    const qaTotal = Object.values(props.groupedVotes.qa).reduce((a, b) => a + b, 0)
+    if (qaTotal) out.push({ label: 'QA', votes: props.groupedVotes.qa, average: averageOf(props.groupedVotes.qa) })
+  }
+  return out
 })
 
 const celebrate = computed(() => shouldCelebrateGroupedVotes(props.groupedVotes))
@@ -89,7 +90,7 @@ watch(celebrate, (next, prev) => {
         }"
       />
     </div>
-    <div v-if="groups" ref="chartsEl" class="w-full flex flex-wrap justify-center gap-8">
+    <div ref="chartsEl" class="w-full flex flex-wrap justify-center gap-8">
       <div
         v-for="g in groups"
         :key="g.label"
@@ -101,9 +102,6 @@ watch(celebrate, (next, prev) => {
         </span>
         <PieChart :votes="g.votes" />
       </div>
-    </div>
-    <div v-else ref="chartsEl">
-      <PieChart :votes="votes" />
     </div>
     <button
       v-if="isModerator"

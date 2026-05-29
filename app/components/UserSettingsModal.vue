@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
+import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed } from 'vue'
 import {
   DialogRoot,
@@ -105,7 +105,7 @@ async function save() {
               :disabled="cursor === 0"
               @click="prev"
             >
-              <Icon class="mui-svg-icon" icon="ic:baseline-navigate-before" style="font-size: 1.25rem;" />
+              <AppIcon class="mui-svg-icon" icon="ic:baseline-navigate-before" style="font-size: 1.25rem;" />
             </button>
             <img
               v-if="previewUri"
@@ -121,7 +121,7 @@ async function save() {
               :aria-label="$t('userSettings.nextAvatar')"
               @click="next"
             >
-              <Icon class="mui-svg-icon" icon="ic:baseline-navigate-next" style="font-size: 1.25rem;" />
+              <AppIcon class="mui-svg-icon" icon="ic:baseline-navigate-next" style="font-size: 1.25rem;" />
             </button>
           </div>
 
@@ -138,7 +138,7 @@ async function save() {
             style="top: 12px; right: 12px;"
             :aria-label="$t('common.close')"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+            <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
           </DialogClose>
         </DialogContent>
       </DialogOverlay>

@@ -313,37 +313,6 @@ body {
     outline-offset: -2px;
   }
 
-  .mui-tooltip {
-    position: relative;
-  }
-  .mui-tooltip::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(97, 97, 97, 0.92);
-    color: #fff;
-    font-size: 0.625rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    line-height: 1.4;
-    padding: 4px 8px;
-    border-radius: 4px;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 100;
-  }
-  .mui-tooltip:hover::after {
-    opacity: 1;
-  }
-  .mui-tooltip-top::after {
-    top: auto;
-    bottom: calc(100% + 6px);
-  }
-
   .mui-tooltip-content {
     background-color: rgba(97, 97, 97, 0.92);
     color: #fff;
@@ -396,18 +365,18 @@ body {
   .mui-role-tag {
     display: inline-flex;
     align-items: center;
-    max-width: 8ch;
-    padding: 1px 6px;
+    justify-content: center;
+    width: 1.75rem;
     border-radius: 6px;
-    border: 1px solid var(--border-input);
+    border: 0.0625rem solid var(--border-input);
     color: var(--icon-player-color);
-    font-size: 0.6875rem;
+    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.625rem;
     font-weight: 600;
     line-height: 1.5;
     letter-spacing: 0.04em;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    cursor: default;
   }
   .mui-input {
     width: 100%;

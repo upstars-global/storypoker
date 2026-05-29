@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Icon } from '@iconify/vue'
+import AppIcon from '~/components/AppIcon.vue'
 import {
   TooltipRoot,
   TooltipTrigger,
@@ -86,7 +86,8 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           >
             <TooltipTrigger as-child>
               <label
-                class="cursor-pointer flex items-center justify-center rounded p-1.5 transition-colors"
+                v-wave
+                class="mui-icon-btn cursor-pointer"
                 :class="countdownMode === option.value ? 'text-primary' : 'text-muted'"
               >
                 <input
@@ -97,7 +98,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
                   :value="option.value"
                   :disabled="countdownRunning"
                 >
-                <Icon class="text-xl" :icon="option.icon" />
+                <AppIcon class="mui-svg-icon" style="font-size: 1.5rem;" :icon="option.icon" />
               </label>
             </TooltipTrigger>
             <TooltipPortal>

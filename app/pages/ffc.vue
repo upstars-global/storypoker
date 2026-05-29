@@ -48,6 +48,7 @@ function resetFeatureFlags() {
       :online-count="0"
       :is-moderator="false"
       :player-name="''"
+      :title="$t('ffc.title')"
       @open-sign-in="showAuth = 'signin'"
       @open-sign-up="showAuth = 'signup'"
       @open-account-settings="showAccountSettings = true"

@@ -15,6 +15,7 @@ const LEAD_GROUP: ShieldGroup = 'lead'
 export const SHIELD_CATALOG: Shield[] = [
   { id: 'dev', labelKey: 'shields.labels.dev', icon: 'ic:baseline-terminal', group: 'role' },
   { id: 'qa', labelKey: 'shields.labels.qa', icon: 'ic:baseline-bug-report', group: 'role' },
+  { id: 'gqa', labelKey: 'shields.labels.gqa', icon: 'ic:baseline-fact-check', group: 'role' },
   { id: 'po', labelKey: 'shields.labels.po', icon: 'ic:baseline-track-changes', group: 'role' },
   { id: 'sm', labelKey: 'shields.labels.sm', icon: 'app:scrum', group: 'role' },
 
@@ -82,9 +83,18 @@ export const PLAYER_ROLES = [
   { tag: 'BE', shield: 'be' },
   { tag: 'FE', shield: 'fe' },
   { tag: 'QA', shield: 'qa' },
+  { tag: 'GQA', shield: 'gqa' },
+  { tag: 'AQA', shield: 'aqa' },
   { tag: 'PO', shield: 'po' },
   { tag: 'SM', shield: 'sm' },
 ] as const
+
+const ROLE_ORDER = new Map<string, number>(PLAYER_ROLES.map((r, i) => [r.tag, i]))
+
+export function roleTagOrder(tag: string | null): number {
+  if (!tag) return Number.MAX_SAFE_INTEGER
+  return ROLE_ORDER.get(tag) ?? Number.MAX_SAFE_INTEGER - 1
+}
 
 const ROLE_TAG_BY_SHIELD = new Map<string, string>(PLAYER_ROLES.map(r => [r.shield, r.tag]))
 
@@ -118,7 +128,7 @@ export function toggleShield(selected: string[], shield: Shield): string[] {
 }
 
 // QA disciplines route a player's vote into the separate QA pile.
-const QA_SHIELDS = new Set(['qa', 'aqa'])
+const QA_SHIELDS = new Set(['qa', 'aqa', 'gqa'])
 
 export function isQaPlayer(shields: string[] | null | undefined): boolean {
   return Boolean(shields?.some(id => QA_SHIELDS.has(id)))

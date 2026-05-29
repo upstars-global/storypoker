@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
+import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch } from 'vue'
 import {
   DialogRoot,
@@ -78,7 +78,7 @@ function save() {
                 :aria-label="$t('deck.configure')"
               >
                 <SelectValue />
-                <Icon icon="ic:baseline-arrow-drop-down" style="font-size: 1.25rem;" />
+                <AppIcon icon="ic:baseline-arrow-drop-down" style="font-size: 1.25rem;" />
               </SelectTrigger>
               <SelectPortal>
                 <SelectContent
@@ -127,7 +127,7 @@ function save() {
             style="top: 12px; right: 12px;"
             :aria-label="$t('common.close')"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+            <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
           </DialogClose>
         </DialogContent>
       </DialogOverlay>

@@ -25,7 +25,7 @@ Guidance for Claude Code working with this repository.
 - **State:** Pinia 3 (без auto-imports — явні `from 'pinia'`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **i18n:** `vue-i18n@11` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
-- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`, єдина offline-колекція); `simple-icons:*`/`game-icons:*` резолвляться через Iconify API; custom collection `app:` (`moderator`, `deciding`, `offline`, `leave-room`, `bank`, `town-hall`, `fibonacci`, `scrum`) через `addCollection` у `app/lib/registerAppIcons.ts`; `v-wave`, DiceBear, Roboto 300–700
+- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`, єдина offline-колекція); `simple-icons:*`/`game-icons:*` резолвляться через Iconify API; custom collection `app:` (`moderator`, `deciding`, `offline`, `leave-room`, `bank`, `town-hall`, `fibonacci`, `scrum`) через `addCollection` у `app/lib/registerAppIcons.ts`. Іконки рендеряться через `<AppIcon>`, який проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts`): флаг `iconsLucide` ремапить `ic:baseline-*`→`lucide:*` (нову lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`. Також `v-wave`, DiceBear, Roboto 300–700
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
 ## Common Commands
@@ -104,7 +104,7 @@ Pinia stores у `app/stores/`:
 - `auth.ts` — Supabase session, sign in/up/out, password reset/update
 - `room.ts` — room state, create, reveal, new round, deck, resolve, room name/slug
 - `players.ts` — players, optimistic votes, join/rejoin, rename, moderator toggle, set shields, kick/leave, link user
-- `presence.ts` — online `Set<playerId>` через Supabase Presence і reconnect/visibility handlers
+- `presence.ts` — online `Set<playerId>` через Supabase Presence; на `visibilitychange → hidden` закриває канал лише через `AWAY_TIMEOUT_MS` (5 хв), повернення раніше — скасовує таймер
 - `profiles.ts` — `user_profiles` cache, fetch/upsert, Realtime applyChange
 - `types.ts` — спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `UserProfile`)
 
@@ -119,6 +119,7 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 - `rooms:<roomId>` → sync `slug/name`, redirect між id і slug
 - `user_profiles:<roomId>` → `profilesStore.applyChange`
 - `room:<roomId>` Presence → online players
+- `countdown:<roomId>` broadcast (`self:true`) → синхронний відлік перед reveal; initiator викликає `reveal()`
 
 Після `'reconnecting' → 'online'` виконується reconciliation refetch. Optimistic vote пишеться в `pendingVotes[playerId]`, success/realtime ACK очищає запис, error робить rollback.
 
@@ -137,17 +138,16 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 │   └── favicon.svg
 ├── app/
 │   ├── main.ts            # entry: createApp + pinia + router + i18n + plugins
-│   ├── router.ts          # явні 6 routes
+│   ├── router.ts          # явні 7 routes
 │   ├── i18n.ts            # createI18n
 │   ├── App.vue            # <RouterView />
 │   ├── pages/             # index, [slug], login, signup, forgot-password, reset-password, ffc
 │   ├── components/        # AppHeader, CardsArea, PlayersList, modals, icons
 │   ├── composables/       # useTheme, useDylanAvatar, useCountdown
 │   ├── stores/            # auth, room, players, presence, profiles
-│   ├── directives/        # clickOutside
 │   ├── lib/               # supabase-instance, registerAppIcons
 │   ├── configs/           # featureFlags (runtime toggles з localStorage)
-│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, shields, resultCelebration, relativeTime
+│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, shields, resultCelebration, relativeTime, iconMap
 │   ├── i18n/locales/{uk,en}.json
 │   └── assets/css/main.css, assets/icons/
 ├── supabase/migrations/*.sql
@@ -189,7 +189,8 @@ Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `ap
 - **Player:** vote, rename self, leave room
 - **Moderator:** reveal, start new round, configure deck; own moderator toggle доступний у меню гравця
 - **Authorized moderator:** rename room, rename/kick other players, set slug/name; контролі таймера (reset/pause/resume/±30s)
-- **Shields:** каталог `app/utils/shields.ts` (групи role/focus/stack/qa/lead → `players.shields`); `isQaPlayer()` виводить QA-гравців в окрему пилу; PlayerEditModal зберігає роль через radio, icon-picker задісейблено
+- **Shields:** `app/utils/shields.ts` — роль обирається з `PLAYER_ROLES` (бейджі-селектор у PlayerEditModal) і пишеться як один shield у `players.shields` через `shieldForRoleTag()` (кастомні — префікс `custom:`); `SHIELD_CATALOG` (групи role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` виводить QA-гравців в окрему пилу
+- **Consensus:** при QA-розщепленні салют + decision-sound тригерять, якщо **хоча б одна** група (DEV/QA) одноголосна; без QA — всі голоси однакові (≥ 2). Логіка в `utils/resultCelebration.ts → shouldCelebrateGroupedVotes`; sound через `isConsensus` у `pages/[slug].vue`
 
 ## Security
 

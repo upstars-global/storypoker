@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
+import AppIcon from '~/components/AppIcon.vue'
 import { ref, reactive } from 'vue'
 import {
   DialogRoot,
@@ -132,7 +132,7 @@ async function submit() {
             style="top: 8px; right: 8px;"
             :aria-label="$t('common.close')"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+            <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
           </DialogClose>
         </DialogContent>
       </DialogOverlay>

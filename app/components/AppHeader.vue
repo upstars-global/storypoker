@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
+import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
@@ -23,10 +23,12 @@ const props = withDefaults(defineProps<{
   playerName: string
   playerUserId?: string | null
   roomName?: string
+  title?: string
   countdownActive?: boolean
   countdownCounter?: number
   countdownTotal?: number
 }>(), {
+  title: 'Story Poker',
   countdownActive: false,
   countdownCounter: 0,
   countdownTotal: 0,
@@ -99,7 +101,7 @@ function toggleLocale() {
       class="mui-icon-btn text-appbar-emphasis"
       style="--hover-bg: rgba(255,255,255,0.08);"
     >
-      <Icon
+      <AppIcon
         icon="app:fibonacci"
         style="font-size: 1.75rem; transform: rotate(-90deg);"
       />
@@ -108,7 +110,7 @@ function toggleLocale() {
     <span
       v-if="!roomName"
       class="mui-h6 text-lg px-2 text-white"
-    >Story Poker</span>
+    >{{ title }}</span>
     <template v-if="roomName">
       <span class="mui-h6 text-lg text-appbar-emphasis">{{ roomName }}</span>
     </template>
@@ -145,7 +147,7 @@ function toggleLocale() {
               :alt="playerName"
               :style="{ opacity: profileFetched ? 1 : 0, transition: 'opacity 0.15s' }"
             >
-            <Icon
+            <AppIcon
               v-else
               class="mui-svg-icon"
               icon="ic:baseline-account-circle"
@@ -167,7 +169,7 @@ function toggleLocale() {
                 class="mui-menu-item whitespace-nowrap"
                 @select="emit('openCardDeck')"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="ic:baseline-settings"
                 /> {{ $t('header.configureCardDeck') }}
@@ -178,7 +180,7 @@ function toggleLocale() {
                 class="mui-menu-item whitespace-nowrap"
                 @select="emit('openRenameRoom')"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="ic:baseline-edit"
                 /> {{ $t('header.renameRoom') }}
@@ -192,7 +194,7 @@ function toggleLocale() {
                 class="mui-menu-item whitespace-nowrap"
                 @select="emit('openAccountSettings')"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="ic:baseline-settings"
                 /> {{ $t('header.accountSettings') }}
@@ -206,7 +208,7 @@ function toggleLocale() {
               :model-value="isLight"
               @select.prevent="toggleTheme"
             >
-              <Icon
+              <AppIcon
                 class="mui-menu-icon"
                 :icon="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'"
               />
@@ -231,7 +233,7 @@ function toggleLocale() {
                 data-testid="auth-sign-in-menu-item"
                 @select="emit('openSignIn')"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="ic:baseline-login"
                 /> {{ $t('common.signIn') }}
@@ -241,7 +243,7 @@ function toggleLocale() {
                 class="mui-menu-item whitespace-nowrap"
                 @select="emit('openSignUp')"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="ic:baseline-person-add"
                 /> {{ $t('common.signUp') }}
@@ -255,7 +257,7 @@ function toggleLocale() {
                 data-testid="auth-sign-out-menu-item"
                 @select="emit('signOut')"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="ic:baseline-logout"
                 /> {{ $t('common.signOut') }}

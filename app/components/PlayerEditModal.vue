@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
+import AppIcon from '~/components/AppIcon.vue'
 import { ref } from 'vue'
 import {
   DialogRoot,
@@ -9,6 +9,10 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipPortal,
+  TooltipContent,
 } from 'reka-ui'
 import { PLAYER_ROLES, roleTagForShields, shieldForRoleTag } from '~/utils/shields'
 
@@ -53,7 +57,34 @@ function save() {
             {{ $t('players.editSubtitle') }}
           </DialogDescription>
 
-          <label class="block mt-6">
+          <section class="mt-6">
+            <h3 class="text-mui-caption font-semibold uppercase tracking-wide text-muted mb-2">
+              {{ $t('players.roleLabel') }}
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <TooltipRoot v-for="opt in ROLE_TAGS" :key="opt">
+                <TooltipTrigger as-child>
+                  <button
+                    type="button"
+                    class="mui-shield"
+                    style="padding: 6px 12px;"
+                    :class="{ 'is-selected': tag === opt }"
+                    :aria-pressed="tag === opt"
+                    @click="tag = tag === opt ? '' : opt"
+                  >
+                    {{ opt }}
+                  </button>
+                </TooltipTrigger>
+                <TooltipPortal>
+                  <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+                    {{ $t(`players.roleNames.${opt}`, opt) }}
+                  </TooltipContent>
+                </TooltipPortal>
+              </TooltipRoot>
+            </div>
+          </section>
+
+          <label class="block mt-5">
             <span class="text-mui-caption font-semibold uppercase tracking-wide text-muted">
               {{ $t('players.nameLabel') }}
             </span>
@@ -64,23 +95,6 @@ function save() {
               @keyup.enter="save"
             >
           </label>
-
-          <section class="mt-5">
-            <h3 class="text-mui-caption font-semibold uppercase tracking-wide text-muted mb-2">
-              {{ $t('players.roleLabel') }}
-            </h3>
-            <div role="radiogroup" class="flex flex-wrap gap-x-5 gap-y-2">
-              <label v-for="opt in ROLE_TAGS" :key="opt" class="mui-radio">
-                <input
-                  v-model="tag"
-                  type="radio"
-                  name="player-role"
-                  :value="opt"
-                >
-                <span>{{ opt }}</span>
-              </label>
-            </div>
-          </section>
 
           <div class="flex justify-center mt-8">
             <button v-wave class="mui-btn" style="min-width: 120px;" @click="save">
@@ -93,7 +107,7 @@ function save() {
             style="top: 12px; right: 12px;"
             :aria-label="$t('common.close')"
           >
-            <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+            <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
           </DialogClose>
         </DialogContent>
       </DialogOverlay>

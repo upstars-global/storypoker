@@ -83,6 +83,36 @@ describe('presenceStore — presence sync', () => {
     expect(store.online.has('p1')).toBe(true)
     expect(store.online.has('p2')).toBe(true)
   })
+
+  it('player removed from presenceState stays online for 5 min via grace period', async () => {
+    vi.useFakeTimers()
+    try {
+      const ch = makeFakeChannel()
+      ch.presenceState = vi.fn().mockReturnValue({
+        k1: [{ playerId: 'p1' }],
+        k2: [{ playerId: 'p2' }],
+      })
+      setSupabase(fakeSupabase(ch) as any)
+      const store = usePresenceStore()
+      await store.start('r1', 'p1')
+      await vi.advanceTimersByTimeAsync(5)
+      ch._trigger('sync', {})
+      expect(store.online.has('p2')).toBe(true)
+
+      ch.presenceState = vi.fn().mockReturnValue({ k1: [{ playerId: 'p1' }] })
+      ch._trigger('sync', {})
+      expect(store.online.has('p2')).toBe(true)
+
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(store.online.has('p2')).toBe(true)
+
+      await vi.advanceTimersByTimeAsync(5 * 60_000)
+      expect(store.online.has('p2')).toBe(false)
+      expect(store.online.has('p1')).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
 
 describe('presenceStore — visibility handler', () => {

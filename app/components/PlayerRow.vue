@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
+import AppIcon from '~/components/AppIcon.vue'
 import { computed } from 'vue'
 import {
   DropdownMenuRoot,
@@ -8,6 +8,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuCheckboxItem,
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipPortal,
+  TooltipContent,
 } from 'reka-ui'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
@@ -57,63 +61,98 @@ const playerAvatar = computed(() => {
     class="grid items-center gap-2 rounded relative"
     style="grid-template-columns: 32px 1fr auto 36px;"
   >
-    <img
-      :src="playerAvatar"
-      :alt="player.name"
-      class="rounded-full"
-      style="width: 28px; height: 28px;"
-    >
+    <TooltipRoot>
+      <TooltipTrigger as-child>
+        <img
+          :src="playerAvatar"
+          :alt="player.name"
+          class="rounded-full"
+          style="width: 28px; height: 28px;"
+        >
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent
+          class="mui-tooltip-content"
+          side="top"
+          :side-offset="6"
+          style="max-width: 240px; white-space: normal; text-align: center;"
+        >
+          {{ $t('players.avatarAuthHint') }}
+        </TooltipContent>
+      </TooltipPortal>
+    </TooltipRoot>
     <div class="flex items-center gap-1.5 min-w-0">
-      <span
-        v-if="roleTag"
-        class="flex-none mui-role-tag"
-      >{{ roleTag }}</span>
+      <TooltipRoot v-if="roleTag">
+        <TooltipTrigger as-child>
+          <span class="flex-none mui-role-tag">{{ roleTag }}</span>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+            {{ $t(`players.roleNames.${roleTag}`, roleTag) }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
       <span
         class="truncate text-base"
         :style="{ color: player.is_online ? 'var(--text-primary)' : 'var(--text-muted)' }"
       >
         {{ player.name }}
       </span>
-      <span
-        v-if="player.is_moderator"
-        class="inline-flex flex-none mui-tooltip"
-        :data-tooltip="$t('players.moderatorOf', { name: player.name })"
-      >
-        <Icon
-          class="mui-svg-icon"
-          icon="app:moderator"
-          style="font-size: 1.5rem; color: var(--icon-player-color);"
-          :aria-label="$t('players.moderatorOf', { name: player.name })"
-        />
-      </span>
+      <TooltipRoot v-if="player.is_moderator">
+        <TooltipTrigger as-child>
+          <span class="inline-flex flex-none">
+            <AppIcon
+              class="mui-svg-icon"
+              icon="app:moderator"
+              style="font-size: 1.5rem; color: var(--icon-player-color);"
+              :aria-label="$t('players.moderator')"
+            />
+          </span>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+            {{ $t('players.moderator') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
     </div>
 
     <template v-if="player.is_online">
       <template v-if="phase === 'voting'">
-        <span
-          v-if="player.vote !== null"
-          class="inline-flex mui-tooltip"
-          :data-tooltip="$t('players.estimateGiven')"
-        >
-          <Icon
-            class="mui-svg-icon"
-            icon="ic:baseline-check-circle"
-            style="font-size: 1.5rem; color: var(--icon-player-color);"
-            :aria-label="$t('players.estimateGiven')"
-          />
-        </span>
-        <span
-          v-else
-          class="inline-flex mui-tooltip"
-          :data-tooltip="$t('players.playerDeciding')"
-        >
-          <Icon
-            class="mui-svg-icon"
-            icon="app:deciding"
-            style="font-size: 1.5rem; color: var(--icon-player-color);"
-            :aria-label="$t('players.playerDeciding')"
-          />
-        </span>
+        <TooltipRoot v-if="player.vote !== null">
+          <TooltipTrigger as-child>
+            <span class="inline-flex">
+              <AppIcon
+                class="mui-svg-icon"
+                icon="ic:baseline-check-circle"
+                style="font-size: 1.5rem; color: var(--icon-player-color);"
+                :aria-label="$t('players.estimateGiven')"
+              />
+            </span>
+          </TooltipTrigger>
+          <TooltipPortal>
+            <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+              {{ $t('players.estimateGiven') }}
+            </TooltipContent>
+          </TooltipPortal>
+        </TooltipRoot>
+        <TooltipRoot v-else>
+          <TooltipTrigger as-child>
+            <span class="inline-flex">
+              <AppIcon
+                class="mui-svg-icon"
+                icon="app:deciding"
+                style="font-size: 1.5rem; color: var(--icon-player-color);"
+                :aria-label="$t('players.playerDeciding')"
+              />
+            </span>
+          </TooltipTrigger>
+          <TooltipPortal>
+            <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+              {{ $t('players.playerDeciding') }}
+            </TooltipContent>
+          </TooltipPortal>
+        </TooltipRoot>
       </template>
       <template v-else>
         <span
@@ -121,18 +160,23 @@ const playerAvatar = computed(() => {
           class="text-base font-medium text-center"
           style="width: 24px; color: var(--text-primary);"
         >{{ player.vote }}</span>
-        <span
-          v-else
-          class="inline-flex mui-tooltip"
-          :data-tooltip="$t('players.noVote')"
-        >
-          <Icon
-            class="mui-svg-icon"
-            icon="ic:baseline-cancel"
-            style="font-size: 1.5rem; color: var(--icon-player-color);"
-            :aria-label="$t('players.noVote')"
-          />
-        </span>
+        <TooltipRoot v-else>
+          <TooltipTrigger as-child>
+            <span class="inline-flex">
+              <AppIcon
+                class="mui-svg-icon"
+                icon="ic:baseline-cancel"
+                style="font-size: 1.5rem; color: var(--icon-player-color);"
+                :aria-label="$t('players.noVote')"
+              />
+            </span>
+          </TooltipTrigger>
+          <TooltipPortal>
+            <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+              {{ $t('players.noVote') }}
+            </TooltipContent>
+          </TooltipPortal>
+        </TooltipRoot>
       </template>
     </template>
     <template v-else>
@@ -141,30 +185,40 @@ const playerAvatar = computed(() => {
         class="text-base font-medium text-center"
         style="width: 24px; color: var(--text-primary);"
       >{{ player.vote }}</span>
-      <span
-        v-else-if="phase === 'voting' && player.vote !== null"
-        class="inline-flex mui-tooltip"
-        :data-tooltip="$t('players.estimateGiven')"
-      >
-        <Icon
-          class="mui-svg-icon"
-          icon="ic:baseline-check-circle"
-          style="font-size: 1.5rem; color: var(--icon-player-color);"
-          :aria-label="$t('players.estimateGiven')"
-        />
-      </span>
-      <span
-        v-else
-        class="inline-flex mui-tooltip"
-        :data-tooltip="$t('players.inactive')"
-      >
-        <Icon
-          class="mui-svg-icon text-black/[0.26] dark:text-white/30"
-          icon="app:offline"
-          style="font-size: 1.5rem;"
-          :aria-label="$t('players.inactive')"
-        />
-      </span>
+      <TooltipRoot v-else-if="phase === 'voting' && player.vote !== null">
+        <TooltipTrigger as-child>
+          <span class="inline-flex">
+            <AppIcon
+              class="mui-svg-icon"
+              icon="ic:baseline-check-circle"
+              style="font-size: 1.5rem; color: var(--icon-player-color);"
+              :aria-label="$t('players.estimateGiven')"
+            />
+          </span>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+            {{ $t('players.estimateGiven') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
+      <TooltipRoot v-else>
+        <TooltipTrigger as-child>
+          <span class="inline-flex">
+            <AppIcon
+              class="mui-svg-icon text-black/[0.26] dark:text-white/30"
+              icon="app:offline"
+              style="font-size: 1.5rem;"
+              :aria-label="$t('players.inactive')"
+            />
+          </span>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+            {{ $t('players.inactive') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
     </template>
 
     <div
@@ -178,7 +232,7 @@ const playerAvatar = computed(() => {
             class="mui-icon-btn"
             style="padding: 4px;"
           >
-            <Icon
+            <AppIcon
               class="mui-svg-icon text-muted dark:text-inverse"
               icon="ic:baseline-more-vert"
               style="font-size: 1.5rem;"
@@ -199,7 +253,7 @@ const playerAvatar = computed(() => {
                 :model-value="player.is_moderator"
                 @update:model-value="emit('toggleModerator', player.id, $event)"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="app:moderator"
                 />
@@ -220,7 +274,7 @@ const playerAvatar = computed(() => {
                 class="mui-menu-item"
                 @select="emit('edit', player.id)"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="ic:baseline-edit"
                 /> {{ $t('players.edit') }}
@@ -230,7 +284,7 @@ const playerAvatar = computed(() => {
                 class="mui-menu-item"
                 @select="emit('leave', player.id)"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="app:leave-room"
                 /> {{ $t('players.leaveRoom') }}
@@ -242,7 +296,7 @@ const playerAvatar = computed(() => {
                 class="mui-menu-item"
                 @select="emit('edit', player.id)"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="ic:baseline-edit"
                 /> {{ $t('players.edit') }}
@@ -252,7 +306,7 @@ const playerAvatar = computed(() => {
                 class="mui-menu-item"
                 @select="emit('kick', player.id)"
               >
-                <Icon
+                <AppIcon
                   class="mui-menu-icon"
                   icon="ic:baseline-person-remove"
                 /> {{ $t('players.kickPlayer') }}

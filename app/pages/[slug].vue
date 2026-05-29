@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
+import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -22,7 +22,7 @@ import { getSupabase } from '~/lib/supabase-instance'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
-import { isQaPlayer } from '~/utils/shields'
+import { isQaPlayer, roleTagForShields, roleTagOrder } from '~/utils/shields'
 import { shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
@@ -75,12 +75,18 @@ const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 const onlineCount = computed(() => visiblePlayers.value.filter(p => online.value.has(p.id)).length)
 
 const playersForUi = computed(() =>
-  visiblePlayers.value.map(p => ({
-    ...p,
-    is_online: online.value.has(p.id),
-    vote: playersStore.voteOf(p.id),
-    votePending: pendingVotes.value[p.id] !== undefined,
-  }))
+  visiblePlayers.value
+    .map(p => ({
+      ...p,
+      is_online: online.value.has(p.id),
+      vote: playersStore.voteOf(p.id),
+      votePending: pendingVotes.value[p.id] !== undefined,
+    }))
+    .sort((a, b) => {
+      const oa = roleTagOrder(roleTagForShields(a.shields))
+      const ob = roleTagOrder(roleTagForShields(b.shields))
+      return oa - ob || a.name.localeCompare(b.name)
+    })
 )
 
 const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
@@ -509,7 +515,7 @@ async function submitRenameRoom() {
               style="top: 8px; right: 8px;"
               :aria-label="$t('common.close')"
             >
-              <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+              <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
             </DialogClose>
           </DialogContent>
         </DialogOverlay>
@@ -531,7 +537,7 @@ async function submitRenameRoom() {
               style="top: 8px; right: 8px;"
               :aria-label="$t('common.close')"
             >
-              <Icon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+              <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
             </DialogClose>
           </DialogContent>
         </DialogOverlay>

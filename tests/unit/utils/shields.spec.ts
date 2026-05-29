@@ -57,7 +57,7 @@ describe('shields', () => {
 
   it('groups shields by category', () => {
     expect(SHIELD_GROUPS).toEqual(['role', 'focus', 'stack', 'qa', 'lead'])
-    expect(shieldsForGroup('role').map(s => s.id)).toEqual(['dev', 'qa', 'po', 'sm'])
+    expect(shieldsForGroup('role').map(s => s.id)).toEqual(['dev', 'qa', 'gqa', 'po', 'sm'])
     expect(shieldsForGroup('qa').map(s => s.id)).toContain('vitest')
     expect(shieldsForGroup('stack').every(s => s.group === 'stack')).toBe(true)
   })

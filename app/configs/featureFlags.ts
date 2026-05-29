@@ -4,11 +4,17 @@ export type FeatureFlagItem = {
     enabled: boolean
 }
 
-export type FeatureFlagKey = 'countdownEnabled' | 'example'
+export type FeatureFlagKey = 'countdownEnabled' | 'iconsLucide' | 'iconsRounded' | 'example'
 export type FeatureFlags = Record<FeatureFlagKey, FeatureFlagItem>
 
 export const featureFlags: FeatureFlags = {
     countdownEnabled: {
+        enabled: true,
+    },
+    iconsLucide: {
+        enabled: false,
+    },
+    iconsRounded: {
         enabled: true,
     },
     example: {

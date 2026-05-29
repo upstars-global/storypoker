@@ -51,8 +51,6 @@
     "pause": "Pause",
     "continue": "Continue",
     "minus30": "-30s",
-    "minus10": "-10s",
-    "plus10": "+10s",
     "plus30": "+30s"
   },
   "deck": {
@@ -72,10 +70,22 @@
     "kickPlayer": "Kick Player",
     "moderatorLabel": "moderator",
     "moderatorOf": "{name} is moderator of this room",
+    "moderator": "Moderator",
     "estimateGiven": "Estimate given",
     "playerDeciding": "Not decided on an estimate yet",
     "inactive": "Inactive",
-    "noVote": "Wasted"
+    "noVote": "Wasted",
+    "avatarAuthHint": "Avatar replacement is available to auth users",
+    "roleNames": {
+      "SM": "Scrum Master",
+      "PO": "Product Owner",
+      "BE": "Backend",
+      "FE": "Frontend",
+      "DEV": "Developer",
+      "QA": "Quality Assurance",
+      "AQA": "Automated Quality Assurance",
+      "GQA": "General Quality Assurance"
+    }
   },
   "results": {
     "general": "DEV"
@@ -97,6 +107,7 @@
       "fe": "Frontend",
       "be": "Backend",
       "aqa": "Automation QA",
+      "gqa": "General QA",
       "sre": "SRE / DevOps",
       "js": "JavaScript",
       "ts": "TypeScript",
@@ -212,6 +223,7 @@
     "updatePassword": "Update Password"
   },
   "ffc": {
+    "title": "Feature Flags",
     "resetFeatureFlags": "Reset Feature Flags",
     "exampleHeader": "Example",
     "exampleText": "This is an example of how a feature flag works",
@@ -219,6 +231,14 @@
       "countdownEnabled": {
         "name": "Countdown (Easter Egg)",
         "description": "Enable countdown button in the room with funny sound"
+      },
+      "iconsLucide": {
+        "name": "Lucide Icons",
+        "description": "Swap Material Design icons for Lucide (page reload required)"
+      },
+      "iconsRounded": {
+        "name": "Material Rounded",
+        "description": "Use the rounded variant of Material Design icons (page reload required)"
       },
       "example": {
         "name": "Example Feature Flag",
