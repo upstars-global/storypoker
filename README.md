@@ -58,8 +58,10 @@ claude --dangerously-skip-permissions
 npx skills add anthropics/claude-plugins-official -s claude-md-improver -a claude-code -y
 
 # FRONTEND
+# npx skills add anthropics/skills -s frontend-design -a claude-code -y
 npx skills add giuseppe-trisciuoglio/developer-kit -s tailwind-css-patterns -a claude-code -y
-npx skills add anthropics/skills -s frontend-design -a claude-code -y
+npx skills add skilld-dev/vue-ecosystem-skills -s reka-ui-skilld -a claude-code -y
+npx skills add unovue/shadcn-vue -s shadcn-vue -a claude-code -y
 
 # TESTS
 npx skills add anthropics/skills -s webapp-testing -a claude-code -y
