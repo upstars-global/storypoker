@@ -14,6 +14,7 @@ function fakeRoomState(overrides: Partial<RoomState> = {}): RoomState {
     round_started_at: '2026-05-04T00:00:00Z',
     paused_at: null,
     paused_elapsed_ms: 0,
+    poll_question: null,
     ...overrides,
   }
 }
@@ -200,6 +201,7 @@ describe('roomStore actions', () => {
     expect(update).toHaveBeenCalledWith({
       deck_preset: 'boolean',
       active_cards: ['True', 'False', '?', '☕'],
+      poll_question: null,
     })
   })
 })

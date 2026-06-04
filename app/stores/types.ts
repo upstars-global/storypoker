@@ -20,6 +20,7 @@ export interface RoomState {
   round_started_at: string
   paused_at: string | null
   paused_elapsed_ms: number
+  poll_question: string | null
 }
 
 export interface RoundHistoryVote {

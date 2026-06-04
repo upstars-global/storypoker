@@ -57,6 +57,12 @@
     "configure": "Configure Card Deck",
     "save": "Save Card Deck"
   },
+  "poll": {
+    "thirdCard": "Third card",
+    "questionPlaceholder": "Write a question to vote on…",
+    "startVoting": "Start voting",
+    "waiting": "Waiting for the moderator's question…"
+  },
   "players": {
     "title": "Players",
     "isModerator": "Is Moderator",

@@ -1,4 +1,4 @@
-export type DeckPresetId = 'scrum' | 'fibonacci' | 'tshirt' | 'hours' | 'boolean'
+export type DeckPresetId = 'scrum' | 'fibonacci' | 'tshirt' | 'hours' | 'boolean' | 'voting'
 
 export interface DeckPreset {
   id: DeckPresetId
@@ -38,7 +38,16 @@ export const DECK_PRESETS: DeckPreset[] = [
     cards: ['True', 'False', '?', '☕'],
     defaultActive: ['True', 'False', '?', '☕'],
   },
+  {
+    id: 'voting',
+    name: 'Голосовалка',
+    cards: ['За', 'Проти', '☕', '🍺', '🚬'],
+    defaultActive: ['За', 'Проти', '☕'],
+  },
 ]
+
+export const VOTING_BASE_CARDS = ['За', 'Проти']
+export const VOTING_THIRD_CARDS = ['☕', '🍺', '🚬']
 
 export const DEFAULT_PRESET_ID: DeckPresetId = 'scrum'
 

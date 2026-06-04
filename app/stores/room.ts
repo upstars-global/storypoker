@@ -64,6 +64,7 @@ export const useRoomStore = defineStore('room', () => {
           round_started_at: new Date().toISOString(),
           paused_at: null,
           paused_elapsed_ms: 0,
+          poll_question: null,
         })
         .eq('room_id', roomId.value),
     ])
@@ -123,7 +124,16 @@ export const useRoomStore = defineStore('room', () => {
     const preset = getDeck(presetId)
     await getSupabase()
       .from('room_state')
-      .update({ deck_preset: presetId, active_cards: preset.defaultActive })
+      .update({ deck_preset: presetId, active_cards: preset.defaultActive, poll_question: null })
+      .eq('room_id', roomId.value)
+  }
+
+  async function setPollQuestion(question: string | null) {
+    if (!roomId.value) return
+    const value = question?.trim() || null
+    await getSupabase()
+      .from('room_state')
+      .update({ poll_question: value })
       .eq('room_id', roomId.value)
   }
 
@@ -174,6 +184,7 @@ export const useRoomStore = defineStore('room', () => {
     startNewRound,
     saveCardDeck,
     setDeckPreset,
+    setPollQuestion,
     create,
     resolveRoom,
     setRoomName,

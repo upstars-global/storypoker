@@ -283,6 +283,7 @@ async function handleJoin(payload: { name: string; shields: string[] }) {
 
 async function handleVote(card: string) {
   if (!currentPlayerId.value) return
+  if (roomState.value?.deck_preset === 'voting' && !roomState.value.poll_question) return
   const next = playersStore.voteOf(currentPlayerId.value) === card ? null : card
   try {
     await playersStore.castVote(currentPlayerId.value, next)
@@ -446,15 +447,19 @@ async function submitRenameRoom() {
           :has-votes="hasVotes"
           :countdown-counter="countdownTimerCounter"
           :countdown-running="countdownRunning"
+          :poll-mode="roomState.deck_preset === 'voting'"
+          :poll-question="roomState.poll_question ?? null"
           @vote="handleVote"
           @reveal="roomStore.reveal()"
           @start-countdown="broadcastCountdownStart"
+          @set-poll-question="(q: string) => roomStore.setPollQuestion(q)"
         />
         <ResultsArea
           v-else-if="roomState?.phase === 'revealed'"
           :votes="voteCounts"
           :grouped-votes="groupedVoteCounts"
           :is-moderator="isModerator"
+          :poll-question="roomState.deck_preset === 'voting' ? (roomState.poll_question ?? null) : null"
           @start-new-round="roomStore.startNewRound()"
         />
       </div>

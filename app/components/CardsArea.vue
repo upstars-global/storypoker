@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import AppIcon from '~/components/AppIcon.vue'
 import {
   TooltipRoot,
@@ -9,20 +9,32 @@ import {
 } from 'reka-ui'
 import type { CountdownMode } from '~/composables/useCountdown'
 
-defineProps<{
+const props = defineProps<{
   activeCards: string[]
   selectedVote: string | null
   isModerator: boolean
   hasVotes: boolean
   countdownCounter: number
   countdownRunning: boolean
+  pollMode: boolean
+  pollQuestion: string | null
 }>()
 
 const emit = defineEmits<{
   vote: [card: string]
   reveal: []
   startCountdown: [mode: CountdownMode]
+  setPollQuestion: [question: string]
 }>()
+
+const canVote = computed(() => !props.pollMode || !!props.pollQuestion)
+const questionDraft = ref('')
+
+function submitQuestion() {
+  const value = questionDraft.value.trim()
+  if (!value) return
+  emit('setPollQuestion', value)
+}
 
 const countdownModeLSKey = 'sp-countdown-mode'
 const countdownModeOptions: { value: CountdownMode; icon: string; label: string }[] = [
@@ -42,7 +54,44 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
 
 <template>
   <div class="flex flex-col items-center w-full rounded">
-    <div class="flex flex-wrap justify-center gap-4 max-w-[1240px] mx-auto">
+    <div v-if="pollMode" class="w-full max-w-[640px] mx-auto mb-8">
+      <h3
+        v-if="pollQuestion"
+        class="text-center text-mui-h2 font-bold text-primary"
+        data-testid="poll-question"
+      >
+        {{ pollQuestion }}
+      </h3>
+      <div v-else-if="isModerator" class="flex flex-col gap-3">
+        <input
+          v-model="questionDraft"
+          type="text"
+          class="mui-input w-full"
+          :placeholder="$t('poll.questionPlaceholder')"
+          data-testid="poll-question-input"
+          @keyup.enter="submitQuestion"
+        >
+        <div class="flex justify-center">
+          <button
+            v-wave
+            class="mui-btn"
+            :disabled="!questionDraft.trim()"
+            data-testid="poll-start-button"
+            @click="submitQuestion"
+          >
+            {{ $t('poll.startVoting') }}
+          </button>
+        </div>
+      </div>
+      <p v-else class="text-center text-mui-body text-muted">
+        {{ $t('poll.waiting') }}
+      </p>
+    </div>
+
+    <div
+      class="flex flex-wrap justify-center gap-4 max-w-[1240px] mx-auto"
+      :class="{ 'pointer-events-none opacity-40': !canVote }"
+    >
       <div
         v-for="card in activeCards"
         :key="card"
@@ -56,6 +105,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           data-testid="vote-card"
           :data-value="card"
           :aria-pressed="selectedVote === card"
+          :disabled="!canVote"
           @click="emit('vote', card)"
         >
           <span class="mui-card-value">{{ card }}</span>
@@ -63,7 +113,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
       </div>
     </div>
 
-    <div v-if="isModerator" class="flex flex-wrap items-end justify-center gap-4 pt-8">
+    <div v-if="isModerator && canVote" class="flex flex-wrap items-end justify-center gap-4 pt-8">
       <button
         v-wave
         class="mui-btn"

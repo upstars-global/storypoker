@@ -9,6 +9,7 @@ const props = defineProps<{
   votes: Record<string, number>
   groupedVotes?: { general: Record<string, number>; qa: Record<string, number> } | null
   isModerator: boolean
+  pollQuestion?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -90,6 +91,9 @@ watch(celebrate, (next, prev) => {
         }"
       />
     </div>
+    <h3 v-if="pollQuestion" class="text-center text-mui-h2 font-bold text-primary" data-testid="poll-question">
+      {{ pollQuestion }}
+    </h3>
     <div ref="chartsEl" class="w-full flex flex-wrap justify-center gap-8">
       <div
         v-for="g in groups"

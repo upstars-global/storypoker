@@ -17,7 +17,7 @@ import {
   SelectItem,
   SelectItemText,
 } from 'reka-ui'
-import { DECK_PRESETS, getDeck, type DeckPresetId } from '~/utils/cardDecks'
+import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
 
 const props = defineProps<{
   deckPreset: DeckPresetId
@@ -33,9 +33,17 @@ const presetId = ref<DeckPresetId>(props.deckPreset)
 const selected = ref<string[]>([...props.activeCards])
 
 const currentDeck = computed(() => getDeck(presetId.value))
+const isVoting = computed(() => presetId.value === 'voting')
+const votingThird = computed(() =>
+  selected.value.find(c => VOTING_THIRD_CARDS.includes(c)) ?? VOTING_THIRD_CARDS[0]!
+)
 
 watch(() => props.deckPreset, (next) => { presetId.value = next })
 watch(() => props.activeCards, (next) => { selected.value = [...next] })
+
+function setVotingThird(card: string) {
+  selected.value = [...VOTING_BASE_CARDS, card]
+}
 
 function toggle(card: string) {
   if (selected.value.includes(card)) {
@@ -102,7 +110,44 @@ function save() {
             </SelectRoot>
           </div>
 
-          <div class="grid grid-cols-3 gap-x-8 gap-y-3 mt-8 mb-2 mx-auto" style="max-width: 380px;">
+          <div
+            v-if="isVoting"
+            class="flex flex-col items-center gap-6 mt-8 mb-2"
+          >
+            <div class="flex flex-col items-start gap-3">
+              <label
+                v-for="card in VOTING_BASE_CARDS"
+                :key="card"
+                class="flex items-center gap-3 text-mui-body text-primary opacity-70 cursor-not-allowed"
+              >
+                <input
+                  type="checkbox"
+                  checked
+                  disabled
+                  style="accent-color: var(--primary); width: 18px; height: 18px;"
+                />
+                <span>{{ card }}</span>
+              </label>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <span class="text-mui-caption font-semibold uppercase tracking-wide text-muted">
+                {{ $t('poll.thirdCard') }}
+              </span>
+              <div class="flex items-center gap-3">
+                <button
+                  v-for="card in VOTING_THIRD_CARDS"
+                  :key="card"
+                  type="button"
+                  class="mui-shield"
+                  style="padding: 6px 16px; font-size: 1.25rem;"
+                  :class="{ 'is-selected': votingThird === card }"
+                  :aria-pressed="votingThird === card"
+                  @click="setVotingThird(card)"
+                >{{ card }}</button>
+              </div>
+            </div>
+          </div>
+          <div v-else class="grid grid-cols-3 gap-x-8 gap-y-3 mt-8 mb-2 mx-auto" style="max-width: 380px;">
             <label
               v-for="card in currentDeck.cards"
               :key="card"
