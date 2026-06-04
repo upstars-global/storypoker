@@ -97,11 +97,11 @@ export const usePlayersStore = defineStore('players', () => {
       .eq('id', playerId)
   }
 
-  async function join(name: string, userId: string | null = null): Promise<Player> {
+  async function join(name: string, userId: string | null = null, shields: string[] = []): Promise<Player> {
     if (!roomId.value) throw new Error('roomId not set')
     const { data, error } = await getSupabase()
       .from('players')
-      .insert({ room_id: roomId.value, name, user_id: userId, is_moderator: false })
+      .insert({ room_id: roomId.value, name, user_id: userId, is_moderator: false, shields })
       .select()
       .single()
     if (error) throw error

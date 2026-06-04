@@ -180,7 +180,7 @@ describe('playersStore actions', () => {
     store.roomId = 'r1'
     const result = await store.join('Carol')
     expect(result.id).toBe('p9')
-    expect(b.insert).toHaveBeenCalledWith({ room_id: 'r1', name: 'Carol', user_id: null, is_moderator: false })
+    expect(b.insert).toHaveBeenCalledWith({ room_id: 'r1', name: 'Carol', user_id: null, is_moderator: false, shields: [] })
   })
 
   it('linkUser(playerId, userId) sends update with user_id', async () => {

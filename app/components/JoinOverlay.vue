@@ -9,13 +9,22 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipPortal,
+  TooltipContent,
 } from 'reka-ui'
+import { PLAYER_ROLES, shieldForRoleTag } from '~/utils/shields'
+
 const emit = defineEmits<{
-  join: [name: string]
+  join: [payload: { name: string; shields: string[] }]
   close: []
 }>()
 
+const ROLE_TAGS = PLAYER_ROLES.map(r => r.tag)
+
 const name = ref('')
+const tag = ref('')
 const hasError = ref(false)
 
 function submit() {
@@ -23,7 +32,8 @@ function submit() {
     hasError.value = true
     return
   }
-  emit('join', name.value.trim())
+  const role = tag.value.trim()
+  emit('join', { name: name.value.trim(), shields: role ? [shieldForRoleTag(role)] : [] })
 }
 </script>
 
@@ -50,6 +60,32 @@ function submit() {
               :class="{ 'is-error': hasError }"
               @keyup.enter="submit"
             />
+            <section>
+              <h3 class="text-mui-caption font-semibold uppercase tracking-wide text-muted mb-2">
+                {{ $t('players.roleLabel') }}
+              </h3>
+              <div class="flex flex-wrap gap-2">
+                <TooltipRoot v-for="opt in ROLE_TAGS" :key="opt">
+                  <TooltipTrigger as-child>
+                    <button
+                      type="button"
+                      class="mui-shield"
+                      style="padding: 6px 12px;"
+                      :class="{ 'is-selected': tag === opt }"
+                      :aria-pressed="tag === opt"
+                      @click="tag = tag === opt ? '' : opt"
+                    >
+                      {{ opt }}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipPortal>
+                    <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+                      {{ $t(`players.roleNames.${opt}`, opt) }}
+                    </TooltipContent>
+                  </TooltipPortal>
+                </TooltipRoot>
+              </div>
+            </section>
             <div class="flex justify-center">
               <button class="mui-btn" @click="submit">{{ $t('join.joinRoom') }}</button>
             </div>

@@ -273,8 +273,8 @@ function getStoredSession(): { playerId: string; playerName: string } | null {
   try { return JSON.parse(raw) } catch { return null }
 }
 
-async function handleJoin(name: string) {
-  const player = await playersStore.join(name, user.value?.id ?? null)
+async function handleJoin(payload: { name: string; shields: string[] }) {
+  const player = await playersStore.join(payload.name, user.value?.id ?? null, payload.shields)
   touchRecentRoom(roomId, player.id, player.name)
   currentPlayerId.value = player.id
   showJoin.value = false
