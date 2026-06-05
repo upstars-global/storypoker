@@ -40,13 +40,13 @@ export const DECK_PRESETS: DeckPreset[] = [
   },
   {
     id: 'voting',
-    name: 'Голосовалка',
-    cards: ['За', 'Проти', '☕', '🍺', '🚬'],
-    defaultActive: ['За', 'Проти', '☕'],
+    name: 'Vote',
+    cards: ['yes', 'no', '☕', '🍺', '🚬'],
+    defaultActive: ['yes', 'no', '☕'],
   },
 ]
 
-export const VOTING_BASE_CARDS = ['За', 'Проти']
+export const VOTING_BASE_CARDS = ['yes', 'no']
 export const VOTING_THIRD_CARDS = ['☕', '🍺', '🚬']
 
 export const DEFAULT_PRESET_ID: DeckPresetId = 'scrum'

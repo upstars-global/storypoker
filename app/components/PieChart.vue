@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useCardLabel } from '~/composables/useCardLabel'
+
+const cardLabel = useCardLabel()
 
 const props = defineProps<{
   votes: Record<string, number>
@@ -54,7 +57,7 @@ const data = computed(() => {
         font-size="12"
         fill="white"
         font-weight="400"
-      >{{ data.single.label }}</text>
+      >{{ cardLabel(data.single.label) }}</text>
     </template>
     <template v-else>
       <path
@@ -73,7 +76,7 @@ const data = computed(() => {
         font-size="6"
         fill="white"
         font-weight="600"
-      >{{ seg.label }}</text>
+      >{{ cardLabel(seg.label) }}</text>
     </template>
   </svg>
 </template>

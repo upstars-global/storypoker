@@ -92,6 +92,7 @@ const playersForUi = computed(() =>
 const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
 const isConsensus = computed(() => {
+  if (roomState.value?.deck_preset === 'voting') return false
   const grouped = groupedVoteCounts.value
   if (grouped) return shouldCelebrateGroupedVotes(grouped)
   const votes = playersForUi.value.map(p => p.vote).filter((v): v is string => v !== null)
@@ -460,6 +461,8 @@ async function submitRenameRoom() {
           :grouped-votes="groupedVoteCounts"
           :is-moderator="isModerator"
           :poll-question="roomState.deck_preset === 'voting' ? (roomState.poll_question ?? null) : null"
+          :disable-celebration="roomState.deck_preset === 'voting'"
+          :active-cards="roomState.deck_preset === 'voting' ? (roomState.active_cards ?? undefined) : undefined"
           @start-new-round="roomStore.startNewRound()"
         />
       </div>

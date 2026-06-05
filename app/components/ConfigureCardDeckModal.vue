@@ -18,6 +18,9 @@ import {
   SelectItemText,
 } from 'reka-ui'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
+import { useCardLabel } from '~/composables/useCardLabel'
+
+const cardLabel = useCardLabel()
 
 const props = defineProps<{
   deckPreset: DeckPresetId
@@ -71,7 +74,7 @@ function save() {
     <DialogPortal>
       <DialogOverlay class="mui-modal-overlay">
         <DialogContent class="mui-modal-paper" style="max-width: 560px; padding: 32px 40px 40px;" @pointerdown.stop>
-          <DialogTitle as="h2" class="text-center text-mui-h2 font-bold text-primary">
+          <DialogTitle as="h2" class="text-center text-mui-h2 font-bold text-white">
             {{ $t('deck.configure') }}
           </DialogTitle>
 
@@ -81,7 +84,7 @@ function save() {
               @update:model-value="(v) => applyPreset(v as DeckPresetId)"
             >
               <SelectTrigger
-                class="flex items-center justify-between gap-2 rounded border bg-transparent px-3 py-2 text-mui-body text-primary focus:outline-none focus:ring-1 focus:ring-[#546e7a]"
+                class="flex items-center justify-between gap-2 rounded border bg-transparent px-3 py-2 text-mui-body text-white focus:outline-none focus:ring-1 focus:ring-[#546e7a]"
                 style="min-width: 240px;"
                 :aria-label="$t('deck.configure')"
               >
@@ -118,7 +121,7 @@ function save() {
               <label
                 v-for="card in VOTING_BASE_CARDS"
                 :key="card"
-                class="flex items-center gap-3 text-mui-body text-primary opacity-70 cursor-not-allowed"
+                class="flex items-center gap-3 text-mui-body text-white opacity-70 cursor-not-allowed"
               >
                 <input
                   type="checkbox"
@@ -126,11 +129,11 @@ function save() {
                   disabled
                   style="accent-color: var(--primary); width: 18px; height: 18px;"
                 />
-                <span>{{ card }}</span>
+                <span>{{ cardLabel(card) }}</span>
               </label>
             </div>
             <div class="flex flex-col items-center gap-2">
-              <span class="text-mui-caption font-semibold uppercase tracking-wide text-muted">
+              <span class="text-mui-caption font-semibold uppercase tracking-wide text-white">
                 {{ $t('poll.thirdCard') }}
               </span>
               <div class="flex items-center gap-3">
@@ -151,7 +154,7 @@ function save() {
             <label
               v-for="card in currentDeck.cards"
               :key="card"
-              class="flex items-center gap-3 cursor-pointer text-mui-body text-primary"
+              class="flex items-center gap-3 cursor-pointer text-mui-body text-white"
             >
               <input
                 type="checkbox"

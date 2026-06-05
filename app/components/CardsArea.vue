@@ -8,6 +8,9 @@ import {
   TooltipContent,
 } from 'reka-ui'
 import type { CountdownMode } from '~/composables/useCountdown'
+import { useCardLabel } from '~/composables/useCardLabel'
+
+const cardLabel = useCardLabel()
 
 const props = defineProps<{
   activeCards: string[]
@@ -108,16 +111,16 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           :disabled="!canVote"
           @click="emit('vote', card)"
         >
-          <span class="mui-card-value">{{ card }}</span>
+          <span class="mui-card-value">{{ cardLabel(card) }}</span>
         </button>
       </div>
     </div>
 
-    <div v-if="isModerator && canVote" class="flex flex-wrap items-end justify-center gap-4 pt-8">
+    <div v-if="isModerator" class="flex flex-wrap items-end justify-center gap-4 pt-8">
       <button
         v-wave
         class="mui-btn"
-        :disabled="!hasVotes || countdownRunning"
+        :disabled="!hasVotes || countdownRunning || !canVote"
         data-testid="reveal-button"
         @click="emit('reveal')"
       >
@@ -161,7 +164,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
         <button
           v-wave
           class="mui-btn"
-          :disabled="countdownRunning"
+          :disabled="countdownRunning || !canVote"
           data-testid="reveal-countdown-button"
           @click="emit('startCountdown', countdownMode)"
         >

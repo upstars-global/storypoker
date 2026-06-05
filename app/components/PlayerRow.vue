@@ -16,6 +16,9 @@ import {
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
 import { roleTagForShields } from '~/utils/shields'
+import { useCardLabel } from '~/composables/useCardLabel'
+
+const cardLabel = useCardLabel()
 
 const props = defineProps<{
   player: {
@@ -159,7 +162,7 @@ const playerAvatar = computed(() => {
           v-if="player.vote !== null"
           class="text-base font-medium text-center"
           style="width: 24px; color: var(--text-primary);"
-        >{{ player.vote }}</span>
+        >{{ cardLabel(player.vote!) }}</span>
         <TooltipRoot v-else>
           <TooltipTrigger as-child>
             <span class="inline-flex">
@@ -184,7 +187,7 @@ const playerAvatar = computed(() => {
         v-if="phase === 'revealed' && player.vote !== null"
         class="text-base font-medium text-center"
         style="width: 24px; color: var(--text-primary);"
-      >{{ player.vote }}</span>
+      >{{ cardLabel(player.vote!) }}</span>
       <TooltipRoot v-else-if="phase === 'voting' && player.vote !== null">
         <TooltipTrigger as-child>
           <span class="inline-flex">

@@ -55,7 +55,11 @@
   },
   "deck": {
     "configure": "Configure Card Deck",
-    "save": "Save Card Deck"
+    "save": "Save Card Deck",
+    "cardLabels": {
+      "yes": "Yes",
+      "no": "No"
+    }
   },
   "poll": {
     "thirdCard": "Third card",
