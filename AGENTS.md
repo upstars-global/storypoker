@@ -196,3 +196,5 @@ Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit
 - Не друкувати секрети або повні env values
 - У прикладах використовувати placeholders
 - `SUPABASE_SECRET_KEY` / `sb_secret_...` — тільки server-side, ніколи в client bundle
+
+## Temp
