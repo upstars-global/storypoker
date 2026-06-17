@@ -41,7 +41,9 @@
     "countdownSilent": "Silent",
     "countdownDry": "Plain sound",
     "countdownWet": "With ambience",
-    "startNewRound": "Start New Estimation Round"
+    "startNewRound": "Start New Estimation Round",
+    "lastRound": "Previous Round",
+    "backToCards": "Back to Voting"
   },
   "timer": {
     "title": "Timer",

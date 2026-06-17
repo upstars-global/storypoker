@@ -12,6 +12,7 @@ const props = defineProps<{
   pollQuestion?: string | null
   disableCelebration?: boolean
   activeCards?: string[]
+  playerVotes?: { name: string; vote: string }[]
 }>()
 
 const cardLabel = useCardLabel()
@@ -145,6 +146,16 @@ watch(celebrate, (next, prev) => {
           {{ g.label }}<template v-if="g.average !== null">: {{ g.average }}</template>
         </span>
         <PieChart :votes="g.votes" />
+      </div>
+    </div>
+    <div v-if="playerVotes?.length" class="w-full max-w-md mx-auto">
+      <div
+        v-for="pv in playerVotes"
+        :key="pv.name"
+        class="flex items-center justify-between py-1.5 border-b last:border-0"
+      >
+        <span class="text-base text-body">{{ pv.name }}</span>
+        <span class="text-base font-semibold text-primary">{{ cardLabel(pv.vote) }}</span>
       </div>
     </div>
     <button

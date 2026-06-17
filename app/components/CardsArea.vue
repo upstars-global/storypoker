@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import AppIcon from '~/components/AppIcon.vue'
 import {
   TooltipRoot,
@@ -133,10 +133,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           role="radiogroup"
           data-testid="countdown-mode"
         >
-          <TooltipRoot
-            v-for="option in countdownModeOptions"
-            :key="option.value"
-          >
+          <TooltipRoot v-for="option in countdownModeOptions" :key="option.value">
             <TooltipTrigger as-child>
               <label
                 v-wave

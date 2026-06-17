@@ -51,6 +51,15 @@ const { roomState } = storeToRefs(roomStore)
 const { visiblePlayers, pendingVotes } = storeToRefs(playersStore)
 const { online, status: connectionStatus } = storeToRefs(presenceStore)
 
+interface LastRoundSnapshot {
+  votes: Record<string, number>
+  groupedVotes: { general: Record<string, number>; qa: Record<string, number> } | null
+  playerVotes: { name: string; vote: string }[]
+  pollQuestion: string | null
+  isVotingDeck: boolean
+  activeCards: string[]
+}
+
 const currentPlayerId = ref<string | null>(null)
 const notFound = ref(false)
 const showJoin = ref(false)
@@ -67,6 +76,10 @@ const currentRoomName = ref<string | null>(null)
 const origin = ref('')
 const kickTargetId = ref<string | null>(null)
 const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === kickTargetId.value)?.name ?? '')
+
+const pendingSnapshot = ref<LastRoundSnapshot | null>(null)
+const lastRound = ref<LastRoundSnapshot | null>(null)
+const showLastRound = ref(false)
 
 const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
@@ -104,6 +117,7 @@ const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRu
 function broadcastCountdownStart(mode: CountdownMode) {
   countdownChannel?.send({ type: 'broadcast', event: 'start', payload: { initiatorId: currentPlayerId.value, mode } })
 }
+
 
 const voteCounts = computed(() => {
   if (!roomState.value) return {}
@@ -188,8 +202,27 @@ watch(connectionStatus, async (next, prev) => {
   }
 })
 
-watch(() => roomState.value?.phase, (phase) => {
-  if (phase === 'revealed') playersStore.clearPendingVotes()
+watch(() => roomState.value?.phase, (phase, prev) => {
+  if (phase === 'revealed') {
+    playersStore.clearPendingVotes()
+    pendingSnapshot.value = {
+      votes: { ...voteCounts.value },
+      groupedVotes: groupedVoteCounts.value
+        ? { general: { ...groupedVoteCounts.value.general }, qa: { ...groupedVoteCounts.value.qa } }
+        : null,
+      playerVotes: visiblePlayers.value
+        .filter(p => p.vote !== null)
+        .map(p => ({ name: p.name, vote: p.vote as string })),
+      pollQuestion: roomState.value?.deck_preset === 'voting' ? (roomState.value.poll_question ?? null) : null,
+      isVotingDeck: roomState.value?.deck_preset === 'voting',
+      activeCards: [...(roomState.value?.active_cards ?? [])],
+    }
+    showLastRound.value = false
+  }
+  if (phase === 'voting' && prev === 'revealed') {
+    lastRound.value = pendingSnapshot.value
+    showLastRound.value = false
+  }
 })
 
 watch(visiblePlayers, async (next) => {
@@ -437,11 +470,41 @@ async function submitRenameRoom() {
           @resume="roomStore.resumeTimer"
           @adjust="(ms: number) => roomStore.adjustTimer(ms)"
         />
+        <div v-if="roomState?.phase === 'voting' && isModerator" class="flex flex-col items-center gap-2">
+          <button
+            v-wave
+            class="mui-btn"
+            :disabled="!lastRound && !showLastRound"
+            @click="showLastRound = !showLastRound"
+          >
+            {{ $t(showLastRound ? 'cards.backToCards' : 'cards.lastRound') }}
+          </button>
+        </div>
       </div>
 
       <div class="flex-1 flex flex-col items-center justify-start">
+        <ResultsArea
+          v-if="roomState?.phase === 'voting' && showLastRound && lastRound"
+          :votes="lastRound.votes"
+          :grouped-votes="lastRound.groupedVotes"
+          :is-moderator="false"
+          :poll-question="lastRound.pollQuestion"
+          :disable-celebration="true"
+          :active-cards="lastRound.isVotingDeck ? lastRound.activeCards : undefined"
+          :player-votes="lastRound.playerVotes"
+        />
+        <ResultsArea
+          v-if="roomState?.phase === 'revealed'"
+          :votes="voteCounts"
+          :grouped-votes="groupedVoteCounts"
+          :is-moderator="isModerator"
+          :poll-question="roomState.deck_preset === 'voting' ? (roomState.poll_question ?? null) : null"
+          :disable-celebration="roomState.deck_preset === 'voting'"
+          :active-cards="roomState.deck_preset === 'voting' ? (roomState.active_cards ?? undefined) : undefined"
+          @start-new-round="roomStore.startNewRound()"
+        />
         <CardsArea
-          v-if="roomState?.phase === 'voting'"
+          v-if="roomState?.phase === 'voting' && !showLastRound"
           :active-cards="roomState.active_cards ?? []"
           :selected-vote="currentPlayer ? playersStore.voteOf(currentPlayer.id) : null"
           :is-moderator="isModerator"
@@ -454,16 +517,6 @@ async function submitRenameRoom() {
           @reveal="roomStore.reveal()"
           @start-countdown="broadcastCountdownStart"
           @set-poll-question="(q: string) => roomStore.setPollQuestion(q)"
-        />
-        <ResultsArea
-          v-else-if="roomState?.phase === 'revealed'"
-          :votes="voteCounts"
-          :grouped-votes="groupedVoteCounts"
-          :is-moderator="isModerator"
-          :poll-question="roomState.deck_preset === 'voting' ? (roomState.poll_question ?? null) : null"
-          :disable-celebration="roomState.deck_preset === 'voting'"
-          :active-cards="roomState.deck_preset === 'voting' ? (roomState.active_cards ?? undefined) : undefined"
-          @start-new-round="roomStore.startNewRound()"
         />
       </div>
     </div>

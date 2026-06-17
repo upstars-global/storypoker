@@ -41,7 +41,9 @@
     "countdownSilent": "Без звуку",
     "countdownDry": "Простий звук",
     "countdownWet": "З атмосферою",
-    "startNewRound": "Почати новий раунд"
+    "startNewRound": "Почати новий раунд",
+    "lastRound": "Попередній раунд",
+    "backToCards": "До голосування"
   },
   "timer": {
     "title": "Таймер",
