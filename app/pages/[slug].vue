@@ -470,16 +470,6 @@ async function submitRenameRoom() {
           @resume="roomStore.resumeTimer"
           @adjust="(ms: number) => roomStore.adjustTimer(ms)"
         />
-        <button
-          v-if="roomState?.phase === 'voting' && isModerator"
-          v-wave
-          class="mui-btn w-full"
-          style="border-radius: 4px; min-width: 0;"
-          :disabled="!lastRound && !showLastRound"
-          @click="showLastRound = !showLastRound"
-        >
-          {{ $t(showLastRound ? 'cards.backToCards' : 'cards.lastRound') }}
-        </button>
       </div>
 
       <div class="flex-1 flex flex-col items-center justify-start">
@@ -491,7 +481,6 @@ async function submitRenameRoom() {
           :poll-question="lastRound.pollQuestion"
           :disable-celebration="true"
           :active-cards="lastRound.isVotingDeck ? lastRound.activeCards : undefined"
-          :player-votes="lastRound.playerVotes"
         />
         <ResultsArea
           v-if="roomState?.phase === 'revealed'"
@@ -504,7 +493,7 @@ async function submitRenameRoom() {
           @start-new-round="roomStore.startNewRound()"
         />
         <CardsArea
-          v-if="roomState?.phase === 'voting' && !showLastRound"
+          v-if="roomState?.phase === 'voting'"
           :active-cards="roomState.active_cards ?? []"
           :selected-vote="currentPlayer ? playersStore.voteOf(currentPlayer.id) : null"
           :is-moderator="isModerator"
@@ -513,10 +502,13 @@ async function submitRenameRoom() {
           :countdown-running="countdownRunning"
           :poll-mode="roomState.deck_preset === 'voting'"
           :poll-question="roomState.poll_question ?? null"
+          :has-last-round="!!lastRound"
+          :show-last-round="showLastRound"
           @vote="handleVote"
           @reveal="roomStore.reveal()"
           @start-countdown="broadcastCountdownStart"
           @set-poll-question="(q: string) => roomStore.setPollQuestion(q)"
+          @toggle-last-round="showLastRound = !showLastRound"
         />
       </div>
     </div>

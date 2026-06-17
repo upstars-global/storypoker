@@ -21,6 +21,8 @@ const props = defineProps<{
   countdownRunning: boolean
   pollMode: boolean
   pollQuestion: string | null
+  hasLastRound?: boolean
+  showLastRound?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -28,6 +30,7 @@ const emit = defineEmits<{
   reveal: []
   startCountdown: [mode: CountdownMode]
   setPollQuestion: [question: string]
+  toggleLastRound: []
 }>()
 
 const canVote = computed(() => !props.pollMode || !!props.pollQuestion)
@@ -92,6 +95,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
     </div>
 
     <div
+      v-if="!showLastRound"
       class="flex flex-wrap justify-center gap-4 max-w-[1240px] mx-auto"
       :class="{ 'pointer-events-none opacity-40': !canVote }"
     >
@@ -119,6 +123,15 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
     <div v-if="isModerator" class="flex flex-wrap items-end justify-center gap-4 pt-8">
       <button
         v-wave
+        class="mui-icon-btn"
+        :disabled="!hasLastRound && !showLastRound"
+        :class="showLastRound ? 'text-primary' : ''"
+        @click="emit('toggleLastRound')"
+      >
+        <AppIcon icon="lucide:undo" style="font-size: 1.5rem;" />
+      </button>
+      <button
+        v-wave
         class="mui-btn"
         :disabled="!hasVotes || countdownRunning || !canVote"
         data-testid="reveal-button"
@@ -129,7 +142,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
       <div class="flex flex-col items-center gap-2">
         <div
           class="flex items-center gap-1"
-          :class="{ 'pointer-events-none opacity-50': countdownRunning }"
+          :class="{ 'pointer-events-none opacity-50': countdownRunning || showLastRound }"
           role="radiogroup"
           data-testid="countdown-mode"
         >
@@ -161,7 +174,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
         <button
           v-wave
           class="mui-btn"
-          :disabled="countdownRunning || !canVote"
+          :disabled="countdownRunning || !canVote || showLastRound"
           data-testid="reveal-countdown-button"
           @click="emit('startCountdown', countdownMode)"
         >
