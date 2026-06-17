@@ -470,16 +470,16 @@ async function submitRenameRoom() {
           @resume="roomStore.resumeTimer"
           @adjust="(ms: number) => roomStore.adjustTimer(ms)"
         />
-        <div v-if="roomState?.phase === 'voting' && isModerator" class="flex flex-col items-center gap-2">
-          <button
-            v-wave
-            class="mui-btn"
-            :disabled="!lastRound && !showLastRound"
-            @click="showLastRound = !showLastRound"
-          >
-            {{ $t(showLastRound ? 'cards.backToCards' : 'cards.lastRound') }}
-          </button>
-        </div>
+        <button
+          v-if="roomState?.phase === 'voting' && isModerator"
+          v-wave
+          class="mui-btn w-full"
+          style="border-radius: 4px; min-width: 0;"
+          :disabled="!lastRound && !showLastRound"
+          @click="showLastRound = !showLastRound"
+        >
+          {{ $t(showLastRound ? 'cards.backToCards' : 'cards.lastRound') }}
+        </button>
       </div>
 
       <div class="flex-1 flex flex-col items-center justify-start">
