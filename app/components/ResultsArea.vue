@@ -23,9 +23,7 @@ const BUBBLE_MAX = 200
 
 const votingBubbles = computed(() => {
   if (!props.disableCelebration || !props.activeCards?.length) return null
-  const base = props.activeCards.slice(0, 2)
-  const third = props.activeCards[2]
-  const cards = (third && (props.votes[third] ?? 0) > 0) ? [...base, third] : base
+  const cards = props.activeCards.slice(0, 3)
   const counts = cards.map(card => props.votes[card] ?? 0)
   const maxCount = Math.max(...counts, 1)
   return cards.map((card, i) => {
