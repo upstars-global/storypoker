@@ -114,7 +114,7 @@ watch(celebrate, (next, prev) => {
         }"
       />
     </div>
-    <h3 v-if="pollQuestion" class="text-center text-mui-h2 font-bold text-primary" data-testid="poll-question">
+    <h3 v-if="pollQuestion" class="text-center text-mui-h2 font-bold text-white" data-testid="poll-question">
       {{ pollQuestion }}
     </h3>
     <div v-if="votingBubbles" ref="chartsEl" class="flex items-end justify-center gap-10 flex-wrap py-4">

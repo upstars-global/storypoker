@@ -60,10 +60,10 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
 
 <template>
   <div class="flex flex-col items-center w-full rounded">
-    <div v-if="pollMode" class="w-full max-w-[640px] mx-auto mb-8">
+    <div v-if="pollMode && !showLastRound" class="w-full max-w-[640px] mx-auto mb-8">
       <h3
         v-if="pollQuestion"
-        class="text-center text-mui-h2 font-bold text-primary"
+        class="text-center text-mui-h2 font-bold text-white"
         data-testid="poll-question"
       >
         {{ pollQuestion }}
@@ -151,7 +151,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
               <label
                 v-wave
                 class="mui-icon-btn cursor-pointer"
-                :class="countdownMode === option.value ? 'text-primary' : 'text-muted'"
+                :style="{ color: countdownMode === option.value ? '#fff' : 'var(--text-muted)' }"
               >
                 <input
                   v-model="countdownMode"
