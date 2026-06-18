@@ -37,6 +37,7 @@ const selected = ref<string[]>([...props.activeCards])
 
 const currentDeck = computed(() => getDeck(presetId.value))
 const isVoting = computed(() => presetId.value === 'voting')
+const isVoteQuestion = computed(() => presetId.value === 'vote_question')
 const votingThird = computed(() =>
   selected.value.find(c => VOTING_THIRD_CARDS.includes(c)) ?? VOTING_THIRD_CARDS[0]!
 )
@@ -149,6 +150,12 @@ function save() {
                 >{{ card }}</button>
               </div>
             </div>
+          </div>
+          <div
+            v-else-if="isVoteQuestion"
+            class="flex justify-center mt-8 mb-2"
+          >
+            <p class="text-mui-body text-muted text-center">{{ $t('deck.voteQuestionInfo') }}</p>
           </div>
           <div v-else class="grid grid-cols-3 gap-x-8 gap-y-3 mt-8 mb-2 mx-auto" style="max-width: 380px;">
             <label

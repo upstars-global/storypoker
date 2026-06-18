@@ -55,18 +55,20 @@ export const useRoomStore = defineStore('room', () => {
   async function startNewRound() {
     if (!roomId.value) return
     const supabase = getSupabase()
+    const preset = roomState.value?.deck_preset
+    const stateUpdate: Record<string, unknown> = {
+      phase: 'voting',
+      round_started_at: new Date().toISOString(),
+      paused_at: null,
+      paused_elapsed_ms: 0,
+      poll_question: null,
+    }
+    if (preset === 'vote_question') {
+      stateUpdate.active_cards = getDeck('vote_question').defaultActive
+    }
     await Promise.all([
       supabase.from('players').update({ vote: null }).eq('room_id', roomId.value),
-      supabase
-        .from('room_state')
-        .update({
-          phase: 'voting',
-          round_started_at: new Date().toISOString(),
-          paused_at: null,
-          paused_elapsed_ms: 0,
-          poll_question: null,
-        })
-        .eq('room_id', roomId.value),
+      supabase.from('room_state').update(stateUpdate).eq('room_id', roomId.value),
     ])
   }
 

@@ -20,6 +20,7 @@ const props = defineProps<{
   countdownCounter: number
   countdownRunning: boolean
   pollMode: boolean
+  voteQuestionMode: boolean
   pollQuestion: string | null
   hasLastRound?: boolean
   showLastRound?: boolean
@@ -30,16 +31,40 @@ const emit = defineEmits<{
   reveal: []
   startCountdown: [mode: CountdownMode]
   setPollQuestion: [question: string]
+  startVoteQuestion: [question: string, answers: [string, string, string]]
   toggleLastRound: []
 }>()
 
-const canVote = computed(() => !props.pollMode || !!props.pollQuestion)
+const canVote = computed(() => !(props.pollMode || props.voteQuestionMode) || !!props.pollQuestion)
 const questionDraft = ref('')
+const answerDrafts = ref<[string, string, string]>(['', '', ''])
+
+watch(() => props.pollQuestion, (val) => {
+  if (!val) {
+    questionDraft.value = ''
+    answerDrafts.value = ['', '', '']
+  }
+})
 
 function submitQuestion() {
   const value = questionDraft.value.trim()
   if (!value) return
   emit('setPollQuestion', value)
+}
+
+function vqCardStyle(card: string): Record<string, string> {
+  if (!props.voteQuestionMode || !props.pollQuestion) return {}
+  const len = card.length
+  if (len <= 3) return {}
+  const rem = len <= 6 ? 1.4 : len <= 9 ? 1.0 : 0.8
+  return { fontSize: `${rem}rem`, wordBreak: 'break-word', padding: '0 8px', lineHeight: '1.2', textAlign: 'center' }
+}
+
+function submitVoteQuestion() {
+  const question = questionDraft.value.trim()
+  const answers = answerDrafts.value.map(a => a.trim()) as [string, string, string]
+  if (!question || answers.some(a => !a)) return
+  emit('startVoteQuestion', question, answers)
 }
 
 const countdownModeLSKey = 'sp-countdown-mode'
@@ -60,7 +85,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
 
 <template>
   <div class="flex flex-col items-center w-full rounded">
-    <div v-if="pollMode && !showLastRound" class="w-full max-w-[640px] mx-auto mb-8">
+    <div v-if="(pollMode || voteQuestionMode) && !showLastRound" class="w-full max-w-[640px] mx-auto mb-8">
       <h3
         v-if="pollQuestion"
         class="text-center text-mui-h2 font-bold text-white"
@@ -68,7 +93,36 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
       >
         {{ pollQuestion }}
       </h3>
-      <div v-else-if="isModerator" class="flex flex-col gap-3">
+      <div v-else-if="voteQuestionMode && isModerator" class="flex flex-col gap-3">
+        <input
+          v-model="questionDraft"
+          type="text"
+          class="mui-input w-full"
+          :placeholder="$t('poll.questionPlaceholder')"
+          data-testid="poll-question-input"
+        >
+        <input
+          v-for="n in 3"
+          :key="n"
+          v-model="answerDrafts[n - 1]"
+          type="text"
+          class="mui-input w-full"
+          maxlength="12"
+          :placeholder="$t('poll.answerPlaceholder', { n })"
+        >
+        <div class="flex justify-center mt-5">
+          <button
+            v-wave
+            class="mui-btn"
+            :disabled="!questionDraft.trim() || answerDrafts.some(a => !a.trim())"
+            data-testid="poll-start-button"
+            @click="submitVoteQuestion"
+          >
+            {{ $t('poll.startVoting') }}
+          </button>
+        </div>
+      </div>
+      <div v-else-if="!voteQuestionMode && isModerator" class="flex flex-col gap-3">
         <input
           v-model="questionDraft"
           type="text"
@@ -77,7 +131,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           data-testid="poll-question-input"
           @keyup.enter="submitQuestion"
         >
-        <div class="flex justify-center">
+        <div class="flex justify-center mt-5">
           <button
             v-wave
             class="mui-btn"
@@ -115,7 +169,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           :disabled="!canVote"
           @click="emit('vote', card)"
         >
-          <span class="mui-card-value">{{ cardLabel(card) }}</span>
+          <span class="mui-card-value" :style="vqCardStyle(card)">{{ voteQuestionMode && !pollQuestion ? '?' : cardLabel(card) }}</span>
         </button>
       </div>
     </div>

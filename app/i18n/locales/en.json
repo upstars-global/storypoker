@@ -61,13 +61,15 @@
     "cardLabels": {
       "yes": "Yes",
       "no": "No"
-    }
+    },
+    "voteQuestionInfo": "Question and answers are configured in the voting area"
   },
   "poll": {
     "thirdCard": "Third card",
-    "questionPlaceholder": "Write a question to vote on…",
+    "questionPlaceholder": "Question to vote on…",
     "startVoting": "Start voting",
-    "waiting": "Waiting for the moderator's question…"
+    "waiting": "Waiting for the moderator's question…",
+    "answerPlaceholder": "Answer {n}"
   },
   "players": {
     "title": "Players",

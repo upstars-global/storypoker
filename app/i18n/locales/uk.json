@@ -61,13 +61,15 @@
     "cardLabels": {
       "yes": "Так",
       "no": "Ні"
-    }
+    },
+    "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні"
   },
   "poll": {
     "thirdCard": "Третя картка",
-    "questionPlaceholder": "Напишіть питання для голосування…",
+    "questionPlaceholder": "Питання для голосування…",
     "startVoting": "Почати голосування",
-    "waiting": "Очікування питання від модератора…"
+    "waiting": "Очікування питання від модератора…",
+    "answerPlaceholder": "Відповідь {n}"
   },
   "players": {
     "title": "Гравці",

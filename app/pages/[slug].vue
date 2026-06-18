@@ -104,8 +104,12 @@ const playersForUi = computed(() =>
 
 const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
+const isPollDeck = computed(() =>
+  roomState.value?.deck_preset === 'voting' || roomState.value?.deck_preset === 'vote_question'
+)
+
 const isConsensus = computed(() => {
-  if (roomState.value?.deck_preset === 'voting') return false
+  if (isPollDeck.value) return false
   const grouped = groupedVoteCounts.value
   if (grouped) return shouldCelebrateGroupedVotes(grouped)
   const votes = playersForUi.value.map(p => p.vote).filter((v): v is string => v !== null)
@@ -213,8 +217,8 @@ watch(() => roomState.value?.phase, (phase, prev) => {
       playerVotes: visiblePlayers.value
         .filter(p => p.vote !== null)
         .map(p => ({ name: p.name, vote: p.vote as string })),
-      pollQuestion: roomState.value?.deck_preset === 'voting' ? (roomState.value.poll_question ?? null) : null,
-      isVotingDeck: roomState.value?.deck_preset === 'voting',
+      pollQuestion: isPollDeck.value ? (roomState.value?.poll_question ?? null) : null,
+      isVotingDeck: isPollDeck.value,
       activeCards: [...(roomState.value?.active_cards ?? [])],
     }
     showLastRound.value = false
@@ -317,7 +321,7 @@ async function handleJoin(payload: { name: string; shields: string[] }) {
 
 async function handleVote(card: string) {
   if (!currentPlayerId.value) return
-  if (roomState.value?.deck_preset === 'voting' && !roomState.value.poll_question) return
+  if (isPollDeck.value && !roomState.value?.poll_question) return
   const next = playersStore.voteOf(currentPlayerId.value) === card ? null : card
   try {
     await playersStore.castVote(currentPlayerId.value, next)
@@ -374,6 +378,13 @@ async function handleSaveCardDeck(payload: { deckPreset: DeckPresetId; cards: st
   }
   await roomStore.saveCardDeck(payload.cards)
   showCardDeck.value = false
+}
+
+async function handleStartVoteQuestion(question: string, answers: [string, string, string]) {
+  await Promise.all([
+    roomStore.setPollQuestion(question),
+    roomStore.saveCardDeck(answers),
+  ])
 }
 
 function openRenameRoom() {
@@ -453,6 +464,7 @@ async function submitRenameRoom() {
           :phase="roomState?.phase ?? 'voting'"
           :current-player-id="currentPlayerId"
           :current-user-is-authorized-moderator="isAuthorizedModerator"
+          :truncate-votes="roomState?.deck_preset === 'vote_question'"
           @edit="handleEdit"
           @toggle-moderator="handleToggleModerator"
           @leave="handleLeave"
@@ -487,9 +499,9 @@ async function submitRenameRoom() {
           :votes="voteCounts"
           :grouped-votes="groupedVoteCounts"
           :is-moderator="isModerator"
-          :poll-question="roomState.deck_preset === 'voting' ? (roomState.poll_question ?? null) : null"
-          :disable-celebration="roomState.deck_preset === 'voting'"
-          :active-cards="roomState.deck_preset === 'voting' ? (roomState.active_cards ?? undefined) : undefined"
+          :poll-question="isPollDeck ? (roomState.poll_question ?? null) : null"
+          :disable-celebration="isPollDeck"
+          :active-cards="isPollDeck ? (roomState.active_cards ?? undefined) : undefined"
           @start-new-round="roomStore.startNewRound()"
         />
         <CardsArea
@@ -501,6 +513,7 @@ async function submitRenameRoom() {
           :countdown-counter="countdownTimerCounter"
           :countdown-running="countdownRunning"
           :poll-mode="roomState.deck_preset === 'voting'"
+          :vote-question-mode="roomState.deck_preset === 'vote_question'"
           :poll-question="roomState.poll_question ?? null"
           :has-last-round="!!lastRound"
           :show-last-round="showLastRound"
@@ -508,6 +521,7 @@ async function submitRenameRoom() {
           @reveal="roomStore.reveal()"
           @start-countdown="broadcastCountdownStart"
           @set-poll-question="(q: string) => roomStore.setPollQuestion(q)"
+          @start-vote-question="handleStartVoteQuestion"
           @toggle-last-round="showLastRound = !showLastRound"
         />
       </div>

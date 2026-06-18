@@ -129,7 +129,7 @@ watch(celebrate, (next, prev) => {
         >
           <span
             class="font-semibold text-white text-center leading-none"
-            :style="{ fontSize: `${Math.max(b.size * 0.22, 12)}px` }"
+            :style="{ fontSize: `${Math.max(Math.min(b.size * 0.22, b.size * 1.2 / Math.max(cardLabel(b.card).length, 1)), 9)}px`, wordBreak: 'break-word', padding: '0 8px' }"
           >{{ cardLabel(b.card) }}</span>
         </div>
         <span class="text-white font-medium text-base">{{ b.count }}</span>
