@@ -54,7 +54,7 @@ const { online, status: connectionStatus } = storeToRefs(presenceStore)
 interface LastRoundSnapshot {
   votes: Record<string, number>
   groupedVotes: { general: Record<string, number>; qa: Record<string, number> } | null
-  playerVotes: { name: string; vote: string }[]
+  playerVotes: { id: string; name: string; vote: string }[]
   pollQuestion: string | null
   isVotingDeck: boolean
   activeCards: string[]
@@ -87,12 +87,17 @@ const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
 const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 const onlineCount = computed(() => visiblePlayers.value.filter(p => online.value.has(p.id)).length)
 
+const lastRoundVoteMap = computed(() => {
+  if (!showLastRound.value || !lastRound.value) return {}
+  return Object.fromEntries(lastRound.value.playerVotes.map(pv => [pv.id, pv.vote]))
+})
+
 const playersForUi = computed(() =>
   visiblePlayers.value
     .map(p => ({
       ...p,
       is_online: online.value.has(p.id),
-      vote: playersStore.voteOf(p.id),
+      vote: showLastRound.value ? (lastRoundVoteMap.value[p.id] ?? null) : playersStore.voteOf(p.id),
       votePending: pendingVotes.value[p.id] !== undefined,
     }))
     .sort((a, b) => {
@@ -216,7 +221,7 @@ watch(() => roomState.value?.phase, (phase, prev) => {
         : null,
       playerVotes: visiblePlayers.value
         .filter(p => p.vote !== null)
-        .map(p => ({ name: p.name, vote: p.vote as string })),
+        .map(p => ({ id: p.id, name: p.name, vote: p.vote as string })),
       pollQuestion: isPollDeck.value ? (roomState.value?.poll_question ?? null) : null,
       isVotingDeck: isPollDeck.value,
       activeCards: [...(roomState.value?.active_cards ?? [])],
@@ -461,7 +466,7 @@ async function submitRenameRoom() {
       <div class="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-6">
         <PlayersList
           :players="playersForUi"
-          :phase="roomState?.phase ?? 'voting'"
+          :phase="showLastRound ? 'revealed' : (roomState?.phase ?? 'voting')"
           :current-player-id="currentPlayerId"
           :current-user-is-authorized-moderator="isAuthorizedModerator"
           :truncate-votes="roomState?.deck_preset === 'vote_question'"
