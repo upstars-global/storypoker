@@ -178,8 +178,8 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
       <button
         v-wave
         class="mui-icon-btn"
-        :disabled="!hasLastRound && !showLastRound"
-        :class="showLastRound ? 'text-primary' : ''"
+        :disabled="(!hasLastRound && !showLastRound) || countdownRunning"
+        :style="{ color: ((!hasLastRound && !showLastRound) || countdownRunning) ? 'var(--text-disabled)' : showLastRound ? 'var(--primary)' : undefined }"
         @click="emit('toggleLastRound')"
       >
         <AppIcon icon="lucide:undo" style="font-size: 1.5rem;" />
