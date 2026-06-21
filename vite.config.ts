@@ -11,7 +11,7 @@ export default defineConfig({
       '@': resolve(__dirname, 'app'),
     },
   },
-  server: { host: true, port: 3000 },
+  server: { host: '127.0.0.1', port: 3000 },
   preview: { port: 3000 },
   build: { sourcemap: true },
 })
