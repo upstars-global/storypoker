@@ -109,6 +109,12 @@ const playersForUi = computed(() =>
 
 const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
+const canReset = computed(() => {
+  if (showLastRound.value) return false
+  const voted = visiblePlayers.value.filter(p => playersStore.voteOf(p.id) !== null).length
+  return voted > 0 && voted < visiblePlayers.value.length
+})
+
 const isPollDeck = computed(() =>
   roomState.value?.deck_preset === 'voting' || roomState.value?.deck_preset === 'vote_question'
 )
@@ -385,7 +391,7 @@ async function handleSaveCardDeck(payload: { deckPreset: DeckPresetId; cards: st
   showCardDeck.value = false
 }
 
-async function handleStartVoteQuestion(question: string, answers: [string, string, string]) {
+async function handleStartVoteQuestion(question: string, answers: string[]) {
   await Promise.all([
     roomStore.setPollQuestion(question),
     roomStore.saveCardDeck(answers),
@@ -515,6 +521,7 @@ async function submitRenameRoom() {
           :selected-vote="currentPlayer ? playersStore.voteOf(currentPlayer.id) : null"
           :is-moderator="isModerator"
           :has-votes="hasVotes"
+          :can-reset="canReset"
           :countdown-counter="countdownTimerCounter"
           :countdown-running="countdownRunning"
           :poll-mode="roomState.deck_preset === 'voting'"
@@ -524,6 +531,7 @@ async function submitRenameRoom() {
           :show-last-round="showLastRound"
           @vote="handleVote"
           @reveal="roomStore.reveal()"
+          @reset="roomStore.resetVotes()"
           @start-countdown="broadcastCountdownStart"
           @set-poll-question="(q: string) => roomStore.setPollQuestion(q)"
           @start-vote-question="handleStartVoteQuestion"

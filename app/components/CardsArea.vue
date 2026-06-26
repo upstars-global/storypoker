@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch, type ComponentPublicInstance } from 'vue'
 import AppIcon from '~/components/AppIcon.vue'
 import {
   TooltipRoot,
@@ -17,6 +17,7 @@ const props = defineProps<{
   selectedVote: string | null
   isModerator: boolean
   hasVotes: boolean
+  canReset: boolean
   countdownCounter: number
   countdownRunning: boolean
   pollMode: boolean
@@ -29,22 +30,36 @@ const props = defineProps<{
 const emit = defineEmits<{
   vote: [card: string]
   reveal: []
+  reset: []
   startCountdown: [mode: CountdownMode]
   setPollQuestion: [question: string]
-  startVoteQuestion: [question: string, answers: [string, string, string]]
+  startVoteQuestion: [question: string, answers: string[]]
   toggleLastRound: []
 }>()
 
 const canVote = computed(() => !(props.pollMode || props.voteQuestionMode) || !!props.pollQuestion)
+const MAX_ANSWERS = 5
 const questionDraft = ref('')
-const answerDrafts = ref<[string, string, string]>(['', '', ''])
+const answerDrafts = ref<string[]>(['', ''])
 
 watch(() => props.pollQuestion, (val) => {
   if (!val) {
     questionDraft.value = ''
-    answerDrafts.value = ['', '', '']
+    answerDrafts.value = ['', '']
   }
 })
+
+const answerInputs = ref<HTMLInputElement[]>([])
+function setAnswerRef(el: Element | ComponentPublicInstance | null, i: number) {
+  if (el) answerInputs.value[i] = el as HTMLInputElement
+}
+
+async function addAnswer() {
+  if (answerDrafts.value.length >= MAX_ANSWERS) return
+  answerDrafts.value.push('')
+  await nextTick()
+  answerInputs.value[answerDrafts.value.length - 1]?.focus()
+}
 
 function submitQuestion() {
   const value = questionDraft.value.trim()
@@ -62,8 +77,8 @@ function vqCardStyle(card: string): Record<string, string> {
 
 function submitVoteQuestion() {
   const question = questionDraft.value.trim()
-  const answers = answerDrafts.value.map(a => a.trim()) as [string, string, string]
-  if (!question || answers.some(a => !a)) return
+  const answers = answerDrafts.value.map(a => a.trim()).filter(Boolean)
+  if (!question || answers.length < 2) return
   emit('startVoteQuestion', question, answers)
 }
 
@@ -101,20 +116,36 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           :placeholder="$t('poll.questionPlaceholder')"
           data-testid="poll-question-input"
         >
-        <input
-          v-for="n in 3"
-          :key="n"
-          v-model="answerDrafts[n - 1]"
-          type="text"
-          class="mui-input w-full"
-          maxlength="12"
-          :placeholder="$t('poll.answerPlaceholder', { n })"
+        <div
+          v-for="(answer, i) in answerDrafts"
+          :key="i"
+          class="flex items-center justify-center gap-2"
         >
+          <input
+            :ref="(el) => setAnswerRef(el, i)"
+            v-model="answerDrafts[i]"
+            type="text"
+            class="mui-input w-48"
+            maxlength="12"
+            :placeholder="$t('poll.answerPlaceholder', { n: i + 1 })"
+          >
+          <button
+            v-wave
+            type="button"
+            class="mui-icon-btn flex-none"
+            :style="{ visibility: (i === answerDrafts.length - 1 && answerDrafts.length < 5) ? 'visible' : 'hidden' }"
+            :disabled="!(i === answerDrafts.length - 1 && answerDrafts.length < 5)"
+            data-testid="poll-add-answer"
+            @click="addAnswer"
+          >
+            <AppIcon icon="ic:baseline-add" style="font-size: 1.5rem;" />
+          </button>
+        </div>
         <div class="flex justify-center mt-5">
           <button
             v-wave
             class="mui-btn"
-            :disabled="!questionDraft.trim() || answerDrafts.some(a => !a.trim())"
+            :disabled="!questionDraft.trim() || answerDrafts.filter(a => a.trim()).length < 2"
             data-testid="poll-start-button"
             @click="submitVoteQuestion"
           >
@@ -184,6 +215,25 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
       >
         <AppIcon icon="lucide:undo" style="font-size: 1.5rem;" />
       </button>
+      <TooltipRoot>
+        <TooltipTrigger as-child>
+          <button
+            v-wave
+            class="mui-icon-btn"
+            :disabled="!canReset || countdownRunning"
+            :style="{ color: (!canReset || countdownRunning) ? 'var(--text-disabled)' : undefined }"
+            data-testid="reset-button"
+            @click="emit('reset')"
+          >
+            <AppIcon icon="ic:baseline-restart-alt" style="font-size: 1.5rem;" />
+          </button>
+        </TooltipTrigger>
+        <TooltipPortal>
+          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
+            {{ $t('cards.reset') }}
+          </TooltipContent>
+        </TooltipPortal>
+      </TooltipRoot>
       <button
         v-wave
         class="mui-btn"

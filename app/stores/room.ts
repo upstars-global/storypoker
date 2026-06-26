@@ -72,6 +72,13 @@ export const useRoomStore = defineStore('room', () => {
     ])
   }
 
+  async function resetVotes() {
+    if (!roomId.value) return
+    const playersStore = usePlayersStore()
+    await getSupabase().from('players').update({ vote: null }).eq('room_id', roomId.value)
+    playersStore.clearPendingVotes()
+  }
+
   async function resetTimer() {
     if (!roomId.value) return
     await getSupabase()
@@ -184,6 +191,7 @@ export const useRoomStore = defineStore('room', () => {
     applyChange,
     reveal,
     startNewRound,
+    resetVotes,
     saveCardDeck,
     setDeckPreset,
     setPollQuestion,

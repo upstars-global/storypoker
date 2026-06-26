@@ -37,6 +37,7 @@
   },
   "cards": {
     "reveal": "Reveal Estimates",
+    "reset": "Reset Estimates",
     "revealCountdown": "Start Countdown",
     "countdownSilent": "Silent",
     "countdownDry": "Plain sound",

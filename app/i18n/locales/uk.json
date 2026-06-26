@@ -37,6 +37,7 @@
   },
   "cards": {
     "reveal": "Показати оцінки",
+    "reset": "Скинути оцінки",
     "revealCountdown": "Зворотній відлік",
     "countdownSilent": "Без звуку",
     "countdownDry": "Простий звук",

@@ -17,13 +17,13 @@ const props = defineProps<{
 
 const cardLabel = useCardLabel()
 
-const BUBBLE_COLORS = ['#546e7a', '#e64a19', '#fbc02d']
+const BUBBLE_COLORS = ['#546e7a', '#e64a19', '#fbc02d', '#43a047', '#5e35b1']
 const BUBBLE_MIN = 60
 const BUBBLE_MAX = 200
 
 const votingBubbles = computed(() => {
   if (!props.disableCelebration || !props.activeCards?.length) return null
-  const cards = props.activeCards.slice(0, 3)
+  const cards = props.activeCards
   const counts = cards.map(card => props.votes[card] ?? 0)
   const maxCount = Math.max(...counts, 1)
   return cards.map((card, i) => {
