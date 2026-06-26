@@ -19,6 +19,9 @@
   "workbench.editor.empty.hint": "hidden",
   "explorer.confirmPasteNative": false,
   "terminal.integrated.defaultLocation": "editor",
-  "workbench.browser.openLocalhostLinks": false,
-  "workbench.editor.openSideBySideDirection": "right"
+  "workbench.browser.openLocalhostLinks": true,
+  "workbench.editor.openSideBySideDirection": "right",
+  "extensions.ignoreRecommendations": true,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.confirmDelete": false
 }

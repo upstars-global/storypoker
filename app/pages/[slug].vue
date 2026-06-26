@@ -240,10 +240,13 @@ watch(() => roomState.value?.phase, (phase, prev) => {
   }
 })
 
-watch(visiblePlayers, async (next) => {
-  const ids = next.map(p => p.user_id).filter(Boolean) as string[]
-  if (ids.length) await profilesStore.fetchMany(ids)
-}, { deep: true })
+const playerUserIds = computed(() =>
+  (visiblePlayers.value.map(p => p.user_id).filter(Boolean) as string[]).sort().join(',')
+)
+
+watch(playerUserIds, async (ids) => {
+  if (ids) await profilesStore.fetchMany(ids.split(','))
+})
 
 onUnmounted(async () => {
   unsubscribe()

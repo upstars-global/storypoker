@@ -286,3 +286,326 @@ Smoke pack (планується, спека: `docs/superpowers/specs/2026-05-15
 - [`DESIGN.md`](DESIGN.md) — повна дизайн-специфікація + audit
 - [`docs/superpowers/plans/`](docs/superpowers/plans/) — iter-плани окремих фіч
 - [`docs/superpowers/specs/`](docs/superpowers/specs/) — специфікації фіч
+
+
+====================================================================================================
+
+2026-06-24
+BY CLAUDE-CODE
+
+⏺ Проаналізував архітектуру, stores, realtime, міграції та bundle. Ось 8 найважливіших оптимізацій,
+пріоритизовані за впливом × ризиком.
+
+---
+P0 — Критичні
+
+1. RLS дає публічний read/write на всі таблиці
+
+supabase/migrations/001 (+002, 005) — усі політики using (true) / with check (true). З publishable
+anon-ключем (який лежить у browser bundle) будь-хто може:
+- змінити/видалити голос або left_at будь-якого гравця в будь-якій кімнаті (players update/delete
+global),
+- перейменувати/захопити slug чужої кімнати, переписати room_state.phase,
+- читати всі round_history і user_profiles глобально.
+
+CLAUDE.md це визнає («логіка в клієнті»), але для продакшну це найбільший ризик. Дія: хоча б звузити
+write-політики — update/delete players лише в межах рядків з відповідним room_id, а краще перенести
+мутації (kick, toggle-moderator, rename room, reveal) у Postgres RPC / Edge Functions з перевіркою
+прав. Мінімальний крок без бекенду: політики, що звіряють room_id і забороняють зміну чужих профілів.
+
+---
+P1 — Висока віддача
+
+2. user_profiles realtime-канал слухає глобально, без фільтра
+
+[slug].vue:286-290 — підписка на user_profiles без filter, попри назву каналу user_profiles:${roomId}.
+Кожен апдейт аватара будь-якого юзера в усій БД розсилається всім підключеним клієнтам. Це не
+масштабується і витікає дані інших кімнат.
+Дія: прибрати канал зовсім (профілі й так тягнуться через fetchMany у watch) або фільтрувати по
+конкретних user_id поточної кімнати.
+
+3. Перегенерація DiceBear-аватарів на кожен рендер + deep-watcher
+
+- PlayerRow.vue:57-60 — playerAvatar це computed, що залежить від is_online; на кожну зміну (голос,
+presence) SVG генерується заново + btoa(unescape(...)). При 8+ гравцях і частих голосуваннях це
+помітний CPU.
+- [slug].vue:237-240 — watch(visiblePlayers, …, { deep: true }) запускає profilesStore.fetchMany на
+будь-яку глибоку зміну гравця (зокрема кожен голос), а не лише при зміні складу.
+
+Дія: (а) кешувати avatarDataUri по ключу seed|grayscale|style (Map-memo у composable); (б) замінити
+deep-watcher на watch по похідному списку user_id (computed → плоский масив), без deep: true.
+
+4. Немає code-splitting; усі маршрути + DiceBear у головному бандлі
+
+router.ts:2-8 — статичні імпорти всіх 7 сторінок. @dicebear/core + 3 колекції (bottts/dylan/miniavs)
+великі й тягнуться в initial bundle, хоча потрібні лише на сторінці кімнати/налаштувань.
+Дія: lazy-load маршрутів (component: () => import(...)) для auth-сторінок і /ffc; винести DiceBear у
+динамічний import. Це найшвидший виграш по TTI на головній.
+
+---
+P2 — Варто зробити
+
+5. PostgREST filter injection у resolveRoom
+
+room.ts:162 — .or(\id.eq.${input},slug.eq.${input}`)з сирим інтерполюваннямurlParam. Спецсимволи (,,
+), .) ламають/розширюють фільтр. **Дія:** валідувати inputчерезisValidRoomSlug/8-символьний id перед
+запитом, або робити два окремі .eq()запити замість.or()` з рядком.
+
+6. Google Fonts блокують перший рендер
+
+index.html:8 — <link rel="stylesheet" href="fonts.googleapis.com…"> без preconnect, render-blocking.
+Дія: додати <link rel="preconnect"> до fonts.googleapis.com і fonts.gstatic.com; розглянути self-host
+Roboto/Geist Mono або media="print" onload трюк.
+
+7. Помилки мутацій тихо ковтаються
+
+handleVote, handleSaveEdit ([slug].vue:333,353), rejoin (164-187) — порожні catch {}. Користувач не
+бачить фейлу збереження (rename, shields, голос після rollback).
+Дія: мінімум — toast/inline-помилка для критичних дій (rename room вже має roomNameError, решта — ні).
+
+---
+P3 — Дрібне
+
+8. build.sourcemap: true у продакшні + single() на room_state
+
+vite.config.ts:16 публікує повні sourcemaps (розкриває код, важчий deploy) — лиши лише для stage.
+fetchInitialData ([slug].vue:251) .single() кине помилку, якщо рядка room_state нема (гонка при
+створенні) — .maybeSingle() безпечніше.
+
+---
+Рекомендований порядок: 1 → 2 → 3 → 4 (security + найбільший realtime/CPU/bundle виграш), далі 5–7.
+Якщо хочеш — почну з #2 і #3 (швидкі, ізольовані, без зміни схеми БД) або підготую SQL для #1.
+
+====================================================================================================
+
+2026-06-24
+BY CODEX
+
+• Проєкт функціонально компактний і збирається стабільно, але головні ризики зараз не в CSS чи дрібній
+продуктивності, а в безпеці даних, атомарності операцій та слабких quality gates.
+
+## Пріоритетні оптимізації
+
+  #      Пріоритет    Оптимізація                                      Impact       Effort
+━━━━━  ━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━  ━━━━━━━━━━
+  1      P0           Реальна серверна авторизація та RLS              Критичний    Великий
+─────  ───────────  ───────────────────────────────────────────────  ───────────  ──────────
+  2      P0           Атомарні операції раунду через Postgres RPC      Критичний    Середній
+─────  ───────────  ───────────────────────────────────────────────  ───────────  ──────────
+  3      P1           Системна обробка Supabase-помилок                Високий      Середній
+─────  ───────────  ───────────────────────────────────────────────  ───────────  ──────────
+  4      P1           Посилення CI, E2E та database tests              Високий      Середній
+─────  ───────────  ───────────────────────────────────────────────  ───────────  ──────────
+  5      P1           Декомпозиція room orchestration                  Високий      Середній
+─────  ───────────  ───────────────────────────────────────────────  ───────────  ──────────
+  6      P2           Оптимізація bundle і lazy loading                Середній     Середній
+─────  ───────────  ───────────────────────────────────────────────  ───────────  ──────────
+  7      P2           Надійніший Realtime/Presence/countdown           Середній     Середній
+─────  ───────────  ───────────────────────────────────────────────  ───────────  ──────────
+  8      P2           Синхронізація документації та lint discipline    Середній     Малий
+
+### 1. P0 — закрити публічний запис у БД
+
+Зараз будь-який користувач з anon key може:
+
+- зробити себе модератором;
+- змінити або видалити іншого гравця;
+- підмінити user_id;
+- розкрити чи скинути раунд;
+- перейменувати будь-яку кімнату;
+- змінити чужий профіль;
+- записати довільну історію.
+
+Причина: всі update/insert policies мають using (true) або with check (true):
+
+- supabase/migrations/001_initial_schema.sql:43
+- supabase/migrations/002_rooms_update_policy.sql:1
+- supabase/migrations/005_user_profiles.sql:10
+
+Рекомендація:
+
+- профілі дозволяти змінювати лише при auth.uid() = user_id;
+- модераторські операції винести в security definer RPC;
+- ввести непідробний moderator membership/ownership;
+- для анонімного гравця використовувати room-scoped capability/token, а не знання UUID;
+- додати rate limiting або CAPTCHA для створення кімнат.
+
+### 2. P0 — зробити раунд атомарним
+
+reveal() окремо оновлює стан і потім вставляє історію. Два модератори можуть записати два snapshots, а
+помилка другого запиту залишить частково виконану операцію:
+
+app/stores/room.ts:24
+
+startNewRound() паралельно, але не транзакційно, очищає голоси й змінює фазу:
+
+app/stores/room.ts:55
+
+Створення кімнати також може залишити rooms без room_state:
+
+app/stores/room.ts:147
+
+Потрібні Postgres-функції:
+
+- create_room();
+- reveal_round(expected_started_at);
+- start_new_round();
+- join_room().
+
+Усередині — транзакції, перевірка ролей, optimistic concurrency та idempotency. Додатково потрібні DB
+constraints для phase, deck_preset, довжин імен/slug, розміру active_cards, players.room_id NOT NULL.
+
+### 3. P1 — перестати ігнорувати помилки
+
+Більшість store-методів не перевіряють { error }, тому UI може закрити модалку або перейти на іншу
+сторінку, хоча зміна не збереглася:
+
+app/stores/players.ts:67
+
+У room page є порожні catch, які повністю приховують проблеми:
+
+app/pages/[slug].vue:327
+
+Рекомендую:
+
+- один typed helper для перевірки Supabase result;
+- loading/error state для мутацій;
+- localized toast/banner із retry;
+- rollback для всіх optimistic updates;
+- logging із room/action context без персональних даних.
+
+### 4. P1 — зробити тести реальним захистом
+
+Поточний стан:
+
+- 67 unit-тестів проходять;
+- statements: 71.3%, branches: 51.5%;
+- UI component tests відсутні;
+- lint повертає успіх із 461 warning;
+- E2E опціональні й deploy дозволений, коли вони skipped:
+  .github/workflows/ci.yml:102
+
+- smoke-тест уже не відповідає коду: очікує number, але lastVisitedAt зберігається як ISO string:
+  tests/e2e/smoke.spec.ts:18,
+  app/utils/recentRooms.ts:41
+
+Найцінніші нові тести:
+
+- два browser contexts: голосування, reveal, reconnect;
+- одночасний reveal двома модераторами;
+- заборонені RLS-операції anon/user;
+- moderator permissions;
+- presence reconnect без duplicate channels;
+- failure injection для кожної мутації.
+
+Встановити coverage thresholds і запускати хоча б smoke E2E як обов’язковий deploy gate.
+
+### 5. P1 — розділити [slug].vue
+
+app/pages/[slug].vue:1 має 619 рядків і одночасно керує:
+
+- route resolution;
+- session restore;
+- п’ятьма realtime channels;
+- presence;
+- snapshots;
+- countdown;
+- профілями;
+- усіма UI actions.
+
+Це вже coordination god-component. Доцільно виділити:
+
+- useRoomSession;
+- useRoomRealtime;
+- useRoundSnapshot;
+- useRoomActions;
+- useCountdownBroadcast.
+
+Також треба реагувати на зміну route.params.slug: при переході між двома кімнатами Vue може повторно
+використати той самий компонент без нового onMounted.
+
+### 6. P2 — зменшити initial bundle
+
+Поточний production build:
+
+- JS: 757 KB / 232.7 KB gzip;
+- один монолітний chunk;
+- source map: 3.6 MB;
+- весь dist: 4.7 MB.
+
+Причини:
+
+- всі routes імпортуються eagerly:
+  app/router.ts:1
+
+- три DiceBear collections входять у початковий bundle:
+  app/composables/useDylanAvatar.ts:1
+
+- production sourcemaps увімкнені:
+  vite.config.ts:16
+
+- є невикористані @lucide/vue, CVA та shadcn scaffolding.
+
+Рекомендація:
+
+- routes через () => import(...);
+- lazy-load avatar editor і avatar styles;
+- precompile vue-i18n;
+- прибрати невикористані dependencies;
+- sourcemaps або вимкнути, або завантажувати тільки в error tracker;
+- додати bundle budget у CI.
+
+Також зараз шрифти завантажуються двома Google Fonts requests:
+
+index.html:8, app/assets/css/main.css:2.
+
+### 7. P2 — зробити Realtime lifecycle детермінованим
+
+openChannel() може викликатися повторно без закриття попереднього каналу під час online/visibility
+events:
+
+app/stores/presence.ts:67
+
+Це створює ризик zombie channels, duplicate subscriptions та некоректного статусу.
+
+Потрібні:
+
+- single-flight reconnect;
+- generation/token guard для stale callbacks;
+- removeChannel() під час cleanup;
+- backoff;
+- server timestamp у countdown broadcast;
+- серверна фіналізація countdown, щоб reveal не залежав від того, чи залишився initiator online.
+
+### 8. P2 — синхронізувати документацію та tooling
+
+AGENTS.md описує Nuxt 4, Tailwind 3 і неіснуючий nuxt.config.ts, хоча проєкт уже Vue/Vite/Tailwind 4:
+
+AGENTS.md:19
+
+ROADMAP.md усе ще планує Tailwind 4, який уже встановлено:
+
+ROADMAP.md:33
+
+Це створює прямий ризик неправильних змін. Варто:
+
+- оновити AGENTS.md, CLAUDE.md, ROADMAP.md;
+- прибрати старі Nuxt exclusions/config references;
+- зменшити lint noise й заборонити нові warnings через --max-warnings 0;
+- підключити generated Supabase database types замість численних any.
+
+## Рекомендована послідовність
+
+1. RLS та authorization model.
+2. Atomic RPC + DB constraints.
+3. Error handling.
+4. Database/E2E tests як deploy gate.
+5. Декомпозиція room lifecycle.
+6. Realtime hardening.
+7. Bundle optimization.
+8. Документація й lint cleanup.
+
+Перевірено локально: typecheck, 67 unit tests і build проходять; npm audit — 0 відомих
+vulnerabilities. E2E не запускався через відсутній .env/.env.test. Файли проєкту не змінював.
+
+====================================================================================================
