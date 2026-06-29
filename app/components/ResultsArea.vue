@@ -4,6 +4,7 @@ import PieChart from '~/components/PieChart.vue'
 import { createCelebrationParticles, shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
 import { useI18n } from 'vue-i18n'
 import { useCardLabel } from '~/composables/useCardLabel'
+import { averageOf } from '~/utils/roundStats'
 
 const props = defineProps<{
   votes: Record<string, number>
@@ -11,6 +12,7 @@ const props = defineProps<{
   isModerator: boolean
   pollQuestion?: string | null
   disableCelebration?: boolean
+  showAlignment?: boolean
   activeCards?: string[]
   playerVotes?: { name: string; vote: string }[]
 }>()
@@ -22,7 +24,7 @@ const BUBBLE_MIN = 60
 const BUBBLE_MAX = 200
 
 const votingBubbles = computed(() => {
-  if (!props.disableCelebration || !props.activeCards?.length) return null
+  if (!props.disableCelebration || props.showAlignment || !props.activeCards?.length) return null
   const cards = props.activeCards
   const counts = cards.map(card => props.votes[card] ?? 0)
   const maxCount = Math.max(...counts, 1)
@@ -38,26 +40,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-
-function voteToNumber(v: string): number | null {
-  const trimmed = v.replace(/\s*\*$/, '').replace(/h$/i, '')
-  if (trimmed === '1/2') return 0.5
-  const n = Number(trimmed)
-  return Number.isFinite(n) ? n : null
-}
-
-function averageOf(votes: Record<string, number>): string | null {
-  let sum = 0
-  let count = 0
-  for (const [vote, c] of Object.entries(votes)) {
-    const n = voteToNumber(vote)
-    if (n === null) continue
-    sum += n * c
-    count += c
-  }
-  if (count === 0) return null
-  return (sum / count).toFixed(1)
-}
 
 const groups = computed(() => {
   const out: { label: string; votes: Record<string, number>; average: string | null }[] = []

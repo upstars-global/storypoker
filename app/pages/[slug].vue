@@ -28,8 +28,11 @@ import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal.vue'
+import HistoryModal from '~/components/HistoryModal.vue'
 import PlayerEditModal from '~/components/PlayerEditModal.vue'
 import PlayersList from '~/components/PlayersList.vue'
+import AlignmentCard from '~/components/AlignmentCard.vue'
+import { alignmentScore } from '~/utils/alignment'
 import Timer from '~/components/Timer.vue'
 import CardsArea from '~/components/CardsArea.vue'
 import ResultsArea from '~/components/ResultsArea.vue'
@@ -65,6 +68,7 @@ const notFound = ref(false)
 const showJoin = ref(false)
 const showAuth = ref<'signin' | 'signup' | null>(null)
 const showCardDeck = ref(false)
+const showHistory = ref(false)
 const showAccountSettings = ref(false)
 const editTargetId = ref<string | null>(null)
 const editTargetPlayer = computed(() => visiblePlayers.value.find(p => p.id === editTargetId.value) ?? null)
@@ -118,6 +122,37 @@ const canReset = computed(() => {
 const isPollDeck = computed(() =>
   roomState.value?.deck_preset === 'voting' || roomState.value?.deck_preset === 'vote_question'
 )
+
+const alignmentBlocks = computed(() => {
+  let votes: Record<string, number>
+  let grouped: { general: Record<string, number>; qa: Record<string, number> } | null
+  let deck: string[] | null | undefined
+  if (showLastRound.value && lastRound.value && !lastRound.value.isVotingDeck) {
+    votes = lastRound.value.votes
+    grouped = lastRound.value.groupedVotes
+    deck = lastRound.value.activeCards
+  } else if (roomState.value?.phase === 'revealed' && !isPollDeck.value) {
+    votes = voteCounts.value
+    grouped = groupedVoteCounts.value
+    deck = roomState.value?.active_cards
+  } else {
+    return null
+  }
+  const blocks: { label: string; value: number }[] = []
+  if (grouped) {
+    const dev = alignmentScore(grouped.general, deck)
+    if (dev !== null) blocks.push({ label: t('results.general'), value: dev })
+    const qaTotal = Object.values(grouped.qa).reduce((a, b) => a + b, 0)
+    if (qaTotal) {
+      const qa = alignmentScore(grouped.qa, deck)
+      if (qa !== null) blocks.push({ label: 'QA', value: qa })
+    }
+  } else {
+    const all = alignmentScore(votes, deck)
+    if (all !== null) blocks.push({ label: t('results.general'), value: all })
+  }
+  return blocks.length ? blocks : null
+})
 
 const isConsensus = computed(() => {
   if (isPollDeck.value) return false
@@ -465,6 +500,7 @@ async function submitRenameRoom() {
       @open-card-deck="showCardDeck = true"
       @open-rename-room="openRenameRoom"
       @open-account-settings="showAccountSettings = true"
+      @open-history="showHistory = true"
       @sign-out="authStore.signOut()"
       :countdown-active="countdownActive"
       :countdown-counter="countdownTimerCounter"
@@ -484,6 +520,7 @@ async function submitRenameRoom() {
           @leave="handleLeave"
           @kick="handleKick"
         />
+        <AlignmentCard v-if="alignmentBlocks" :blocks="alignmentBlocks" />
         <Timer
           v-if="roomState"
           :round-started-at="roomState.round_started_at"
@@ -506,7 +543,8 @@ async function submitRenameRoom() {
           :is-moderator="false"
           :poll-question="lastRound.pollQuestion"
           :disable-celebration="true"
-          :active-cards="lastRound.isVotingDeck ? lastRound.activeCards : undefined"
+          :show-alignment="!lastRound.isVotingDeck"
+          :active-cards="lastRound.activeCards"
         />
         <ResultsArea
           v-if="roomState?.phase === 'revealed'"
@@ -515,7 +553,8 @@ async function submitRenameRoom() {
           :is-moderator="isModerator"
           :poll-question="isPollDeck ? (roomState.poll_question ?? null) : null"
           :disable-celebration="isPollDeck"
-          :active-cards="isPollDeck ? (roomState.active_cards ?? undefined) : undefined"
+          :show-alignment="!isPollDeck"
+          :active-cards="roomState.active_cards ?? undefined"
           @start-new-round="roomStore.startNewRound()"
         />
         <CardsArea
@@ -559,6 +598,8 @@ async function submitRenameRoom() {
       @close="showCardDeck = false"
       @save="handleSaveCardDeck"
     />
+
+    <HistoryModal v-if="showHistory" :room-name="currentRoomName ?? currentSlug ?? undefined" @close="showHistory = false" />
 
     <PlayerEditModal
       v-if="editTargetPlayer"

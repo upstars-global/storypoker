@@ -3,6 +3,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "close": "Close",
+    "loading": "Loading…",
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "signOut": "Sign Out",
@@ -18,7 +19,18 @@
     "lightTheme": "Light Theme",
     "darkTheme": "Dark Theme",
     "currentUserAccount": "account of current user",
-    "accountSettings": "Account Settings"
+    "accountSettings": "Account Settings",
+    "history": "Round History"
+  },
+  "history": {
+    "title": "Round History",
+    "empty": "No completed rounds yet",
+    "emptyRange": "No rounds in this period",
+    "average": "Average",
+    "exportCsv": "Export CSV",
+    "filter": {
+      "allDecks": "All decks"
+    }
   },
   "home": {
     "title": "Create a planning poker room",
@@ -103,7 +115,8 @@
     }
   },
   "results": {
-    "general": "DEV"
+    "general": "DEV",
+    "alignment": "Alignment"
   },
   "shields": {
     "title": "Pick your shields",
