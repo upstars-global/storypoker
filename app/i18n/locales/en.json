@@ -20,7 +20,22 @@
     "darkTheme": "Dark Theme",
     "currentUserAccount": "account of current user",
     "accountSettings": "Account Settings",
-    "history": "Round History"
+    "history": "Round History",
+    "alignmentTrends": "Alignment Trends"
+  },
+  "trends": {
+    "title": "Team Alignment Trends",
+    "currentScore": "Current Score",
+    "trend": "Trend",
+    "averageScore": "Average Score",
+    "estimates": "Estimates",
+    "vsPrevious": "vs previous period",
+    "currentPeriod": "Current period estimates",
+    "stable": "Stable",
+    "up": "Rising",
+    "down": "Declining",
+    "noData": "Not enough data for this period",
+    "chartTitle": "Alignment Trend Chart"
   },
   "history": {
     "title": "Round History",

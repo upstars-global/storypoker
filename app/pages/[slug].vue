@@ -29,6 +29,7 @@ import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal.vue'
 import HistoryModal from '~/components/HistoryModal.vue'
+import AlignmentTrendsModal from '~/components/AlignmentTrendsModal.vue'
 import PlayerEditModal from '~/components/PlayerEditModal.vue'
 import PlayersList from '~/components/PlayersList.vue'
 import AlignmentCard from '~/components/AlignmentCard.vue'
@@ -69,6 +70,7 @@ const showJoin = ref(false)
 const showAuth = ref<'signin' | 'signup' | null>(null)
 const showCardDeck = ref(false)
 const showHistory = ref(false)
+const showAlignmentTrends = ref(false)
 const showAccountSettings = ref(false)
 const editTargetId = ref<string | null>(null)
 const editTargetPlayer = computed(() => visiblePlayers.value.find(p => p.id === editTargetId.value) ?? null)
@@ -501,6 +503,7 @@ async function submitRenameRoom() {
       @open-rename-room="openRenameRoom"
       @open-account-settings="showAccountSettings = true"
       @open-history="showHistory = true"
+      @open-alignment-trends="showAlignmentTrends = true"
       @sign-out="authStore.signOut()"
       :countdown-active="countdownActive"
       :countdown-counter="countdownTimerCounter"
@@ -600,6 +603,7 @@ async function submitRenameRoom() {
     />
 
     <HistoryModal v-if="showHistory" :room-name="currentRoomName ?? currentSlug ?? undefined" @close="showHistory = false" />
+    <AlignmentTrendsModal v-if="showAlignmentTrends" @close="showAlignmentTrends = false" />
 
     <PlayerEditModal
       v-if="editTargetPlayer"

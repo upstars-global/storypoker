@@ -41,6 +41,7 @@ const emit = defineEmits<{
   openRenameRoom: []
   openAccountSettings: []
   openHistory: []
+  openAlignmentTrends: []
   signOut: []
 }>()
 
@@ -212,6 +213,16 @@ function toggleLocale() {
                 class="mui-menu-icon"
                 icon="ic:baseline-history"
               /> {{ $t('header.history') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              @select="emit('openAlignmentTrends')"
+            >
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-trending-up"
+              /> {{ $t('header.alignmentTrends') }}
             </DropdownMenuItem>
             <DropdownMenuSeparator class="mui-divider" />
 
