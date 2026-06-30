@@ -16,6 +16,7 @@ import { usePlayersStore } from '~/stores/players'
 import { summarizeRound, isNumericPreset, voteToNumber } from '~/utils/roundStats'
 import { alignmentScore } from '~/utils/alignment'
 import { isQaPlayer } from '~/utils/shields'
+import { DECK_PRESETS } from '~/utils/cardDecks'
 import type { RoundHistory } from '~/stores/types'
 
 const emit = defineEmits<{ close: [] }>()
@@ -32,6 +33,7 @@ interface ChartPoint {
   date: Date
   devAlignment: number | null
   qaAlignment: number | null
+  deckPreset: string | null
 }
 
 const allPoints = ref<ChartPoint[]>([])
@@ -56,25 +58,30 @@ function splitRound(round: RoundHistory): { dev: number | null; qa: number | nul
   }
   return {
     dev: alignmentScore(devCounts, round.active_cards),
-    qa: Object.keys(qaCounts).length >= 2 ? alignmentScore(qaCounts, round.active_cards) : null,
+    qa: alignmentScore(qaCounts, round.active_cards),
   }
 }
 
 onMounted(async () => {
-  const rounds = await roomStore.fetchHistory()
-  allPoints.value = rounds
-    .filter(r => {
-      const s = summarizeRound(r)
-      if (!isNumericPreset(s.deckPreset)) return false
-      if (s.deckPreset == null && !Object.keys(s.counts).some(v => voteToNumber(v) !== null)) return false
-      return true
-    })
-    .map(r => {
-      const { dev, qa } = splitRound(r)
-      return { date: new Date(r.revealed_at), devAlignment: dev, qaAlignment: qa }
-    })
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-  loading.value = false
+  try {
+    const rounds = await roomStore.fetchHistory()
+    allPoints.value = rounds
+      .filter(r => {
+        const s = summarizeRound(r)
+        if (!isNumericPreset(s.deckPreset)) return false
+        if (s.deckPreset == null && !Object.keys(s.counts).some(v => voteToNumber(v) !== null)) return false
+        return true
+      })
+      .map(r => {
+        const { dev, qa } = splitRound(r)
+        return { date: new Date(r.revealed_at), devAlignment: dev, qaAlignment: qa, deckPreset: r.deck_preset }
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+  } catch (e) {
+    console.error('[AlignmentTrendsModal] fetchHistory error:', e)
+  } finally {
+    loading.value = false
+  }
 })
 
 const cutoff = computed(() => {
@@ -86,7 +93,24 @@ const cutoff = computed(() => {
   return d
 })
 
-const points = computed(() => allPoints.value.filter(p => p.date >= cutoff.value))
+const deckFilter = ref<string | null>(null)
+
+const availableDecks = computed(() => {
+  const seen = new Set<string>()
+  for (const p of allPoints.value) {
+    if (p.deckPreset) seen.add(p.deckPreset)
+  }
+  return [...seen]
+})
+
+function deckName(id: string): string {
+  return DECK_PRESETS.find(p => p.id === id)?.name ?? id
+}
+
+const points = computed(() => allPoints.value.filter(p =>
+  p.date >= cutoff.value &&
+  (deckFilter.value === null || p.deckPreset === deckFilter.value),
+))
 
 const hasQaData = computed(() => points.value.some(p => p.qaAlignment !== null))
 
@@ -300,6 +324,21 @@ const xAxisLabels = computed(() => {
                     @click="timeRange = r"
                   >{{ r }}</button>
                 </div>
+              </div>
+
+              <div v-if="availableDecks.length > 1" class="mb-2 flex flex-wrap gap-1">
+                <button
+                  class="rounded px-3 py-0.5 text-mui-caption font-medium transition-colors"
+                  :class="deckFilter === null ? 'bg-elevated text-white' : 'text-muted hover:text-body'"
+                  @click="deckFilter = null"
+                >{{ $t('history.filter.allDecks') }}</button>
+                <button
+                  v-for="deck in availableDecks"
+                  :key="deck"
+                  class="rounded px-3 py-0.5 text-mui-caption font-medium transition-colors"
+                  :class="deckFilter === deck ? 'bg-elevated text-white' : 'text-muted hover:text-body'"
+                  @click="deckFilter = deck"
+                >{{ deckName(deck) }}</button>
               </div>
 
               <div v-if="!chartData" class="flex h-32 items-center justify-center">
