@@ -11,7 +11,7 @@ export default defineConfig({
       '@': resolve(__dirname, 'app'),
     },
   },
-  server: { host: 'localhost', port: 3000, strictPort: false },
-  preview: { host: 'localhost', port: 3000, strictPort: false },
+  server: { host: 'localhost', port: 3001, strictPort: false },
+  preview: { host: 'localhost', port: 3001, strictPort: false },
   build: { sourcemap: true },
 })
