@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { getSupabase } from '~/lib/supabase-instance'
 import { getDeck, type DeckPresetId } from '~/utils/cardDecks'
 import { usePlayersStore } from './players'
-import type { RoomState, RoundHistoryVote } from './types'
+import type { RoomState, RoundHistory, RoundHistoryVote } from './types'
 
 type RealtimePayload = {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE'
@@ -43,31 +43,53 @@ export const useRoomStore = defineStore('room', () => {
     await supabase.from('room_state').update(update).eq('room_id', roomId.value)
 
     if (votes.length >= 2) {
-      await supabase.from('round_history').insert({
+      const { error } = await supabase.from('round_history').insert({
         room_id: roomId.value,
         started_at: roomState.value.round_started_at,
         revealed_at: revealedAt.toISOString(),
         votes,
+        active_cards: roomState.value.active_cards ?? null,
+        deck_preset: roomState.value.deck_preset ?? null,
       })
+      if (error) console.error('[reveal] round_history insert failed:', error)
     }
+  }
+
+  async function fetchHistory(): Promise<RoundHistory[]> {
+    if (!roomId.value) return []
+    const { data } = await getSupabase()
+      .from('round_history')
+      .select('*')
+      .eq('room_id', roomId.value)
+      .order('revealed_at', { ascending: false })
+    return (data ?? []) as RoundHistory[]
   }
 
   async function startNewRound() {
     if (!roomId.value) return
     const supabase = getSupabase()
+    const preset = roomState.value?.deck_preset
+    const stateUpdate: Record<string, unknown> = {
+      phase: 'voting',
+      round_started_at: new Date().toISOString(),
+      paused_at: null,
+      paused_elapsed_ms: 0,
+      poll_question: null,
+    }
+    if (preset === 'vote_question') {
+      stateUpdate.active_cards = getDeck('vote_question').defaultActive
+    }
     await Promise.all([
       supabase.from('players').update({ vote: null }).eq('room_id', roomId.value),
-      supabase
-        .from('room_state')
-        .update({
-          phase: 'voting',
-          round_started_at: new Date().toISOString(),
-          paused_at: null,
-          paused_elapsed_ms: 0,
-          poll_question: null,
-        })
-        .eq('room_id', roomId.value),
+      supabase.from('room_state').update(stateUpdate).eq('room_id', roomId.value),
     ])
+  }
+
+  async function resetVotes() {
+    if (!roomId.value) return
+    const playersStore = usePlayersStore()
+    await getSupabase().from('players').update({ vote: null }).eq('room_id', roomId.value)
+    playersStore.clearPendingVotes()
   }
 
   async function resetTimer() {
@@ -181,7 +203,9 @@ export const useRoomStore = defineStore('room', () => {
     roomState,
     applyChange,
     reveal,
+    fetchHistory,
     startNewRound,
+    resetVotes,
     saveCardDeck,
     setDeckPreset,
     setPollQuestion,

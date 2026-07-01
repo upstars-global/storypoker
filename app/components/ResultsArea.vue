@@ -4,6 +4,7 @@ import PieChart from '~/components/PieChart.vue'
 import { createCelebrationParticles, shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
 import { useI18n } from 'vue-i18n'
 import { useCardLabel } from '~/composables/useCardLabel'
+import { averageOf } from '~/utils/roundStats'
 
 const props = defineProps<{
   votes: Record<string, number>
@@ -11,20 +12,20 @@ const props = defineProps<{
   isModerator: boolean
   pollQuestion?: string | null
   disableCelebration?: boolean
+  showAlignment?: boolean
   activeCards?: string[]
+  playerVotes?: { name: string; vote: string }[]
 }>()
 
 const cardLabel = useCardLabel()
 
-const BUBBLE_COLORS = ['#546e7a', '#e64a19', '#fbc02d']
+const BUBBLE_COLORS = ['#546e7a', '#e64a19', '#fbc02d', '#43a047', '#5e35b1']
 const BUBBLE_MIN = 60
 const BUBBLE_MAX = 200
 
 const votingBubbles = computed(() => {
-  if (!props.disableCelebration || !props.activeCards?.length) return null
-  const base = props.activeCards.slice(0, 2)
-  const third = props.activeCards[2]
-  const cards = (third && (props.votes[third] ?? 0) > 0) ? [...base, third] : base
+  if (!props.disableCelebration || props.showAlignment || !props.activeCards?.length) return null
+  const cards = props.activeCards
   const counts = cards.map(card => props.votes[card] ?? 0)
   const maxCount = Math.max(...counts, 1)
   return cards.map((card, i) => {
@@ -39,26 +40,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-
-function voteToNumber(v: string): number | null {
-  const trimmed = v.replace(/\s*\*$/, '').replace(/h$/i, '')
-  if (trimmed === '1/2') return 0.5
-  const n = Number(trimmed)
-  return Number.isFinite(n) ? n : null
-}
-
-function averageOf(votes: Record<string, number>): string | null {
-  let sum = 0
-  let count = 0
-  for (const [vote, c] of Object.entries(votes)) {
-    const n = voteToNumber(vote)
-    if (n === null) continue
-    sum += n * c
-    count += c
-  }
-  if (count === 0) return null
-  return (sum / count).toFixed(1)
-}
 
 const groups = computed(() => {
   const out: { label: string; votes: Record<string, number>; average: string | null }[] = []
@@ -113,7 +94,7 @@ watch(celebrate, (next, prev) => {
         }"
       />
     </div>
-    <h3 v-if="pollQuestion" class="text-center text-mui-h2 font-bold text-primary" data-testid="poll-question">
+    <h3 v-if="pollQuestion" class="text-center text-mui-h2 font-bold text-white" data-testid="poll-question">
       {{ pollQuestion }}
     </h3>
     <div v-if="votingBubbles" ref="chartsEl" class="flex items-end justify-center gap-10 flex-wrap py-4">
@@ -128,7 +109,7 @@ watch(celebrate, (next, prev) => {
         >
           <span
             class="font-semibold text-white text-center leading-none"
-            :style="{ fontSize: `${Math.max(b.size * 0.22, 12)}px` }"
+            :style="{ fontSize: `${Math.max(Math.min(b.size * 0.22, b.size * 1.2 / Math.max(cardLabel(b.card).length, 1)), 9)}px`, wordBreak: 'break-word', padding: '0 8px' }"
           >{{ cardLabel(b.card) }}</span>
         </div>
         <span class="text-white font-medium text-base">{{ b.count }}</span>
@@ -145,6 +126,16 @@ watch(celebrate, (next, prev) => {
           {{ g.label }}<template v-if="g.average !== null">: {{ g.average }}</template>
         </span>
         <PieChart :votes="g.votes" />
+      </div>
+    </div>
+    <div v-if="playerVotes?.length" class="w-full max-w-md mx-auto">
+      <div
+        v-for="pv in playerVotes"
+        :key="pv.name"
+        class="flex items-center justify-between py-1.5 border-b last:border-0"
+      >
+        <span class="text-base text-body">{{ pv.name }}</span>
+        <span class="text-base font-semibold text-primary">{{ cardLabel(pv.vote) }}</span>
       </div>
     </div>
     <button

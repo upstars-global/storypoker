@@ -28,8 +28,12 @@ import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal.vue'
+import HistoryModal from '~/components/HistoryModal.vue'
+import AlignmentTrendsModal from '~/components/AlignmentTrendsModal.vue'
 import PlayerEditModal from '~/components/PlayerEditModal.vue'
 import PlayersList from '~/components/PlayersList.vue'
+import AlignmentCard from '~/components/AlignmentCard.vue'
+import { alignmentScore } from '~/utils/alignment'
 import Timer from '~/components/Timer.vue'
 import CardsArea from '~/components/CardsArea.vue'
 import ResultsArea from '~/components/ResultsArea.vue'
@@ -51,11 +55,22 @@ const { roomState } = storeToRefs(roomStore)
 const { visiblePlayers, pendingVotes } = storeToRefs(playersStore)
 const { online, status: connectionStatus } = storeToRefs(presenceStore)
 
+interface LastRoundSnapshot {
+  votes: Record<string, number>
+  groupedVotes: { general: Record<string, number>; qa: Record<string, number> } | null
+  playerVotes: { id: string; name: string; vote: string }[]
+  pollQuestion: string | null
+  isVotingDeck: boolean
+  activeCards: string[]
+}
+
 const currentPlayerId = ref<string | null>(null)
 const notFound = ref(false)
 const showJoin = ref(false)
 const showAuth = ref<'signin' | 'signup' | null>(null)
 const showCardDeck = ref(false)
+const showHistory = ref(false)
+const showAlignmentTrends = ref(false)
 const showAccountSettings = ref(false)
 const editTargetId = ref<string | null>(null)
 const editTargetPlayer = computed(() => visiblePlayers.value.find(p => p.id === editTargetId.value) ?? null)
@@ -68,18 +83,27 @@ const origin = ref('')
 const kickTargetId = ref<string | null>(null)
 const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === kickTargetId.value)?.name ?? '')
 
+const pendingSnapshot = ref<LastRoundSnapshot | null>(null)
+const lastRound = ref<LastRoundSnapshot | null>(null)
+const showLastRound = ref(false)
+
 const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
 const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
 const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 const onlineCount = computed(() => visiblePlayers.value.filter(p => online.value.has(p.id)).length)
 
+const lastRoundVoteMap = computed(() => {
+  if (!showLastRound.value || !lastRound.value) return {}
+  return Object.fromEntries(lastRound.value.playerVotes.map(pv => [pv.id, pv.vote]))
+})
+
 const playersForUi = computed(() =>
   visiblePlayers.value
     .map(p => ({
       ...p,
       is_online: online.value.has(p.id),
-      vote: playersStore.voteOf(p.id),
+      vote: showLastRound.value ? (lastRoundVoteMap.value[p.id] ?? null) : playersStore.voteOf(p.id),
       votePending: pendingVotes.value[p.id] !== undefined,
     }))
     .sort((a, b) => {
@@ -91,8 +115,49 @@ const playersForUi = computed(() =>
 
 const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
+const canReset = computed(() => {
+  if (showLastRound.value) return false
+  const voted = visiblePlayers.value.filter(p => playersStore.voteOf(p.id) !== null).length
+  return voted > 0 && voted < visiblePlayers.value.length
+})
+
+const isPollDeck = computed(() =>
+  roomState.value?.deck_preset === 'voting' || roomState.value?.deck_preset === 'vote_question'
+)
+
+const alignmentBlocks = computed(() => {
+  let votes: Record<string, number>
+  let grouped: { general: Record<string, number>; qa: Record<string, number> } | null
+  let deck: string[] | null | undefined
+  if (showLastRound.value && lastRound.value && !lastRound.value.isVotingDeck) {
+    votes = lastRound.value.votes
+    grouped = lastRound.value.groupedVotes
+    deck = lastRound.value.activeCards
+  } else if (roomState.value?.phase === 'revealed' && !isPollDeck.value) {
+    votes = voteCounts.value
+    grouped = groupedVoteCounts.value
+    deck = roomState.value?.active_cards
+  } else {
+    return null
+  }
+  const blocks: { label: string; value: number }[] = []
+  if (grouped) {
+    const dev = alignmentScore(grouped.general, deck)
+    if (dev !== null) blocks.push({ label: t('results.general'), value: dev })
+    const qaTotal = Object.values(grouped.qa).reduce((a, b) => a + b, 0)
+    if (qaTotal) {
+      const qa = alignmentScore(grouped.qa, deck)
+      if (qa !== null) blocks.push({ label: 'QA', value: qa })
+    }
+  } else {
+    const all = alignmentScore(votes, deck)
+    if (all !== null) blocks.push({ label: t('results.general'), value: all })
+  }
+  return blocks.length ? blocks : null
+})
+
 const isConsensus = computed(() => {
-  if (roomState.value?.deck_preset === 'voting') return false
+  if (isPollDeck.value) return false
   const grouped = groupedVoteCounts.value
   if (grouped) return shouldCelebrateGroupedVotes(grouped)
   const votes = playersForUi.value.map(p => p.vote).filter((v): v is string => v !== null)
@@ -104,6 +169,7 @@ const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRu
 function broadcastCountdownStart(mode: CountdownMode) {
   countdownChannel?.send({ type: 'broadcast', event: 'start', payload: { initiatorId: currentPlayerId.value, mode } })
 }
+
 
 const voteCounts = computed(() => {
   if (!roomState.value) return {}
@@ -188,14 +254,36 @@ watch(connectionStatus, async (next, prev) => {
   }
 })
 
-watch(() => roomState.value?.phase, (phase) => {
-  if (phase === 'revealed') playersStore.clearPendingVotes()
+watch(() => roomState.value?.phase, (phase, prev) => {
+  if (phase === 'revealed') {
+    playersStore.clearPendingVotes()
+    pendingSnapshot.value = {
+      votes: { ...voteCounts.value },
+      groupedVotes: groupedVoteCounts.value
+        ? { general: { ...groupedVoteCounts.value.general }, qa: { ...groupedVoteCounts.value.qa } }
+        : null,
+      playerVotes: visiblePlayers.value
+        .filter(p => p.vote !== null)
+        .map(p => ({ id: p.id, name: p.name, vote: p.vote as string })),
+      pollQuestion: isPollDeck.value ? (roomState.value?.poll_question ?? null) : null,
+      isVotingDeck: isPollDeck.value,
+      activeCards: [...(roomState.value?.active_cards ?? [])],
+    }
+    showLastRound.value = false
+  }
+  if (phase === 'voting' && prev === 'revealed') {
+    lastRound.value = pendingSnapshot.value
+    showLastRound.value = false
+  }
 })
 
-watch(visiblePlayers, async (next) => {
-  const ids = next.map(p => p.user_id).filter(Boolean) as string[]
-  if (ids.length) await profilesStore.fetchMany(ids)
-}, { deep: true })
+const playerUserIds = computed(() =>
+  (visiblePlayers.value.map(p => p.user_id).filter(Boolean) as string[]).sort().join(',')
+)
+
+watch(playerUserIds, async (ids) => {
+  if (ids) await profilesStore.fetchMany(ids.split(','))
+})
 
 onUnmounted(async () => {
   unsubscribe()
@@ -284,7 +372,7 @@ async function handleJoin(payload: { name: string; shields: string[] }) {
 
 async function handleVote(card: string) {
   if (!currentPlayerId.value) return
-  if (roomState.value?.deck_preset === 'voting' && !roomState.value.poll_question) return
+  if (isPollDeck.value && !roomState.value?.poll_question) return
   const next = playersStore.voteOf(currentPlayerId.value) === card ? null : card
   try {
     await playersStore.castVote(currentPlayerId.value, next)
@@ -341,6 +429,13 @@ async function handleSaveCardDeck(payload: { deckPreset: DeckPresetId; cards: st
   }
   await roomStore.saveCardDeck(payload.cards)
   showCardDeck.value = false
+}
+
+async function handleStartVoteQuestion(question: string, answers: string[]) {
+  await Promise.all([
+    roomStore.setPollQuestion(question),
+    roomStore.saveCardDeck(answers),
+  ])
 }
 
 function openRenameRoom() {
@@ -407,6 +502,8 @@ async function submitRenameRoom() {
       @open-card-deck="showCardDeck = true"
       @open-rename-room="openRenameRoom"
       @open-account-settings="showAccountSettings = true"
+      @open-history="showHistory = true"
+      @open-alignment-trends="showAlignmentTrends = true"
       @sign-out="authStore.signOut()"
       :countdown-active="countdownActive"
       :countdown-counter="countdownTimerCounter"
@@ -417,14 +514,16 @@ async function submitRenameRoom() {
       <div class="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-6">
         <PlayersList
           :players="playersForUi"
-          :phase="roomState?.phase ?? 'voting'"
+          :phase="showLastRound ? 'revealed' : (roomState?.phase ?? 'voting')"
           :current-player-id="currentPlayerId"
           :current-user-is-authorized-moderator="isAuthorizedModerator"
+          :truncate-votes="roomState?.deck_preset === 'vote_question'"
           @edit="handleEdit"
           @toggle-moderator="handleToggleModerator"
           @leave="handleLeave"
           @kick="handleKick"
         />
+        <AlignmentCard v-if="alignmentBlocks" :blocks="alignmentBlocks" />
         <Timer
           v-if="roomState"
           :round-started-at="roomState.round_started_at"
@@ -440,30 +539,48 @@ async function submitRenameRoom() {
       </div>
 
       <div class="flex-1 flex flex-col items-center justify-start">
+        <ResultsArea
+          v-if="roomState?.phase === 'voting' && showLastRound && lastRound"
+          :votes="lastRound.votes"
+          :grouped-votes="lastRound.groupedVotes"
+          :is-moderator="false"
+          :poll-question="lastRound.pollQuestion"
+          :disable-celebration="true"
+          :show-alignment="!lastRound.isVotingDeck"
+          :active-cards="lastRound.activeCards"
+        />
+        <ResultsArea
+          v-if="roomState?.phase === 'revealed'"
+          :votes="voteCounts"
+          :grouped-votes="groupedVoteCounts"
+          :is-moderator="isModerator"
+          :poll-question="isPollDeck ? (roomState.poll_question ?? null) : null"
+          :disable-celebration="isPollDeck"
+          :show-alignment="!isPollDeck"
+          :active-cards="roomState.active_cards ?? undefined"
+          @start-new-round="roomStore.startNewRound()"
+        />
         <CardsArea
           v-if="roomState?.phase === 'voting'"
           :active-cards="roomState.active_cards ?? []"
           :selected-vote="currentPlayer ? playersStore.voteOf(currentPlayer.id) : null"
           :is-moderator="isModerator"
           :has-votes="hasVotes"
+          :can-reset="canReset"
           :countdown-counter="countdownTimerCounter"
           :countdown-running="countdownRunning"
           :poll-mode="roomState.deck_preset === 'voting'"
+          :vote-question-mode="roomState.deck_preset === 'vote_question'"
           :poll-question="roomState.poll_question ?? null"
+          :has-last-round="!!lastRound"
+          :show-last-round="showLastRound"
           @vote="handleVote"
           @reveal="roomStore.reveal()"
+          @reset="roomStore.resetVotes()"
           @start-countdown="broadcastCountdownStart"
           @set-poll-question="(q: string) => roomStore.setPollQuestion(q)"
-        />
-        <ResultsArea
-          v-else-if="roomState?.phase === 'revealed'"
-          :votes="voteCounts"
-          :grouped-votes="groupedVoteCounts"
-          :is-moderator="isModerator"
-          :poll-question="roomState.deck_preset === 'voting' ? (roomState.poll_question ?? null) : null"
-          :disable-celebration="roomState.deck_preset === 'voting'"
-          :active-cards="roomState.deck_preset === 'voting' ? (roomState.active_cards ?? undefined) : undefined"
-          @start-new-round="roomStore.startNewRound()"
+          @start-vote-question="handleStartVoteQuestion"
+          @toggle-last-round="showLastRound = !showLastRound"
         />
       </div>
     </div>
@@ -484,6 +601,9 @@ async function submitRenameRoom() {
       @close="showCardDeck = false"
       @save="handleSaveCardDeck"
     />
+
+    <HistoryModal v-if="showHistory" :room-name="currentRoomName ?? currentSlug ?? undefined" @close="showHistory = false" />
+    <AlignmentTrendsModal v-if="showAlignmentTrends" @close="showAlignmentTrends = false" />
 
     <PlayerEditModal
       v-if="editTargetPlayer"

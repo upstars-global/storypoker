@@ -3,6 +3,7 @@
     "cancel": "Скасувати",
     "save": "Зберегти",
     "close": "Закрити",
+    "loading": "Завантаження…",
     "signIn": "Увійти",
     "signUp": "Зареєструватись",
     "signOut": "Вийти",
@@ -18,7 +19,33 @@
     "lightTheme": "Світла тема",
     "darkTheme": "Темна тема",
     "currentUserAccount": "акаунт поточного користувача",
-    "accountSettings": "Налаштування акаунту"
+    "accountSettings": "Налаштування акаунту",
+    "history": "Історія раундів",
+    "alignmentTrends": "Тренди узгодженості"
+  },
+  "trends": {
+    "title": "Тренди узгодженості команди",
+    "currentScore": "Поточний бал",
+    "trend": "Тренд",
+    "averageScore": "Середній бал",
+    "estimates": "Оцінки",
+    "vsPrevious": "vs попередній період",
+    "currentPeriod": "Оцінок у поточному періоді",
+    "stable": "Стабільно",
+    "up": "Зростає",
+    "down": "Знижується",
+    "noData": "Недостатньо даних за цей період",
+    "chartTitle": "Графік узгодженості"
+  },
+  "history": {
+    "title": "Історія раундів",
+    "empty": "Поки немає завершених раундів",
+    "emptyRange": "Немає раундів за цей період",
+    "average": "Середнє",
+    "exportCsv": "Експорт CSV",
+    "filter": {
+      "allDecks": "Всі колоди"
+    }
   },
   "home": {
     "title": "Створіть кімнату для планінг-покеру",
@@ -37,11 +64,14 @@
   },
   "cards": {
     "reveal": "Показати оцінки",
+    "reset": "Скинути оцінки",
     "revealCountdown": "Зворотній відлік",
     "countdownSilent": "Без звуку",
     "countdownDry": "Простий звук",
     "countdownWet": "З атмосферою",
-    "startNewRound": "Почати новий раунд"
+    "startNewRound": "Почати новий раунд",
+    "lastRound": "Попередній раунд",
+    "backToCards": "До голосування"
   },
   "timer": {
     "title": "Таймер",
@@ -59,13 +89,15 @@
     "cardLabels": {
       "yes": "Так",
       "no": "Ні"
-    }
+    },
+    "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні"
   },
   "poll": {
     "thirdCard": "Третя картка",
-    "questionPlaceholder": "Напишіть питання для голосування…",
+    "questionPlaceholder": "Питання для голосування…",
     "startVoting": "Почати голосування",
-    "waiting": "Очікування питання від модератора…"
+    "waiting": "Очікування питання від модератора…",
+    "answerPlaceholder": "Відповідь {n}"
   },
   "players": {
     "title": "Гравці",
@@ -98,7 +130,8 @@
     }
   },
   "results": {
-    "general": "DEV"
+    "general": "DEV",
+    "alignment": "Узгодженість"
   },
   "shields": {
     "title": "Обери свої щити",

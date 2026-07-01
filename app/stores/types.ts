@@ -35,6 +35,8 @@ export interface RoundHistory {
   started_at: string
   revealed_at: string
   votes: RoundHistoryVote[]
+  active_cards: string[] | null
+  deck_preset: string | null
   created_at: string
 }
 

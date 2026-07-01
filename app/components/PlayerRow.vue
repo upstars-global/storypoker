@@ -20,6 +20,11 @@ import { useCardLabel } from '~/composables/useCardLabel'
 
 const cardLabel = useCardLabel()
 
+function voteLabel(vote: string) {
+  const label = cardLabel(vote)
+  return props.truncateVotes && label.length > 8 ? label.slice(0, 8) : label
+}
+
 const props = defineProps<{
   player: {
     id: string
@@ -34,6 +39,7 @@ const props = defineProps<{
   phase: 'voting' | 'revealed'
   currentPlayerId: string | null
   currentUserIsAuthorizedModerator: boolean
+  truncateVotes?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -62,7 +68,7 @@ const playerAvatar = computed(() => {
     :data-voted="String(player.vote !== null)"
     :data-vote-pending="String(player.votePending)"
     class="grid items-center gap-2 rounded relative"
-    style="grid-template-columns: 32px 1fr auto 36px;"
+    style="grid-template-columns: 32px 1fr auto 36px; column-gap: 4px;"
   >
     <TooltipRoot>
       <TooltipTrigger as-child>
@@ -161,8 +167,8 @@ const playerAvatar = computed(() => {
         <span
           v-if="player.vote !== null"
           class="text-base font-medium text-center"
-          style="width: 24px; color: var(--text-primary);"
-        >{{ cardLabel(player.vote!) }}</span>
+          style="color: var(--text-primary); margin-right: 0;"
+        >{{ voteLabel(player.vote!) }}</span>
         <TooltipRoot v-else>
           <TooltipTrigger as-child>
             <span class="inline-flex">
@@ -186,8 +192,8 @@ const playerAvatar = computed(() => {
       <span
         v-if="phase === 'revealed' && player.vote !== null"
         class="text-base font-medium text-center"
-        style="width: 24px; color: var(--text-primary);"
-      >{{ cardLabel(player.vote!) }}</span>
+        style="color: var(--text-primary); margin-right: 0;"
+      >{{ voteLabel(player.vote!) }}</span>
       <TooltipRoot v-else-if="phase === 'voting' && player.vote !== null">
         <TooltipTrigger as-child>
           <span class="inline-flex">
