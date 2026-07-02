@@ -757,3 +757,18 @@ body {
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
+
+dialog.app-modal {
+  background: transparent;
+  border: none;
+  padding: 0;
+  overflow: visible;
+}
+dialog.app-modal::backdrop {
+  display: none;
+}
+
+.app-tooltip-top    { position: absolute; bottom: calc(100% + var(--tt-offset, 6px)); left: 50%; transform: translateX(-50%); pointer-events: none; }
+.app-tooltip-bottom { position: absolute; top:    calc(100% + var(--tt-offset, 6px)); left: 50%; transform: translateX(-50%); pointer-events: none; }
+.app-tooltip-left   { position: absolute; right:  calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
+.app-tooltip-right  { position: absolute; left:   calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
