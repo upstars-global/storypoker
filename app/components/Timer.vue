@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import {
-  TooltipRoot,
-  TooltipTrigger,
-  TooltipPortal,
-  TooltipContent,
-} from 'reka-ui'
+import AppTooltip from '~/components/AppTooltip.vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
@@ -76,8 +71,8 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
     </div>
     <p class="mui-body px-4 py-3 text-body">{{ text }}</p>
     <div v-if="showControls" class="flex justify-between px-4 pb-3">
-      <TooltipRoot>
-        <TooltipTrigger as-child>
+      <AppTooltip side="top" :side-offset="6">
+        <template #trigger>
           <button
             v-wave
             type="button"
@@ -87,15 +82,11 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
           >
             <AppIcon class="mui-svg-icon" icon="ic:baseline-fast-rewind" style="font-size: 1.5rem;" />
           </button>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t('timer.minus30') }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
-      <TooltipRoot>
-        <TooltipTrigger as-child>
+        </template>
+        <template #content>{{ $t('timer.minus30') }}</template>
+      </AppTooltip>
+      <AppTooltip side="top" :side-offset="6">
+        <template #trigger>
           <button
             v-wave
             type="button"
@@ -105,15 +96,11 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
           >
             <AppIcon class="mui-svg-icon" icon="ic:baseline-stop" style="font-size: 1.5rem;" />
           </button>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t('timer.reset') }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
-      <TooltipRoot v-if="!isPaused">
-        <TooltipTrigger as-child>
+        </template>
+        <template #content>{{ $t('timer.reset') }}</template>
+      </AppTooltip>
+      <AppTooltip v-if="!isPaused" side="top" :side-offset="6">
+        <template #trigger>
           <button
             v-wave
             type="button"
@@ -123,15 +110,11 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
           >
             <AppIcon class="mui-svg-icon" icon="ic:baseline-pause" style="font-size: 1.5rem;" />
           </button>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t('timer.pause') }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
-      <TooltipRoot v-else>
-        <TooltipTrigger as-child>
+        </template>
+        <template #content>{{ $t('timer.pause') }}</template>
+      </AppTooltip>
+      <AppTooltip v-else side="top" :side-offset="6">
+        <template #trigger>
           <button
             v-wave
             type="button"
@@ -141,15 +124,11 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
           >
             <AppIcon class="mui-svg-icon" icon="ic:baseline-play-arrow" style="font-size: 1.5rem;" />
           </button>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t('timer.continue') }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
-      <TooltipRoot>
-        <TooltipTrigger as-child>
+        </template>
+        <template #content>{{ $t('timer.continue') }}</template>
+      </AppTooltip>
+      <AppTooltip side="top" :side-offset="6">
+        <template #trigger>
           <button
             v-wave
             type="button"
@@ -159,13 +138,9 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
           >
             <AppIcon class="mui-svg-icon" icon="ic:baseline-fast-forward" style="font-size: 1.5rem;" />
           </button>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t('timer.plus30') }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
+        </template>
+        <template #content>{{ $t('timer.plus30') }}</template>
+      </AppTooltip>
     </div>
   </div>
 </template>
