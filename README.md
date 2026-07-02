@@ -12,7 +12,6 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 * [Pinia](https://pinia.vuejs.org)
 * [Vue Router](https://router.vuejs.org)
 * [Vue I18n](https://vue-i18n.intlify.dev)
-* [Reka UI](https://reka-ui.com)
 * [Tailwind](https://tailwindcss.com)
 * [Supabase](https://supabase.com)
 * [Netlify](https://netlify.com)
