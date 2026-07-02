@@ -1,18 +1,8 @@
 <script setup lang="ts">
 import AppIcon from '~/components/AppIcon.vue'
-import { computed } from 'vue'
-import {
-  DropdownMenuRoot,
-  DropdownMenuTrigger,
-  DropdownMenuPortal,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuCheckboxItem,
-  TooltipRoot,
-  TooltipTrigger,
-  TooltipPortal,
-  TooltipContent,
-} from 'reka-ui'
+import { computed, ref } from 'vue'
+import AppTooltip from '~/components/AppTooltip.vue'
+import { useClickOutside } from '~/composables/useClickOutside'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
 import { roleTagForShields } from '~/utils/shields'
@@ -53,6 +43,9 @@ const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
+const menuRef = ref<HTMLElement | null>(null)
+const menuOpen = ref(false)
+useClickOutside(menuRef, () => { menuOpen.value = false })
 const roleTag = computed(() => roleTagForShields(props.player.shields))
 const playerAvatar = computed(() => {
   const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
@@ -70,45 +63,36 @@ const playerAvatar = computed(() => {
     class="grid items-center gap-2 rounded relative"
     style="grid-template-columns: 32px 1fr auto 36px; column-gap: 4px;"
   >
-    <TooltipRoot>
-      <TooltipTrigger as-child>
+    <AppTooltip side="top" :side-offset="6">
+      <template #trigger>
         <img
           :src="playerAvatar"
           :alt="player.name"
           class="rounded-full"
           style="width: 28px; height: 28px;"
         >
-      </TooltipTrigger>
-      <TooltipPortal>
-        <TooltipContent
-          class="mui-tooltip-content"
-          side="top"
-          :side-offset="6"
-          style="max-width: 240px; white-space: normal; text-align: center;"
-        >
+      </template>
+      <template #content>
+        <span style="max-width: 240px; white-space: normal; text-align: center; display: block;">
           {{ $t('players.avatarAuthHint') }}
-        </TooltipContent>
-      </TooltipPortal>
-    </TooltipRoot>
+        </span>
+      </template>
+    </AppTooltip>
     <div class="flex items-center gap-1.5 min-w-0">
-      <TooltipRoot v-if="roleTag">
-        <TooltipTrigger as-child>
+      <AppTooltip v-if="roleTag" side="top" :side-offset="6">
+        <template #trigger>
           <span class="flex-none mui-role-tag">{{ roleTag }}</span>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t(`players.roleNames.${roleTag}`, roleTag) }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
+        </template>
+        <template #content>{{ $t(`players.roleNames.${roleTag}`, roleTag) }}</template>
+      </AppTooltip>
       <span
         class="truncate text-base"
         :style="{ color: player.is_online ? 'var(--text-primary)' : 'var(--text-muted)' }"
       >
         {{ player.name }}
       </span>
-      <TooltipRoot v-if="player.is_moderator">
-        <TooltipTrigger as-child>
+      <AppTooltip v-if="player.is_moderator" side="top" :side-offset="6">
+        <template #trigger>
           <span class="inline-flex flex-none">
             <AppIcon
               class="mui-svg-icon"
@@ -117,19 +101,15 @@ const playerAvatar = computed(() => {
               :aria-label="$t('players.moderator')"
             />
           </span>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t('players.moderator') }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
+        </template>
+        <template #content>{{ $t('players.moderator') }}</template>
+      </AppTooltip>
     </div>
 
     <template v-if="player.is_online">
       <template v-if="phase === 'voting'">
-        <TooltipRoot v-if="player.vote !== null">
-          <TooltipTrigger as-child>
+        <AppTooltip v-if="player.vote !== null" side="top" :side-offset="6">
+          <template #trigger>
             <span class="inline-flex">
               <AppIcon
                 class="mui-svg-icon"
@@ -138,15 +118,11 @@ const playerAvatar = computed(() => {
                 :aria-label="$t('players.estimateGiven')"
               />
             </span>
-          </TooltipTrigger>
-          <TooltipPortal>
-            <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-              {{ $t('players.estimateGiven') }}
-            </TooltipContent>
-          </TooltipPortal>
-        </TooltipRoot>
-        <TooltipRoot v-else>
-          <TooltipTrigger as-child>
+          </template>
+          <template #content>{{ $t('players.estimateGiven') }}</template>
+        </AppTooltip>
+        <AppTooltip v-else side="top" :side-offset="6">
+          <template #trigger>
             <span class="inline-flex">
               <AppIcon
                 class="mui-svg-icon"
@@ -155,13 +131,9 @@ const playerAvatar = computed(() => {
                 :aria-label="$t('players.playerDeciding')"
               />
             </span>
-          </TooltipTrigger>
-          <TooltipPortal>
-            <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-              {{ $t('players.playerDeciding') }}
-            </TooltipContent>
-          </TooltipPortal>
-        </TooltipRoot>
+          </template>
+          <template #content>{{ $t('players.playerDeciding') }}</template>
+        </AppTooltip>
       </template>
       <template v-else>
         <span
@@ -169,8 +141,8 @@ const playerAvatar = computed(() => {
           class="text-base font-medium text-center"
           style="color: var(--text-primary); margin-right: 0;"
         >{{ voteLabel(player.vote!) }}</span>
-        <TooltipRoot v-else>
-          <TooltipTrigger as-child>
+        <AppTooltip v-else side="top" :side-offset="6">
+          <template #trigger>
             <span class="inline-flex">
               <AppIcon
                 class="mui-svg-icon"
@@ -179,13 +151,9 @@ const playerAvatar = computed(() => {
                 :aria-label="$t('players.noVote')"
               />
             </span>
-          </TooltipTrigger>
-          <TooltipPortal>
-            <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-              {{ $t('players.noVote') }}
-            </TooltipContent>
-          </TooltipPortal>
-        </TooltipRoot>
+          </template>
+          <template #content>{{ $t('players.noVote') }}</template>
+        </AppTooltip>
       </template>
     </template>
     <template v-else>
@@ -194,8 +162,8 @@ const playerAvatar = computed(() => {
         class="text-base font-medium text-center"
         style="color: var(--text-primary); margin-right: 0;"
       >{{ voteLabel(player.vote!) }}</span>
-      <TooltipRoot v-else-if="phase === 'voting' && player.vote !== null">
-        <TooltipTrigger as-child>
+      <AppTooltip v-else-if="phase === 'voting' && player.vote !== null" side="top" :side-offset="6">
+        <template #trigger>
           <span class="inline-flex">
             <AppIcon
               class="mui-svg-icon"
@@ -204,15 +172,11 @@ const playerAvatar = computed(() => {
               :aria-label="$t('players.estimateGiven')"
             />
           </span>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t('players.estimateGiven') }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
-      <TooltipRoot v-else>
-        <TooltipTrigger as-child>
+        </template>
+        <template #content>{{ $t('players.estimateGiven') }}</template>
+      </AppTooltip>
+      <AppTooltip v-else side="top" :side-offset="6">
+        <template #trigger>
           <span class="inline-flex">
             <AppIcon
               class="mui-svg-icon text-black/[0.26] dark:text-white/30"
@@ -221,109 +185,98 @@ const playerAvatar = computed(() => {
               :aria-label="$t('players.inactive')"
             />
           </span>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t('players.inactive') }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
+        </template>
+        <template #content>{{ $t('players.inactive') }}</template>
+      </AppTooltip>
     </template>
 
     <div
+      ref="menuRef"
       class="flex items-center justify-center"
-      style="width: 36px; height: 36px;"
+      style="width: 36px; height: 36px; position: relative;"
     >
-      <DropdownMenuRoot v-if="isOwn || currentUserIsAuthorizedModerator">
-        <DropdownMenuTrigger as-child>
-          <button
+      <button
+        v-if="isOwn || currentUserIsAuthorizedModerator"
+        v-wave
+        class="mui-icon-btn"
+        style="padding: 4px;"
+        :aria-expanded="menuOpen"
+        @click="menuOpen = !menuOpen"
+      >
+        <AppIcon
+          class="mui-svg-icon text-muted dark:text-inverse"
+          icon="ic:baseline-more-vert"
+          style="font-size: 1.5rem;"
+        />
+      </button>
+
+      <ul
+        v-if="menuOpen"
+        class="mui-menu z-50"
+        role="menu"
+        style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 200px;"
+        @keydown.escape="menuOpen = false"
+      >
+        <template v-if="isOwn">
+          <li
             v-wave
-            class="mui-icon-btn"
-            style="padding: 4px;"
+            class="mui-menu-item"
+            role="menuitem"
+            tabindex="0"
+            @click.stop="emit('toggleModerator', player.id, !player.is_moderator)"
           >
-            <AppIcon
-              class="mui-svg-icon text-muted dark:text-inverse"
-              icon="ic:baseline-more-vert"
-              style="font-size: 1.5rem;"
-            />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuPortal>
-          <DropdownMenuContent
-            class="mui-menu z-50"
-            style="min-width: 200px;"
-            align="end"
-            :side-offset="4"
+            <AppIcon class="mui-menu-icon" icon="app:moderator" />
+            <span class="flex-1">{{ $t('players.isModerator') }}</span>
+            <span class="mui-switch">
+              <input type="checkbox" :checked="player.is_moderator" tabindex="-1" readonly>
+              <span class="track" />
+              <span class="thumb" />
+            </span>
+          </li>
+          <li
+            v-wave
+            class="mui-menu-item"
+            role="menuitem"
+            tabindex="0"
+            @click="emit('edit', player.id); menuOpen = false"
           >
-            <template v-if="isOwn">
-              <DropdownMenuCheckboxItem
-                v-wave
-                class="mui-menu-item"
-                :model-value="player.is_moderator"
-                @update:model-value="emit('toggleModerator', player.id, $event)"
-              >
-                <AppIcon
-                  class="mui-menu-icon"
-                  icon="app:moderator"
-                />
-                <span class="flex-1">{{ $t('players.isModerator') }}</span>
-                <span class="mui-switch">
-                  <input
-                    type="checkbox"
-                    :checked="player.is_moderator"
-                    tabindex="-1"
-                    readonly
-                  >
-                  <span class="track" />
-                  <span class="thumb" />
-                </span>
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuItem
-                v-wave
-                class="mui-menu-item"
-                @select="emit('edit', player.id)"
-              >
-                <AppIcon
-                  class="mui-menu-icon"
-                  icon="ic:baseline-edit"
-                /> {{ $t('players.edit') }}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                v-wave
-                class="mui-menu-item"
-                @select="emit('leave', player.id)"
-              >
-                <AppIcon
-                  class="mui-menu-icon"
-                  icon="app:leave-room"
-                /> {{ $t('players.leaveRoom') }}
-              </DropdownMenuItem>
-            </template>
-            <template v-else-if="currentUserIsAuthorizedModerator">
-              <DropdownMenuItem
-                v-wave
-                class="mui-menu-item"
-                @select="emit('edit', player.id)"
-              >
-                <AppIcon
-                  class="mui-menu-icon"
-                  icon="ic:baseline-edit"
-                /> {{ $t('players.edit') }}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                v-wave
-                class="mui-menu-item"
-                @select="emit('kick', player.id)"
-              >
-                <AppIcon
-                  class="mui-menu-icon"
-                  icon="ic:baseline-person-remove"
-                /> {{ $t('players.kickPlayer') }}
-              </DropdownMenuItem>
-            </template>
-          </DropdownMenuContent>
-        </DropdownMenuPortal>
-      </DropdownMenuRoot>
+            <AppIcon class="mui-menu-icon" icon="ic:baseline-edit" />
+            {{ $t('players.edit') }}
+          </li>
+          <li
+            v-wave
+            class="mui-menu-item"
+            role="menuitem"
+            tabindex="0"
+            @click="emit('leave', player.id); menuOpen = false"
+          >
+            <AppIcon class="mui-menu-icon" icon="app:leave-room" />
+            {{ $t('players.leaveRoom') }}
+          </li>
+        </template>
+        <template v-else-if="currentUserIsAuthorizedModerator">
+          <li
+            v-wave
+            class="mui-menu-item"
+            role="menuitem"
+            tabindex="0"
+            @click="emit('edit', player.id); menuOpen = false"
+          >
+            <AppIcon class="mui-menu-icon" icon="ic:baseline-edit" />
+            {{ $t('players.edit') }}
+          </li>
+          <li
+            v-wave
+            class="mui-menu-item"
+            role="menuitem"
+            tabindex="0"
+            @click="emit('kick', player.id); menuOpen = false"
+          >
+            <AppIcon class="mui-menu-icon" icon="ic:baseline-person-remove" />
+            {{ $t('players.kickPlayer') }}
+          </li>
+        </template>
+      </ul>
     </div>
   </div>
 </template>

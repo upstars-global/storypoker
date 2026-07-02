@@ -2,14 +2,7 @@
 import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {
-  DialogRoot,
-  DialogPortal,
-  DialogOverlay,
-  DialogContent,
-  DialogTitle,
-  DialogClose,
-} from 'reka-ui'
+import AppModal from '~/components/AppModal.vue'
 import { useRoomStore } from '~/stores/room'
 import { useCardLabel } from '~/composables/useCardLabel'
 import { summarizeRound, isNumericPreset, voteToNumber, type RoundSummary } from '~/utils/roundStats'
@@ -151,17 +144,15 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
 </script>
 
 <template>
-  <DialogRoot default-open @update:open="(open) => { if (!open) emit('close') }">
-    <DialogPortal>
-      <DialogOverlay class="mui-modal-overlay">
-        <DialogContent
-          class="mui-modal-paper"
-          style="max-width: 640px; width: 92vw; max-height: 86vh; overflow-y: auto; padding: 32px 36px 36px;"
-          @pointerdown.stop
-        >
-          <DialogTitle as="h2" class="text-center text-mui-h2 font-bold text-white">
-            {{ $t('history.title') }}
-          </DialogTitle>
+  <AppModal :open="true" @close="emit('close')">
+    <div
+      class="mui-modal-paper"
+      style="max-width: 640px; width: 92vw; max-height: 86vh; overflow-y: auto; padding: 32px 36px 36px;"
+      @pointerdown.stop
+    >
+      <h2 class="text-center text-mui-h2 font-bold text-white">
+        {{ $t('history.title') }}
+      </h2>
 
           <div class="mt-4 flex flex-col items-center gap-2">
             <div class="flex w-full items-center justify-between">
@@ -298,16 +289,15 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
             </section>
           </div>
 
-          <DialogClose
-            v-wave
-            class="mui-icon-btn absolute"
-            style="top: 12px; right: 12px;"
-            :aria-label="$t('common.close')"
-          >
-            <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-          </DialogClose>
-        </DialogContent>
-      </DialogOverlay>
-    </DialogPortal>
-  </DialogRoot>
+      <button
+        v-wave
+        class="mui-icon-btn absolute"
+        style="top: 12px; right: 12px;"
+        :aria-label="$t('common.close')"
+        @click="emit('close')"
+      >
+        <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+      </button>
+    </div>
+  </AppModal>
 </template>

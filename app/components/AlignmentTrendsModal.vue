@@ -2,14 +2,7 @@
 import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {
-  DialogRoot,
-  DialogPortal,
-  DialogOverlay,
-  DialogContent,
-  DialogTitle,
-  DialogClose,
-} from 'reka-ui'
+import AppModal from '~/components/AppModal.vue'
 import { storeToRefs } from 'pinia'
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
@@ -228,17 +221,15 @@ const xAxisLabels = computed(() => {
 </script>
 
 <template>
-  <DialogRoot default-open @update:open="(open) => { if (!open) emit('close') }">
-    <DialogPortal>
-      <DialogOverlay class="mui-modal-overlay">
-        <DialogContent
-          class="mui-modal-paper"
-          style="max-width: 680px; width: 95vw; max-height: 90vh; overflow-y: auto; padding: 28px 32px 32px;"
-          @pointerdown.stop
-        >
-          <DialogTitle as="h2" class="text-mui-h2 font-bold text-white">
-            {{ $t('trends.title') }}
-          </DialogTitle>
+  <AppModal :open="true" @close="emit('close')">
+    <div
+      class="mui-modal-paper"
+      style="max-width: 680px; width: 95vw; max-height: 90vh; overflow-y: auto; padding: 28px 32px 32px;"
+      @pointerdown.stop
+    >
+      <h2 class="text-mui-h2 font-bold text-white">
+        {{ $t('trends.title') }}
+      </h2>
 
           <p v-if="loading" class="mt-8 text-center text-mui-body text-muted">
             {{ $t('common.loading') }}
@@ -410,16 +401,15 @@ const xAxisLabels = computed(() => {
             </div>
           </template>
 
-          <DialogClose
-            v-wave
-            class="mui-icon-btn absolute"
-            style="top: 12px; right: 12px;"
-            :aria-label="$t('common.close')"
-          >
-            <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-          </DialogClose>
-        </DialogContent>
-      </DialogOverlay>
-    </DialogPortal>
-  </DialogRoot>
+      <button
+        v-wave
+        class="mui-icon-btn absolute"
+        style="top: 12px; right: 12px;"
+        :aria-label="$t('common.close')"
+        @click="emit('close')"
+      >
+        <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+      </button>
+    </div>
+  </AppModal>
 </template>

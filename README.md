@@ -12,7 +12,6 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 * [Pinia](https://pinia.vuejs.org)
 * [Vue Router](https://router.vuejs.org)
 * [Vue I18n](https://vue-i18n.intlify.dev)
-* [Reka UI](https://reka-ui.com)
 * [Tailwind](https://tailwindcss.com)
 * [Supabase](https://supabase.com)
 * [Netlify](https://netlify.com)
@@ -55,22 +54,24 @@ claude --dangerously-skip-permissions
 ### Skills
 
 ```zsh
+
 # META
 npx skills add anthropics/claude-plugins-official -s claude-md-improver -a codex claude-code -y
 
 # FRONTEND
 npx skills add anthropics/skills -s frontend-design -a codex claude-code -y
-npx skills add giuseppe-trisciuoglio/developer-kit -s tailwind-css-patterns -a codex claude-code -y
-npx skills add skilld-dev/vue-ecosystem-skills -s reka-ui-skilld -a codex claude-code -y
-npx skills add unovue/shadcn-vue -s shadcn-vue -a codex claude-code -y
+# npx skills add giuseppe-trisciuoglio/developer-kit -s tailwind-css-patterns -a codex claude-code -y
+# npx skills add skilld-dev/vue-ecosystem-skills -s reka-ui-skilld -a codex claude-code -y
+# npx skills add unovue/shadcn-vue -s shadcn-vue -a codex claude-code -y
 
 # TESTS
 npx skills add anthropics/skills -s webapp-testing -a codex claude-code -y
-npx skills add antfu/skills -s vitest -a codex claude-code -y
-npx skills add currents-dev/playwright-best-practices-skill -a codex claude-code -y
+# npx skills add antfu/skills -s vitest -a codex claude-code -y
+# npx skills add currents-dev/playwright-best-practices-skill -a codex claude-code -y
 
 # SUPABASE
 # npx skills add supabase/agent-skills -s supabase -a codex claude-code -y
+# npx skills add supabase/agent-skills -s supabase-postgres-best-practices -a codex claude-code -y
 
 # WORKFLOW
 npx skills add obra/superpowers -s brainstorming -a codex claude-code -y
@@ -89,7 +90,23 @@ npx skills add obra/superpowers -s test-driven-development -a codex claude-code 
 # DESIGN
 # npx skills add better-auth/better-icons -s better-icons -a codex claude-code -y
 # npx skills add wshobson/agents -s tailwind-design-system -a codex claude-code -y
-npx impeccable skills install
+# npx impeccable skills install
+# npx impeccable skills uninstall
+
+# GRAPH
+# uv tool install graphifyy
+# than in project folder
+# graphify install --project
+# uninstall
+# uv tool uninstall graphifyy
+
+# TOKENOMICS
+# npx skills add forrestchang/andrej-karpathy-skills -s karpathy-guidelines -a codex claude-code -y
+# npx skills add dietrichgebert/ponytail -s ponytail -a codex claude-code -y
+
+# TYPESCRIPT
+npx skills add sickn33/antigravity-awesome-skills -s typescript-expert -a codex claude-code -y
+
 ```
 
 ### Як подивитись скільки і яких скілів використовували агенти

@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch, type ComponentPublicInstance } from 'vue'
 import AppIcon from '~/components/AppIcon.vue'
-import {
-  TooltipRoot,
-  TooltipTrigger,
-  TooltipPortal,
-  TooltipContent,
-} from 'reka-ui'
+import AppTooltip from '~/components/AppTooltip.vue'
 import type { CountdownMode } from '~/composables/useCountdown'
 import { useCardLabel } from '~/composables/useCardLabel'
 
@@ -215,8 +210,8 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
       >
         <AppIcon icon="lucide:undo" style="font-size: 1.5rem;" />
       </button>
-      <TooltipRoot>
-        <TooltipTrigger as-child>
+      <AppTooltip side="top" :side-offset="6">
+        <template #trigger>
           <button
             v-wave
             class="mui-icon-btn"
@@ -227,13 +222,9 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           >
             <AppIcon icon="ic:baseline-restart-alt" style="font-size: 1.5rem;" />
           </button>
-        </TooltipTrigger>
-        <TooltipPortal>
-          <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-            {{ $t('cards.reset') }}
-          </TooltipContent>
-        </TooltipPortal>
-      </TooltipRoot>
+        </template>
+        <template #content>{{ $t('cards.reset') }}</template>
+      </AppTooltip>
       <button
         v-wave
         class="mui-btn"
@@ -250,8 +241,8 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           role="radiogroup"
           data-testid="countdown-mode"
         >
-          <TooltipRoot v-for="option in countdownModeOptions" :key="option.value">
-            <TooltipTrigger as-child>
+          <AppTooltip v-for="option in countdownModeOptions" :key="option.value" side="top" :side-offset="6">
+            <template #trigger>
               <label
                 v-wave
                 class="mui-icon-btn cursor-pointer"
@@ -267,13 +258,9 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
                 >
                 <AppIcon class="mui-svg-icon" style="font-size: 1.5rem;" :icon="option.icon" />
               </label>
-            </TooltipTrigger>
-            <TooltipPortal>
-              <TooltipContent class="mui-tooltip-content" side="top" :side-offset="6">
-                {{ $t(option.label) }}
-              </TooltipContent>
-            </TooltipPortal>
-          </TooltipRoot>
+            </template>
+            <template #content>{{ $t(option.label) }}</template>
+          </AppTooltip>
         </div>
         <button
           v-wave

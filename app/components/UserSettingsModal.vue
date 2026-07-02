@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed } from 'vue'
-import {
-  DialogRoot,
-  DialogPortal,
-  DialogOverlay,
-  DialogContent,
-  DialogTitle,
-  DialogClose,
-} from 'reka-ui'
+import AppModal from '~/components/AppModal.vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
@@ -74,13 +67,11 @@ async function save() {
 </script>
 
 <template>
-  <DialogRoot default-open @update:open="(open) => { if (!open) emit('close') }">
-    <DialogPortal>
-      <DialogOverlay class="mui-modal-overlay">
-        <DialogContent class="mui-modal-paper" style="max-width: 420px; padding: 32px 40px 40px;" @pointerdown.stop>
-          <DialogTitle as="h2" class="text-center text-mui-h2 font-bold text-primary">
-            {{ $t('userSettings.title') }}
-          </DialogTitle>
+  <AppModal :open="true" @close="emit('close')">
+    <div class="mui-modal-paper" style="max-width: 420px; padding: 32px 40px 40px;" @pointerdown.stop>
+      <h2 class="text-center text-mui-h2 font-bold text-primary">
+        {{ $t('userSettings.title') }}
+      </h2>
 
           <div class="mt-6 flex justify-center gap-2">
             <button
@@ -132,16 +123,15 @@ async function save() {
               {{ $t('common.save') }}
             </button>
           </div>
-          <DialogClose
-            v-wave
-            class="mui-icon-btn absolute"
-            style="top: 12px; right: 12px;"
-            :aria-label="$t('common.close')"
-          >
-            <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-          </DialogClose>
-        </DialogContent>
-      </DialogOverlay>
-    </DialogPortal>
-  </DialogRoot>
+      <button
+        v-wave
+        class="mui-icon-btn absolute"
+        style="top: 12px; right: 12px;"
+        :aria-label="$t('common.close')"
+        @click="emit('close')"
+      >
+        <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+      </button>
+    </div>
+  </AppModal>
 </template>
