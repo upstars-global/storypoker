@@ -3,6 +3,7 @@ import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppModal from '~/components/AppModal.vue'
+import AppModalPaper from '~/components/AppModalPaper.vue'
 import { storeToRefs } from 'pinia'
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
@@ -222,10 +223,9 @@ const xAxisLabels = computed(() => {
 
 <template>
   <AppModal :open="true" @close="emit('close')">
-    <div
-      class="mui-modal-paper"
+    <AppModalPaper
       style="max-width: 680px; width: 95vw; max-height: 90vh; overflow-y: auto; padding: 28px 32px 32px;"
-      @pointerdown.stop
+      @close="emit('close')"
     >
       <h2 class="text-mui-h2 font-bold text-white">
         {{ $t('trends.title') }}
@@ -401,15 +401,6 @@ const xAxisLabels = computed(() => {
             </div>
           </template>
 
-      <button
-        v-wave
-        class="mui-icon-btn absolute"
-        style="top: 12px; right: 12px;"
-        :aria-label="$t('common.close')"
-        @click="emit('close')"
-      >
-        <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-      </button>
-    </div>
+    </AppModalPaper>
   </AppModal>
 </template>

@@ -3,6 +3,7 @@ import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppModal from '~/components/AppModal.vue'
+import AppModalPaper from '~/components/AppModalPaper.vue'
 import { useRoomStore } from '~/stores/room'
 import { useCardLabel } from '~/composables/useCardLabel'
 import { summarizeRound, isNumericPreset, voteToNumber, type RoundSummary } from '~/utils/roundStats'
@@ -145,10 +146,9 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
 
 <template>
   <AppModal :open="true" @close="emit('close')">
-    <div
-      class="mui-modal-paper"
+    <AppModalPaper
       style="max-width: 640px; width: 92vw; max-height: 86vh; overflow-y: auto; padding: 32px 36px 36px;"
-      @pointerdown.stop
+      @close="emit('close')"
     >
       <h2 class="text-center text-mui-h2 font-bold text-white">
         {{ $t('history.title') }}
@@ -289,15 +289,6 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
             </section>
           </div>
 
-      <button
-        v-wave
-        class="mui-icon-btn absolute"
-        style="top: 12px; right: 12px;"
-        :aria-label="$t('common.close')"
-        @click="emit('close')"
-      >
-        <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-      </button>
-    </div>
+    </AppModalPaper>
   </AppModal>
 </template>

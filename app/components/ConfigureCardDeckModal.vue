@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch } from 'vue'
 import AppModal from '~/components/AppModal.vue'
+import AppModalPaper from '~/components/AppModalPaper.vue'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
 import { useCardLabel } from '~/composables/useCardLabel'
 
@@ -57,7 +57,7 @@ function save() {
 
 <template>
   <AppModal :open="true" @close="emit('close')">
-    <div class="mui-modal-paper" style="max-width: 560px; padding: 32px 40px 40px;" @pointerdown.stop>
+    <AppModalPaper style="max-width: 560px; padding: 32px 40px 40px;" @close="emit('close')">
       <h2 class="text-center text-mui-h2 font-bold text-white">
         {{ $t('deck.configure') }}
       </h2>
@@ -139,15 +139,6 @@ function save() {
           <div class="flex justify-center mt-8">
             <button v-wave class="mui-btn" @click="save">{{ $t('deck.save') }}</button>
           </div>
-      <button
-        v-wave
-        class="mui-icon-btn absolute"
-        style="top: 12px; right: 12px;"
-        :aria-label="$t('common.close')"
-        @click="emit('close')"
-      >
-        <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-      </button>
-    </div>
+    </AppModalPaper>
   </AppModal>
 </template>

@@ -223,7 +223,7 @@ const playerAvatar = computed(() => {
             class="mui-menu-item"
             role="menuitem"
             tabindex="0"
-            @click.stop="emit('toggleModerator', player.id, !player.is_moderator)"
+            @click.stop="emit('toggleModerator', player.id, !player.is_moderator); menuOpen = false"
           >
             <AppIcon class="mui-menu-icon" icon="app:moderator" />
             <span class="flex-1">{{ $t('players.isModerator') }}</span>

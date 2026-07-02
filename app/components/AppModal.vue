@@ -17,7 +17,7 @@ watch(() => props.open, async (val) => {
   } else {
     if (dialogEl.value.open) dialogEl.value.close()
   }
-})
+}, { immediate: true })
 
 function onCancel(e: Event) {
   e.preventDefault()

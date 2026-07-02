@@ -31,6 +31,7 @@ import Timer from '~/components/Timer.vue'
 import CardsArea from '~/components/CardsArea.vue'
 import ResultsArea from '~/components/ResultsArea.vue'
 import JoinOverlay from '~/components/JoinOverlay.vue'
+import AppModalPaper from '~/components/AppModalPaper.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -612,7 +613,7 @@ async function submitRenameRoom() {
     />
 
     <AppModal :open="showRenameRoom" @close="showRenameRoom = false">
-      <div class="mui-modal-paper" @pointerdown.stop>
+      <AppModalPaper @close="showRenameRoom = false">
         <h2 class="mui-h5 mb-4">{{ $t('room.renameTitle') }}</h2>
         <input
           v-model="roomNameInput"
@@ -628,35 +629,17 @@ async function submitRenameRoom() {
         <div class="flex justify-end mt-6">
           <button v-wave class="mui-btn" style="min-width: 120px;" @click="submitRenameRoom">{{ $t('common.save') }}</button>
         </div>
-        <button
-          v-wave
-          class="mui-icon-btn absolute"
-          style="top: 8px; right: 8px;"
-          :aria-label="$t('common.close')"
-          @click="showRenameRoom = false"
-        >
-          <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-        </button>
-      </div>
+      </AppModalPaper>
     </AppModal>
 
     <AppModal :open="!!kickTargetId" @close="kickTargetId = null">
-      <div class="mui-modal-paper" @pointerdown.stop>
+      <AppModalPaper @close="kickTargetId = null">
         <h2 class="mui-h5 mb-4">{{ $t('room.kickTitle') }}</h2>
         <p class="text-body">{{ $t('room.kickConfirm', { name: kickTargetName }) }}</p>
         <div class="flex justify-end mt-6">
           <button v-wave class="mui-btn" style="min-width: 120px;" @click="confirmKick">{{ $t('room.kickButton') }}</button>
         </div>
-        <button
-          v-wave
-          class="mui-icon-btn absolute"
-          style="top: 8px; right: 8px;"
-          :aria-label="$t('common.close')"
-          @click="kickTargetId = null"
-        >
-          <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-        </button>
-      </div>
+      </AppModalPaper>
     </AppModal>
   </div>
 </template>

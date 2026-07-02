@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import AppIcon from '~/components/AppIcon.vue'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import AppModal from '~/components/AppModal.vue'
+import AppModalPaper from '~/components/AppModalPaper.vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import { PLAYER_ROLES, roleTagForShields, shieldForRoleTag } from '~/utils/shields'
 
@@ -21,6 +21,8 @@ const nameValue = ref(props.name)
 const nameInput = ref<HTMLInputElement | null>(null)
 const tag = ref(roleTagForShields(props.shields) ?? '')
 
+onMounted(() => nameInput.value?.focus())
+
 function save() {
   const trimmed = nameValue.value.trim()
   if (!trimmed) return
@@ -31,11 +33,7 @@ function save() {
 
 <template>
   <AppModal :open="true" @close="emit('close')">
-    <div
-      class="mui-modal-paper"
-      style="max-width: 600px; padding: 32px 40px 40px;"
-      @pointerdown.stop
-    >
+    <AppModalPaper style="max-width: 600px; padding: 32px 40px 40px;" @close="emit('close')">
       <h2 class="text-center text-mui-h2 font-bold text-primary">
         {{ $t('players.editTitle') }}
       </h2>
@@ -83,15 +81,6 @@ function save() {
           {{ $t('common.save') }}
         </button>
       </div>
-      <button
-        v-wave
-        class="mui-icon-btn absolute"
-        style="top: 12px; right: 12px;"
-        :aria-label="$t('common.close')"
-        @click="emit('close')"
-      >
-        <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-      </button>
-    </div>
+    </AppModalPaper>
   </AppModal>
 </template>

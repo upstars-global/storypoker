@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import AppIcon from '~/components/AppIcon.vue'
 import { ref } from 'vue'
 import AppModal from '~/components/AppModal.vue'
+import AppModalPaper from '~/components/AppModalPaper.vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import { PLAYER_ROLES, shieldForRoleTag } from '~/utils/shields'
 
@@ -28,7 +28,7 @@ function submit() {
 
 <template>
   <AppModal :open="true" lock-dismiss @close="emit('close')">
-    <div class="mui-modal-paper" @pointerdown.stop>
+    <AppModalPaper @close="emit('close')">
       <h2 class="mui-h5 text-center">{{ $t('join.title') }}</h2>
       <p class="mui-caption text-center mt-2 text-muted">
         {{ $t('join.subtitle') }}
@@ -68,15 +68,6 @@ function submit() {
           <button class="mui-btn" @click="submit">{{ $t('join.joinRoom') }}</button>
         </div>
       </div>
-      <button
-        v-wave
-        class="mui-icon-btn absolute"
-        style="top: 8px; right: 8px;"
-        :aria-label="$t('common.close')"
-        @click="emit('close')"
-      >
-        <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
-      </button>
-    </div>
+    </AppModalPaper>
   </AppModal>
 </template>

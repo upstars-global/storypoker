@@ -129,7 +129,7 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
       >
         {{ headerLabel }}
       </span>
-      <div ref="menuRef" style="position: relative;">
+      <div ref="menuRef" style="position: relative;" @keydown.escape.stop="menuOpen = false">
         <button
           v-wave
           class="mui-icon-btn text-white"
@@ -232,7 +232,7 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
             class="mui-menu-item whitespace-nowrap"
             role="menuitem"
             tabindex="0"
-            @click.stop="toggleTheme"
+            @click.stop="toggleTheme(); menuOpen = false"
           >
             <AppIcon class="mui-menu-icon" :icon="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'" />
             <span class="flex-1">{{ isLight ? $t('header.lightTheme') : $t('header.darkTheme') }}</span>
