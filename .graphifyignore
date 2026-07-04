@@ -1,0 +1,7 @@
+*
+!/app/
+!/app/**
+!/docs/
+!/docs/**
+!/supabase/
+!/supabase/**
