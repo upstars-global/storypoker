@@ -46,6 +46,11 @@ const isOwn = computed(() => props.player.id === props.currentPlayerId)
 const menuRef = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
 useClickOutside(menuRef, () => { menuOpen.value = false })
+
+function activateMenuItem(e: KeyboardEvent) {
+  const item = (e.target as HTMLElement).closest<HTMLElement>('[role="menuitem"]')
+  item?.click()
+}
 const roleTag = computed(() => roleTagForShields(props.player.shields))
 const playerAvatar = computed(() => {
   const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
@@ -261,6 +266,8 @@ const playerAvatar = computed(() => {
         role="menu"
         style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 200px;"
         @keydown.escape="menuOpen = false"
+        @keydown.enter.prevent="activateMenuItem"
+        @keydown.space.prevent="activateMenuItem"
       >
         <template v-if="isOwn">
           <li

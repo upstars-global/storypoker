@@ -81,7 +81,7 @@ html[data-theme='dark'] {
 
   --text-primary: rgb(245, 245, 245);
   --text-body: rgb(224, 224, 224);
-  --text-muted: rgb(123, 123, 123);
+  --text-muted: rgba(255, 255, 255, 0.7);
   --text-disabled: rgba(255, 255, 255, 0.3);
   --text-inverse: rgb(255, 255, 255);
 

@@ -146,6 +146,7 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
 
 <template>
   <AppModal
+    labelledby="history-modal-title"
     :open="true"
     @close="emit('close')"
   >
@@ -153,7 +154,10 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
       style="max-width: 640px; width: 92vw; max-height: 86vh; overflow-y: auto; padding: 32px 36px 36px;"
       @close="emit('close')"
     >
-      <h2 class="text-center text-mui-h2 font-bold text-white">
+      <h2
+        id="history-modal-title"
+        class="text-center text-mui-h2 font-bold text-white"
+      >
         {{ $t('history.title') }}
       </h2>
 

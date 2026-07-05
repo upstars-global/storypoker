@@ -33,6 +33,7 @@ function save() {
 
 <template>
   <AppModal
+    labelledby="player-edit-modal-title"
     :open="true"
     @close="emit('close')"
   >
@@ -40,7 +41,10 @@ function save() {
       style="max-width: 600px; padding: 32px 40px 40px;"
       @close="emit('close')"
     >
-      <h2 class="text-center text-mui-h2 font-bold text-primary">
+      <h2
+        id="player-edit-modal-title"
+        class="text-center text-mui-h2 font-bold text-primary"
+      >
         {{ $t('players.editTitle') }}
       </h2>
       <p class="mui-caption text-center mt-2 text-muted">

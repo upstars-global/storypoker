@@ -69,6 +69,7 @@ async function save() {
 
 <template>
   <AppModal
+    labelledby="user-settings-modal-title"
     :open="true"
     @close="emit('close')"
   >
@@ -76,7 +77,10 @@ async function save() {
       style="max-width: 420px; padding: 32px 40px 40px;"
       @close="emit('close')"
     >
-      <h2 class="text-center text-mui-h2 font-bold text-primary">
+      <h2
+        id="user-settings-modal-title"
+        class="text-center text-mui-h2 font-bold text-primary"
+      >
         {{ $t('userSettings.title') }}
       </h2>
 

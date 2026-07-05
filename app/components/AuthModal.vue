@@ -53,11 +53,15 @@ async function submit() {
 
 <template>
   <AppModal
+    labelledby="auth-modal-title"
     :open="true"
     @close="emit('close')"
   >
     <AppModalPaper @close="emit('close')">
-      <h2 class="mui-h5 text-center">
+      <h2
+        id="auth-modal-title"
+        class="mui-h5 text-center"
+      >
         {{ mode === 'signin' ? $t('common.signIn') : $t('common.signUp') }}
       </h2>
       <p

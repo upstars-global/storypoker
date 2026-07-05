@@ -4,6 +4,8 @@ import { ref, watch, nextTick } from 'vue'
 const props = defineProps<{
   open: boolean
   lockDismiss?: boolean
+  labelledby?: string
+  describedby?: string
 }>()
 const emit = defineEmits<{ close: [] }>()
 
@@ -13,7 +15,10 @@ watch(() => props.open, async (val) => {
   await nextTick()
   if (!dialogEl.value) return
   if (val) {
-    if (!dialogEl.value.open) dialogEl.value.showModal()
+    if (!dialogEl.value.open) {
+      dialogEl.value.showModal()
+      dialogEl.value.focus()
+    }
   } else {
     if (dialogEl.value.open) dialogEl.value.close()
   }
@@ -33,6 +38,9 @@ function onOverlayClick() {
   <dialog
     ref="dialogEl"
     class="app-modal"
+    tabindex="-1"
+    :aria-labelledby="labelledby"
+    :aria-describedby="describedby"
     @cancel="onCancel"
   >
     <div

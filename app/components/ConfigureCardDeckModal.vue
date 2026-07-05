@@ -57,6 +57,7 @@ function save() {
 
 <template>
   <AppModal
+    labelledby="card-deck-modal-title"
     :open="true"
     @close="emit('close')"
   >
@@ -64,7 +65,10 @@ function save() {
       style="max-width: 560px; padding: 32px 40px 40px;"
       @close="emit('close')"
     >
-      <h2 class="text-center text-mui-h2 font-bold text-white">
+      <h2
+        id="card-deck-modal-title"
+        class="text-center text-mui-h2 font-bold text-white"
+      >
         {{ $t('deck.configure') }}
       </h2>
 

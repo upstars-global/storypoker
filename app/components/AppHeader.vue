@@ -88,6 +88,11 @@ function toggleLocale() {
 const menuRef = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
 useClickOutside(menuRef, () => { menuOpen.value = false })
+
+function activateMenuItem(e: KeyboardEvent) {
+  const item = (e.target as HTMLElement).closest<HTMLElement>('[role="menuitem"]')
+  item?.click()
+}
 </script>
 
 <template>
@@ -166,6 +171,8 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
           role="menu"
           style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 240px;"
           @keydown.escape="menuOpen = false"
+          @keydown.enter.prevent="activateMenuItem"
+          @keydown.space.prevent="activateMenuItem"
         >
           <template v-if="isModerator">
             <li
@@ -174,7 +181,6 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               role="menuitem"
               tabindex="0"
               @click="emit('openCardDeck'); menuOpen = false"
-              @keydown.enter="emit('openCardDeck'); menuOpen = false"
             >
               <AppIcon
                 class="mui-menu-icon"
@@ -189,7 +195,6 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               role="menuitem"
               tabindex="0"
               @click="emit('openRenameRoom'); menuOpen = false"
-              @keydown.enter="emit('openRenameRoom'); menuOpen = false"
             >
               <AppIcon
                 class="mui-menu-icon"
@@ -207,7 +212,6 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               role="menuitem"
               tabindex="0"
               @click="emit('openAccountSettings'); menuOpen = false"
-              @keydown.enter="emit('openAccountSettings'); menuOpen = false"
             >
               <AppIcon
                 class="mui-menu-icon"
@@ -224,7 +228,6 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
             role="menuitem"
             tabindex="0"
             @click="emit('openHistory'); menuOpen = false"
-            @keydown.enter="emit('openHistory'); menuOpen = false"
           >
             <AppIcon
               class="mui-menu-icon"
@@ -238,7 +241,6 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
             role="menuitem"
             tabindex="0"
             @click="emit('openAlignmentTrends'); menuOpen = false"
-            @keydown.enter="emit('openAlignmentTrends'); menuOpen = false"
           >
             <AppIcon
               class="mui-menu-icon"
@@ -281,7 +283,6 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               tabindex="0"
               data-testid="auth-sign-in-menu-item"
               @click="emit('openSignIn'); menuOpen = false"
-              @keydown.enter="emit('openSignIn'); menuOpen = false"
             >
               <AppIcon
                 class="mui-menu-icon"
@@ -295,7 +296,6 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               role="menuitem"
               tabindex="0"
               @click="emit('openSignUp'); menuOpen = false"
-              @keydown.enter="emit('openSignUp'); menuOpen = false"
             >
               <AppIcon
                 class="mui-menu-icon"
@@ -313,7 +313,6 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               tabindex="0"
               data-testid="auth-sign-out-menu-item"
               @click="emit('signOut'); menuOpen = false"
-              @keydown.enter="emit('signOut'); menuOpen = false"
             >
               <AppIcon
                 class="mui-menu-icon"

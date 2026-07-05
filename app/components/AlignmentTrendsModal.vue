@@ -223,6 +223,7 @@ const xAxisLabels = computed(() => {
 
 <template>
   <AppModal
+    labelledby="alignment-trends-modal-title"
     :open="true"
     @close="emit('close')"
   >
@@ -230,7 +231,10 @@ const xAxisLabels = computed(() => {
       style="max-width: 680px; width: 95vw; max-height: 90vh; overflow-y: auto; padding: 28px 32px 32px;"
       @close="emit('close')"
     >
-      <h2 class="text-mui-h2 font-bold text-white">
+      <h2
+        id="alignment-trends-modal-title"
+        class="text-mui-h2 font-bold text-white"
+      >
         {{ $t('trends.title') }}
       </h2>
 

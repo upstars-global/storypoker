@@ -28,12 +28,16 @@ function submit() {
 
 <template>
   <AppModal
+    labelledby="join-overlay-title"
     :open="true"
     lock-dismiss
     @close="emit('close')"
   >
     <AppModalPaper @close="emit('close')">
-      <h2 class="mui-h5 text-center">
+      <h2
+        id="join-overlay-title"
+        class="mui-h5 text-center"
+      >
         {{ $t('join.title') }}
       </h2>
       <p class="mui-caption text-center mt-2 text-muted">

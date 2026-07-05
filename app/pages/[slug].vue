@@ -637,11 +637,15 @@ async function submitRenameRoom() {
     />
 
     <AppModal
+      labelledby="rename-room-modal-title"
       :open="showRenameRoom"
       @close="showRenameRoom = false"
     >
       <AppModalPaper @close="showRenameRoom = false">
-        <h2 class="mui-h5 mb-4">
+        <h2
+          id="rename-room-modal-title"
+          class="mui-h5 mb-4"
+        >
           {{ $t('room.renameTitle') }}
         </h2>
         <input
@@ -677,11 +681,15 @@ async function submitRenameRoom() {
     </AppModal>
 
     <AppModal
+      labelledby="kick-player-modal-title"
       :open="!!kickTargetId"
       @close="kickTargetId = null"
     >
       <AppModalPaper @close="kickTargetId = null">
-        <h2 class="mui-h5 mb-4">
+        <h2
+          id="kick-player-modal-title"
+          class="mui-h5 mb-4"
+        >
           {{ $t('room.kickTitle') }}
         </h2>
         <p class="text-body">
