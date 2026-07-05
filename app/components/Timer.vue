@@ -69,9 +69,17 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
     <div class="mui-paper-header justify-center">
       <span>{{ $t('timer.title') }}</span>
     </div>
-    <p class="mui-body px-4 py-3 text-body">{{ text }}</p>
-    <div v-if="showControls" class="flex justify-between px-4 pb-3">
-      <AppTooltip side="top" :side-offset="6">
+    <p class="mui-body px-4 py-3 text-body">
+      {{ text }}
+    </p>
+    <div
+      v-if="showControls"
+      class="flex justify-between px-4 pb-3"
+    >
+      <AppTooltip
+        side="top"
+        :side-offset="6"
+      >
         <template #trigger>
           <button
             v-wave
@@ -80,12 +88,21 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.minus30')"
             @click="emit('adjust', -30000)"
           >
-            <AppIcon class="mui-svg-icon" icon="ic:baseline-fast-rewind" style="font-size: 1.5rem;" />
+            <AppIcon
+              class="mui-svg-icon"
+              icon="ic:baseline-fast-rewind"
+              style="font-size: 1.5rem;"
+            />
           </button>
         </template>
-        <template #content>{{ $t('timer.minus30') }}</template>
+        <template #content>
+          {{ $t('timer.minus30') }}
+        </template>
       </AppTooltip>
-      <AppTooltip side="top" :side-offset="6">
+      <AppTooltip
+        side="top"
+        :side-offset="6"
+      >
         <template #trigger>
           <button
             v-wave
@@ -94,12 +111,22 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.reset')"
             @click="emit('reset')"
           >
-            <AppIcon class="mui-svg-icon" icon="ic:baseline-stop" style="font-size: 1.5rem;" />
+            <AppIcon
+              class="mui-svg-icon"
+              icon="ic:baseline-stop"
+              style="font-size: 1.5rem;"
+            />
           </button>
         </template>
-        <template #content>{{ $t('timer.reset') }}</template>
+        <template #content>
+          {{ $t('timer.reset') }}
+        </template>
       </AppTooltip>
-      <AppTooltip v-if="!isPaused" side="top" :side-offset="6">
+      <AppTooltip
+        v-if="!isPaused"
+        side="top"
+        :side-offset="6"
+      >
         <template #trigger>
           <button
             v-wave
@@ -108,12 +135,22 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.pause')"
             @click="emit('pause')"
           >
-            <AppIcon class="mui-svg-icon" icon="ic:baseline-pause" style="font-size: 1.5rem;" />
+            <AppIcon
+              class="mui-svg-icon"
+              icon="ic:baseline-pause"
+              style="font-size: 1.5rem;"
+            />
           </button>
         </template>
-        <template #content>{{ $t('timer.pause') }}</template>
+        <template #content>
+          {{ $t('timer.pause') }}
+        </template>
       </AppTooltip>
-      <AppTooltip v-else side="top" :side-offset="6">
+      <AppTooltip
+        v-else
+        side="top"
+        :side-offset="6"
+      >
         <template #trigger>
           <button
             v-wave
@@ -122,12 +159,21 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.continue')"
             @click="emit('resume')"
           >
-            <AppIcon class="mui-svg-icon" icon="ic:baseline-play-arrow" style="font-size: 1.5rem;" />
+            <AppIcon
+              class="mui-svg-icon"
+              icon="ic:baseline-play-arrow"
+              style="font-size: 1.5rem;"
+            />
           </button>
         </template>
-        <template #content>{{ $t('timer.continue') }}</template>
+        <template #content>
+          {{ $t('timer.continue') }}
+        </template>
       </AppTooltip>
-      <AppTooltip side="top" :side-offset="6">
+      <AppTooltip
+        side="top"
+        :side-offset="6"
+      >
         <template #trigger>
           <button
             v-wave
@@ -136,10 +182,16 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
             :aria-label="$t('timer.plus30')"
             @click="emit('adjust', 30000)"
           >
-            <AppIcon class="mui-svg-icon" icon="ic:baseline-fast-forward" style="font-size: 1.5rem;" />
+            <AppIcon
+              class="mui-svg-icon"
+              icon="ic:baseline-fast-forward"
+              style="font-size: 1.5rem;"
+            />
           </button>
         </template>
-        <template #content>{{ $t('timer.plus30') }}</template>
+        <template #content>
+          {{ $t('timer.plus30') }}
+        </template>
       </AppTooltip>
     </div>
   </div>

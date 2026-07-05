@@ -66,10 +66,11 @@ npx skills add anthropics/skills -s frontend-design -a codex claude-code -y
 # npx skills add anthropics/skills -s webapp-testing -a codex claude-code -y
 npx skills add sentimony/skills -s web-debug -a codex claude-code -y
 # npx skills add antfu/skills -s vitest -a codex claude-code -y
+npx skills add sentimony/skills -s vitest -a codex claude-code -y
 # npx skills add currents-dev/playwright-best-practices-skill -a codex claude-code -y
 
 # SUPABASE
-npx skills add supabase/agent-skills -s supabase -a codex claude-code -y
+# npx skills add supabase/agent-skills -s supabase -a codex claude-code -y
 # npx skills add supabase/agent-skills -s supabase-postgres-best-practices -a codex claude-code -y
 
 # WORKFLOW
@@ -102,7 +103,7 @@ npx skills add obra/superpowers -s verification-before-completion -a codex claud
 
 # TOKENOMICS
 # npx skills add forrestchang/andrej-karpathy-skills -s karpathy-guidelines -a codex claude-code -y
-npx skills add dietrichgebert/ponytail -s ponytail -a codex claude-code -y
+# npx skills add dietrichgebert/ponytail -s ponytail -a codex claude-code -y
 
 # TYPESCRIPT
 # npx skills add sickn33/antigravity-awesome-skills -s typescript-expert -a codex claude-code -y

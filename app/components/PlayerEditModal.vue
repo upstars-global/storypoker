@@ -32,8 +32,14 @@ function save() {
 </script>
 
 <template>
-  <AppModal :open="true" @close="emit('close')">
-    <AppModalPaper style="max-width: 600px; padding: 32px 40px 40px;" @close="emit('close')">
+  <AppModal
+    :open="true"
+    @close="emit('close')"
+  >
+    <AppModalPaper
+      style="max-width: 600px; padding: 32px 40px 40px;"
+      @close="emit('close')"
+    >
       <h2 class="text-center text-mui-h2 font-bold text-primary">
         {{ $t('players.editTitle') }}
       </h2>
@@ -46,7 +52,12 @@ function save() {
           {{ $t('players.roleLabel') }}
         </h3>
         <div class="flex flex-wrap gap-2">
-          <AppTooltip v-for="opt in ROLE_TAGS" :key="opt" side="top" :side-offset="6">
+          <AppTooltip
+            v-for="opt in ROLE_TAGS"
+            :key="opt"
+            side="top"
+            :side-offset="6"
+          >
             <template #trigger>
               <button
                 type="button"
@@ -59,7 +70,9 @@ function save() {
                 {{ opt }}
               </button>
             </template>
-            <template #content>{{ $t(`players.roleNames.${opt}`, opt) }}</template>
+            <template #content>
+              {{ $t(`players.roleNames.${opt}`, opt) }}
+            </template>
           </AppTooltip>
         </div>
       </section>
@@ -77,7 +90,12 @@ function save() {
       </label>
 
       <div class="flex justify-center mt-8">
-        <button v-wave class="mui-btn" style="min-width: 120px;" @click="save">
+        <button
+          v-wave
+          class="mui-btn"
+          style="min-width: 120px;"
+          @click="save"
+        >
           {{ $t('common.save') }}
         </button>
       </div>

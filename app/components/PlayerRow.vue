@@ -63,7 +63,10 @@ const playerAvatar = computed(() => {
     class="grid items-center gap-2 rounded relative"
     style="grid-template-columns: 32px 1fr auto 36px; column-gap: 4px;"
   >
-    <AppTooltip side="top" :side-offset="6">
+    <AppTooltip
+      side="top"
+      :side-offset="6"
+    >
       <template #trigger>
         <img
           :src="playerAvatar"
@@ -79,11 +82,17 @@ const playerAvatar = computed(() => {
       </template>
     </AppTooltip>
     <div class="flex items-center gap-1.5 min-w-0">
-      <AppTooltip v-if="roleTag" side="top" :side-offset="6">
+      <AppTooltip
+        v-if="roleTag"
+        side="top"
+        :side-offset="6"
+      >
         <template #trigger>
           <span class="flex-none mui-role-tag">{{ roleTag }}</span>
         </template>
-        <template #content>{{ $t(`players.roleNames.${roleTag}`, roleTag) }}</template>
+        <template #content>
+          {{ $t(`players.roleNames.${roleTag}`, roleTag) }}
+        </template>
       </AppTooltip>
       <span
         class="truncate text-base"
@@ -91,7 +100,11 @@ const playerAvatar = computed(() => {
       >
         {{ player.name }}
       </span>
-      <AppTooltip v-if="player.is_moderator" side="top" :side-offset="6">
+      <AppTooltip
+        v-if="player.is_moderator"
+        side="top"
+        :side-offset="6"
+      >
         <template #trigger>
           <span class="inline-flex flex-none">
             <AppIcon
@@ -102,13 +115,19 @@ const playerAvatar = computed(() => {
             />
           </span>
         </template>
-        <template #content>{{ $t('players.moderator') }}</template>
+        <template #content>
+          {{ $t('players.moderator') }}
+        </template>
       </AppTooltip>
     </div>
 
     <template v-if="player.is_online">
       <template v-if="phase === 'voting'">
-        <AppTooltip v-if="player.vote !== null" side="top" :side-offset="6">
+        <AppTooltip
+          v-if="player.vote !== null"
+          side="top"
+          :side-offset="6"
+        >
           <template #trigger>
             <span class="inline-flex">
               <AppIcon
@@ -119,9 +138,15 @@ const playerAvatar = computed(() => {
               />
             </span>
           </template>
-          <template #content>{{ $t('players.estimateGiven') }}</template>
+          <template #content>
+            {{ $t('players.estimateGiven') }}
+          </template>
         </AppTooltip>
-        <AppTooltip v-else side="top" :side-offset="6">
+        <AppTooltip
+          v-else
+          side="top"
+          :side-offset="6"
+        >
           <template #trigger>
             <span class="inline-flex">
               <AppIcon
@@ -132,7 +157,9 @@ const playerAvatar = computed(() => {
               />
             </span>
           </template>
-          <template #content>{{ $t('players.playerDeciding') }}</template>
+          <template #content>
+            {{ $t('players.playerDeciding') }}
+          </template>
         </AppTooltip>
       </template>
       <template v-else>
@@ -141,7 +168,11 @@ const playerAvatar = computed(() => {
           class="text-base font-medium text-center"
           style="color: var(--text-primary); margin-right: 0;"
         >{{ voteLabel(player.vote!) }}</span>
-        <AppTooltip v-else side="top" :side-offset="6">
+        <AppTooltip
+          v-else
+          side="top"
+          :side-offset="6"
+        >
           <template #trigger>
             <span class="inline-flex">
               <AppIcon
@@ -152,7 +183,9 @@ const playerAvatar = computed(() => {
               />
             </span>
           </template>
-          <template #content>{{ $t('players.noVote') }}</template>
+          <template #content>
+            {{ $t('players.noVote') }}
+          </template>
         </AppTooltip>
       </template>
     </template>
@@ -162,7 +195,11 @@ const playerAvatar = computed(() => {
         class="text-base font-medium text-center"
         style="color: var(--text-primary); margin-right: 0;"
       >{{ voteLabel(player.vote!) }}</span>
-      <AppTooltip v-else-if="phase === 'voting' && player.vote !== null" side="top" :side-offset="6">
+      <AppTooltip
+        v-else-if="phase === 'voting' && player.vote !== null"
+        side="top"
+        :side-offset="6"
+      >
         <template #trigger>
           <span class="inline-flex">
             <AppIcon
@@ -173,9 +210,15 @@ const playerAvatar = computed(() => {
             />
           </span>
         </template>
-        <template #content>{{ $t('players.estimateGiven') }}</template>
+        <template #content>
+          {{ $t('players.estimateGiven') }}
+        </template>
       </AppTooltip>
-      <AppTooltip v-else side="top" :side-offset="6">
+      <AppTooltip
+        v-else
+        side="top"
+        :side-offset="6"
+      >
         <template #trigger>
           <span class="inline-flex">
             <AppIcon
@@ -186,7 +229,9 @@ const playerAvatar = computed(() => {
             />
           </span>
         </template>
-        <template #content>{{ $t('players.inactive') }}</template>
+        <template #content>
+          {{ $t('players.inactive') }}
+        </template>
       </AppTooltip>
     </template>
 
@@ -225,10 +270,18 @@ const playerAvatar = computed(() => {
             tabindex="0"
             @click.stop="emit('toggleModerator', player.id, !player.is_moderator); menuOpen = false"
           >
-            <AppIcon class="mui-menu-icon" icon="app:moderator" />
+            <AppIcon
+              class="mui-menu-icon"
+              icon="app:moderator"
+            />
             <span class="flex-1">{{ $t('players.isModerator') }}</span>
             <span class="mui-switch">
-              <input type="checkbox" :checked="player.is_moderator" tabindex="-1" readonly>
+              <input
+                type="checkbox"
+                :checked="player.is_moderator"
+                tabindex="-1"
+                readonly
+              >
               <span class="track" />
               <span class="thumb" />
             </span>
@@ -240,7 +293,10 @@ const playerAvatar = computed(() => {
             tabindex="0"
             @click="emit('edit', player.id); menuOpen = false"
           >
-            <AppIcon class="mui-menu-icon" icon="ic:baseline-edit" />
+            <AppIcon
+              class="mui-menu-icon"
+              icon="ic:baseline-edit"
+            />
             {{ $t('players.edit') }}
           </li>
           <li
@@ -250,7 +306,10 @@ const playerAvatar = computed(() => {
             tabindex="0"
             @click="emit('leave', player.id); menuOpen = false"
           >
-            <AppIcon class="mui-menu-icon" icon="app:leave-room" />
+            <AppIcon
+              class="mui-menu-icon"
+              icon="app:leave-room"
+            />
             {{ $t('players.leaveRoom') }}
           </li>
         </template>
@@ -262,7 +321,10 @@ const playerAvatar = computed(() => {
             tabindex="0"
             @click="emit('edit', player.id); menuOpen = false"
           >
-            <AppIcon class="mui-menu-icon" icon="ic:baseline-edit" />
+            <AppIcon
+              class="mui-menu-icon"
+              icon="ic:baseline-edit"
+            />
             {{ $t('players.edit') }}
           </li>
           <li
@@ -272,7 +334,10 @@ const playerAvatar = computed(() => {
             tabindex="0"
             @click="emit('kick', player.id); menuOpen = false"
           >
-            <AppIcon class="mui-menu-icon" icon="ic:baseline-person-remove" />
+            <AppIcon
+              class="mui-menu-icon"
+              icon="ic:baseline-person-remove"
+            />
             {{ $t('players.kickPlayer') }}
           </li>
         </template>

@@ -5,7 +5,10 @@ const emit = defineEmits<{ close: [] }>()
 </script>
 
 <template>
-  <div class="mui-modal-paper" @pointerdown.stop>
+  <div
+    class="mui-modal-paper"
+    @pointerdown.stop
+  >
     <slot />
     <button
       v-wave
@@ -14,7 +17,11 @@ const emit = defineEmits<{ close: [] }>()
       :aria-label="$t('common.close')"
       @click="emit('close')"
     >
-      <AppIcon class="mui-svg-icon" icon="ic:baseline-close" style="font-size: 1.5rem;" />
+      <AppIcon
+        class="mui-svg-icon"
+        icon="ic:baseline-close"
+        style="font-size: 1.5rem;"
+      />
     </button>
   </div>
 </template>

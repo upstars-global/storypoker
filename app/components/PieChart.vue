@@ -47,11 +47,21 @@ const data = computed(() => {
 </script>
 
 <template>
-  <svg viewBox="0 0 100 100" class="block mx-auto" style="width: 100%; max-width: 500px;">
+  <svg
+    viewBox="0 0 100 100"
+    class="block mx-auto"
+    style="width: 100%; max-width: 500px;"
+  >
     <template v-if="data.single">
-      <circle cx="50" cy="50" r="49" :fill="data.single.color" />
+      <circle
+        cx="50"
+        cy="50"
+        r="49"
+        :fill="data.single.color"
+      />
       <text
-        x="50" y="50"
+        x="50"
+        y="50"
         text-anchor="middle"
         dominant-baseline="central"
         font-size="12"

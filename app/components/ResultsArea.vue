@@ -74,8 +74,15 @@ watch(celebrate, (next, prev) => {
 </script>
 
 <template>
-  <div data-testid="results-area" class="flex flex-col items-center gap-8 w-full">
-    <div v-if="celebrate" class="celebration-layer" aria-hidden="true">
+  <div
+    data-testid="results-area"
+    class="flex flex-col items-center gap-8 w-full"
+  >
+    <div
+      v-if="celebrate"
+      class="celebration-layer"
+      aria-hidden="true"
+    >
       <span
         v-for="(particle, index) in celebrationParticles"
         :key="index"
@@ -94,10 +101,18 @@ watch(celebrate, (next, prev) => {
         }"
       />
     </div>
-    <h3 v-if="pollQuestion" class="text-center text-mui-h2 font-bold text-white" data-testid="poll-question">
+    <h3
+      v-if="pollQuestion"
+      class="text-center text-mui-h2 font-bold text-white"
+      data-testid="poll-question"
+    >
       {{ pollQuestion }}
     </h3>
-    <div v-if="votingBubbles" ref="chartsEl" class="flex items-end justify-center gap-10 flex-wrap py-4">
+    <div
+      v-if="votingBubbles"
+      ref="chartsEl"
+      class="flex items-end justify-center gap-10 flex-wrap py-4"
+    >
       <div
         v-for="b in votingBubbles"
         :key="b.card"
@@ -115,7 +130,11 @@ watch(celebrate, (next, prev) => {
         <span class="text-white font-medium text-base">{{ b.count }}</span>
       </div>
     </div>
-    <div v-else ref="chartsEl" class="w-full flex flex-wrap justify-center gap-8">
+    <div
+      v-else
+      ref="chartsEl"
+      class="w-full flex flex-wrap justify-center gap-8"
+    >
       <div
         v-for="g in groups"
         :key="g.label"
@@ -128,7 +147,10 @@ watch(celebrate, (next, prev) => {
         <PieChart :votes="g.votes" />
       </div>
     </div>
-    <div v-if="playerVotes?.length" class="w-full max-w-md mx-auto">
+    <div
+      v-if="playerVotes?.length"
+      class="w-full max-w-md mx-auto"
+    >
       <div
         v-for="pv in playerVotes"
         :key="pv.name"

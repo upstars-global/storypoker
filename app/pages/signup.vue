@@ -60,41 +60,115 @@ async function onSubmit() {
 
     <main class="flex flex-1 items-center justify-center px-4 py-10">
       <section class="mui-modal-paper max-w-md">
-        <h1 class="mui-h5 text-center">{{ $t('common.signUp') }}</h1>
-        <p class="mui-caption text-center mt-2">{{ $t('signup.description') }}</p>
+        <h1 class="mui-h5 text-center">
+          {{ $t('common.signUp') }}
+        </h1>
+        <p class="mui-caption text-center mt-2">
+          {{ $t('signup.description') }}
+        </p>
 
-        <div v-if="success" data-testid="signup-success" class="text-center mt-6">
-          <p class="mui-body">{{ $t('signup.confirmEmail') }}</p>
-          <RouterLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('signup.backToSignIn') }}</RouterLink>
+        <div
+          v-if="success"
+          data-testid="signup-success"
+          class="text-center mt-6"
+        >
+          <p class="mui-body">
+            {{ $t('signup.confirmEmail') }}
+          </p>
+          <RouterLink
+            to="/login"
+            class="mui-caption underline hover:no-underline text-primary"
+          >
+            {{ $t('signup.backToSignIn') }}
+          </RouterLink>
         </div>
 
-        <form v-else class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
+        <form
+          v-else
+          class="flex flex-col gap-3 mt-6"
+          @submit.prevent="onSubmit"
+        >
           <div>
-            <input v-model.trim="form.email" type="email" autocomplete="email" :placeholder="$t('common.emailPlaceholder')" class="mui-input" :class="{ 'is-error': errors.email }" data-testid="signup-email" />
-            <p v-if="errors.email" class="text-sm mt-1 text-danger">{{ errors.email }}</p>
+            <input
+              v-model.trim="form.email"
+              type="email"
+              autocomplete="email"
+              :placeholder="$t('common.emailPlaceholder')"
+              class="mui-input"
+              :class="{ 'is-error': errors.email }"
+              data-testid="signup-email"
+            >
+            <p
+              v-if="errors.email"
+              class="text-sm mt-1 text-danger"
+            >
+              {{ errors.email }}
+            </p>
           </div>
 
           <div>
-            <input v-model="form.password" type="password" autocomplete="new-password" :placeholder="$t('common.passwordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.password }" data-testid="signup-password" />
-            <p v-if="errors.password" class="text-sm mt-1 text-danger">{{ errors.password }}</p>
+            <input
+              v-model="form.password"
+              type="password"
+              autocomplete="new-password"
+              :placeholder="$t('common.passwordPlaceholder')"
+              class="mui-input"
+              :class="{ 'is-error': errors.password }"
+              data-testid="signup-password"
+            >
+            <p
+              v-if="errors.password"
+              class="text-sm mt-1 text-danger"
+            >
+              {{ errors.password }}
+            </p>
           </div>
 
           <div>
-            <input v-model="form.confirm" type="password" autocomplete="new-password" :placeholder="$t('common.confirmPasswordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.confirm }" data-testid="signup-confirm" />
-            <p v-if="errors.confirm" class="text-sm mt-1 text-danger">{{ errors.confirm }}</p>
+            <input
+              v-model="form.confirm"
+              type="password"
+              autocomplete="new-password"
+              :placeholder="$t('common.confirmPasswordPlaceholder')"
+              class="mui-input"
+              :class="{ 'is-error': errors.confirm }"
+              data-testid="signup-confirm"
+            >
+            <p
+              v-if="errors.confirm"
+              class="text-sm mt-1 text-danger"
+            >
+              {{ errors.confirm }}
+            </p>
           </div>
 
-          <p v-if="errors.server" class="text-sm text-danger">{{ errors.server }}</p>
+          <p
+            v-if="errors.server"
+            class="text-sm text-danger"
+          >
+            {{ errors.server }}
+          </p>
 
           <div class="flex justify-center mt-2">
-            <button v-wave class="mui-btn" type="submit" :disabled="loading" data-testid="signup-submit">
+            <button
+              v-wave
+              class="mui-btn"
+              type="submit"
+              :disabled="loading"
+              data-testid="signup-submit"
+            >
               {{ loading ? $t('auth.signingUp') : $t('common.signUp') }}
             </button>
           </div>
 
           <p class="mui-caption text-center mt-2">
             {{ $t('signup.alreadyHaveAccount') }}
-            <RouterLink to="/login" class="underline hover:no-underline text-primary">{{ $t('common.signIn') }}</RouterLink>
+            <RouterLink
+              to="/login"
+              class="underline hover:no-underline text-primary"
+            >
+              {{ $t('common.signIn') }}
+            </RouterLink>
           </p>
         </form>
       </section>

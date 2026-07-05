@@ -145,7 +145,10 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
 </script>
 
 <template>
-  <AppModal :open="true" @close="emit('close')">
+  <AppModal
+    :open="true"
+    @close="emit('close')"
+  >
     <AppModalPaper
       style="max-width: 640px; width: 92vw; max-height: 86vh; overflow-y: auto; padding: 32px 36px 36px;"
       @close="emit('close')"
@@ -154,141 +157,171 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
         {{ $t('history.title') }}
       </h2>
 
-          <div class="mt-4 flex flex-col items-center gap-2">
-            <div class="flex w-full items-center justify-between">
-              <div class="flex flex-col gap-1">
-                <div class="flex gap-1">
-                  <button
-                    v-for="year in availableYears"
-                    :key="year"
-                    class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
-                    :class="selectedYear === year
-                      ? 'bg-elevated text-white'
-                      : 'text-muted hover:text-body'"
-                    @click="selectedYear = year; selectedQuarter = null"
-                  >
-                    {{ year }}
-                  </button>
-                </div>
-                <div class="flex gap-1">
-                  <button
-                    v-for="q in [1, 2, 3, 4]"
-                    :key="q"
-                    class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
-                    :class="selectedQuarter === q
-                      ? 'bg-elevated text-white'
-                      : 'text-muted hover:text-body'"
-                    @click="selectedQuarter = selectedQuarter === q ? null : q"
-                  >
-                    Q{{ q }}
-                  </button>
-                </div>
-              </div>
+      <div class="mt-4 flex flex-col items-center gap-2">
+        <div class="flex w-full items-center justify-between">
+          <div class="flex flex-col gap-1">
+            <div class="flex gap-1">
               <button
-                v-if="filteredSummaries.length"
-                v-wave
-                class="flex items-center gap-1 rounded px-2 py-1 text-mui-caption text-muted transition-colors hover:text-body"
-                :aria-label="$t('history.exportCsv')"
-                @click="exportCsv"
+                v-for="year in availableYears"
+                :key="year"
+                class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
+                :class="selectedYear === year
+                  ? 'bg-elevated text-white'
+                  : 'text-muted hover:text-body'"
+                @click="selectedYear = year; selectedQuarter = null"
               >
-                <AppIcon icon="ic:baseline-download" style="font-size: 1rem;" />
-                {{ $t('history.exportCsv') }}
+                {{ year }}
               </button>
             </div>
-            <div v-if="availableDecks.length > 1" class="flex flex-wrap justify-center gap-1">
+            <div class="flex gap-1">
               <button
+                v-for="q in [1, 2, 3, 4]"
+                :key="q"
                 class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
-                :class="deckFilter === null
+                :class="selectedQuarter === q
                   ? 'bg-elevated text-white'
                   : 'text-muted hover:text-body'"
-                @click="deckFilter = null"
+                @click="selectedQuarter = selectedQuarter === q ? null : q"
               >
-                {{ $t('history.filter.allDecks') }}
-              </button>
-              <button
-                v-for="deck in availableDecks"
-                :key="deck"
-                class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
-                :class="deckFilter === deck
-                  ? 'bg-elevated text-white'
-                  : 'text-muted hover:text-body'"
-                @click="deckFilter = deck"
-              >
-                {{ deckName(deck) }}
+                Q{{ q }}
               </button>
             </div>
           </div>
+          <button
+            v-if="filteredSummaries.length"
+            v-wave
+            class="flex items-center gap-1 rounded px-2 py-1 text-mui-caption text-muted transition-colors hover:text-body"
+            :aria-label="$t('history.exportCsv')"
+            @click="exportCsv"
+          >
+            <AppIcon
+              icon="ic:baseline-download"
+              style="font-size: 1rem;"
+            />
+            {{ $t('history.exportCsv') }}
+          </button>
+        </div>
+        <div
+          v-if="availableDecks.length > 1"
+          class="flex flex-wrap justify-center gap-1"
+        >
+          <button
+            class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
+            :class="deckFilter === null
+              ? 'bg-elevated text-white'
+              : 'text-muted hover:text-body'"
+            @click="deckFilter = null"
+          >
+            {{ $t('history.filter.allDecks') }}
+          </button>
+          <button
+            v-for="deck in availableDecks"
+            :key="deck"
+            class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
+            :class="deckFilter === deck
+              ? 'bg-elevated text-white'
+              : 'text-muted hover:text-body'"
+            @click="deckFilter = deck"
+          >
+            {{ deckName(deck) }}
+          </button>
+        </div>
+      </div>
 
-          <p v-if="loading" class="mt-8 text-center text-mui-body text-muted">
-            {{ $t('common.loading') }}
-          </p>
-          <p v-else-if="!summaries.length" class="mt-8 text-center text-mui-body text-muted">
-            {{ $t('history.empty') }}
-          </p>
-          <p v-else-if="!filteredSummaries.length" class="mt-8 text-center text-mui-body text-muted">
-            {{ $t('history.emptyRange') }}
-          </p>
+      <p
+        v-if="loading"
+        class="mt-8 text-center text-mui-body text-muted"
+      >
+        {{ $t('common.loading') }}
+      </p>
+      <p
+        v-else-if="!summaries.length"
+        class="mt-8 text-center text-mui-body text-muted"
+      >
+        {{ $t('history.empty') }}
+      </p>
+      <p
+        v-else-if="!filteredSummaries.length"
+        class="mt-8 text-center text-mui-body text-muted"
+      >
+        {{ $t('history.emptyRange') }}
+      </p>
 
-          <div v-else class="mt-6 flex flex-col gap-7">
-            <section v-for="g in groups" :key="g.key" class="flex flex-col gap-3">
-              <h3 class="text-mui-caption font-semibold uppercase tracking-wide text-muted">
-                {{ g.label }}
-              </h3>
-              <div
-                v-for="r in g.rounds"
-                :key="r.id"
-                class="flex flex-col gap-2 rounded border p-3"
-                data-testid="history-round"
-              >
-                <div class="flex items-center justify-between gap-3 text-mui-body text-white">
-                  <div class="flex items-center gap-2">
-                    <span>{{ dateFmt.format(new Date(r.revealedAt)) }}</span>
-                    <span class="text-muted">·</span>
-                    <span>{{ timeFmt.format(new Date(r.revealedAt)) }}</span>
-                    <span v-if="r.deckPreset" class="text-mui-caption text-muted">
-                      {{ deckName(r.deckPreset) }}
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-4 text-mui-caption">
-                    <span v-if="r.average !== null">
-                      {{ $t('history.average') }}: <span class="font-semibold">{{ r.average }}</span>
-                    </span>
-                    <span v-if="r.alignment !== null" class="flex items-center gap-1.5">
-                      <span
-                        class="inline-block rounded-full"
-                        :style="{ width: '9px', height: '9px', backgroundColor: alignmentColor(r.alignment) }"
-                      />
-                      <span class="font-semibold">{{ r.alignment }}</span>
-                      <AppIcon
-                        v-if="r.trend === 'up'"
-                        icon="ic:baseline-arrow-drop-up"
-                        style="font-size: 1.25rem; color: #43a047;"
-                      />
-                      <AppIcon
-                        v-else-if="r.trend === 'down'"
-                        icon="ic:baseline-arrow-drop-down"
-                        style="font-size: 1.25rem; color: #e64a19;"
-                      />
-                    </span>
-                    <span class="flex items-center gap-1 text-muted">
-                      <AppIcon icon="ic:baseline-account-circle" style="font-size: 1rem;" />
-                      {{ r.voterCount }}
-                    </span>
-                  </div>
-                </div>
-                <div class="flex flex-wrap gap-2">
+      <div
+        v-else
+        class="mt-6 flex flex-col gap-7"
+      >
+        <section
+          v-for="g in groups"
+          :key="g.key"
+          class="flex flex-col gap-3"
+        >
+          <h3 class="text-mui-caption font-semibold uppercase tracking-wide text-muted">
+            {{ g.label }}
+          </h3>
+          <div
+            v-for="r in g.rounds"
+            :key="r.id"
+            class="flex flex-col gap-2 rounded border p-3"
+            data-testid="history-round"
+          >
+            <div class="flex items-center justify-between gap-3 text-mui-body text-white">
+              <div class="flex items-center gap-2">
+                <span>{{ dateFmt.format(new Date(r.revealedAt)) }}</span>
+                <span class="text-muted">·</span>
+                <span>{{ timeFmt.format(new Date(r.revealedAt)) }}</span>
+                <span
+                  v-if="r.deckPreset"
+                  class="text-mui-caption text-muted"
+                >
+                  {{ deckName(r.deckPreset) }}
+                </span>
+              </div>
+              <div class="flex items-center gap-4 text-mui-caption">
+                <span v-if="r.average !== null">
+                  {{ $t('history.average') }}: <span class="font-semibold">{{ r.average }}</span>
+                </span>
+                <span
+                  v-if="r.alignment !== null"
+                  class="flex items-center gap-1.5"
+                >
                   <span
-                    v-for="[card, count] in sortedCounts(r.counts)"
-                    :key="card"
-                    class="rounded bg-elevated px-2 py-0.5 text-mui-caption text-body"
-                  >
-                    {{ cardLabel(card) }} × {{ count }}
-                  </span>
-                </div>
+                    class="inline-block rounded-full"
+                    :style="{ width: '9px', height: '9px', backgroundColor: alignmentColor(r.alignment) }"
+                  />
+                  <span class="font-semibold">{{ r.alignment }}</span>
+                  <AppIcon
+                    v-if="r.trend === 'up'"
+                    icon="ic:baseline-arrow-drop-up"
+                    style="font-size: 1.25rem; color: #43a047;"
+                  />
+                  <AppIcon
+                    v-else-if="r.trend === 'down'"
+                    icon="ic:baseline-arrow-drop-down"
+                    style="font-size: 1.25rem; color: #e64a19;"
+                  />
+                </span>
+                <span class="flex items-center gap-1 text-muted">
+                  <AppIcon
+                    icon="ic:baseline-account-circle"
+                    style="font-size: 1rem;"
+                  />
+                  {{ r.voterCount }}
+                </span>
               </div>
-            </section>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="[card, count] in sortedCounts(r.counts)"
+                :key="card"
+                class="rounded bg-elevated px-2 py-0.5 text-mui-caption text-body"
+              >
+                {{ cardLabel(card) }} × {{ count }}
+              </span>
+            </div>
           </div>
-
+        </section>
+      </div>
     </AppModalPaper>
   </AppModal>
 </template>

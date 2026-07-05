@@ -126,7 +126,7 @@ async function createRoom() {
               :class="{ 'is-error': hasError }"
               data-testid="home-name-input"
               @keyup.enter="createRoom"
-            />
+            >
           </div>
           <button
             v-wave
@@ -139,13 +139,22 @@ async function createRoom() {
         </div>
       </section>
 
-      <section v-if="recentRooms.length" class="w-full max-w-[920px] mt-[60px]">
+      <section
+        v-if="recentRooms.length"
+        class="w-full max-w-[920px] mt-[60px]"
+      >
         <table class="w-full text-mui-table text-body">
           <thead class="text-primary">
             <tr class="text-left">
-              <th class="px-3 py-3 font-medium">{{ $t('home.recentRooms') }}</th>
-              <th class="px-3 py-3 font-medium">{{ $t('home.players') }}</th>
-              <th class="px-3 py-3 font-medium text-right whitespace-nowrap">{{ $t('home.lastVisited') }}</th>
+              <th class="px-3 py-3 font-medium">
+                {{ $t('home.recentRooms') }}
+              </th>
+              <th class="px-3 py-3 font-medium">
+                {{ $t('home.players') }}
+              </th>
+              <th class="px-3 py-3 font-medium text-right whitespace-nowrap">
+                {{ $t('home.lastVisited') }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -155,13 +164,19 @@ async function createRoom() {
               class="border-t"
             >
               <td class="px-3 py-3 align-top">
-                <RouterLink :to="`/${room.slug ?? room.roomId}`" class="underline hover:no-underline text-primary">
+                <RouterLink
+                  :to="`/${room.slug ?? room.roomId}`"
+                  class="underline hover:no-underline text-primary"
+                >
                   {{ room.name ?? room.slug ?? room.roomId }}
                 </RouterLink>
               </td>
               <td class="px-3 py-3 align-top">
                 <span v-if="room.playerNames.length">{{ room.playerNames.join(', ') }}</span>
-                <span v-else class="text-muted">—</span>
+                <span
+                  v-else
+                  class="text-muted"
+                >—</span>
               </td>
               <td class="px-3 py-3 align-top text-right whitespace-nowrap text-muted">
                 {{ room.lastVisitedAt ? relativeTime(room.lastVisitedAt) : '—' }}

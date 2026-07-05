@@ -20,6 +20,8 @@ const props = withDefaults(defineProps<{
   countdownCounter?: number
   countdownTotal?: number
 }>(), {
+  playerUserId: null,
+  roomName: '',
   title: 'Story Poker',
   countdownActive: false,
   countdownCounter: 0,
@@ -129,7 +131,11 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
       >
         {{ headerLabel }}
       </span>
-      <div ref="menuRef" style="position: relative;" @keydown.escape.stop="menuOpen = false">
+      <div
+        ref="menuRef"
+        style="position: relative;"
+        @keydown.escape.stop="menuOpen = false"
+      >
         <button
           v-wave
           class="mui-icon-btn text-white"
@@ -170,7 +176,10 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               @click="emit('openCardDeck'); menuOpen = false"
               @keydown.enter="emit('openCardDeck'); menuOpen = false"
             >
-              <AppIcon class="mui-menu-icon" icon="ic:baseline-settings" />
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-settings"
+              />
               {{ $t('header.configureCardDeck') }}
             </li>
             <li
@@ -182,7 +191,10 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               @click="emit('openRenameRoom'); menuOpen = false"
               @keydown.enter="emit('openRenameRoom'); menuOpen = false"
             >
-              <AppIcon class="mui-menu-icon" icon="ic:baseline-edit" />
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-edit"
+              />
               {{ $t('header.renameRoom') }}
             </li>
             <hr class="mui-divider">
@@ -197,7 +209,10 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               @click="emit('openAccountSettings'); menuOpen = false"
               @keydown.enter="emit('openAccountSettings'); menuOpen = false"
             >
-              <AppIcon class="mui-menu-icon" icon="ic:baseline-settings" />
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-settings"
+              />
               {{ $t('header.accountSettings') }}
             </li>
             <hr class="mui-divider">
@@ -211,7 +226,10 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
             @click="emit('openHistory'); menuOpen = false"
             @keydown.enter="emit('openHistory'); menuOpen = false"
           >
-            <AppIcon class="mui-menu-icon" icon="ic:baseline-history" />
+            <AppIcon
+              class="mui-menu-icon"
+              icon="ic:baseline-history"
+            />
             {{ $t('header.history') }}
           </li>
           <li
@@ -222,7 +240,10 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
             @click="emit('openAlignmentTrends'); menuOpen = false"
             @keydown.enter="emit('openAlignmentTrends'); menuOpen = false"
           >
-            <AppIcon class="mui-menu-icon" icon="ic:baseline-trending-up" />
+            <AppIcon
+              class="mui-menu-icon"
+              icon="ic:baseline-trending-up"
+            />
             {{ $t('header.alignmentTrends') }}
           </li>
           <hr class="mui-divider">
@@ -234,10 +255,18 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
             tabindex="0"
             @click.stop="toggleTheme(); menuOpen = false"
           >
-            <AppIcon class="mui-menu-icon" :icon="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'" />
+            <AppIcon
+              class="mui-menu-icon"
+              :icon="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'"
+            />
             <span class="flex-1">{{ isLight ? $t('header.lightTheme') : $t('header.darkTheme') }}</span>
             <span class="mui-switch">
-              <input type="checkbox" :checked="isLight" tabindex="-1" readonly>
+              <input
+                type="checkbox"
+                :checked="isLight"
+                tabindex="-1"
+                readonly
+              >
               <span class="track" />
               <span class="thumb" />
             </span>
@@ -254,7 +283,10 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               @click="emit('openSignIn'); menuOpen = false"
               @keydown.enter="emit('openSignIn'); menuOpen = false"
             >
-              <AppIcon class="mui-menu-icon" icon="ic:baseline-login" />
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-login"
+              />
               {{ $t('common.signIn') }}
             </li>
             <li
@@ -265,7 +297,10 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               @click="emit('openSignUp'); menuOpen = false"
               @keydown.enter="emit('openSignUp'); menuOpen = false"
             >
-              <AppIcon class="mui-menu-icon" icon="ic:baseline-person-add" />
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-person-add"
+              />
               {{ $t('common.signUp') }}
             </li>
           </template>
@@ -280,7 +315,10 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
               @click="emit('signOut'); menuOpen = false"
               @keydown.enter="emit('signOut'); menuOpen = false"
             >
-              <AppIcon class="mui-menu-icon" icon="ic:baseline-logout" />
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-logout"
+              />
               {{ $t('common.signOut') }}
             </li>
           </template>

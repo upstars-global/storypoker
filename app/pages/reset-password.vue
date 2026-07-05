@@ -77,38 +77,105 @@ async function onSubmit() {
 
     <main class="flex flex-1 items-center justify-center px-4 py-10">
       <section class="mui-modal-paper max-w-md">
-        <h1 class="mui-h5 text-center">{{ $t('resetPassword.title') }}</h1>
-        <p class="mui-caption text-center mt-2">{{ $t('resetPassword.description') }}</p>
+        <h1 class="mui-h5 text-center">
+          {{ $t('resetPassword.title') }}
+        </h1>
+        <p class="mui-caption text-center mt-2">
+          {{ $t('resetPassword.description') }}
+        </p>
 
-        <div v-if="checkingSession" class="text-center mt-6">
-          <p class="mui-body">{{ $t('resetPassword.checking') }}</p>
+        <div
+          v-if="checkingSession"
+          class="text-center mt-6"
+        >
+          <p class="mui-body">
+            {{ $t('resetPassword.checking') }}
+          </p>
         </div>
 
-        <div v-else-if="success" class="text-center mt-6">
-          <p class="mui-body">{{ $t('resetPassword.updated') }}</p>
-          <RouterLink to="/login" class="mui-caption underline hover:no-underline text-primary">{{ $t('common.signIn') }}</RouterLink>
+        <div
+          v-else-if="success"
+          class="text-center mt-6"
+        >
+          <p class="mui-body">
+            {{ $t('resetPassword.updated') }}
+          </p>
+          <RouterLink
+            to="/login"
+            class="mui-caption underline hover:no-underline text-primary"
+          >
+            {{ $t('common.signIn') }}
+          </RouterLink>
         </div>
 
-        <div v-else-if="!canReset" class="text-center mt-6">
-          <p class="mui-body">{{ errors.session }}</p>
-          <RouterLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary">{{ $t('resetPassword.requestNewLink') }}</RouterLink>
+        <div
+          v-else-if="!canReset"
+          class="text-center mt-6"
+        >
+          <p class="mui-body">
+            {{ errors.session }}
+          </p>
+          <RouterLink
+            to="/forgot-password"
+            class="mui-caption underline hover:no-underline text-primary"
+          >
+            {{ $t('resetPassword.requestNewLink') }}
+          </RouterLink>
         </div>
 
-        <form v-else class="flex flex-col gap-3 mt-6" @submit.prevent="onSubmit">
+        <form
+          v-else
+          class="flex flex-col gap-3 mt-6"
+          @submit.prevent="onSubmit"
+        >
           <div>
-            <input v-model="form.password" type="password" autocomplete="new-password" :placeholder="$t('resetPassword.newPasswordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.password }" />
-            <p v-if="errors.password" class="text-sm mt-1 text-danger">{{ errors.password }}</p>
+            <input
+              v-model="form.password"
+              type="password"
+              autocomplete="new-password"
+              :placeholder="$t('resetPassword.newPasswordPlaceholder')"
+              class="mui-input"
+              :class="{ 'is-error': errors.password }"
+            >
+            <p
+              v-if="errors.password"
+              class="text-sm mt-1 text-danger"
+            >
+              {{ errors.password }}
+            </p>
           </div>
 
           <div>
-            <input v-model="form.confirm" type="password" autocomplete="new-password" :placeholder="$t('resetPassword.confirmNewPasswordPlaceholder')" class="mui-input" :class="{ 'is-error': errors.confirm }" />
-            <p v-if="errors.confirm" class="text-sm mt-1 text-danger">{{ errors.confirm }}</p>
+            <input
+              v-model="form.confirm"
+              type="password"
+              autocomplete="new-password"
+              :placeholder="$t('resetPassword.confirmNewPasswordPlaceholder')"
+              class="mui-input"
+              :class="{ 'is-error': errors.confirm }"
+            >
+            <p
+              v-if="errors.confirm"
+              class="text-sm mt-1 text-danger"
+            >
+              {{ errors.confirm }}
+            </p>
           </div>
 
-          <p v-if="errors.server" class="text-sm text-danger">{{ errors.server }}</p>
+          <p
+            v-if="errors.server"
+            class="text-sm text-danger"
+          >
+            {{ errors.server }}
+          </p>
 
           <div class="flex justify-center mt-2">
-            <button v-wave class="mui-btn" type="submit" :disabled="loading">
+            <button
+              v-wave
+              class="mui-btn"
+              type="submit"
+              :disabled="loading"
+            >
               {{ loading ? $t('resetPassword.updating') : $t('resetPassword.updatePassword') }}
             </button>
           </div>

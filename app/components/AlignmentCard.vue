@@ -11,7 +11,10 @@ function alignmentColor(a: number): string {
 </script>
 
 <template>
-  <div data-testid="alignment-card" class="mui-paper">
+  <div
+    data-testid="alignment-card"
+    class="mui-paper"
+  >
     <div class="mui-paper-header flex items-center justify-center">
       {{ $t('results.alignment') }}
     </div>

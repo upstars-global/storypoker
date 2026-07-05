@@ -30,8 +30,15 @@ function onOverlayClick() {
 </script>
 
 <template>
-  <dialog ref="dialogEl" class="app-modal" @cancel="onCancel">
-    <div class="mui-modal-overlay" @click.self="onOverlayClick">
+  <dialog
+    ref="dialogEl"
+    class="app-modal"
+    @cancel="onCancel"
+  >
+    <div
+      class="mui-modal-overlay"
+      @click.self="onOverlayClick"
+    >
       <slot />
     </div>
   </dialog>

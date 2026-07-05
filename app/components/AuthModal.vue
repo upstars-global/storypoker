@@ -52,7 +52,10 @@ async function submit() {
 </script>
 
 <template>
-  <AppModal :open="true" @close="emit('close')">
+  <AppModal
+    :open="true"
+    @close="emit('close')"
+  >
     <AppModalPaper @close="emit('close')">
       <h2 class="mui-h5 text-center">
         {{ mode === 'signin' ? $t('common.signIn') : $t('common.signUp') }}
@@ -73,14 +76,26 @@ async function submit() {
             class="mui-input"
             :class="{ 'is-error': errors.email }"
             @keyup.enter="submit"
-          />
-          <p v-if="errors.email" class="text-sm mt-1 text-danger">{{ errors.email }}</p>
+          >
+          <p
+            v-if="errors.email"
+            class="text-sm mt-1 text-danger"
+          >
+            {{ errors.email }}
+          </p>
         </div>
 
         <div>
-          <div v-if="mode === 'signin'" class="flex items-center justify-between gap-3 mb-1">
+          <div
+            v-if="mode === 'signin'"
+            class="flex items-center justify-between gap-3 mb-1"
+          >
             <span class="mui-caption">{{ $t('common.password') }}</span>
-            <RouterLink to="/forgot-password" class="mui-caption underline hover:no-underline text-primary" @click="emit('close')">
+            <RouterLink
+              to="/forgot-password"
+              class="mui-caption underline hover:no-underline text-primary"
+              @click="emit('close')"
+            >
               {{ $t('auth.forgotPassword') }}
             </RouterLink>
           </div>
@@ -92,8 +107,13 @@ async function submit() {
             class="mui-input"
             :class="{ 'is-error': errors.password }"
             @keyup.enter="submit"
-          />
-          <p v-if="errors.password" class="text-sm mt-1 text-danger">{{ errors.password }}</p>
+          >
+          <p
+            v-if="errors.password"
+            class="text-sm mt-1 text-danger"
+          >
+            {{ errors.password }}
+          </p>
         </div>
 
         <div v-if="mode === 'signup'">
@@ -105,13 +125,27 @@ async function submit() {
             class="mui-input"
             :class="{ 'is-error': errors.confirm }"
             @keyup.enter="submit"
-          />
-          <p v-if="errors.confirm" class="text-sm mt-1 text-danger">{{ errors.confirm }}</p>
+          >
+          <p
+            v-if="errors.confirm"
+            class="text-sm mt-1 text-danger"
+          >
+            {{ errors.confirm }}
+          </p>
         </div>
 
-        <p v-if="errors.server" class="text-sm text-danger">{{ errors.server }}</p>
+        <p
+          v-if="errors.server"
+          class="text-sm text-danger"
+        >
+          {{ errors.server }}
+        </p>
         <div class="flex justify-center mt-2">
-          <button class="mui-btn" :disabled="loading" @click="submit">
+          <button
+            class="mui-btn"
+            :disabled="loading"
+            @click="submit"
+          >
             {{ loading ? (mode === 'signin' ? $t('auth.signingIn') : $t('auth.signingUp')) : (mode === 'signin' ? $t('common.signIn') : $t('common.signUp')) }}
           </button>
         </div>

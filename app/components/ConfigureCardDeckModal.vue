@@ -56,89 +56,111 @@ function save() {
 </script>
 
 <template>
-  <AppModal :open="true" @close="emit('close')">
-    <AppModalPaper style="max-width: 560px; padding: 32px 40px 40px;" @close="emit('close')">
+  <AppModal
+    :open="true"
+    @close="emit('close')"
+  >
+    <AppModalPaper
+      style="max-width: 560px; padding: 32px 40px 40px;"
+      @close="emit('close')"
+    >
       <h2 class="text-center text-mui-h2 font-bold text-white">
         {{ $t('deck.configure') }}
       </h2>
 
-          <div class="mt-7 flex justify-center">
-            <select
-              class="mui-input"
-              style="min-width: 240px; cursor: pointer;"
-              :value="presetId"
-              @change="(e) => applyPreset((e.target as HTMLSelectElement).value as DeckPresetId)"
-            >
-              <option
-                v-for="p in DECK_PRESETS"
-                :key="p.id"
-                :value="p.id"
-              >{{ p.name }}</option>
-            </select>
-          </div>
+      <div class="mt-7 flex justify-center">
+        <select
+          class="mui-input"
+          style="min-width: 240px; cursor: pointer;"
+          :value="presetId"
+          @change="(e) => applyPreset((e.target as HTMLSelectElement).value as DeckPresetId)"
+        >
+          <option
+            v-for="p in DECK_PRESETS"
+            :key="p.id"
+            :value="p.id"
+          >
+            {{ p.name }}
+          </option>
+        </select>
+      </div>
 
-          <div
-            v-if="isVoting"
-            class="flex flex-col items-center gap-6 mt-8 mb-2"
+      <div
+        v-if="isVoting"
+        class="flex flex-col items-center gap-6 mt-8 mb-2"
+      >
+        <div class="flex flex-col items-start gap-3">
+          <label
+            v-for="card in VOTING_BASE_CARDS"
+            :key="card"
+            class="flex items-center gap-3 text-mui-body text-white opacity-70 cursor-not-allowed"
           >
-            <div class="flex flex-col items-start gap-3">
-              <label
-                v-for="card in VOTING_BASE_CARDS"
-                :key="card"
-                class="flex items-center gap-3 text-mui-body text-white opacity-70 cursor-not-allowed"
-              >
-                <input
-                  type="checkbox"
-                  checked
-                  disabled
-                  style="accent-color: var(--primary); width: 18px; height: 18px;"
-                />
-                <span>{{ cardLabel(card) }}</span>
-              </label>
-            </div>
-            <div class="flex flex-col items-center gap-2">
-              <span class="text-mui-caption font-semibold uppercase tracking-wide text-white">
-                {{ $t('poll.thirdCard') }}
-              </span>
-              <div class="flex items-center gap-3">
-                <button
-                  v-for="card in VOTING_THIRD_CARDS"
-                  :key="card"
-                  type="button"
-                  class="mui-shield"
-                  style="padding: 6px 16px; font-size: 1.25rem;"
-                  :class="{ 'is-selected': votingThird === card }"
-                  :aria-pressed="votingThird === card"
-                  @click="setVotingThird(card)"
-                >{{ card }}</button>
-              </div>
-            </div>
-          </div>
-          <div
-            v-else-if="isVoteQuestion"
-            class="flex justify-center mt-8 mb-2"
-          >
-            <p class="text-mui-body text-muted text-center">{{ $t('deck.voteQuestionInfo') }}</p>
-          </div>
-          <div v-else class="grid grid-cols-3 gap-x-8 gap-y-3 mt-8 mb-2 mx-auto" style="max-width: 380px;">
-            <label
-              v-for="card in currentDeck.cards"
+            <input
+              type="checkbox"
+              checked
+              disabled
+              style="accent-color: var(--primary); width: 18px; height: 18px;"
+            >
+            <span>{{ cardLabel(card) }}</span>
+          </label>
+        </div>
+        <div class="flex flex-col items-center gap-2">
+          <span class="text-mui-caption font-semibold uppercase tracking-wide text-white">
+            {{ $t('poll.thirdCard') }}
+          </span>
+          <div class="flex items-center gap-3">
+            <button
+              v-for="card in VOTING_THIRD_CARDS"
               :key="card"
-              class="flex items-center gap-3 cursor-pointer text-mui-body text-white"
+              type="button"
+              class="mui-shield"
+              style="padding: 6px 16px; font-size: 1.25rem;"
+              :class="{ 'is-selected': votingThird === card }"
+              :aria-pressed="votingThird === card"
+              @click="setVotingThird(card)"
             >
-              <input
-                type="checkbox"
-                :checked="selected.includes(card)"
-                style="accent-color: var(--primary); width: 18px; height: 18px;"
-                @change="toggle(card)"
-              />
-              <span>{{ card }}</span>
-            </label>
+              {{ card }}
+            </button>
           </div>
+        </div>
+      </div>
+      <div
+        v-else-if="isVoteQuestion"
+        class="flex justify-center mt-8 mb-2"
+      >
+        <p class="text-mui-body text-muted text-center">
+          {{ $t('deck.voteQuestionInfo') }}
+        </p>
+      </div>
+      <div
+        v-else
+        class="grid grid-cols-3 gap-x-8 gap-y-3 mt-8 mb-2 mx-auto"
+        style="max-width: 380px;"
+      >
+        <label
+          v-for="card in currentDeck.cards"
+          :key="card"
+          class="flex items-center gap-3 cursor-pointer text-mui-body text-white"
+        >
+          <input
+            type="checkbox"
+            :checked="selected.includes(card)"
+            style="accent-color: var(--primary); width: 18px; height: 18px;"
+            @change="toggle(card)"
+          >
+          <span>{{ card }}</span>
+        </label>
+      </div>
 
-          <div class="flex justify-center mt-8">
-            <button v-wave class="mui-btn" @click="save">{{ $t('deck.save') }}</button>
-          </div>
+      <div class="flex justify-center mt-8">
+        <button
+          v-wave
+          class="mui-btn"
+          @click="save"
+        >
+          {{ $t('deck.save') }}
+        </button>
+      </div>
     </AppModalPaper>
   </AppModal>
 </template>
