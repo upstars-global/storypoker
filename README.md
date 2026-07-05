@@ -81,11 +81,11 @@ npx skills add obra/superpowers -s executing-plans -a codex claude-code -y
 # npx skills add obra/superpowers -s subagent-driven-development -a codex claude-code -y
 npx skills add obra/superpowers -s systematic-debugging -a codex claude-code -y
 npx skills add obra/superpowers -s test-driven-development -a codex claude-code -y
-# npx skills add obra/superpowers -s using-git-worktrees -a codex claude-code -y
+npx skills add obra/superpowers -s using-git-worktrees -a codex claude-code -y
 npx skills add obra/superpowers -s verification-before-completion -a codex claude-code -y
-# npx skills add obra/superpowers -s receiving-code-review -a codex claude-code -y
-# npx skills add obra/superpowers -s requesting-code-review -a codex claude-code -y
-# npx skills add obra/superpowers -s finishing-a-development-branch -a codex claude-code -y
+npx skills add obra/superpowers -s receiving-code-review -a codex claude-code -y
+npx skills add obra/superpowers -s requesting-code-review -a codex claude-code -y
+npx skills add obra/superpowers -s finishing-a-development-branch -a codex claude-code -y
 
 # DESIGN
 # npx skills add better-auth/better-icons -s better-icons -a codex claude-code -y
