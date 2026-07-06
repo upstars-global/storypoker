@@ -14,7 +14,10 @@ const { status } = storeToRefs(presence)
       role="status"
       aria-live="polite"
     >
-      <span class="h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" />
+      <span
+        class="h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent"
+        aria-hidden="true"
+      />
       <span>{{ $t('connection.reconnecting') }}</span>
     </div>
   </Transition>
