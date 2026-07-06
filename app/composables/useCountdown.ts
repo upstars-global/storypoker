@@ -87,23 +87,26 @@ export function useCountdown() {
 
     function startCountdown(mode: CountdownMode, onComplete?: () => void, withDecision?: () => boolean) {
         if (countdownRunning.value) return
-        if (mode === 'dry' && !countdownDryAudio) return
-        if (mode === 'wet' && (!pleaseVoteAudio || !countdownWetAudio)) return
+        const dry = countdownDryAudio
+        const votePrompt = pleaseVoteAudio
+        const wet = countdownWetAudio
+        if (mode === 'dry' && !dry) return
+        if (mode === 'wet' && (!votePrompt || !wet)) return
         countdownRunning.value = true
         currentMode = mode
         onCountdownComplete = onComplete
         shouldPlayDecision = withDecision
         if (mode === 'silent') {
             beginTimer(COUNTDOWN_FALLBACK_SECONDS)
-        } else if (mode === 'dry') {
-            startVisualCountdown(countdownDryAudio!)
-        } else {
-            pleaseVoteAudio!.currentTime = 0
-            pleaseVoteAudio!.onended = () => {
-                if (pleaseVoteAudio) pleaseVoteAudio.onended = null
-                startVisualCountdown(countdownWetAudio!)
+        } else if (mode === 'dry' && dry) {
+            startVisualCountdown(dry)
+        } else if (votePrompt && wet) {
+            votePrompt.currentTime = 0
+            votePrompt.onended = () => {
+                votePrompt.onended = null
+                startVisualCountdown(wet)
             }
-            pleaseVoteAudio!.play()
+            votePrompt.play()
         }
     }
 

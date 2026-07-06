@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import { getSupabase } from '~/lib/supabase-instance'
 import type { ConnectionStatus } from './types'
 
@@ -12,7 +13,7 @@ export const usePresenceStore = defineStore('presence', () => {
   const present = ref<Set<string>>(new Set())
   const lastSeen = new Map<string, number>()
 
-  let channel: any = null
+  let channel: RealtimeChannel | null = null
   let currentRoomId: string | null = null
   let currentPlayerId: string | null = null
   let visibilityHandler: (() => void) | null = null
@@ -68,9 +69,10 @@ export const usePresenceStore = defineStore('presence', () => {
     if (!currentRoomId || !currentPlayerId) return
     status.value = 'connecting'
     const supabase = getSupabase()
-    channel = supabase.channel(`room:${currentRoomId}`)
-    channel.on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState() as Record<string, Array<{ playerId: string }>>
+    const ch = supabase.channel(`room:${currentRoomId}`)
+    channel = ch
+    ch.on('presence', { event: 'sync' }, () => {
+      const state = ch.presenceState<{ playerId: string }>()
       const now = Date.now()
       const next = new Set<string>()
       for (const arr of Object.values(state)) {
@@ -82,9 +84,9 @@ export const usePresenceStore = defineStore('presence', () => {
       present.value = next
       recomputeOnline()
     })
-    channel.subscribe(async (s: string) => {
+    ch.subscribe(async (s) => {
       if (s === 'SUBSCRIBED') {
-        await channel.track({ playerId: currentPlayerId })
+        await ch.track({ playerId: currentPlayerId })
         status.value = 'online'
       } else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') {
         if (status.value !== 'offline') status.value = 'reconnecting'

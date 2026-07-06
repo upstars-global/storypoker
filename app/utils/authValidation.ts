@@ -16,3 +16,7 @@ export function validatePasswordConfirmation(password: string, confirmation: str
   if (confirmation !== password) return 'Passwords do not match'
   return undefined
 }
+
+export function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : 'Something went wrong'
+}

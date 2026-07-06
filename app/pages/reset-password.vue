@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getSupabase } from '~/lib/supabase-instance'
 import { useAuthStore } from '~/stores/auth'
-import { validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
+import { errorMessage, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
 import AppHeader from '~/components/AppHeader.vue'
 
 const { t } = useI18n()
@@ -56,8 +56,8 @@ async function onSubmit() {
     await authStore.updatePassword(form.password)
     await authStore.signOut()
     success.value = true
-  } catch (e: any) {
-    errors.server = e.message ?? 'Something went wrong'
+  } catch (e) {
+    errors.server = errorMessage(e)
   } finally {
     loading.value = false
   }

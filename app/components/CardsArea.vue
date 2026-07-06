@@ -118,7 +118,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
           data-testid="poll-question-input"
         >
         <div
-          v-for="(answer, i) in answerDrafts"
+          v-for="(_, i) in answerDrafts"
           :key="i"
           class="flex items-center justify-center gap-2"
         >

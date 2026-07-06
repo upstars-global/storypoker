@@ -12,15 +12,13 @@ export function useDylanAvatar() {
     const key = `${style}|${grayscale ? 1 : 0}|${seed}`
     const cached = cache.get(key)
     if (cached) return cached
-    const collection = style === 'dylan' ? dylan : style === 'miniavs' ? miniavs : bottts
-    const options = style === 'bottts' && grayscale
-      ? { seed, baseColor: ['909090'], eyes: ['dizzy'], mouth: ['grill01'] }
-      : style === 'dylan'
-        ? { seed, backgroundColor: [] }
-        : style === 'miniavs'
-          ? { seed, backgroundColor: grayscale ? ['cccccc'] : [] }
-          : { seed, ...(grayscale ? { backgroundColor: ['cccccc'] } : {}) }
-    const avatar = createAvatar(collection as any, options as any)
+    const avatar = style === 'dylan'
+      ? createAvatar(dylan, { seed, backgroundColor: [] })
+      : style === 'miniavs'
+        ? createAvatar(miniavs, { seed, backgroundColor: grayscale ? ['cccccc'] : [] })
+        : grayscale
+          ? createAvatar(bottts, { seed, baseColor: ['909090'], eyes: ['dizzy'], mouth: ['grill01'] })
+          : createAvatar(bottts, { seed })
     const uri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(avatar.toString())))}`
     cache.set(key, uri)
     return uri

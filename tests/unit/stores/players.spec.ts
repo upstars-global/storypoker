@@ -25,7 +25,7 @@ describe('playersStore.applyChange', () => {
     const store = usePlayersStore()
     store.applyChange({ eventType: 'INSERT', new: fakePlayer({ id: 'p1' }), old: {} } as any)
     expect(store.players).toHaveLength(1)
-    expect(store.players[0].id).toBe('p1')
+    expect(store.players[0]!.id).toBe('p1')
   })
 
   it('INSERT is idempotent (no duplicates)', () => {
@@ -44,7 +44,7 @@ describe('playersStore.applyChange', () => {
       new: fakePlayer({ id: 'p1', name: 'Alice2' }),
       old: {},
     } as any)
-    expect(store.players[0].name).toBe('Alice2')
+    expect(store.players[0]!.name).toBe('Alice2')
   })
 
   it('DELETE removes player (used for kick)', () => {
@@ -156,7 +156,7 @@ describe('playersStore actions', () => {
     const b = makeBuilder()
     setSupabase({ from: () => ({ update: b.update }) } as any)
     await usePlayersStore().kick('p1')
-    const arg = b.update.mock.calls[0][0]
+    const arg = b.update.mock.calls[0]![0]
     expect(typeof arg.left_at).toBe('string')
   })
 
@@ -167,7 +167,7 @@ describe('playersStore actions', () => {
     const store = usePlayersStore()
     store.roomId = 'r1'
     await store.leave('p1')
-    const arg = b.update.mock.calls[0][0]
+    const arg = b.update.mock.calls[0]![0]
     expect(typeof arg.left_at).toBe('string')
     expect(localStorage.getItem('storypoker_session_r1')).toBeNull()
   })

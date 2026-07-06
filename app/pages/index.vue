@@ -50,6 +50,7 @@ onMounted(async () => {
 
   const namesByRoom: Record<string, string[]> = {}
   for (const row of playersData ?? []) {
+    if (!row.room_id) continue
     const names = namesByRoom[row.room_id] ?? []
     names.push(row.name)
     namesByRoom[row.room_id] = names

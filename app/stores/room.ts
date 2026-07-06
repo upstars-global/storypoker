@@ -4,18 +4,14 @@ import { getSupabase } from '~/lib/supabase-instance'
 import { getDeck, type DeckPresetId } from '~/utils/cardDecks'
 import { usePlayersStore } from './players'
 import type { RoomState, RoundHistory, RoundHistoryVote } from './types'
-
-type RealtimePayload = {
-  eventType: 'INSERT' | 'UPDATE' | 'DELETE'
-  new: RoomState
-  old: Partial<RoomState>
-}
+import type { Json, TablesUpdate } from '~/lib/database.types'
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 export const useRoomStore = defineStore('room', () => {
   const roomId = ref<string | null>(null)
   const roomState = ref<RoomState | null>(null)
 
-  function applyChange(payload: RealtimePayload) {
+  function applyChange(payload: RealtimePostgresChangesPayload<RoomState>) {
     if (payload.eventType === 'UPDATE') {
       roomState.value = payload.new
     }
@@ -47,7 +43,7 @@ export const useRoomStore = defineStore('room', () => {
         room_id: roomId.value,
         started_at: roomState.value.round_started_at,
         revealed_at: revealedAt.toISOString(),
-        votes,
+        votes: votes as unknown as Json,
         active_cards: roomState.value.active_cards ?? null,
         deck_preset: roomState.value.deck_preset ?? null,
       })
@@ -62,14 +58,14 @@ export const useRoomStore = defineStore('room', () => {
       .select('*')
       .eq('room_id', roomId.value)
       .order('revealed_at', { ascending: false })
-    return (data ?? []) as RoundHistory[]
+    return (data ?? []) as unknown as RoundHistory[]
   }
 
   async function startNewRound() {
     if (!roomId.value) return
     const supabase = getSupabase()
     const preset = roomState.value?.deck_preset
-    const stateUpdate: Record<string, unknown> = {
+    const stateUpdate: TablesUpdate<'room_state'> = {
       phase: 'voting',
       round_started_at: new Date().toISOString(),
       paused_at: null,
@@ -189,7 +185,7 @@ export const useRoomStore = defineStore('room', () => {
     const supabase = getSupabase()
     const { error } = await supabase.from('rooms').update({ name, slug }).eq('id', roomId.value)
     if (error) {
-      if ((error as any).code === '23505') {
+      if (error.code === '23505') {
         const e = new Error('room_slug_taken') as Error & { code?: string }
         e.code = 'room_slug_taken'
         throw e

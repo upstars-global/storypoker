@@ -52,7 +52,7 @@ describe('PlayerRow menu keyboard support', () => {
   it('activates a menu item with Enter', async () => {
     const wrapper = mountRow()
     await openMenu(wrapper)
-    const editItem = wrapper.findAll('[role="menuitem"]')[1]
+    const editItem = wrapper.findAll('[role="menuitem"]')[1]!
     await editItem.trigger('keydown', { key: 'Enter' })
     expect(wrapper.emitted('edit')).toEqual([['p1']])
   })
@@ -60,7 +60,7 @@ describe('PlayerRow menu keyboard support', () => {
   it('activates a menu item with Space', async () => {
     const wrapper = mountRow()
     await openMenu(wrapper)
-    const toggleItem = wrapper.findAll('[role="menuitem"]')[0]
+    const toggleItem = wrapper.findAll('[role="menuitem"]')[0]!
     await toggleItem.trigger('keydown', { key: ' ' })
     expect(wrapper.emitted('toggleModerator')).toEqual([['p1', true]])
   })

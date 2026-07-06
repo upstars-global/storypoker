@@ -3,7 +3,7 @@ import { ref, reactive } from 'vue'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
 import { useAuthStore } from '~/stores/auth'
-import { validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
+import { errorMessage, validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
 
 const props = defineProps<{
   mode: 'signin' | 'signup'
@@ -43,8 +43,8 @@ async function submit() {
     }
     emit('success')
     emit('close')
-  } catch (e: any) {
-    errors.server = e.message ?? 'Something went wrong'
+  } catch (e) {
+    errors.server = errorMessage(e)
   } finally {
     loading.value = false
   }

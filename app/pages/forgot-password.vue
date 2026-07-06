@@ -3,7 +3,7 @@ import { reactive, shallowRef, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
-import { validateEmail } from '~/utils/authValidation'
+import { errorMessage, validateEmail } from '~/utils/authValidation'
 import AppHeader from '~/components/AppHeader.vue'
 
 const authStore = useAuthStore()
@@ -37,8 +37,8 @@ async function onSubmit() {
   try {
     await authStore.requestPasswordReset(form.email, `${window.location.origin}/reset-password`)
     success.value = true
-  } catch (e: any) {
-    errors.server = e.message ?? 'Something went wrong'
+  } catch (e) {
+    errors.server = errorMessage(e)
   } finally {
     loading.value = false
   }

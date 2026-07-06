@@ -1,6 +1,9 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from './database.types'
 
-let _client: SupabaseClient | null = null
+export type TypedSupabaseClient = SupabaseClient<Database>
+
+let _client: TypedSupabaseClient | null = null
 
 export function initSupabase(): void {
   if (_client) return
@@ -9,14 +12,14 @@ export function initSupabase(): void {
   if (!url || !key) {
     throw new Error('Missing VITE_SUPABASE_URL / VITE_SUPABASE_KEY in env')
   }
-  _client = createClient(url, key)
+  _client = createClient<Database>(url, key)
 }
 
-export function setSupabase(client: SupabaseClient): void {
+export function setSupabase(client: TypedSupabaseClient): void {
   _client = client
 }
 
-export function getSupabase(): SupabaseClient {
+export function getSupabase(): TypedSupabaseClient {
   if (!_client) throw new Error('Supabase client not initialized. Call initSupabase() or setSupabase() first.')
   return _client
 }

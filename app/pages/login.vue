@@ -3,7 +3,7 @@ import { reactive, shallowRef, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
-import { validateEmail, validateRequiredPassword } from '~/utils/authValidation'
+import { errorMessage, validateEmail, validateRequiredPassword } from '~/utils/authValidation'
 import AppHeader from '~/components/AppHeader.vue'
 
 const authStore = useAuthStore()
@@ -37,8 +37,8 @@ async function onSubmit() {
   try {
     await authStore.signIn(form.email, form.password)
     router.push('/')
-  } catch (e: any) {
-    errors.server = e.message ?? 'Something went wrong'
+  } catch (e) {
+    errors.server = errorMessage(e)
   } finally {
     loading.value = false
   }
