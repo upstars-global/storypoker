@@ -1,97 +1,84 @@
-# AGENTS.md
+# CLAUDE.md
 
-Guidance for Codex working with this repository.
+Guidance for Claude Code working with this repository.
 
 ## Communication
 - **Language:** Ukrainian (українська мова)
-- **Constraint:** цей файл — ≤ 200 рядків. Детальна продуктова специфікація — `DESIGN.md`.
+- **Constraint:** цей файл — ≤ 256 рядків. Детальна продуктова специфікація — `DESIGN.md`.
 
 ## Project Overview
 
-**Story Poker** — Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 5 пресетів або кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
+**Story Poker** — Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 7 пресетів або кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
 
-Джерела контексту:
-- `DESIGN.md` — дизайн-специфікація + audit (розділ 10)
-- `ROADMAP.md` — статус, design gaps, iter-цілі
-- `docs/superpowers/plans/` і `docs/superpowers/specs/` — iter-плани і специфікації окремих фіч
-- `examples/` — ескізи, gitignored
+Джерела контексту: `DESIGN.md` (дизайн + audit §10), `ROADMAP.md` (статус, gaps, iter-цілі), `docs/superpowers/{plans,specs}/` (iter-плани і специфікації), `examples/` (ескізи, gitignored).
 
 ## Tech Stack
 
-- **Framework:** Nuxt 4.4, Vue 3, Composition API `<script setup>`, `srcDir: app/`
-- **Styling:** Tailwind v3 через `@nuxtjs/tailwindcss` 6, токени в `tailwind.config.ts`, MUI-like класи в `assets/css/main.css`
-- **State:** Pinia 3 через `@pinia/nuxt`
+- **Framework:** Vue 3.5 + Vite 8 (Rolldown bundler) SPA, Composition API `<script setup>`, `srcDir: app/`
+- **Routing:** `vue-router@5` — явні маршрути в `app/router.ts` (7 routes, без file-based routing)
+- **Styling:** Tailwind v4 через PostCSS (`@tailwindcss/postcss` + autoprefixer), CSS-first config у `app/assets/css/main.css` (`@theme`, `@utility`, `@custom-variant dark`), MUI-like класи там само
+  - text utilities з `@theme --color-*`: `text-{primary,body,muted,disabled,inverse,danger,success,appbar-{subtle,muted,emphasis}}`
+  - bg utilities через `@utility`: `bg-{app,appbar,paper,elevated,overlay,skeleton}`
+  - дефолтний `border` зберігає колір `var(--border)` через `@layer base` override (v4 default — `currentColor`); `border-input` — явний `@utility`
+  - `shadow-{1..4,8}` — значення живуть у `@theme`; `text-mui-{h2,body,table,caption}` — `--text-mui-*` + `--line-height`/`--letter-spacing` modifiers
+  - button modifiers (compose з `.mui-btn`): `.mui-btn-md` (180×46 / 23rad / `#607d8b`), `.mui-btn-sm`, `.mui-btn-text`, `.mui-btn-secondary`
+- **State:** Pinia 3 (без auto-imports — явні `from 'pinia'`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
-- **i18n:** `@nuxtjs/i18n`, strategy `no_prefix`, локалі `i18n/locales/{uk,en}.json`
-- **UI:** `@nuxt/icon`, `v-wave`, DiceBear аватари, Roboto 300–700
-- **Node:** 24+
-
-## Workflow Sequences
-
-- **New feature:** `brainstorming` → `writing-plans` → `executing-plans` (+ `vue`/`nuxt`/`pinia`/`supabase`/`tailwind-design-system`/`vue-best-practices`/`vueuse-functions` за потребою) → `test-driven-development` + `vitest`/`webapp-testing` → `verification-before-completion`
-- **Bug / regression:** `systematic-debugging` → `test-driven-development` → `vitest` → `verification-before-completion`
-- **UI з дизайном:** `frontend-design` → `tailwind-design-system` → `vue` → `webapp-testing` → `verification-before-completion`
-- **Supabase:** `supabase` → `test-driven-development` → `verification-before-completion`
-- **Refactoring:** `vue-best-practices` → `test-driven-development` → `vitest` → `verification-before-completion`
-- **Received review:** `receiving-code-review` → fixes → `verification-before-completion`
+- **i18n:** `vue-i18n@11` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
+- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`, єдина offline-колекція); `simple-icons:*`/`game-icons:*` резолвляться через Iconify API; custom collection `app:` (`moderator`, `deciding`, `offline`, `leave-room`, `bank`, `town-hall`, `fibonacci`, `scrum`) через `addCollection` у `app/lib/registerAppIcons.ts`. Іконки рендеряться через `<AppIcon>`, який проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts`): флаг `iconsLucide` ремапить `ic:baseline-*`→`lucide:*` (нову lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`. Також `v-wave`, DiceBear, Roboto 300–700
+- **Components:** `AppModal` (native `<dialog>`, `app/components/AppModal.vue`) — props `open: boolean, lockDismiss?: boolean`, emit `close`; `AppTooltip` (`app/components/AppTooltip.vue`) — props `side?, sideOffset?`, slots `#trigger` `#content`; `useClickOutside` (`app/composables/useClickOutside.ts`) — використовується в AppHeader та PlayerRow для закриття dropdown-меню
+- **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
 ## Common Commands
 
 ```bash
 npm install
-npm run dev       # Nuxt dev, port 3000, --host already enabled
-npm run build
-npm run generate  # static pre-render for Netlify
-npm run preview
-npm run lint
-npm run typecheck # vue-tsc via nuxt typecheck
-npm test          # vitest run
+npm run dev          # Vite dev, port 3000 (host enabled)
+npm run build        # vite build → dist/
+npm run preview      # vite preview, port 3000
+npm run lint         # ESLint flat config
+npm run typecheck    # vue-tsc --noEmit
+npm test             # vitest run
+npm run test:watch
 npm run test:unit
-npm run test:e2e        # playwright, потребує /.env/.env.test
+npm run test:unit:watch
+npm run test:unit:coverage
+npm run test:e2e
 npm run test:e2e:smoke
-npm run test:ci   # lint + typecheck + unit + build (CI rolls this)
+npm run test:e2e:ui  # Playwright UI mode
+npm run test:ci      # lint + typecheck + unit + build (CI runs this)
+npm run deploy:{stage,prod}   # Netlify alias / prod deploy
 ```
 
-CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci`; E2E runs when E2E secrets exist; deploy requires tests and Netlify secrets.
+CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); E2E runs when E2E secrets exist; deploy runs `npm run build` on `main` when checks pass and Netlify secrets exist.
 
 ## Environment Setup
 
-Усі env-файли — у `/.env/` (папка gitignored, окрім `/.env/.env.example` і `/.env/.env.test.example`):
+`package-lock.json` — committed (required for `npm ci`). Do NOT add it back to `.gitignore`.
 
+Усі env-файли — у `/.env/` (gitignored, окрім `*.example`). Vite читає через `envDir: '.env'` у `vite.config.ts`:
 - `/.env/.env.local` — персональні override
 - `/.env/.env` — командні defaults
-- `/.env/.env.test` — креди тестового Supabase project для Playwright (gitignored)
-- `nuxt.config.ts` спочатку вантажить `.env.local`, потім `.env`
-
-Шаблон:
+- `/.env/.env.test` — креди тестового Supabase project для Playwright
 
 ```bash
-SUPABASE_URL=...
-SUPABASE_KEY=...            # publishable client key
-# SUPABASE_SECRET_KEY=...   # server-side only, не класти в client bundle
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_KEY=...        # publishable client key
+# SUPABASE_SECRET_KEY=...    # server-side only, БЕЗ VITE_ префіксу
 ```
 
-`nuxt.config.ts` мапить ці змінні в `runtimeConfig.public.supabaseUrl/supabaseKey`; клієнтський код читає їх через `useRuntimeConfig().public`.
+Клієнтський код читає через `import.meta.env.VITE_*` (тільки `VITE_*` потрапляють у browser bundle).
 
 ## Database
 
-Міграції в `supabase/migrations/` накатуються вручну через Supabase SQL Editor:
-
-- `001_initial_schema.sql` — `rooms`, `room_state`, `players`, `round_history`, public RLS
-- `002_rooms_update_policy.sql` — public update для `rooms`
-- `003_rooms_name.sql` — `rooms.name`
-- `004_rooms_realtime.sql` — Realtime publication для `rooms`
-- `005_user_profiles.sql` — `user_profiles`, public RLS, Realtime publication
-- `006_room_state_timer.sql` — `room_state.paused_at`, `room_state.paused_elapsed_ms` для керованого таймера
-
-Таблиці:
+Міграції в `supabase/migrations/` — накатуються через Supabase SQL Editor або Management API (`001`–`010`: schema, RLS, Realtime, timer, user_profiles, player shields, poll_question, history deck). Таблиці:
 - `rooms (id text PK, slug text unique, name text, created_at)`
-- `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms)`
-- `players (id uuid PK, room_id, name, is_moderator, vote, user_id, created_at, left_at)`
-- `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, created_at)`
+- `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms, poll_question)`
+- `players (id uuid PK, room_id, name, is_moderator, vote, user_id, shields text[], created_at, left_at)`
+- `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, deck_preset, created_at)`
 - `user_profiles (user_id uuid PK, avatar_style, avatar_seed, updated_at)`
 
-RLS зараз public read/write для anon key; окремого backend немає, логіка в клієнті. `leave` і `kick` — soft-delete через `left_at`; UI працює з `left_at is null`.
+RLS зараз public read/write для anon key; логіка в клієнті. `leave` і `kick` — soft-delete через `left_at`; UI працює з `left_at is null`.
 
 ## Card Decks
 
@@ -104,8 +91,10 @@ RLS зараз public read/write для anon key; окремого backend не�
 | `tshirt` | `S,M,L,XL,?,☕` |
 | `hours` | `1/2h,1h,2h,3h,5h,8h,13h,20h,?,☕` |
 | `boolean` | `True,False,?,☕` |
+| `voting` | `yes,no,☕` (опційні `🍺,🚬`) |
+| `vote_question` | кастомні опції; дефолт `Option A,Option B,Option C` |
 
-`0` є в усіх небулевих пресетах, але деактивований за замовчуванням. `☕` — символ, не SVG. `setDeckPreset()` пише `deck_preset + defaultActive`; `saveCardDeck()` пише тільки `active_cards`.
+`0` є в усіх небулевих оцінювальних пресетах (не у `voting`/`vote_question`), але деактивований за замовчуванням. `☕` — символ, не SVG. `setDeckPreset()` пише `deck_preset + defaultActive`; `saveCardDeck()` пише тільки `active_cards`.
 
 ## Round History
 
@@ -117,12 +106,12 @@ Pinia stores у `app/stores/`:
 
 - `auth.ts` — Supabase session, sign in/up/out, password reset/update
 - `room.ts` — room state, create, reveal, new round, deck, resolve, room name/slug
-- `players.ts` — players, optimistic votes, join/rejoin, rename, moderator toggle, kick/leave, link user
-- `presence.ts` — online `Set<playerId>` через Supabase Presence і reconnect/visibility handlers
+- `players.ts` — players, optimistic votes, join/rejoin, rename, moderator toggle, set shields, kick/leave, link user
+- `presence.ts` — online `Set<playerId>` через Supabase Presence; на `visibilitychange → hidden` закриває канал лише через `AWAY_TIMEOUT_MS` (5 хв), повернення раніше — скасовує таймер
 - `profiles.ts` — `user_profiles` cache, fetch/upsert, Realtime applyChange
 - `types.ts` — спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `UserProfile`)
 
-Stores беруть клієнт через `getSupabase()` з `app/lib/supabase-instance.ts`; `app/plugins/supabase.ts` робить `setSupabase(client)`. Тести інжектять mock через `setSupabase(mock)`.
+Stores беруть клієнт через `getSupabase()` з `app/lib/supabase-instance.ts`; `app/main.ts` ініціалізує клієнт через `initSupabase()`. Тести інжектять mock через `setSupabase(mock)`.
 
 ## Realtime
 
@@ -133,35 +122,46 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 - `rooms:<roomId>` → sync `slug/name`, redirect між id і slug
 - `user_profiles:<roomId>` → `profilesStore.applyChange`
 - `room:<roomId>` Presence → online players
+- `countdown:<roomId>` broadcast (`self:true`) → синхронний відлік перед reveal; initiator викликає `reveal()`
 
 Після `'reconnecting' → 'online'` виконується reconciliation refetch. Optimistic vote пишеться в `pendingVotes[playerId]`, success/realtime ACK очищає запис, error робить rollback.
 
 ## Project Structure
 
 ```text
-app/
-├── pages/        # index, [slug], login, signup, forgot-password, reset-password
-├── components/   # AppHeader, CardsArea, PlayersList, modals, icons
-├── composables/  # useTheme, useDylanAvatar
-├── stores/       # auth, room, players, presence, profiles
-├── plugins/      # supabase, vWave, clickOutside
-├── lib/          # supabase-instance
-└── utils/        # roomId, cardDecks, authValidation, recentRooms, playerRoles, relativeTime
-assets/css/main.css
-i18n/locales/{uk,en}.json
-supabase/migrations/*.sql
-scripts/sync-after-history-rewrite.sh  # one-off git reset helper після rewrite main
-tests/
-├── unit/stores|utils/   # Vitest unit tests (alias ~ → app/)
-├── fixtures/, page-objects/, support/
-└── e2e/                 # smoke.spec.ts, critical-flows.spec.ts
-vitest.config.ts
-playwright.config.ts
+/
+├── index.html             # head/meta + theme inline script
+├── vite.config.ts
+├── postcss.config.js
+├── tsconfig.json, tsconfig.node.json
+├── eslint.config.js
+├── netlify.toml
+├── public/
+│   ├── _redirects         # /*  /index.html  200
+│   └── favicon.svg
+├── app/
+│   ├── main.ts            # entry: createApp + pinia + router + i18n + plugins
+│   ├── router.ts          # явні 7 routes
+│   ├── i18n.ts            # createI18n
+│   ├── App.vue            # <RouterView />
+│   ├── pages/             # index, [slug], login, signup, forgot-password, reset-password, ffc
+│   ├── components/        # AppHeader, CardsArea, PlayersList, modals, icons
+│   ├── composables/       # useTheme, useDylanAvatar, useCountdown, useCardLabel, useClickOutside
+│   ├── stores/            # auth, room, players, presence, profiles
+│   ├── lib/               # supabase-instance, registerAppIcons
+│   ├── configs/           # featureFlags (runtime toggles з localStorage)
+│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, shields, resultCelebration, relativeTime, iconMap, alignment, roundStats
+│   ├── i18n/locales/{uk,en}.json
+│   └── assets/css/main.css, assets/icons/
+├── supabase/migrations/*.sql
+└── tests/
+    ├── unit/stores|utils/   # Vitest (alias ~ → app/)
+    ├── fixtures/, page-objects/, support/, e2e/
 ```
 
 ## Testing
 
-Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit/`; alias `~` → `app/`. E2E: Playwright у `tests/e2e/`; потребує `/.env/.env.test`.
+Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `app/`. E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`. Локально зупини dev server на `:3000` або задай `E2E_BASE_URL`, бо Playwright має `reuseExistingServer: true`.
 
 ## URL Schema
 
@@ -169,13 +169,15 @@ Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit
 - `/<roomId>` — кімната за 8-символьним id
 - `/<slug>` — alias кімнати; якщо slug існує, URL з id редиректиться на slug
 - `/login`, `/signup`, `/forgot-password`, `/reset-password` — auth routes
+- `/ffc` — Feature Flags console (override з localStorage, key `FEATURE_FLAGS`)
 
 `normalizeRoomSlug()` / `isValidRoomSlug()` приймають 2–32 символи `[a-z0-9-]`, без дефісу на початку/кінці. Нові top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або вводь префікс.
 
 ## LocalStorage
 
 - `storypoker_session_<roomId>` — `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms
-- `sp-theme` — `light | dark`; inline script у `nuxt.config.ts` застосовує тему до hydration
+- `sp-theme` — `light | dark`; inline script у `index.html` застосовує тему до завантаження JS
+- `FEATURE_FLAGS` — override flags з `app/configs/featureFlags.ts` (керується на `/ffc`)
 
 ## Code Style
 
@@ -190,6 +192,8 @@ Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit
 - **Player:** vote, rename self, leave room
 - **Moderator:** reveal, start new round, configure deck; own moderator toggle доступний у меню гравця
 - **Authorized moderator:** rename room, rename/kick other players, set slug/name; контролі таймера (reset/pause/resume/±30s)
+- **Shields:** `app/utils/shields.ts` — роль обирається з `PLAYER_ROLES` (бейджі-селектор у PlayerEditModal) і пишеться як один shield у `players.shields` через `shieldForRoleTag()` (кастомні — префікс `custom:`); `SHIELD_CATALOG` (групи role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` виводить QA-гравців в окрему пилу
+- **Consensus:** при QA-розщепленні салют + decision-sound тригерять, якщо **хоча б одна** група (DEV/QA) одноголосна; без QA — всі голоси однакові (≥ 2). Логіка в `utils/resultCelebration.ts → shouldCelebrateGroupedVotes`; sound через `isConsensus` у `pages/[slug].vue`
 
 ## Security
 
@@ -197,4 +201,12 @@ Unit tests: Vitest + happy-dom, без Nuxt runtime. Лежать у `tests/unit
 - У прикладах використовувати placeholders
 - `SUPABASE_SECRET_KEY` / `sb_secret_...` — тільки server-side, ніколи в client bundle
 
-## Temp
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
