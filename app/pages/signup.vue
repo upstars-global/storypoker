@@ -90,8 +90,10 @@ async function onSubmit() {
         >
           <div>
             <input
+              id="signup-email"
               v-model.trim="form.email"
               type="email"
+              name="email"
               autocomplete="email"
               :placeholder="$t('common.emailPlaceholder')"
               class="mui-input"
@@ -108,8 +110,10 @@ async function onSubmit() {
 
           <div>
             <input
+              id="signup-password"
               v-model="form.password"
               type="password"
+              name="new-password"
               autocomplete="new-password"
               :placeholder="$t('common.passwordPlaceholder')"
               class="mui-input"
@@ -126,8 +130,10 @@ async function onSubmit() {
 
           <div>
             <input
+              id="signup-confirm"
               v-model="form.confirm"
               type="password"
+              name="confirm-password"
               autocomplete="new-password"
               :placeholder="$t('common.confirmPasswordPlaceholder')"
               class="mui-input"

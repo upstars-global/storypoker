@@ -73,8 +73,10 @@ async function submit() {
       <div class="flex flex-col gap-3 mt-6">
         <div>
           <input
+            id="auth-email"
             v-model.trim="email"
             type="email"
+            name="email"
             :placeholder="$t('common.emailPlaceholder')"
             autocomplete="email"
             class="mui-input"
@@ -104,8 +106,10 @@ async function submit() {
             </RouterLink>
           </div>
           <input
+            id="auth-password"
             v-model="password"
             type="password"
+            name="password"
             :autocomplete="mode === 'signin' ? 'current-password' : 'new-password'"
             :placeholder="$t('common.passwordPlaceholder')"
             class="mui-input"
@@ -122,8 +126,10 @@ async function submit() {
 
         <div v-if="mode === 'signup'">
           <input
+            id="auth-confirm"
             v-model="confirm"
             type="password"
+            name="confirm-password"
             autocomplete="new-password"
             :placeholder="$t('common.confirmPasswordPlaceholder')"
             class="mui-input"

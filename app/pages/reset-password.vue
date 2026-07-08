@@ -130,8 +130,10 @@ async function onSubmit() {
         >
           <div>
             <input
+              id="reset-password"
               v-model="form.password"
               type="password"
+              name="new-password"
               autocomplete="new-password"
               :placeholder="$t('resetPassword.newPasswordPlaceholder')"
               class="mui-input"
@@ -147,8 +149,10 @@ async function onSubmit() {
 
           <div>
             <input
+              id="reset-confirm"
               v-model="form.confirm"
               type="password"
+              name="confirm-password"
               autocomplete="new-password"
               :placeholder="$t('resetPassword.confirmNewPasswordPlaceholder')"
               class="mui-input"

@@ -45,8 +45,11 @@ function submit() {
       </p>
       <div class="flex flex-col gap-4 mt-6">
         <input
+          id="join-name"
           v-model="name"
           type="text"
+          name="name"
+          autocomplete="name"
           :placeholder="$t('join.namePlaceholder')"
           class="mui-input w-full"
           :class="{ 'is-error': hasError }"

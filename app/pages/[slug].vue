@@ -653,7 +653,9 @@ async function submitRenameRoom() {
           {{ $t('room.renameTitle') }}
         </h2>
         <input
+          id="rename-room-name"
           v-model="roomNameInput"
+          name="room-name"
           class="mui-input"
           :placeholder="$t('room.renamePlaceholder')"
           @keyup.enter="submitRenameRoom"

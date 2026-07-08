@@ -136,6 +136,20 @@ function activateMenuItem(e: KeyboardEvent) {
       >
         {{ headerLabel }}
       </span>
+      <button
+        v-if="user"
+        v-wave
+        class="mui-icon-btn text-appbar-emphasis"
+        style="--hover-bg: rgba(255,255,255,0.08);"
+        :aria-label="isLight ? $t('header.darkTheme') : $t('header.lightTheme')"
+        data-testid="theme-toggle-button"
+        @click="toggleTheme($event)"
+      >
+        <AppIcon
+          :icon="isLight ? 'ic:baseline-dark-mode' : 'ic:baseline-light-mode'"
+          style="font-size: 1.5rem;"
+        />
+      </button>
       <div
         ref="menuRef"
         style="position: relative;"
@@ -255,7 +269,7 @@ function activateMenuItem(e: KeyboardEvent) {
             class="mui-menu-item whitespace-nowrap"
             role="menuitem"
             tabindex="0"
-            @click.stop="toggleTheme(); menuOpen = false"
+            @click.stop="toggleTheme($event); menuOpen = false"
           >
             <AppIcon
               class="mui-menu-icon"
@@ -265,6 +279,7 @@ function activateMenuItem(e: KeyboardEvent) {
             <span class="mui-switch">
               <input
                 type="checkbox"
+                name="theme-toggle"
                 :checked="isLight"
                 tabindex="-1"
                 readonly

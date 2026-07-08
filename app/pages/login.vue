@@ -71,8 +71,10 @@ async function onSubmit() {
         >
           <div>
             <input
+              id="login-email"
               v-model.trim="form.email"
               type="email"
+              name="email"
               autocomplete="email"
               :placeholder="$t('common.emailPlaceholder')"
               class="mui-input"
@@ -98,8 +100,10 @@ async function onSubmit() {
               </RouterLink>
             </div>
             <input
+              id="login-password"
               v-model="form.password"
               type="password"
+              name="password"
               autocomplete="current-password"
               :placeholder="$t('common.passwordPlaceholder')"
               class="mui-input"

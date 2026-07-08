@@ -285,6 +285,7 @@ const playerAvatar = computed(() => {
             <span class="mui-switch">
               <input
                 type="checkbox"
+                name="is-moderator"
                 :checked="player.is_moderator"
                 tabindex="-1"
                 readonly

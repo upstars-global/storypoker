@@ -86,8 +86,11 @@ function save() {
           {{ $t('players.nameLabel') }}
         </span>
         <input
+          id="player-name"
           ref="nameInput"
           v-model="nameValue"
+          name="name"
+          autocomplete="name"
           class="mui-input w-full mt-2"
           @keyup.enter="save"
         >

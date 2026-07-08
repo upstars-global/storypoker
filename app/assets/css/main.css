@@ -654,3 +654,17 @@ dialog.app-modal::backdrop {
 .app-tooltip-bottom { position: absolute; top:    calc(100% + var(--tt-offset, 6px)); left: 50%; transform: translateX(-50%); pointer-events: none; }
 .app-tooltip-left   { position: absolute; right:  calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
 .app-tooltip-right  { position: absolute; left:   calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
+
+/* Theme switch: circular clip-path reveal drives the transition, so suppress
+   the default root cross-fade and stack the new snapshot above the old one. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}

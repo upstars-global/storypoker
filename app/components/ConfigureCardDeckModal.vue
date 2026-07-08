@@ -100,7 +100,9 @@ function save() {
             class="flex items-center gap-3 text-mui-body text-white opacity-70 cursor-not-allowed"
           >
             <input
+              :id="`voting-base-${card}`"
               type="checkbox"
+              :name="`voting-base-${card}`"
               checked
               disabled
               style="accent-color: var(--primary); width: 18px; height: 18px;"
@@ -147,7 +149,9 @@ function save() {
           class="flex items-center gap-3 cursor-pointer text-mui-body text-white"
         >
           <input
+            :id="`deck-card-${card}`"
             type="checkbox"
+            :name="`deck-card-${card}`"
             :checked="selected.includes(card)"
             style="accent-color: var(--primary); width: 18px; height: 18px;"
             @change="toggle(card)"

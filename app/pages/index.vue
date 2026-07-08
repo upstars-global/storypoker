@@ -120,8 +120,11 @@ async function createRoom() {
         <div class="mt-[19px] flex flex-col items-center">
           <div class="flex w-full max-w-[360px]">
             <input
+              id="home-name"
               v-model="name"
               type="text"
+              name="name"
+              autocomplete="name"
               :placeholder="$t('home.namePlaceholder')"
               class="mui-input h-[51px] min-w-0 flex-1"
               :class="{ 'is-error': hasError }"

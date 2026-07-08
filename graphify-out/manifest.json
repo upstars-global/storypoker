@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "app/composables/useDylanAvatar.ts": {
-    "mtime": 1783372808.059629,
-    "ast_hash": "5b76e0788253fe4933b2f4ba1df33645",
+    "mtime": 1783509986.0407677,
+    "ast_hash": "d883f2bb7fe2d13d9fd4ab8179276552",
     "semantic_hash": ""
   },
   "app/composables/useTheme.ts": {
@@ -190,13 +190,13 @@
     "semantic_hash": ""
   },
   "app/pages/login.vue": {
-    "mtime": 1783372761.3758354,
-    "ast_hash": "2763d9e39d3bddeefcded3a1c9e3a4f1",
+    "mtime": 1783513312.6157556,
+    "ast_hash": "966a51ba7d9b73f92b739b1fb0fbeace",
     "semantic_hash": ""
   },
   "app/pages/signup.vue": {
-    "mtime": 1783372757.9138854,
-    "ast_hash": "bc680a5417c86306a5c35b882c24c4ce",
+    "mtime": 1783513327.7703881,
+    "ast_hash": "9ae17d6b6c114adac9f38b49676c6cea",
     "semantic_hash": ""
   },
   "app/router.ts": {

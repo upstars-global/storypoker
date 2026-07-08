@@ -87,8 +87,10 @@ async function onSubmit() {
         >
           <div>
             <input
+              id="forgot-email"
               v-model.trim="form.email"
               type="email"
+              name="email"
               autocomplete="email"
               :placeholder="$t('common.emailPlaceholder')"
               class="mui-input"
