@@ -16,7 +16,7 @@ Guidance for Claude Code working with this repository.
 
 - **Framework:** Vue 3.5 + Vite 8 (Rolldown bundler) SPA, Composition API `<script setup>`, `srcDir: app/`
 - **Routing:** `vue-router@5` — явні маршрути в `app/router.ts` (7 routes, без file-based routing)
-- **Styling:** Tailwind v4 через PostCSS (`@tailwindcss/postcss` + autoprefixer), CSS-first config у `app/assets/css/main.css` (`@theme`, `@utility`, `@custom-variant dark`), MUI-like класи там само
+- **Styling:** Tailwind v4 через `@tailwindcss/vite` (нативний Vite-плагін; без PostCSS/autoprefixer — vendor-prefixing робить вбудований Lightning CSS), CSS-first config у `app/assets/css/main.css` (`@theme`, `@utility`, `@custom-variant dark`), MUI-like класи там само
   - text utilities з `@theme --color-*`: `text-{primary,body,muted,disabled,inverse,danger,success,appbar-{subtle,muted,emphasis}}`
   - bg utilities через `@utility`: `bg-{app,appbar,paper,elevated,overlay,skeleton}`
   - дефолтний `border` зберігає колір `var(--border)` через `@layer base` override (v4 default — `currentColor`); `border-input` — явний `@utility`
@@ -45,12 +45,13 @@ npm run test:unit:watch
 npm run test:unit:coverage
 npm run test:e2e
 npm run test:e2e:smoke
+npm run test:e2e:pages   # public pages load smoke (project page-load, no Supabase)
 npm run test:e2e:ui  # Playwright UI mode
 npm run test:ci      # lint + typecheck + unit + build (CI runs this)
 npm run deploy:{stage,prod}   # Netlify alias / prod deploy
 ```
 
-CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); E2E runs when E2E secrets exist; deploy runs `npm run build` on `main` when checks pass and Netlify secrets exist.
+CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); the `page-load` job runs always (unconditional public-pages smoke via `test:e2e:pages` with dummy Supabase creds); E2E runs when E2E secrets exist; deploy runs `npm run build` on `main` when checks (incl. page-load) pass and Netlify secrets exist.
 
 ## Environment Setup
 
@@ -132,7 +133,6 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 /
 ├── index.html             # head/meta + theme inline script
 ├── vite.config.ts
-├── postcss.config.js
 ├── tsconfig.json, tsconfig.node.json
 ├── eslint.config.js
 ├── netlify.toml

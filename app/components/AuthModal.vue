@@ -3,7 +3,7 @@ import { ref, reactive } from 'vue'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
 import { useAuthStore } from '~/stores/auth'
-import { errorMessage, validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
+import { errorMessage, validateEmail, validateRequiredPassword } from '~/utils/authValidation'
 
 const props = defineProps<{
   mode: 'signin' | 'signup'
@@ -17,17 +17,13 @@ const emit = defineEmits<{
 const { signIn, signUp } = useAuthStore()
 const email = ref('')
 const password = ref('')
-const confirm = ref('')
-const errors = reactive<{ email?: string; password?: string; confirm?: string; server?: string }>({})
+const errors = reactive<{ email?: string; password?: string; server?: string }>({})
 const loading = ref(false)
 
 function validate() {
   errors.email = validateEmail(email.value)
   errors.password = validateRequiredPassword(password.value)
-  errors.confirm = props.mode === 'signup'
-    ? validatePasswordConfirmation(password.value, confirm.value)
-    : undefined
-  return !errors.email && !errors.password && !errors.confirm
+  return !errors.email && !errors.password
 }
 
 async function submit() {
@@ -62,7 +58,7 @@ async function submit() {
         id="auth-modal-title"
         class="mui-h5 text-center"
       >
-        {{ mode === 'signin' ? $t('common.signIn') : $t('common.signUp') }}
+        {{ mode === 'signin' ? $t('auth.signInTitle') : $t('auth.signUpTitle') }}
       </h2>
       <p
         v-if="mode === 'signup'"
@@ -121,26 +117,6 @@ async function submit() {
             class="text-sm mt-1 text-danger"
           >
             {{ errors.password }}
-          </p>
-        </div>
-
-        <div v-if="mode === 'signup'">
-          <input
-            id="auth-confirm"
-            v-model="confirm"
-            type="password"
-            name="confirm-password"
-            autocomplete="new-password"
-            :placeholder="$t('common.confirmPasswordPlaceholder')"
-            class="mui-input"
-            :class="{ 'is-error': errors.confirm }"
-            @keyup.enter="submit"
-          >
-          <p
-            v-if="errors.confirm"
-            class="text-sm mt-1 text-danger"
-          >
-            {{ errors.confirm }}
           </p>
         </div>
 

@@ -356,6 +356,17 @@ body {
     background-color: var(--primary-soft);
     color: var(--text-primary);
   }
+  .mui-shield-tag {
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: var(--icon-player-color);
+    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
   .mui-shield-chip {
     display: inline-flex;
     align-items: center;

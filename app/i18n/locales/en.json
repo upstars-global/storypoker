@@ -18,6 +18,7 @@
     "recentRooms": "Recent Rooms",
     "lightTheme": "Light Theme",
     "darkTheme": "Dark Theme",
+    "language": "Language",
     "currentUserAccount": "account of current user",
     "accountSettings": "Account Settings",
     "history": "Round History",
@@ -225,7 +226,9 @@
     "saveError": "Failed to save"
   },
   "auth": {
-    "gainModeratorPowers": "and gain moderator powers",
+    "signInTitle": "Sign In",
+    "signUpTitle": "Sign Up",
+    "gainModeratorPowers": "and unlock more capabilities",
     "forgotPassword": "Forgot password?",
     "signingIn": "Signing In...",
     "signingUp": "Signing Up..."

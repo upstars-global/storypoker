@@ -4,7 +4,7 @@ import { getSupabase } from '~/lib/supabase-instance'
 import { getDeck, type DeckPresetId } from '~/utils/cardDecks'
 import { usePlayersStore } from './players'
 import type { RoomState, RoundHistory, RoundHistoryVote } from './types'
-import type { Json, TablesUpdate } from '~/lib/database.types'
+import type { Json, TablesInsert, TablesUpdate } from '~/lib/database.types'
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 export const useRoomStore = defineStore('room', () => {
@@ -39,14 +39,15 @@ export const useRoomStore = defineStore('room', () => {
     await supabase.from('room_state').update(update).eq('room_id', roomId.value)
 
     if (votes.length >= 2) {
-      const { error } = await supabase.from('round_history').insert({
+      const historyRow: TablesInsert<'round_history'> = {
         room_id: roomId.value,
         started_at: roomState.value.round_started_at,
         revealed_at: revealedAt.toISOString(),
-        votes: votes as unknown as Json,
+        votes: votes as Json,
         active_cards: roomState.value.active_cards ?? null,
         deck_preset: roomState.value.deck_preset ?? null,
-      })
+      }
+      const { error } = await supabase.from('round_history').insert(historyRow)
       if (error) console.error('[reveal] round_history insert failed:', error)
     }
   }
@@ -58,7 +59,7 @@ export const useRoomStore = defineStore('room', () => {
       .select('*')
       .eq('room_id', roomId.value)
       .order('revealed_at', { ascending: false })
-    return (data ?? []) as unknown as RoundHistory[]
+    return (data ?? []).map(row => ({ ...row, votes: row.votes as unknown as RoundHistoryVote[] }))
   }
 
   async function startNewRound() {

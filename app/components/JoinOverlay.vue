@@ -69,8 +69,7 @@ function submit() {
               <template #trigger>
                 <button
                   type="button"
-                  class="mui-shield"
-                  style="padding: 6px 12px;"
+                  class="mui-shield mui-shield-tag"
                   :class="{ 'is-selected': tag === opt }"
                   :aria-pressed="tag === opt"
                   @click="tag = tag === opt ? '' : opt"

@@ -1,12 +1,14 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'node:path'
 
 export default defineConfig({
-  envDir: resolve(__dirname, '.env'),
+  envDir: resolve(import.meta.dirname, '.env'),
   plugins: [
     vue(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -93,11 +95,9 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '~': resolve(__dirname, 'app'),
-      '@': resolve(__dirname, 'app'),
+      '~': resolve(import.meta.dirname, 'app'),
+      '@': resolve(import.meta.dirname, 'app'),
     },
   },
-  server: { host: 'localhost', port: 3001, strictPort: false },
-  preview: { host: 'localhost', port: 3001, strictPort: false },
   build: { sourcemap: true },
 })

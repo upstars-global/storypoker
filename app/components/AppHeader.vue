@@ -81,8 +81,18 @@ watch(() => user.value?.id, async (id) => {
   profileFetched.value = true
 }, { immediate: true })
 
-function toggleLocale() {
-  locale.value = locale.value === 'uk' ? 'en' : 'uk'
+const LOCALES = [
+  { code: 'uk', label: 'Українська' },
+  { code: 'en', label: 'English' },
+] as const
+
+const langMenuRef = ref<HTMLElement | null>(null)
+const langMenuOpen = ref(false)
+useClickOutside(langMenuRef, () => { langMenuOpen.value = false })
+
+function setLocale(code: string) {
+  locale.value = code
+  langMenuOpen.value = false
 }
 
 const menuRef = ref<HTMLElement | null>(null)
@@ -122,14 +132,49 @@ function activateMenuItem(e: KeyboardEvent) {
     <div class="flex-1" />
 
     <div class="flex items-center gap-2">
-      <button
-        v-wave
-        class="mui-icon-btn text-xs font-bold tracking-widest text-appbar-emphasis"
-        style="--hover-bg: rgba(255,255,255,0.12); width: auto; padding: 4px 10px; border-radius: 4px;"
-        @click="toggleLocale"
+      <div
+        ref="langMenuRef"
+        style="position: relative;"
+        @keydown.escape.stop="langMenuOpen = false"
       >
-        {{ locale === 'uk' ? 'EN' : 'UA' }}
-      </button>
+        <button
+          v-wave
+          class="mui-icon-btn text-xs font-bold tracking-widest text-appbar-emphasis"
+          style="--hover-bg: rgba(255,255,255,0.12); width: auto; padding: 4px 10px; border-radius: 4px;"
+          :aria-label="$t('header.language')"
+          :aria-expanded="langMenuOpen"
+          data-testid="language-menu-button"
+          @click="langMenuOpen = !langMenuOpen"
+        >
+          {{ locale === 'uk' ? 'UA' : 'EN' }}
+        </button>
+        <ul
+          v-if="langMenuOpen"
+          class="mui-menu z-50"
+          role="menu"
+          style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 160px;"
+          @keydown.escape="langMenuOpen = false"
+        >
+          <li
+            v-for="loc in LOCALES"
+            :key="loc.code"
+            v-wave
+            class="mui-menu-item whitespace-nowrap"
+            role="menuitemradio"
+            :aria-checked="locale === loc.code"
+            tabindex="0"
+            @click="setLocale(loc.code)"
+            @keydown.enter.prevent="setLocale(loc.code)"
+            @keydown.space.prevent="setLocale(loc.code)"
+          >
+            <AppIcon
+              class="mui-menu-icon"
+              :icon="locale === loc.code ? 'ic:baseline-check' : 'ic:baseline-language'"
+            />
+            <span class="flex-1">{{ loc.label }}</span>
+          </li>
+        </ul>
+      </div>
       <span
         v-if="headerLabel"
         class="text-sm text-appbar-emphasis"
@@ -137,7 +182,6 @@ function activateMenuItem(e: KeyboardEvent) {
         {{ headerLabel }}
       </span>
       <button
-        v-if="user"
         v-wave
         class="mui-icon-btn text-appbar-emphasis"
         style="--hover-bg: rgba(255,255,255,0.08);"
