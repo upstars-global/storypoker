@@ -1,9 +1,15 @@
-import { createAvatar } from '@dicebear/core'
-import { bottts, dylan, miniavs } from '@dicebear/collection'
+import { Avatar, Style } from '@dicebear/core'
+import botttsSchema from '@dicebear/styles/bottts.json'
+import dylanSchema from '@dicebear/styles/dylan.json'
+import miniavsSchema from '@dicebear/styles/miniavs.json'
 
 export type AvatarStyle = 'bottts' | 'dylan' | 'miniavs'
 
 export const AVATAR_STYLES: AvatarStyle[] = ['bottts', 'dylan', 'miniavs']
+
+const bottts = new Style(botttsSchema)
+const dylan = new Style(dylanSchema)
+const miniavs = new Style(miniavsSchema)
 
 const cache = new Map<string, string>()
 
@@ -13,13 +19,13 @@ export function useDylanAvatar() {
     const cached = cache.get(key)
     if (cached) return cached
     const avatar = style === 'dylan'
-      ? createAvatar(dylan, { seed, backgroundColor: [] })
+      ? new Avatar(dylan, { seed, backgroundColor: [] })
       : style === 'miniavs'
-        ? createAvatar(miniavs, { seed, backgroundColor: grayscale ? ['cccccc'] : [] })
+        ? new Avatar(miniavs, { seed, backgroundColor: grayscale ? ['cccccc'] : [] })
         : grayscale
-          ? createAvatar(bottts, { seed, baseColor: ['909090'], eyes: ['dizzy'], mouth: ['grill01'] })
-          : createAvatar(bottts, { seed })
-    const uri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(avatar.toString())))}`
+          ? new Avatar(bottts, { seed, baseColor: ['909090'] })
+          : new Avatar(bottts, { seed })
+    const uri = avatar.toDataUri()
     cache.set(key, uri)
     return uri
   }
