@@ -23,7 +23,13 @@
     "currentUserAccount": "account of current user",
     "accountSettings": "Account Settings",
     "history": "Round History",
-    "alignmentTrends": "Alignment Trends"
+    "alignmentTrends": "Alignment Trends",
+    "themePalette": "Color theme"
+  },
+  "theme": {
+    "classic": "Classic",
+    "cyberdeck": "Cyberdeck",
+    "matcha": "Matcha"
   },
   "trends": {
     "title": "Team Alignment Trends",
@@ -56,7 +62,9 @@
     "createRoom": "Create Room",
     "recentRooms": "Recent Rooms",
     "players": "Players",
-    "lastVisited": "Last Visited"
+    "lastVisited": "Last Visited",
+    "editRoomName": "Rename room",
+    "editRoomNameHint": "The name is visible to everyone. Leave empty to remove it."
   },
   "join": {
     "title": "Invitation",
@@ -86,6 +94,15 @@
     "minus30": "-30s",
     "plus30": "+30s"
   },
+  "slot": {
+    "title": "Slot 777",
+    "spin": "Spin",
+    "jackpot": "Jackpot! {name} gets +1 day off 🏖",
+    "spinsLeft": "Spins left: {n}",
+    "noSpinsLeft": "No spins left — wait for the next round",
+    "switchToSlot": "Show slot machine",
+    "switchToTimer": "Show timer"
+  },
   "deck": {
     "configure": "Configure Card Deck",
     "save": "Save Card Deck",
@@ -105,6 +122,8 @@
   "players": {
     "title": "Players",
     "isModerator": "Is Moderator",
+    "isSpectator": "Spectator mode",
+    "spectator": "Spectator",
     "edit": "Edit",
     "editTitle": "Edit Player",
     "editSubtitle": "Choose a role and name",
@@ -135,6 +154,17 @@
   "results": {
     "general": "DEV",
     "alignment": "Alignment"
+  },
+  "moderatorPanel": {
+    "title": "Voting progress",
+    "voted": "Voted",
+    "waitingFor": "Still deciding",
+    "nudge": "Nudge",
+    "nudged": "Sent",
+    "allVoted": "Everyone has voted 🎉",
+    "groupDev": "DEV",
+    "groupQa": "QA",
+    "groupOther": "Others"
   },
   "shields": {
     "title": "Pick your shields",
@@ -207,6 +237,7 @@
     "renameHint": "Leave empty to remove the custom name.",
     "slugError": "Use 2–32 chars: letters, numbers, dashes",
     "slugTaken": "This name is already taken",
+    "nudgeMessage": "The moderator is waiting for your vote",
     "kickTitle": "Kick Player",
     "kickConfirm": "Remove {name} from the room?",
     "kickButton": "Kick",

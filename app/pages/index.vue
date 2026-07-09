@@ -10,6 +10,9 @@ import { listRecentRooms, touchRecentRoom, type RecentRoomEntry } from '~/utils/
 import { relativeTime } from '~/utils/relativeTime'
 import { getSupabase } from '~/lib/supabase-instance'
 import AppHeader from '~/components/AppHeader.vue'
+import AppIcon from '~/components/AppIcon.vue'
+import AppModal from '~/components/AppModal.vue'
+import AppModalPaper from '~/components/AppModalPaper.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
 
@@ -70,6 +73,31 @@ onMounted(async () => {
     name: slugByRoom[r.roomId]?.name ?? null,
   }))
 })
+
+const renameTargetId = ref<string | null>(null)
+const renameInput = ref('')
+const renameSaving = ref(false)
+
+function openRename(room: RecentRoomDisplay) {
+  renameInput.value = room.name ?? ''
+  renameTargetId.value = room.roomId
+}
+
+async function submitRename() {
+  if (!renameTargetId.value || renameSaving.value) return
+  const roomId = renameTargetId.value
+  const name = renameInput.value.trim() || null
+  renameSaving.value = true
+  try {
+    const { error } = await getSupabase().from('rooms').update({ name }).eq('id', roomId)
+    if (error) throw error
+    const entry = recentRooms.value.find(r => r.roomId === roomId)
+    if (entry) entry.name = name
+    renameTargetId.value = null
+  } finally {
+    renameSaving.value = false
+  }
+}
 
 async function createRoom() {
   if (!name.value.trim()) {
@@ -180,12 +208,28 @@ async function createRoom() {
               class="border-t"
             >
               <td class="px-3 py-3 align-top">
-                <RouterLink
-                  :to="`/${room.slug ?? room.roomId}`"
-                  class="underline hover:no-underline text-primary"
-                >
-                  {{ room.name ?? room.slug ?? room.roomId }}
-                </RouterLink>
+                <span class="inline-flex items-center gap-1">
+                  <RouterLink
+                    :to="`/${room.slug ?? room.roomId}`"
+                    class="underline hover:no-underline text-primary"
+                  >
+                    {{ room.name ?? room.slug ?? room.roomId }}
+                  </RouterLink>
+                  <button
+                    v-wave
+                    class="mui-icon-btn"
+                    style="padding: 3px;"
+                    :aria-label="$t('home.editRoomName')"
+                    data-testid="recent-room-rename"
+                    @click="openRename(room)"
+                  >
+                    <AppIcon
+                      class="mui-svg-icon text-muted"
+                      icon="ic:baseline-edit"
+                      style="font-size: 1rem;"
+                    />
+                  </button>
+                </span>
               </td>
               <td class="px-3 py-3 align-top">
                 <span v-if="room.playerNames.length">{{ room.playerNames.join(', ') }}</span>
@@ -202,5 +246,50 @@ async function createRoom() {
         </table>
       </section>
     </main>
+
+    <AppModal
+      labelledby="recent-room-rename-title"
+      :open="!!renameTargetId"
+      @close="renameTargetId = null"
+    >
+      <AppModalPaper @close="renameTargetId = null">
+        <h2
+          id="recent-room-rename-title"
+          class="mui-h5 mb-4"
+        >
+          {{ $t('home.editRoomName') }}
+        </h2>
+        <div class="mui-field">
+          <input
+            id="recent-room-name"
+            v-model="renameInput"
+            name="room-name"
+            placeholder=" "
+            class="mui-input w-full"
+            @keyup.enter="submitRename"
+          >
+          <label
+            for="recent-room-name"
+            class="mui-field-label"
+          >
+            {{ $t('room.renameLabel') }}
+          </label>
+        </div>
+        <p class="text-mui-caption mt-2 text-muted">
+          {{ $t('home.editRoomNameHint') }}
+        </p>
+        <div class="flex justify-end mt-6">
+          <button
+            v-wave
+            class="mui-btn"
+            style="min-width: 120px;"
+            :disabled="renameSaving"
+            @click="submitRename"
+          >
+            {{ $t('common.save') }}
+          </button>
+        </div>
+      </AppModalPaper>
+    </AppModal>
   </div>
 </template>

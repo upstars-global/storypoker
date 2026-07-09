@@ -20,6 +20,7 @@ const props = defineProps<{
   pollQuestion: string | null
   hasLastRound?: boolean
   showLastRound?: boolean
+  spectator?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -196,7 +197,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
     </div>
 
     <div
-      v-if="!showLastRound"
+      v-if="!showLastRound && !spectator"
       class="flex flex-wrap justify-center gap-4 max-w-[1240px] mx-auto"
       :class="{ 'pointer-events-none opacity-40': !canVote }"
     >
@@ -224,10 +225,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
       </div>
     </div>
 
-    <div
-      v-if="isModerator"
-      class="flex flex-wrap items-end justify-center gap-4 pt-8"
-    >
+    <div class="flex flex-wrap items-end justify-center gap-4 pt-8">
       <button
         v-wave
         class="mui-icon-btn"

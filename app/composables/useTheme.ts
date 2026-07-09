@@ -2,18 +2,38 @@ import { ref, computed } from 'vue'
 
 type Theme = 'light' | 'dark'
 const STORAGE_KEY = 'sp-theme'
+const PALETTE_STORAGE_KEY = 'sp-palette'
+
+export type PaletteId = 'classic' | 'cyberdeck' | 'matcha'
+
+export const PALETTES: { id: PaletteId; swatches: [string, string] }[] = [
+  { id: 'classic', swatches: ['#546e7a', '#455a64'] },
+  { id: 'cyberdeck', swatches: ['#00e5c3', '#0b1220'] },
+  { id: 'matcha', swatches: ['#8fb573', '#5b7750'] },
+]
+
+const PALETTE_IDS = new Set<string>(PALETTES.map(p => p.id))
 
 type ViewTransitionDocument = Document & {
   startViewTransition?: (callback: () => void) => { ready: Promise<void>; finished: Promise<void> }
 }
 
 const theme = ref<Theme>('dark')
+const palette = ref<PaletteId>('classic')
 
 function apply(value: Theme, persist: boolean) {
   theme.value = value
   document.documentElement.setAttribute('data-theme', value)
   if (persist) {
     try { localStorage.setItem(STORAGE_KEY, value) } catch {}
+  }
+}
+
+function applyPalette(value: PaletteId, persist: boolean) {
+  palette.value = value
+  document.documentElement.setAttribute('data-palette', value)
+  if (persist) {
+    try { localStorage.setItem(PALETTE_STORAGE_KEY, value) } catch {}
   }
 }
 
@@ -26,6 +46,9 @@ export function useTheme() {
     } else {
       apply('dark', false)
     }
+    let storedPalette: string | null = null
+    try { storedPalette = localStorage.getItem(PALETTE_STORAGE_KEY) } catch {}
+    applyPalette(storedPalette && PALETTE_IDS.has(storedPalette) ? storedPalette as PaletteId : 'classic', false)
   }
 
   function toggle(event?: MouseEvent) {
@@ -60,7 +83,11 @@ export function useTheme() {
     apply(value, true)
   }
 
+  function setPalette(value: PaletteId) {
+    applyPalette(value, true)
+  }
+
   const isLight = computed(() => theme.value === 'light')
 
-  return { theme, isLight, init, toggle, setTheme }
+  return { theme, isLight, palette, init, toggle, setTheme, setPalette }
 }

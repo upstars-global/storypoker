@@ -7,7 +7,7 @@ import { useClickOutside } from '~/composables/useClickOutside'
 import { useAuthStore } from '~/stores/auth'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
-import { useTheme } from '~/composables/useTheme'
+import { useTheme, PALETTES, type PaletteId } from '~/composables/useTheme'
 
 const props = withDefaults(defineProps<{
   onlineCount: number
@@ -42,7 +42,7 @@ const emit = defineEmits<{
 const { user } = storeToRefs(useAuthStore())
 const profilesStore = useProfilesStore()
 const { avatarDataUri } = useDylanAvatar()
-const { isLight, toggle: toggleTheme } = useTheme()
+const { isLight, palette, toggle: toggleTheme, setPalette } = useTheme()
 const { locale } = useI18n()
 const countdownBarWidth = ref(0)
 
@@ -94,6 +94,15 @@ const menuRef = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
 useClickOutside(menuRef, () => { menuOpen.value = false })
 
+const paletteMenuRef = ref<HTMLElement | null>(null)
+const paletteMenuOpen = ref(false)
+useClickOutside(paletteMenuRef, () => { paletteMenuOpen.value = false })
+
+function pickPalette(id: PaletteId) {
+  setPalette(id)
+  paletteMenuOpen.value = false
+}
+
 function activateMenuItem(e: KeyboardEvent) {
   const item = (e.target as HTMLElement).closest<HTMLElement>('[role="menuitem"]')
   item?.click()
@@ -127,6 +136,63 @@ function activateMenuItem(e: KeyboardEvent) {
     <div class="flex-1" />
 
     <div class="flex items-center gap-2">
+      <div
+        ref="paletteMenuRef"
+        style="position: relative;"
+        @keydown.escape.stop="paletteMenuOpen = false"
+      >
+        <button
+          v-wave
+          class="mui-icon-btn text-appbar-emphasis"
+          style="--hover-bg: rgba(255,255,255,0.08);"
+          :aria-label="$t('header.themePalette')"
+          :aria-expanded="paletteMenuOpen"
+          data-testid="palette-menu-button"
+          @click="paletteMenuOpen = !paletteMenuOpen"
+        >
+          <AppIcon
+            icon="ic:baseline-palette"
+            style="font-size: 1.5rem;"
+          />
+        </button>
+        <ul
+          v-if="paletteMenuOpen"
+          class="mui-menu z-50"
+          role="menu"
+          style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 200px;"
+          @keydown.escape="paletteMenuOpen = false"
+          @keydown.enter.prevent="activateMenuItem"
+          @keydown.space.prevent="activateMenuItem"
+        >
+          <li
+            v-for="p in PALETTES"
+            :key="p.id"
+            v-wave
+            class="mui-menu-item whitespace-nowrap"
+            role="menuitemradio"
+            :aria-checked="palette === p.id"
+            tabindex="0"
+            :data-testid="`palette-option-${p.id}`"
+            @click="pickPalette(p.id)"
+          >
+            <span class="inline-flex items-center gap-1">
+              <span
+                v-for="(color, i) in p.swatches"
+                :key="i"
+                class="inline-block rounded-full"
+                style="width: 12px; height: 12px;"
+                :style="{ backgroundColor: color }"
+              />
+            </span>
+            <span class="flex-1">{{ $t(`theme.${p.id}`) }}</span>
+            <AppIcon
+              v-if="palette === p.id"
+              class="mui-menu-icon"
+              icon="ic:baseline-check"
+            />
+          </li>
+        </ul>
+      </div>
       <button
         v-wave
         class="mui-icon-btn text-appbar-emphasis"
