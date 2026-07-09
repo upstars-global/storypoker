@@ -20,6 +20,7 @@ const props = defineProps<{
     id: string
     name: string
     is_moderator: boolean
+    is_spectator: boolean
     vote: string | null
     is_online: boolean
     user_id: string | null
@@ -28,6 +29,7 @@ const props = defineProps<{
   }
   phase: 'voting' | 'revealed'
   currentPlayerId: string | null
+  currentUserIsModerator: boolean
   currentUserIsAuthorizedModerator: boolean
   truncateVotes?: boolean
 }>()
@@ -35,6 +37,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   edit: [id: string]
   toggleModerator: [id: string, value: boolean]
+  toggleSpectator: [id: string, value: boolean]
   leave: [id: string]
   kick: [id: string]
 }>()
@@ -126,7 +129,27 @@ const playerAvatar = computed(() => {
       </AppTooltip>
     </div>
 
-    <template v-if="player.is_online">
+    <template v-if="player.is_spectator">
+      <AppTooltip
+        side="top"
+        :side-offset="6"
+      >
+        <template #trigger>
+          <span class="inline-flex">
+            <AppIcon
+              class="mui-svg-icon"
+              icon="ic:baseline-visibility"
+              style="font-size: 1.5rem; color: var(--icon-player-color);"
+              :aria-label="$t('players.spectator')"
+            />
+          </span>
+        </template>
+        <template #content>
+          {{ $t('players.spectator') }}
+        </template>
+      </AppTooltip>
+    </template>
+    <template v-else-if="player.is_online">
       <template v-if="phase === 'voting'">
         <AppTooltip
           v-if="player.vote !== null"
@@ -246,7 +269,7 @@ const playerAvatar = computed(() => {
       style="width: 36px; height: 36px; position: relative;"
     >
       <button
-        v-if="isOwn || currentUserIsAuthorizedModerator"
+        v-if="isOwn || currentUserIsModerator"
         v-wave
         class="mui-icon-btn"
         style="padding: 4px;"
@@ -295,6 +318,32 @@ const playerAvatar = computed(() => {
             </span>
           </li>
           <li
+            v-if="player.is_moderator"
+            v-wave
+            class="mui-menu-item"
+            role="menuitem"
+            tabindex="0"
+            data-testid="spectator-toggle"
+            @click.stop="emit('toggleSpectator', player.id, !player.is_spectator); menuOpen = false"
+          >
+            <AppIcon
+              class="mui-menu-icon"
+              icon="ic:baseline-visibility"
+            />
+            <span class="flex-1">{{ $t('players.isSpectator') }}</span>
+            <span class="mui-switch">
+              <input
+                type="checkbox"
+                name="is-spectator"
+                :checked="player.is_spectator"
+                tabindex="-1"
+                readonly
+              >
+              <span class="track" />
+              <span class="thumb" />
+            </span>
+          </li>
+          <li
             v-wave
             class="mui-menu-item"
             role="menuitem"
@@ -321,8 +370,9 @@ const playerAvatar = computed(() => {
             {{ $t('players.leaveRoom') }}
           </li>
         </template>
-        <template v-else-if="currentUserIsAuthorizedModerator">
+        <template v-else-if="currentUserIsModerator">
           <li
+            v-if="currentUserIsAuthorizedModerator"
             v-wave
             class="mui-menu-item"
             role="menuitem"

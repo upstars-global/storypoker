@@ -9,7 +9,7 @@ import { averageOf } from '~/utils/roundStats'
 const props = defineProps<{
   votes: Record<string, number>
   groupedVotes?: { general: Record<string, number>; qa: Record<string, number> } | null
-  isModerator: boolean
+  showNewRound: boolean
   pollQuestion?: string | null
   disableCelebration?: boolean
   showAlignment?: boolean
@@ -161,7 +161,7 @@ watch(celebrate, (next, prev) => {
       </div>
     </div>
     <button
-      v-if="isModerator"
+      v-if="showNewRound"
       class="mui-btn"
       data-testid="new-round-button"
       @click="emit('startNewRound')"

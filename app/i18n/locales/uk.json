@@ -23,7 +23,13 @@
     "currentUserAccount": "акаунт поточного користувача",
     "accountSettings": "Налаштування акаунту",
     "history": "Історія раундів",
-    "alignmentTrends": "Тренди узгодженості"
+    "alignmentTrends": "Тренди узгодженості",
+    "themePalette": "Кольорова тема"
+  },
+  "theme": {
+    "classic": "Classic",
+    "cyberdeck": "Cyberdeck",
+    "matcha": "Matcha"
   },
   "trends": {
     "title": "Тренди узгодженості команди",
@@ -56,7 +62,9 @@
     "createRoom": "Створити кімнату",
     "recentRooms": "Нещодавні кімнати",
     "players": "Гравці",
-    "lastVisited": "Остання відвідана"
+    "lastVisited": "Остання відвідана",
+    "editRoomName": "Перейменувати кімнату",
+    "editRoomNameHint": "Назву бачать усі учасники. Залиште порожнім, щоб прибрати."
   },
   "join": {
     "title": "Запрошення",
@@ -86,6 +94,15 @@
     "minus30": "-30с",
     "plus30": "+30с"
   },
+  "slot": {
+    "title": "Слот 777",
+    "spin": "Spin",
+    "jackpot": "Джекпот! {name} отримує +1 вихідний день 🏖",
+    "spinsLeft": "Залишилось спінів: {n}",
+    "noSpinsLeft": "Спіни скінчились — чекай новий раунд",
+    "switchToSlot": "Показати слот",
+    "switchToTimer": "Показати таймер"
+  },
   "deck": {
     "configure": "Налаштувати колоду",
     "save": "Зберегти колоду",
@@ -105,6 +122,8 @@
   "players": {
     "title": "Гравці",
     "isModerator": "Модератор",
+    "isSpectator": "Режим спектатора",
+    "spectator": "Спектатор",
     "edit": "Редагувати",
     "editTitle": "Редагувати гравця",
     "editSubtitle": "Оберіть роль та імʼя",
@@ -135,6 +154,17 @@
   "results": {
     "general": "DEV",
     "alignment": "Узгодженість"
+  },
+  "moderatorPanel": {
+    "title": "Хід голосування",
+    "voted": "Проголосували",
+    "waitingFor": "Ще думають",
+    "nudge": "Нагадати",
+    "nudged": "Надіслано",
+    "allVoted": "Всі проголосували 🎉",
+    "groupDev": "DEV",
+    "groupQa": "QA",
+    "groupOther": "Інші"
   },
   "shields": {
     "title": "Обери свої щити",
@@ -207,6 +237,7 @@
     "renameHint": "Залиште порожнім, щоб видалити назву.",
     "slugError": "Від 2 до 32 символів: літери, цифри, дефіси",
     "slugTaken": "Це ім'я вже зайнято",
+    "nudgeMessage": "Модератор чекає на твій голос",
     "kickTitle": "Вилучити гравця",
     "kickConfirm": "Видалити {name} з кімнати?",
     "kickButton": "Вилучити",

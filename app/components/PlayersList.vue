@@ -7,6 +7,7 @@ const props = defineProps<{
     id: string
     name: string
     is_moderator: boolean
+    is_spectator: boolean
     vote: string | null
     is_online: boolean
     user_id: string | null
@@ -15,6 +16,7 @@ const props = defineProps<{
   }>
   phase: 'voting' | 'revealed'
   currentPlayerId: string | null
+  currentUserIsModerator: boolean
   currentUserIsAuthorizedModerator: boolean
   truncateVotes?: boolean
 }>()
@@ -22,6 +24,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   edit: [id: string]
   toggleModerator: [id: string, value: boolean]
+  toggleSpectator: [id: string, value: boolean]
   leave: [id: string]
   kick: [id: string]
 }>()
@@ -48,10 +51,12 @@ const totalCount = computed(() => props.players.length)
         :player="player"
         :phase="phase"
         :current-player-id="currentPlayerId"
+        :current-user-is-moderator="currentUserIsModerator"
         :current-user-is-authorized-moderator="currentUserIsAuthorizedModerator"
         :truncate-votes="truncateVotes"
         @edit="emit('edit', $event)"
         @toggle-moderator="(id: string, val: boolean) => emit('toggleModerator', id, val)"
+        @toggle-spectator="(id: string, val: boolean) => emit('toggleSpectator', id, val)"
         @leave="emit('leave', $event)"
         @kick="emit('kick', $event)"
       />

@@ -17,6 +17,7 @@ const emit = defineEmits<{
   (e: 'pause'): void
   (e: 'resume'): void
   (e: 'adjust', deltaMs: number): void
+  (e: 'switchWidget'): void
 }>()
 
 const { t } = useI18n()
@@ -66,8 +67,35 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
 
 <template>
   <div class="mui-paper">
-    <div class="mui-paper-header justify-center">
+    <div class="mui-paper-header justify-center relative">
       <span>{{ $t('timer.title') }}</span>
+      <div class="absolute right-1.5 top-1/2 -translate-y-1/2">
+        <AppTooltip
+          side="left"
+          :side-offset="6"
+        >
+          <template #trigger>
+            <button
+              v-wave
+              type="button"
+              class="mui-icon-btn"
+              style="padding: 4px; color: inherit;"
+              :aria-label="$t('slot.switchToSlot')"
+              data-testid="widget-toggle-slot"
+              @click="emit('switchWidget')"
+            >
+              <AppIcon
+                class="mui-svg-icon"
+                icon="ic:baseline-casino"
+                style="font-size: 1.25rem;"
+              />
+            </button>
+          </template>
+          <template #content>
+            {{ $t('slot.switchToSlot') }}
+          </template>
+        </AppTooltip>
+      </div>
     </div>
     <p class="mui-body px-4 py-3 text-body">
       {{ text }}
