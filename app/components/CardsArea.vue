@@ -20,7 +20,6 @@ const props = defineProps<{
   pollQuestion: string | null
   hasLastRound?: boolean
   showLastRound?: boolean
-  spectator?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -197,7 +196,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
     </div>
 
     <div
-      v-if="!showLastRound && !spectator"
+      v-if="!showLastRound"
       class="flex flex-wrap justify-center gap-4 max-w-[1240px] mx-auto"
       :class="{ 'pointer-events-none opacity-40': !canVote }"
     >

@@ -19,7 +19,6 @@ export type Database = {
           created_at: string | null
           id: string
           is_moderator: boolean
-          is_spectator: boolean
           left_at: string | null
           name: string
           room_id: string | null
@@ -31,7 +30,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_moderator?: boolean
-          is_spectator?: boolean
           left_at?: string | null
           name: string
           room_id?: string | null
@@ -43,7 +41,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_moderator?: boolean
-          is_spectator?: boolean
           left_at?: string | null
           name?: string
           room_id?: string | null
