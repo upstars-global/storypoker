@@ -5,7 +5,6 @@ export interface Player {
   room_id: string
   name: string
   is_moderator: boolean
-  is_spectator: boolean
   vote: string | null
   user_id: string | null
   shields: string[]

@@ -27,7 +27,6 @@ import HistoryModal from '~/components/HistoryModal.vue'
 import AlignmentTrendsModal from '~/components/AlignmentTrendsModal.vue'
 import PlayerEditModal from '~/components/PlayerEditModal.vue'
 import PlayersList from '~/components/PlayersList.vue'
-import ModeratorPanel from '~/components/ModeratorPanel.vue'
 import AlignmentCard from '~/components/AlignmentCard.vue'
 import { alignmentScore } from '~/utils/alignment'
 import Timer from '~/components/Timer.vue'
@@ -90,8 +89,6 @@ const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
 const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
 const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
-const isSpectator = computed(() => currentPlayer.value?.is_spectator ?? false)
-const votingPlayers = computed(() => visiblePlayers.value.filter(p => !p.is_spectator))
 const onlineCount = computed(() => visiblePlayers.value.filter(p => online.value.has(p.id)).length)
 
 const lastRoundVoteMap = computed(() => {
@@ -118,8 +115,8 @@ const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
 const canReset = computed(() => {
   if (showLastRound.value) return false
-  const voted = votingPlayers.value.filter(p => playersStore.voteOf(p.id) !== null).length
-  return voted > 0 && voted < votingPlayers.value.length
+  const voted = visiblePlayers.value.filter(p => playersStore.voteOf(p.id) !== null).length
+  return voted > 0 && voted < visiblePlayers.value.length
 })
 
 const isPollDeck = computed(() =>
@@ -174,7 +171,7 @@ function broadcastCountdownStart(mode: CountdownMode) {
 
 const voteCounts = computed(() => {
   if (!roomState.value) return {}
-  return votingPlayers.value.reduce((acc, p) => {
+  return visiblePlayers.value.reduce((acc, p) => {
     if (p.vote) acc[p.vote] = (acc[p.vote] ?? 0) + 1
     return acc
   }, {} as Record<string, number>)
@@ -185,7 +182,7 @@ const groupedVoteCounts = computed(() => {
   const general: Record<string, number> = {}
   const qa: Record<string, number> = {}
   let hasQa = false
-  for (const p of votingPlayers.value) {
+  for (const p of visiblePlayers.value) {
     if (!p.vote) continue
     if (isQaPlayer(p.shields)) {
       qa[p.vote] = (qa[p.vote] ?? 0) + 1
@@ -263,7 +260,7 @@ watch(() => roomState.value?.phase, (phase, prev) => {
       groupedVotes: groupedVoteCounts.value
         ? { general: { ...groupedVoteCounts.value.general }, qa: { ...groupedVoteCounts.value.qa } }
         : null,
-      playerVotes: votingPlayers.value
+      playerVotes: visiblePlayers.value
         .filter(p => p.vote !== null)
         .map(p => ({ id: p.id, name: p.name, vote: p.vote as string })),
       pollQuestion: isPollDeck.value ? (roomState.value?.poll_question ?? null) : null,
@@ -347,9 +344,6 @@ function subscribeRealtime() {
         () => isConsensus.value,
       )
     })
-    .on('broadcast', { event: 'nudge' }, ({ payload }: { payload?: { initiatorId?: string } }) => {
-      receiveNudge(payload?.initiatorId)
-    })
     .on('broadcast', { event: 'slot-win' }, ({ payload }: { payload?: { name?: string; symbol?: string } }) => {
       receiveSlotWin(payload)
     })
@@ -390,13 +384,6 @@ async function handleVote(card: string) {
 
 async function handleToggleModerator(id: string, value: boolean) {
   await playersStore.toggleModerator(id, value)
-  if (!value && visiblePlayers.value.find(p => p.id === id)?.is_spectator) {
-    await playersStore.setSpectator(id, false)
-  }
-}
-
-async function handleToggleSpectator(id: string, value: boolean) {
-  await playersStore.setSpectator(id, value)
 }
 
 const SIDE_WIDGET_KEY = 'sp-side-widget'
@@ -428,25 +415,6 @@ function receiveSlotWin(payload?: { name?: string; symbol?: string }) {
   slotWin.value = { name: payload.name, symbol: payload.symbol, burstKey: (slotWin.value?.burstKey ?? 0) + 1 }
   clearTimeout(slotWinTimer)
   slotWinTimer = setTimeout(() => { slotWin.value = null }, 6000)
-}
-
-const nudgeActive = ref(false)
-let nudgeTimer: ReturnType<typeof setTimeout> | undefined
-
-function broadcastNudge() {
-  countdownChannel?.send({ type: 'broadcast', event: 'nudge', payload: { initiatorId: currentPlayerId.value } })
-}
-
-function receiveNudge(initiatorId?: string) {
-  if (initiatorId === currentPlayerId.value) return
-  if (roomState.value?.phase !== 'voting') return
-  const me = currentPlayer.value
-  if (!me || me.is_spectator) return
-  if (playersStore.voteOf(me.id) !== null) return
-  nudgeActive.value = false
-  clearTimeout(nudgeTimer)
-  requestAnimationFrame(() => { nudgeActive.value = true })
-  nudgeTimer = setTimeout(() => { nudgeActive.value = false }, 4000)
 }
 
 function handleEdit(id: string) {
@@ -597,7 +565,6 @@ async function submitRenameRoom() {
           :truncate-votes="roomState?.deck_preset === 'vote_question'"
           @edit="handleEdit"
           @toggle-moderator="handleToggleModerator"
-          @toggle-spectator="handleToggleSpectator"
           @leave="handleLeave"
           @kick="handleKick"
         />
@@ -627,15 +594,7 @@ async function submitRenameRoom() {
         />
       </div>
 
-      <div
-        class="flex-1 flex flex-col items-center justify-start"
-        :class="{ 'sp-nudge-shake': nudgeActive }"
-      >
-        <ModeratorPanel
-          v-if="roomState?.phase === 'voting' && isSpectator && !showLastRound"
-          :players="playersForUi.filter(p => !p.is_spectator)"
-          @nudge="broadcastNudge"
-        />
+      <div class="flex-1 flex flex-col items-center justify-start">
         <ResultsArea
           v-if="roomState?.phase === 'voting' && showLastRound && lastRound"
           :votes="lastRound.votes"
@@ -671,7 +630,6 @@ async function submitRenameRoom() {
           :poll-question="roomState.poll_question ?? null"
           :has-last-round="!!lastRound"
           :show-last-round="showLastRound"
-          :spectator="isSpectator"
           @vote="handleVote"
           @reveal="roomStore.reveal()"
           @reset="roomStore.resetVotes()"
@@ -689,15 +647,6 @@ async function submitRenameRoom() {
       :symbol="slotWin.symbol"
       :burst-key="slotWin.burstKey"
     />
-
-    <div
-      v-if="nudgeActive"
-      class="fixed left-1/2 -translate-x-1/2 z-50 mui-paper shadow-8 px-5 py-3 text-mui-body text-primary"
-      style="top: 72px;"
-      data-testid="nudge-banner"
-    >
-      👋 {{ $t('room.nudgeMessage') }}
-    </div>
 
     <JoinOverlay
       v-if="showJoin"
