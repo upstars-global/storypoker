@@ -72,10 +72,10 @@ VITE_SUPABASE_KEY=...        # publishable client key
 
 ## Database
 
-Міграції в `supabase/migrations/` — накатуються через Supabase SQL Editor або Management API (`001`–`010`: schema, RLS, Realtime, timer, user_profiles, player shields, poll_question, history deck). Таблиці:
+Міграції в `supabase/migrations/` — накатуються через Supabase SQL Editor або Management API (`001`–`011`: schema, RLS, Realtime, timer, user_profiles, player shields, poll_question, history deck, spectator). Таблиці:
 - `rooms (id text PK, slug text unique, name text, created_at)`
 - `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms, poll_question)`
-- `players (id uuid PK, room_id, name, is_moderator, vote, user_id, shields text[], created_at, left_at)`
+- `players (id uuid PK, room_id, name, is_moderator, is_spectator, vote, user_id, shields text[], created_at, left_at)`
 - `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, deck_preset, created_at)`
 - `user_profiles (user_id uuid PK, avatar_style, avatar_seed, updated_at)`
 
@@ -107,7 +107,7 @@ Pinia stores у `app/stores/`:
 
 - `auth.ts` — Supabase session, sign in/up/out, password reset/update
 - `room.ts` — room state, create, reveal, new round, deck, resolve, room name/slug
-- `players.ts` — players, optimistic votes, join/rejoin, rename, moderator toggle, set shields, kick/leave, link user
+- `players.ts` — players, optimistic votes, join/rejoin, rename, moderator toggle, `setSpectator` (вмикання скидає vote), set shields, kick/leave, link user
 - `presence.ts` — online `Set<playerId>` через Supabase Presence; на `visibilitychange → hidden` закриває канал лише через `AWAY_TIMEOUT_MS` (5 хв), повернення раніше — скасовує таймер
 - `profiles.ts` — `user_profiles` cache, fetch/upsert, Realtime applyChange
 - `types.ts` — спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `UserProfile`)

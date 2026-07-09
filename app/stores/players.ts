@@ -67,6 +67,18 @@ export const usePlayersStore = defineStore('players', () => {
     await getSupabase().from('players').update({ is_moderator: value }).eq('id', playerId)
   }
 
+  async function setSpectator(playerId: string, value: boolean) {
+    const idx = players.value.findIndex(p => p.id === playerId)
+    const existing = idx >= 0 ? players.value[idx] : undefined
+    if (existing) players.value[idx] = { ...existing, is_spectator: value, vote: value ? null : existing.vote }
+    const patch = value ? { is_spectator: true, vote: null } : { is_spectator: false }
+    const { error } = await getSupabase().from('players').update(patch).eq('id', playerId)
+    if (error) {
+      if (existing) players.value[idx] = existing
+      throw error
+    }
+  }
+
   async function setShields(playerId: string, shields: string[]) {
     const idx = players.value.findIndex(p => p.id === playerId)
     const existing = idx >= 0 ? players.value[idx] : undefined
@@ -170,6 +182,6 @@ export const usePlayersStore = defineStore('players', () => {
   return {
     roomId, players, pendingVotes, visiblePlayers,
     applyChange, voteOf, castVote, clearPendingVotes,
-    rename, toggleModerator, setShields, kick, leave, join, rejoin, findExistingPlayer, linkUser, fetchAll,
+    rename, toggleModerator, setSpectator, setShields, kick, leave, join, rejoin, findExistingPlayer, linkUser, fetchAll,
   }
 })

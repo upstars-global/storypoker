@@ -20,6 +20,7 @@ const props = defineProps<{
     id: string
     name: string
     is_moderator: boolean
+    is_spectator: boolean
     vote: string | null
     is_online: boolean
     user_id: string | null
@@ -36,6 +37,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   edit: [id: string]
   toggleModerator: [id: string, value: boolean]
+  toggleSpectator: [id: string, value: boolean]
   leave: [id: string]
   kick: [id: string]
 }>()
@@ -127,7 +129,27 @@ const playerAvatar = computed(() => {
       </AppTooltip>
     </div>
 
-    <template v-if="player.is_online">
+    <template v-if="player.is_spectator">
+      <AppTooltip
+        side="top"
+        :side-offset="6"
+      >
+        <template #trigger>
+          <span class="inline-flex">
+            <AppIcon
+              class="mui-svg-icon"
+              icon="ic:baseline-visibility"
+              style="font-size: 1.5rem; color: var(--icon-player-color);"
+              :aria-label="$t('players.spectator')"
+            />
+          </span>
+        </template>
+        <template #content>
+          {{ $t('players.spectator') }}
+        </template>
+      </AppTooltip>
+    </template>
+    <template v-else-if="player.is_online">
       <template v-if="phase === 'voting'">
         <AppTooltip
           v-if="player.vote !== null"
@@ -288,6 +310,32 @@ const playerAvatar = computed(() => {
                 type="checkbox"
                 name="is-moderator"
                 :checked="player.is_moderator"
+                tabindex="-1"
+                readonly
+              >
+              <span class="track" />
+              <span class="thumb" />
+            </span>
+          </li>
+          <li
+            v-if="player.is_moderator"
+            v-wave
+            class="mui-menu-item"
+            role="menuitem"
+            tabindex="0"
+            data-testid="spectator-toggle"
+            @click.stop="emit('toggleSpectator', player.id, !player.is_spectator); menuOpen = false"
+          >
+            <AppIcon
+              class="mui-menu-icon"
+              icon="ic:baseline-visibility"
+            />
+            <span class="flex-1">{{ $t('players.isSpectator') }}</span>
+            <span class="mui-switch">
+              <input
+                type="checkbox"
+                name="is-spectator"
+                :checked="player.is_spectator"
                 tabindex="-1"
                 readonly
               >
