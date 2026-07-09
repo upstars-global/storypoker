@@ -946,19 +946,6 @@ dialog.app-modal::backdrop {
 .app-tooltip-left   { position: absolute; right:  calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
 .app-tooltip-right  { position: absolute; left:   calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
 
-@keyframes sp-nudge-shake {
-  0%, 100% { transform: translateX(0); }
-  15% { transform: translateX(-10px); }
-  30% { transform: translateX(10px); }
-  45% { transform: translateX(-7px); }
-  60% { transform: translateX(7px); }
-  75% { transform: translateX(-4px); }
-  90% { transform: translateX(4px); }
-}
-.sp-nudge-shake {
-  animation: sp-nudge-shake 0.7s ease-in-out 2;
-}
-
 /* Theme switch: circular clip-path reveal drives the transition, so suppress
    the default root cross-fade and stack the new snapshot above the old one. */
 ::view-transition-old(root),

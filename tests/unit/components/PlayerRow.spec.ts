@@ -20,7 +20,6 @@ function mountRow() {
         id: 'p1',
         name: 'Alice',
         is_moderator: false,
-        is_spectator: false,
         vote: null,
         is_online: true,
         user_id: null,

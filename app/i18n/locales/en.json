@@ -122,8 +122,6 @@
   "players": {
     "title": "Players",
     "isModerator": "Is Moderator",
-    "isSpectator": "Spectator mode",
-    "spectator": "Spectator",
     "edit": "Edit",
     "editTitle": "Edit Player",
     "editSubtitle": "Choose a role and name",
@@ -154,17 +152,6 @@
   "results": {
     "general": "DEV",
     "alignment": "Alignment"
-  },
-  "moderatorPanel": {
-    "title": "Voting progress",
-    "voted": "Voted",
-    "waitingFor": "Still deciding",
-    "nudge": "Nudge",
-    "nudged": "Sent",
-    "allVoted": "Everyone has voted 🎉",
-    "groupDev": "DEV",
-    "groupQa": "QA",
-    "groupOther": "Others"
   },
   "shields": {
     "title": "Pick your shields",
@@ -237,7 +224,6 @@
     "renameHint": "Leave empty to remove the custom name.",
     "slugError": "Use 2–32 chars: letters, numbers, dashes",
     "slugTaken": "This name is already taken",
-    "nudgeMessage": "The moderator is waiting for your vote",
     "kickTitle": "Kick Player",
     "kickConfirm": "Remove {name} from the room?",
     "kickButton": "Kick",

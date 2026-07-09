@@ -25,7 +25,6 @@ function fakePlayer(overrides: Partial<Player> = {}): Player {
     room_id: 'r1',
     name: 'Alice',
     is_moderator: false,
-    is_spectator: false,
     vote: null,
     user_id: null,
     shields: [],
