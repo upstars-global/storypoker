@@ -2,8 +2,9 @@
 import { ref, reactive } from 'vue'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
+import PasswordInput from '~/components/PasswordInput.vue'
 import { useAuthStore } from '~/stores/auth'
-import { validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
+import { errorMessage, validateEmail, validateRequiredPassword } from '~/utils/authValidation'
 
 const props = defineProps<{
   mode: 'signin' | 'signup'
@@ -17,17 +18,13 @@ const emit = defineEmits<{
 const { signIn, signUp } = useAuthStore()
 const email = ref('')
 const password = ref('')
-const confirm = ref('')
-const errors = reactive<{ email?: string; password?: string; confirm?: string; server?: string }>({})
+const errors = reactive<{ email?: string; password?: string; server?: string }>({})
 const loading = ref(false)
 
 function validate() {
   errors.email = validateEmail(email.value)
   errors.password = validateRequiredPassword(password.value)
-  errors.confirm = props.mode === 'signup'
-    ? validatePasswordConfirmation(password.value, confirm.value)
-    : undefined
-  return !errors.email && !errors.password && !errors.confirm
+  return !errors.email && !errors.password
 }
 
 async function submit() {
@@ -43,8 +40,8 @@ async function submit() {
     }
     emit('success')
     emit('close')
-  } catch (e: any) {
-    errors.server = e.message ?? 'Something went wrong'
+  } catch (e) {
+    errors.server = errorMessage(e)
   } finally {
     loading.value = false
   }
@@ -62,7 +59,7 @@ async function submit() {
         id="auth-modal-title"
         class="mui-h5 text-center"
       >
-        {{ mode === 'signin' ? $t('common.signIn') : $t('common.signUp') }}
+        {{ mode === 'signin' ? $t('auth.signInTitle') : $t('auth.signUpTitle') }}
       </h2>
       <p
         v-if="mode === 'signup'"
@@ -72,15 +69,25 @@ async function submit() {
       </p>
       <div class="flex flex-col gap-3 mt-6">
         <div>
-          <input
-            v-model.trim="email"
-            type="email"
-            :placeholder="$t('common.emailPlaceholder')"
-            autocomplete="email"
-            class="mui-input"
-            :class="{ 'is-error': errors.email }"
-            @keyup.enter="submit"
-          >
+          <div class="mui-field">
+            <input
+              id="auth-email"
+              v-model.trim="email"
+              type="email"
+              name="email"
+              placeholder=" "
+              autocomplete="email"
+              class="mui-input"
+              :class="{ 'is-error': errors.email }"
+              @keyup.enter="submit"
+            >
+            <label
+              for="auth-email"
+              class="mui-field-label"
+            >
+              {{ $t('common.email') }}
+            </label>
+          </div>
           <p
             v-if="errors.email"
             class="text-sm mt-1 text-danger"
@@ -90,52 +97,30 @@ async function submit() {
         </div>
 
         <div>
-          <div
-            v-if="mode === 'signin'"
-            class="flex items-center justify-between gap-3 mb-1"
-          >
-            <span class="mui-caption">{{ $t('common.password') }}</span>
+          <PasswordInput
+            id="auth-password"
+            v-model="password"
+            :label="$t('common.password')"
+            :autocomplete="mode === 'signin' ? 'current-password' : 'new-password'"
+            :error="errors.password"
+            @enter="submit"
+          />
+          <div class="flex items-center justify-between gap-3 mt-1">
+            <p
+              v-if="errors.password"
+              class="text-sm text-danger"
+            >
+              {{ errors.password }}
+            </p>
             <RouterLink
+              v-if="mode === 'signin'"
               to="/forgot-password"
-              class="mui-caption underline hover:no-underline text-primary"
+              class="mui-caption underline hover:no-underline text-primary ml-auto"
               @click="emit('close')"
             >
               {{ $t('auth.forgotPassword') }}
             </RouterLink>
           </div>
-          <input
-            v-model="password"
-            type="password"
-            :autocomplete="mode === 'signin' ? 'current-password' : 'new-password'"
-            :placeholder="$t('common.passwordPlaceholder')"
-            class="mui-input"
-            :class="{ 'is-error': errors.password }"
-            @keyup.enter="submit"
-          >
-          <p
-            v-if="errors.password"
-            class="text-sm mt-1 text-danger"
-          >
-            {{ errors.password }}
-          </p>
-        </div>
-
-        <div v-if="mode === 'signup'">
-          <input
-            v-model="confirm"
-            type="password"
-            autocomplete="new-password"
-            :placeholder="$t('common.confirmPasswordPlaceholder')"
-            class="mui-input"
-            :class="{ 'is-error': errors.confirm }"
-            @keyup.enter="submit"
-          >
-          <p
-            v-if="errors.confirm"
-            class="text-sm mt-1 text-danger"
-          >
-            {{ errors.confirm }}
-          </p>
         </div>
 
         <p

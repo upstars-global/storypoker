@@ -9,11 +9,7 @@ export interface UserProfile {
   avatar_seed: string
 }
 
-type RealtimePayload = {
-  eventType: 'INSERT' | 'UPDATE' | 'DELETE'
-  new: UserProfile
-  old: Partial<UserProfile>
-}
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 export const useProfilesStore = defineStore('profiles', () => {
   const profiles = ref<Record<string, UserProfile>>({})
@@ -63,14 +59,14 @@ export const useProfilesStore = defineStore('profiles', () => {
     profiles.value[profile.user_id] = profile
   }
 
-  function applyChange(payload: RealtimePayload) {
+  function applyChange(payload: RealtimePostgresChangesPayload<UserProfile>) {
     if (payload.eventType === 'DELETE') {
-      const id = (payload.old as any).user_id
+      const id = payload.old.user_id
       if (id) delete profiles.value[id]
       return
     }
     const row = payload.new
-    if (row?.user_id) profiles.value[row.user_id] = row
+    if (row.user_id) profiles.value[row.user_id] = row
   }
 
   return { profiles, get, fetchOne, fetchMany, upsert, applyChange }

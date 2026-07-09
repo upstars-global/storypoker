@@ -111,21 +111,25 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
         class="flex flex-col gap-3"
       >
         <input
+          id="poll-question"
           v-model="questionDraft"
           type="text"
+          name="poll-question"
           class="mui-input w-full"
           :placeholder="$t('poll.questionPlaceholder')"
           data-testid="poll-question-input"
         >
         <div
-          v-for="(answer, i) in answerDrafts"
+          v-for="(_, i) in answerDrafts"
           :key="i"
           class="flex items-center justify-center gap-2"
         >
           <input
             :ref="(el) => setAnswerRef(el, i)"
+            :id="`poll-answer-${i}`"
             v-model="answerDrafts[i]"
             type="text"
+            :name="`poll-answer-${i}`"
             class="mui-input w-48"
             maxlength="12"
             :placeholder="$t('poll.answerPlaceholder', { n: i + 1 })"
@@ -162,8 +166,10 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
         class="flex flex-col gap-3"
       >
         <input
+          id="poll-question-simple"
           v-model="questionDraft"
           type="text"
+          name="poll-question"
           class="mui-input w-full"
           :placeholder="$t('poll.questionPlaceholder')"
           data-testid="poll-question-input"

@@ -1,7 +1,11 @@
-*
-!/app/
-!/app/**
-!/docs/
-!/docs/**
-!/supabase/
-!/supabase/**
+# *
+# !app/
+# !app/**
+# !docs/
+# !docs/**
+# !supabase/
+# !supabase/**
+
+node_modules/
+package-lock.json
+dist/

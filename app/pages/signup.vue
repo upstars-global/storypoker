@@ -3,8 +3,9 @@ import { reactive, shallowRef, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
-import { validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
+import { errorMessage, validateEmail, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
 import AppHeader from '~/components/AppHeader.vue'
+import PasswordInput from '~/components/PasswordInput.vue'
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
@@ -39,8 +40,8 @@ async function onSubmit() {
   try {
     await authStore.signUp(form.email, form.password)
     success.value = true
-  } catch (e: any) {
-    errors.server = e.message ?? 'Something went wrong'
+  } catch (e) {
+    errors.server = errorMessage(e)
   } finally {
     loading.value = false
   }
@@ -89,15 +90,25 @@ async function onSubmit() {
           @submit.prevent="onSubmit"
         >
           <div>
-            <input
-              v-model.trim="form.email"
-              type="email"
-              autocomplete="email"
-              :placeholder="$t('common.emailPlaceholder')"
-              class="mui-input"
-              :class="{ 'is-error': errors.email }"
-              data-testid="signup-email"
-            >
+            <div class="mui-field">
+              <input
+                id="signup-email"
+                v-model.trim="form.email"
+                type="email"
+                name="email"
+                autocomplete="email"
+                placeholder=" "
+                class="mui-input"
+                :class="{ 'is-error': errors.email }"
+                data-testid="signup-email"
+              >
+              <label
+                for="signup-email"
+                class="mui-field-label"
+              >
+                {{ $t('common.email') }}
+              </label>
+            </div>
             <p
               v-if="errors.email"
               class="text-sm mt-1 text-danger"
@@ -107,15 +118,16 @@ async function onSubmit() {
           </div>
 
           <div>
-            <input
+            <PasswordInput
+              id="signup-password"
               v-model="form.password"
-              type="password"
+              :label="$t('common.password')"
+              name="new-password"
               autocomplete="new-password"
-              :placeholder="$t('common.passwordPlaceholder')"
-              class="mui-input"
-              :class="{ 'is-error': errors.password }"
-              data-testid="signup-password"
-            >
+              :error="errors.password"
+              testid="signup-password"
+              @enter="onSubmit"
+            />
             <p
               v-if="errors.password"
               class="text-sm mt-1 text-danger"
@@ -125,15 +137,16 @@ async function onSubmit() {
           </div>
 
           <div>
-            <input
+            <PasswordInput
+              id="signup-confirm"
               v-model="form.confirm"
-              type="password"
+              :label="$t('common.confirmPassword')"
+              name="confirm-password"
               autocomplete="new-password"
-              :placeholder="$t('common.confirmPasswordPlaceholder')"
-              class="mui-input"
-              :class="{ 'is-error': errors.confirm }"
-              data-testid="signup-confirm"
-            >
+              :error="errors.confirm"
+              testid="signup-confirm"
+              @enter="onSubmit"
+            />
             <p
               v-if="errors.confirm"
               class="text-sm mt-1 text-danger"

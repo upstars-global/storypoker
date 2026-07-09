@@ -15,6 +15,7 @@ import UserSettingsModal from '~/components/UserSettingsModal.vue'
 
 const name = shallowRef('')
 const hasError = shallowRef(false)
+const nameInput = ref<HTMLInputElement | null>(null)
 const router = useRouter()
 const roomStore = useRoomStore()
 const playersStore = usePlayersStore()
@@ -36,6 +37,7 @@ const headerPlayerName = computed(() => recentRooms.value[0]?.playerName ?? '')
 
 onMounted(async () => {
   origin.value = window.location.origin
+  nameInput.value?.focus()
   await authStore.init()
   if (user.value?.id) await profilesStore.fetchOne(user.value.id)
   const local = listRecentRooms()
@@ -50,6 +52,7 @@ onMounted(async () => {
 
   const namesByRoom: Record<string, string[]> = {}
   for (const row of playersData ?? []) {
+    if (!row.room_id) continue
     const names = namesByRoom[row.room_id] ?? []
     names.push(row.name)
     namesByRoom[row.room_id] = names
@@ -117,16 +120,29 @@ async function createRoom() {
           {{ $t('home.subtitle') }}
         </p>
         <div class="mt-[19px] flex flex-col items-center">
-          <div class="flex w-full max-w-[360px]">
+          <div
+            class="mui-field w-full max-w-[360px] text-left"
+            style="--field-label-bg: var(--bg-app);"
+          >
             <input
+              id="home-name"
+              ref="nameInput"
               v-model="name"
               type="text"
-              :placeholder="$t('home.namePlaceholder')"
-              class="mui-input h-[51px] min-w-0 flex-1"
+              name="name"
+              autocomplete="off"
+              placeholder=" "
+              class="mui-input h-[51px] w-full"
               :class="{ 'is-error': hasError }"
               data-testid="home-name-input"
               @keyup.enter="createRoom"
             >
+            <label
+              for="home-name"
+              class="mui-field-label"
+            >
+              {{ $t('home.nameLabel') }}
+            </label>
           </div>
           <button
             v-wave

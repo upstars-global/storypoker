@@ -1,28 +1,32 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
-import AppTooltip from '~/components/AppTooltip.vue'
-import { PLAYER_ROLES, shieldForRoleTag } from '~/utils/shields'
+
+const props = defineProps<{
+  roomName?: string | null
+}>()
 
 const emit = defineEmits<{
   join: [payload: { name: string; shields: string[] }]
   close: []
 }>()
 
-const ROLE_TAGS = PLAYER_ROLES.map(r => r.tag)
-
 const name = ref('')
-const tag = ref('')
 const hasError = ref(false)
+const nameInput = ref<HTMLInputElement | null>(null)
+
+onMounted(async () => {
+  await nextTick()
+  nameInput.value?.focus()
+})
 
 function submit() {
   if (!name.value.trim()) {
     hasError.value = true
     return
   }
-  const role = tag.value.trim()
-  emit('join', { name: name.value.trim(), shields: role ? [shieldForRoleTag(role)] : [] })
+  emit('join', { name: name.value.trim(), shields: [] })
 }
 </script>
 
@@ -40,49 +44,33 @@ function submit() {
       >
         {{ $t('join.title') }}
       </h2>
-      <p class="mui-caption text-center mt-2 text-muted">
-        {{ $t('join.subtitle') }}
+      <p class="mui-body text-center mt-1 text-body">
+        {{ props.roomName ? $t('join.subtitleNamed', { name: props.roomName }) : $t('join.subtitle') }}
       </p>
       <div class="flex flex-col gap-4 mt-6">
-        <input
-          v-model="name"
-          type="text"
-          :placeholder="$t('join.namePlaceholder')"
-          class="mui-input w-full"
-          :class="{ 'is-error': hasError }"
-          @keyup.enter="submit"
-        >
-        <section>
-          <h3 class="text-mui-caption font-semibold uppercase tracking-wide text-muted mb-2">
-            {{ $t('players.roleLabel') }}
-          </h3>
-          <div class="flex flex-wrap gap-2">
-            <AppTooltip
-              v-for="opt in ROLE_TAGS"
-              :key="opt"
-              side="top"
-              :side-offset="6"
-            >
-              <template #trigger>
-                <button
-                  type="button"
-                  class="mui-shield"
-                  style="padding: 6px 12px;"
-                  :class="{ 'is-selected': tag === opt }"
-                  :aria-pressed="tag === opt"
-                  @click="tag = tag === opt ? '' : opt"
-                >
-                  {{ opt }}
-                </button>
-              </template>
-              <template #content>
-                {{ $t(`players.roleNames.${opt}`, opt) }}
-              </template>
-            </AppTooltip>
-          </div>
-        </section>
+        <div class="mui-field">
+          <input
+            id="join-name"
+            ref="nameInput"
+            v-model="name"
+            type="text"
+            name="name"
+            autocomplete="name"
+            placeholder=" "
+            class="mui-input w-full"
+            :class="{ 'is-error': hasError }"
+            @keyup.enter="submit"
+          >
+          <label
+            for="join-name"
+            class="mui-field-label"
+          >
+            {{ $t('join.nameLabel') }}
+          </label>
+        </div>
         <div class="flex justify-center">
           <button
+            v-wave
             class="mui-btn"
             @click="submit"
           >

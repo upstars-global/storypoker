@@ -4,8 +4,9 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getSupabase } from '~/lib/supabase-instance'
 import { useAuthStore } from '~/stores/auth'
-import { validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
+import { errorMessage, validatePasswordConfirmation, validateRequiredPassword } from '~/utils/authValidation'
 import AppHeader from '~/components/AppHeader.vue'
+import PasswordInput from '~/components/PasswordInput.vue'
 
 const { t } = useI18n()
 
@@ -56,8 +57,8 @@ async function onSubmit() {
     await authStore.updatePassword(form.password)
     await authStore.signOut()
     success.value = true
-  } catch (e: any) {
-    errors.server = e.message ?? 'Something went wrong'
+  } catch (e) {
+    errors.server = errorMessage(e)
   } finally {
     loading.value = false
   }
@@ -129,14 +130,15 @@ async function onSubmit() {
           @submit.prevent="onSubmit"
         >
           <div>
-            <input
+            <PasswordInput
+              id="reset-password"
               v-model="form.password"
-              type="password"
+              :label="$t('resetPassword.newPasswordLabel')"
+              name="new-password"
               autocomplete="new-password"
-              :placeholder="$t('resetPassword.newPasswordPlaceholder')"
-              class="mui-input"
-              :class="{ 'is-error': errors.password }"
-            >
+              :error="errors.password"
+              @enter="onSubmit"
+            />
             <p
               v-if="errors.password"
               class="text-sm mt-1 text-danger"
@@ -146,14 +148,15 @@ async function onSubmit() {
           </div>
 
           <div>
-            <input
+            <PasswordInput
+              id="reset-confirm"
               v-model="form.confirm"
-              type="password"
+              :label="$t('resetPassword.confirmNewPasswordLabel')"
+              name="confirm-password"
               autocomplete="new-password"
-              :placeholder="$t('resetPassword.confirmNewPasswordPlaceholder')"
-              class="mui-input"
-              :class="{ 'is-error': errors.confirm }"
-            >
+              :error="errors.confirm"
+              @enter="onSubmit"
+            />
             <p
               v-if="errors.confirm"
               class="text-sm mt-1 text-danger"

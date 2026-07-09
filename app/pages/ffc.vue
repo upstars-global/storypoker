@@ -81,7 +81,9 @@ function resetFeatureFlags() {
                 @click="toggleFeatureFlag(featureFlagKey)"
               >
                 <input
+                  :id="`ffc-${featureFlagKey}`"
                   type="checkbox"
+                  :name="`ffc-${featureFlagKey}`"
                   :checked="featureFlagValue.enabled"
                 >
                 <span class="track" />

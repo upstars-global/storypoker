@@ -27,6 +27,7 @@ export interface RoundHistoryVote {
   player_id: string
   name: string
   vote: string
+  [key: string]: string
 }
 
 export interface RoundHistory {
@@ -37,7 +38,7 @@ export interface RoundHistory {
   votes: RoundHistoryVote[]
   active_cards: string[] | null
   deck_preset: string | null
-  created_at: string
+  created_at: string | null
 }
 
 export type ConnectionStatus = 'connecting' | 'online' | 'reconnecting' | 'offline'

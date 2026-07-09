@@ -54,6 +54,44 @@ jobs:
       - name: CI checks
         run: npm run test:ci
 
+  page-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: ci-page-load-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Public pages load
+        env:
+          VITE_SUPABASE_URL: https://dummy.supabase.co
+          VITE_SUPABASE_KEY: sb_publishable_dummy_key_for_page_load_smoke_only
+        run: npm run test:e2e:pages
+
+      - name: Upload Playwright report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-page-load
+          path: |
+            playwright-report/
+            test-results/playwright/
+          if-no-files-found: ignore
+          retention-days: 7
+
   e2e:
     needs: detect-secrets
     if: ${{ needs.detect-secrets.outputs.has_e2e == 'true' }}
@@ -100,11 +138,12 @@ jobs:
           retention-days: 7
 
   deploy:
-    needs: [test, e2e, detect-secrets]
+    needs: [test, page-load, e2e, detect-secrets]
     if: |
       always()
       && github.ref == 'refs/heads/main'
       && needs.test.result == 'success'
+      && needs.page-load.result == 'success'
       && (needs.e2e.result == 'success' || needs.e2e.result == 'skipped')
       && needs.detect-secrets.outputs.has_netlify == 'true'
     runs-on: ubuntu-latest

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "strict": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "target": "ES2022",
@@ -8,5 +9,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "postcss.config.js", "tailwind.config.ts", "eslint.config.js"]
+  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "eslint.config.js"]
 }

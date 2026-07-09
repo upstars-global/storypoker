@@ -2,12 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getSupabase } from '~/lib/supabase-instance'
 import type { Player } from './types'
-
-type RealtimePayload = {
-  eventType: 'INSERT' | 'UPDATE' | 'DELETE'
-  new: Player
-  old: Partial<Player>
-}
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 export const usePlayersStore = defineStore('players', () => {
   const players = ref<Player[]>([])
@@ -20,7 +15,7 @@ export const usePlayersStore = defineStore('players', () => {
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
   )
 
-  function applyChange(payload: RealtimePayload) {
+  function applyChange(payload: RealtimePostgresChangesPayload<Player>) {
     switch (payload.eventType) {
       case 'INSERT':
         if (!players.value.find(p => p.id === payload.new.id)) {
@@ -36,7 +31,7 @@ export const usePlayersStore = defineStore('players', () => {
         break
       }
       case 'DELETE':
-        players.value = players.value.filter(p => p.id !== (payload.old as any).id)
+        players.value = players.value.filter(p => p.id !== payload.old.id)
         break
     }
   }
@@ -74,7 +69,8 @@ export const usePlayersStore = defineStore('players', () => {
 
   async function setShields(playerId: string, shields: string[]) {
     const idx = players.value.findIndex(p => p.id === playerId)
-    if (idx >= 0) players.value[idx] = { ...players.value[idx], shields }
+    const existing = idx >= 0 ? players.value[idx] : undefined
+    if (existing) players.value[idx] = { ...existing, shields }
     const { error } = await getSupabase().from('players').update({ shields }).eq('id', playerId)
     if (error) {
       if (roomId.value) await fetchAll(roomId.value)

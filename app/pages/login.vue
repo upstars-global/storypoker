@@ -3,8 +3,9 @@ import { reactive, shallowRef, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/auth'
-import { validateEmail, validateRequiredPassword } from '~/utils/authValidation'
+import { errorMessage, validateEmail, validateRequiredPassword } from '~/utils/authValidation'
 import AppHeader from '~/components/AppHeader.vue'
+import PasswordInput from '~/components/PasswordInput.vue'
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
@@ -37,8 +38,8 @@ async function onSubmit() {
   try {
     await authStore.signIn(form.email, form.password)
     router.push('/')
-  } catch (e: any) {
-    errors.server = e.message ?? 'Something went wrong'
+  } catch (e) {
+    errors.server = errorMessage(e)
   } finally {
     loading.value = false
   }
@@ -70,15 +71,25 @@ async function onSubmit() {
           @submit.prevent="onSubmit"
         >
           <div>
-            <input
-              v-model.trim="form.email"
-              type="email"
-              autocomplete="email"
-              :placeholder="$t('common.emailPlaceholder')"
-              class="mui-input"
-              :class="{ 'is-error': errors.email }"
-              data-testid="login-email"
-            >
+            <div class="mui-field">
+              <input
+                id="login-email"
+                v-model.trim="form.email"
+                type="email"
+                name="email"
+                autocomplete="email"
+                placeholder=" "
+                class="mui-input"
+                :class="{ 'is-error': errors.email }"
+                data-testid="login-email"
+              >
+              <label
+                for="login-email"
+                class="mui-field-label"
+              >
+                {{ $t('common.email') }}
+              </label>
+            </div>
             <p
               v-if="errors.email"
               class="text-sm mt-1 text-danger"
@@ -88,30 +99,29 @@ async function onSubmit() {
           </div>
 
           <div>
-            <div class="flex items-center justify-between gap-3 mb-1">
-              <span class="mui-caption">{{ $t('common.password') }}</span>
+            <PasswordInput
+              id="login-password"
+              v-model="form.password"
+              :label="$t('common.password')"
+              autocomplete="current-password"
+              :error="errors.password"
+              testid="login-password"
+              @enter="onSubmit"
+            />
+            <div class="flex items-center justify-between gap-3 mt-1">
+              <p
+                v-if="errors.password"
+                class="text-sm text-danger"
+              >
+                {{ errors.password }}
+              </p>
               <RouterLink
                 to="/forgot-password"
-                class="mui-caption underline hover:no-underline text-primary"
+                class="mui-caption underline hover:no-underline text-primary ml-auto"
               >
                 {{ $t('auth.forgotPassword') }}
               </RouterLink>
             </div>
-            <input
-              v-model="form.password"
-              type="password"
-              autocomplete="current-password"
-              :placeholder="$t('common.passwordPlaceholder')"
-              class="mui-input"
-              :class="{ 'is-error': errors.password }"
-              data-testid="login-password"
-            >
-            <p
-              v-if="errors.password"
-              class="text-sm mt-1 text-danger"
-            >
-              {{ errors.password }}
-            </p>
           </div>
 
           <p

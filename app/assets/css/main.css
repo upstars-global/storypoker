@@ -356,6 +356,17 @@ body {
     background-color: var(--primary-soft);
     color: var(--text-primary);
   }
+  .mui-shield-tag {
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: var(--icon-player-color);
+    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
   .mui-shield-chip {
     display: inline-flex;
     align-items: center;
@@ -408,6 +419,57 @@ body {
   }
   .mui-input.is-error {
     border-color: var(--danger);
+  }
+
+  .mui-field {
+    position: relative;
+    display: block;
+  }
+  .mui-field > .mui-input::placeholder {
+    color: transparent;
+  }
+  .mui-field > .mui-field-label {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    transform-origin: left top;
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.4375em;
+    letter-spacing: 0.00938em;
+    pointer-events: none;
+    background: var(--field-label-bg, var(--bg-paper));
+    padding: 0 5px;
+    transition: transform 150ms cubic-bezier(0, 0, 0.2, 1), color 150ms cubic-bezier(0, 0, 0.2, 1);
+  }
+  .mui-field > .mui-input:focus + .mui-field-label,
+  .mui-field > .mui-input:not(:placeholder-shown) + .mui-field-label {
+    transform: translateY(-50%) scale(0.75);
+    top: 4px;
+  }
+  .mui-field > .mui-input:focus + .mui-field-label {
+    color: var(--primary);
+  }
+  .mui-field > .mui-input.is-error + .mui-field-label {
+    color: var(--danger);
+  }
+  .mui-field > .mui-field-adornment {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 50%;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    transition: color 150ms cubic-bezier(0, 0, 0.2, 1);
+  }
+  .mui-field > .mui-field-adornment:hover {
+    color: var(--text-primary);
   }
 
   .mui-radio {
@@ -654,3 +716,22 @@ dialog.app-modal::backdrop {
 .app-tooltip-bottom { position: absolute; top:    calc(100% + var(--tt-offset, 6px)); left: 50%; transform: translateX(-50%); pointer-events: none; }
 .app-tooltip-left   { position: absolute; right:  calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
 .app-tooltip-right  { position: absolute; left:   calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
+
+/* Theme switch: circular clip-path reveal drives the transition, so suppress
+   the default root cross-fade and stack the new snapshot above the old one. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+/* Freeze element transitions during the theme reveal so animated nodes (e.g.
+   result bubbles) stay part of the root snapshot instead of drifting above it. */
+:root[data-theme-transition] * {
+  transition: none !important;
+}

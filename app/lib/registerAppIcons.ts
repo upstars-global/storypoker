@@ -12,17 +12,20 @@ function parseSvg(svg: string): { body: string; width: number; height: number } 
   let width = 24
   let height = 24
   const viewBox = svg.match(/\bviewBox=["']([^"']+)["']/)
-  if (viewBox) {
+  if (viewBox?.[1]) {
     const parts = viewBox[1].trim().split(/\s+/).map(Number)
-    if (parts.length === 4 && !Number.isNaN(parts[2]) && !Number.isNaN(parts[3])) {
-      width = parts[2]
-      height = parts[3]
+    const vbWidth = parts[2]
+    const vbHeight = parts[3]
+    if (parts.length === 4 && vbWidth !== undefined && vbHeight !== undefined
+      && !Number.isNaN(vbWidth) && !Number.isNaN(vbHeight)) {
+      width = vbWidth
+      height = vbHeight
     }
   } else {
     const w = svg.match(/\bwidth=["'](\d+)["']/)
     const h = svg.match(/\bheight=["'](\d+)["']/)
-    if (w) width = parseInt(w[1], 10)
-    if (h) height = parseInt(h[1], 10)
+    if (w?.[1]) width = parseInt(w[1], 10)
+    if (h?.[1]) height = parseInt(h[1], 10)
   }
   const body = svg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '').trim()
   return { body, width, height }

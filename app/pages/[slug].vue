@@ -11,6 +11,9 @@ import { usePresenceStore } from '~/stores/presence'
 import { useProfilesStore } from '~/stores/profiles'
 import { useCountdown, type CountdownMode } from '~/composables/useCountdown'
 import { getSupabase } from '~/lib/supabase-instance'
+import type { Player, RoomState } from '~/stores/types'
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+import type { UserProfile } from '~/stores/profiles'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
@@ -189,11 +192,11 @@ const groupedVoteCounts = computed(() => {
   return hasQa ? { general, qa } : null
 })
 
-let playersChannel: any = null
-let stateChannel: any = null
-let roomChannel: any = null
-let profilesChannel: any = null
-let countdownChannel: any = null
+let playersChannel: RealtimeChannel | null = null
+let stateChannel: RealtimeChannel | null = null
+let roomChannel: RealtimeChannel | null = null
+let profilesChannel: RealtimeChannel | null = null
+let countdownChannel: RealtimeChannel | null = null
 
 onMounted(async () => {
   origin.value = window.location.origin
@@ -289,9 +292,9 @@ async function fetchInitialData() {
     supabase.from('players').select('*').eq('room_id', roomId).order('created_at'),
     supabase.from('room_state').select('*').eq('room_id', roomId).single(),
   ])
-  playersStore.players = pData ?? []
-  roomStore.roomState = sData ?? null
-  const ids = (pData ?? []).map((p: any) => p.user_id).filter(Boolean) as string[]
+  playersStore.players = (pData ?? []) as Player[]
+  roomStore.roomState = (sData ?? null) as RoomState | null
+  const ids = (pData ?? []).map(p => p.user_id).filter((id): id is string => Boolean(id))
   if (user.value?.id) ids.push(user.value.id)
   if (ids.length) await profilesStore.fetchMany(ids)
 }
@@ -301,18 +304,19 @@ function subscribeRealtime() {
   playersChannel = supabase
     .channel(`players:${roomId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${roomId}` },
-      (payload) => playersStore.applyChange(payload as any))
+      (payload: RealtimePostgresChangesPayload<Player>) => playersStore.applyChange(payload))
     .subscribe()
   stateChannel = supabase
     .channel(`room_state:${roomId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'room_state', filter: `room_id=eq.${roomId}` },
-      (payload) => roomStore.applyChange(payload as any))
+      (payload: RealtimePostgresChangesPayload<RoomState>) => roomStore.applyChange(payload))
     .subscribe()
   roomChannel = supabase
     .channel(`rooms:${roomId}`)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
-      (payload: any) => {
-        const row = payload.new as { slug: string | null; name: string | null }
+      (payload: RealtimePostgresChangesPayload<{ id: string; slug: string | null; name: string | null }>) => {
+        if (payload.eventType !== 'UPDATE') return
+        const row = payload.new
         currentSlug.value = row.slug
         currentRoomName.value = row.name
         if (row.slug && route.params.slug !== row.slug) {
@@ -325,11 +329,11 @@ function subscribeRealtime() {
   profilesChannel = supabase
     .channel(`user_profiles:${roomId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'user_profiles' },
-      (payload) => profilesStore.applyChange(payload as any))
+      (payload: RealtimePostgresChangesPayload<UserProfile>) => profilesStore.applyChange(payload))
     .subscribe()
   countdownChannel = supabase
     .channel(`countdown:${roomId}`, { config: { broadcast: { self: true } } })
-    .on('broadcast', { event: 'start' }, ({ payload }: any) => {
+    .on('broadcast', { event: 'start' }, ({ payload }: { payload?: { initiatorId?: string; mode?: string } }) => {
       const isInitiator = payload?.initiatorId === currentPlayerId.value
       const mode: CountdownMode = payload?.mode === 'wet' || payload?.mode === 'silent' ? payload.mode : 'dry'
       startCountdown(
@@ -455,8 +459,8 @@ async function submitRenameRoom() {
   }
   try {
     await roomStore.setRoomName(name, slug)
-  } catch (e: any) {
-    if (e?.code === 'room_slug_taken') {
+  } catch (e) {
+    if (e instanceof Error && (e as Error & { code?: string }).code === 'room_slug_taken') {
       roomNameError.value = t('room.slugTaken')
       return
     }
@@ -594,6 +598,7 @@ async function submitRenameRoom() {
 
     <JoinOverlay
       v-if="showJoin"
+      :room-name="currentRoomName ?? undefined"
       @join="handleJoin"
       @close="router.push('/')"
     />
@@ -648,12 +653,22 @@ async function submitRenameRoom() {
         >
           {{ $t('room.renameTitle') }}
         </h2>
-        <input
-          v-model="roomNameInput"
-          class="mui-input"
-          :placeholder="$t('room.renamePlaceholder')"
-          @keyup.enter="submitRenameRoom"
-        >
+        <div class="mui-field">
+          <input
+            id="rename-room-name"
+            v-model="roomNameInput"
+            name="room-name"
+            placeholder=" "
+            class="mui-input w-full"
+            @keyup.enter="submitRenameRoom"
+          >
+          <label
+            for="rename-room-name"
+            class="mui-field-label"
+          >
+            {{ $t('room.renameLabel') }}
+          </label>
+        </div>
         <p
           v-if="roomNameError"
           class="text-mui-caption mt-2 text-danger"

@@ -7,10 +7,11 @@
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "signOut": "Sign Out",
+    "email": "Email",
     "password": "Password",
-    "emailPlaceholder": "Please enter your email",
-    "passwordPlaceholder": "Please enter your password",
-    "confirmPasswordPlaceholder": "Confirm password"
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "confirmPassword": "Confirm Password"
   },
   "header": {
     "renameRoom": "Rename Room",
@@ -18,6 +19,7 @@
     "recentRooms": "Recent Rooms",
     "lightTheme": "Light Theme",
     "darkTheme": "Dark Theme",
+    "language": "Language",
     "currentUserAccount": "account of current user",
     "accountSettings": "Account Settings",
     "history": "Round History",
@@ -49,17 +51,18 @@
   },
   "home": {
     "title": "Create a planning poker room",
-    "subtitle": "and start estimating with your team right away",
-    "namePlaceholder": "Please enter your name",
+    "subtitle": "invite your team and start estimating together",
+    "nameLabel": "Your name",
     "createRoom": "Create Room",
     "recentRooms": "Recent Rooms",
     "players": "Players",
     "lastVisited": "Last Visited"
   },
   "join": {
-    "title": "Join the room",
-    "subtitle": "Enter your name to join your team",
-    "namePlaceholder": "Please enter your name",
+    "title": "Invitation",
+    "subtitle": "planning poker",
+    "subtitleNamed": "planning poker {name}",
+    "nameLabel": "your name",
     "joinRoom": "Join Room"
   },
   "cards": {
@@ -200,7 +203,7 @@
   },
   "room": {
     "renameTitle": "Rename Room",
-    "renamePlaceholder": "e.g. Agile Office",
+    "renameLabel": "Room name",
     "renameHint": "Leave empty to remove the custom name.",
     "slugError": "Use 2–32 chars: letters, numbers, dashes",
     "slugTaken": "This name is already taken",
@@ -225,7 +228,9 @@
     "saveError": "Failed to save"
   },
   "auth": {
-    "gainModeratorPowers": "and gain moderator powers",
+    "signInTitle": "Sign In",
+    "signUpTitle": "Sign Up",
+    "gainModeratorPowers": "and unlock more capabilities",
     "forgotPassword": "Forgot password?",
     "signingIn": "Signing In...",
     "signingUp": "Signing Up..."
@@ -260,8 +265,8 @@
     "updated": "Your password has been updated.",
     "openLink": "Open the password reset link from your email to continue.",
     "requestNewLink": "Request a new link",
-    "newPasswordPlaceholder": "Please enter new password",
-    "confirmNewPasswordPlaceholder": "Confirm new password",
+    "newPasswordLabel": "New Password",
+    "confirmNewPasswordLabel": "Confirm New Password",
     "updating": "Updating...",
     "updatePassword": "Update Password"
   },

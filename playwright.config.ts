@@ -29,17 +29,26 @@ export default defineConfig({
       ]
     : 'list',
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:4173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
   },
   projects: [
-    { name: 'chromium', use: devices['Desktop Chrome'] },
+    {
+      name: 'page-load',
+      use: devices['Desktop Chrome'],
+      testMatch: ['**/page-load.spec.ts'],
+    },
+    {
+      name: 'chromium',
+      use: devices['Desktop Chrome'],
+      testIgnore: ['**/page-load.spec.ts'],
+    },
     {
       name: 'webkit',
       use: devices['Desktop Safari'],
-      testIgnore: ['**/critical-flows.spec.ts'],
+      testIgnore: ['**/critical-flows.spec.ts', '**/page-load.spec.ts'],
     },
   ],
   webServer: process.env.E2E_BASE_URL
@@ -47,7 +56,7 @@ export default defineConfig({
     : {
         command: 'npm run build && npm run preview',
         cwd: __cfgDir,
-        url: 'http://localhost:3000',
+        url: 'http://localhost:4173',
         timeout: 180_000,
         reuseExistingServer: !process.env.CI,
         env: {
