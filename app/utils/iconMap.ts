@@ -41,6 +41,8 @@ const MDI_TO_LUCIDE: Record<string, string> = {
   'ic:baseline-add': 'lucide:plus',
   'ic:baseline-history': 'lucide:history',
   'ic:baseline-arrow-drop-up': 'lucide:chevron-up',
+  'ic:baseline-visibility': 'lucide:eye',
+  'ic:baseline-visibility-off': 'lucide:eye-closed',
 }
 
 let useLucide: boolean | null = null

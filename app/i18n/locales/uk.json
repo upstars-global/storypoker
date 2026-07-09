@@ -7,10 +7,11 @@
     "signIn": "Увійти",
     "signUp": "Зареєструватись",
     "signOut": "Вийти",
+    "email": "Email",
     "password": "Пароль",
-    "emailPlaceholder": "Введіть ваш email",
-    "passwordPlaceholder": "Введіть ваш пароль",
-    "confirmPasswordPlaceholder": "Підтвердіть пароль"
+    "showPassword": "Показати пароль",
+    "hidePassword": "Приховати пароль",
+    "confirmPassword": "Підтвердження паролю"
   },
   "header": {
     "renameRoom": "Перейменувати кімнату",
@@ -49,18 +50,19 @@
     }
   },
   "home": {
-    "title": "Створіть кімнату для планування",
-    "subtitle": "і починайте оцінювати разом із командою",
-    "namePlaceholder": "Введіть своє ім'я",
+    "title": "Створи покер-пленнінг кімнату",
+    "subtitle": "запроси команду і починайте оцінювати разом",
+    "nameLabel": "Твоє ім'я",
     "createRoom": "Створити кімнату",
     "recentRooms": "Нещодавні кімнати",
     "players": "Гравці",
     "lastVisited": "Остання відвідана"
   },
   "join": {
-    "title": "Приєднатись до кімнати",
-    "subtitle": "Введіть ім'я, щоб приєднатись до команди",
-    "namePlaceholder": "Введіть своє ім'я",
+    "title": "Запрошення",
+    "subtitle": "покер-пленінг",
+    "subtitleNamed": "на покер-пленінг {name}",
+    "nameLabel": "твоє ім'я",
     "joinRoom": "Приєднатись"
   },
   "cards": {
@@ -201,7 +203,7 @@
   },
   "room": {
     "renameTitle": "Перейменувати кімнату",
-    "renamePlaceholder": "напр. Agile Office",
+    "renameLabel": "Назва кімнати",
     "renameHint": "Залиште порожнім, щоб видалити назву.",
     "slugError": "Від 2 до 32 символів: літери, цифри, дефіси",
     "slugTaken": "Це ім'я вже зайнято",
@@ -263,8 +265,8 @@
     "updated": "Ваш пароль оновлено.",
     "openLink": "Відкрийте посилання для скидання пароля з вашого email.",
     "requestNewLink": "Запросити нове посилання",
-    "newPasswordPlaceholder": "Введіть новий пароль",
-    "confirmNewPasswordPlaceholder": "Підтвердіть новий пароль",
+    "newPasswordLabel": "Новий пароль",
+    "confirmNewPasswordLabel": "Підтвердження нового паролю",
     "updating": "Оновлення…",
     "updatePassword": "Оновити пароль"
   },

@@ -598,6 +598,7 @@ async function submitRenameRoom() {
 
     <JoinOverlay
       v-if="showJoin"
+      :room-name="currentRoomName ?? undefined"
       @join="handleJoin"
       @close="router.push('/')"
     />
@@ -652,14 +653,22 @@ async function submitRenameRoom() {
         >
           {{ $t('room.renameTitle') }}
         </h2>
-        <input
-          id="rename-room-name"
-          v-model="roomNameInput"
-          name="room-name"
-          class="mui-input"
-          :placeholder="$t('room.renamePlaceholder')"
-          @keyup.enter="submitRenameRoom"
-        >
+        <div class="mui-field">
+          <input
+            id="rename-room-name"
+            v-model="roomNameInput"
+            name="room-name"
+            placeholder=" "
+            class="mui-input w-full"
+            @keyup.enter="submitRenameRoom"
+          >
+          <label
+            for="rename-room-name"
+            class="mui-field-label"
+          >
+            {{ $t('room.renameLabel') }}
+          </label>
+        </div>
         <p
           v-if="roomNameError"
           class="text-mui-caption mt-2 text-danger"

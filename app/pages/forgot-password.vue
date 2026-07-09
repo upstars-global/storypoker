@@ -86,16 +86,24 @@ async function onSubmit() {
           @submit.prevent="onSubmit"
         >
           <div>
-            <input
-              id="forgot-email"
-              v-model.trim="form.email"
-              type="email"
-              name="email"
-              autocomplete="email"
-              :placeholder="$t('common.emailPlaceholder')"
-              class="mui-input"
-              :class="{ 'is-error': errors.email }"
-            >
+            <div class="mui-field">
+              <input
+                id="forgot-email"
+                v-model.trim="form.email"
+                type="email"
+                name="email"
+                autocomplete="email"
+                placeholder=" "
+                class="mui-input"
+                :class="{ 'is-error': errors.email }"
+              >
+              <label
+                for="forgot-email"
+                class="mui-field-label"
+              >
+                {{ $t('common.email') }}
+              </label>
+            </div>
             <p
               v-if="errors.email"
               class="text-sm mt-1 text-danger"

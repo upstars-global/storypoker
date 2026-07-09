@@ -81,20 +81,24 @@ function save() {
         </div>
       </section>
 
-      <label class="block mt-5">
-        <span class="text-mui-caption font-semibold uppercase tracking-wide text-muted">
-          {{ $t('players.nameLabel') }}
-        </span>
+      <div class="mui-field mt-5">
         <input
           id="player-name"
           ref="nameInput"
           v-model="nameValue"
           name="name"
           autocomplete="name"
-          class="mui-input w-full mt-2"
+          placeholder=" "
+          class="mui-input w-full"
           @keyup.enter="save"
         >
-      </label>
+        <label
+          for="player-name"
+          class="mui-field-label"
+        >
+          {{ $t('players.nameLabel') }}
+        </label>
+      </div>
 
       <div class="flex justify-center mt-8">
         <button

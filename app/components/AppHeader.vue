@@ -86,13 +86,8 @@ const LOCALES = [
   { code: 'en', label: 'English' },
 ] as const
 
-const langMenuRef = ref<HTMLElement | null>(null)
-const langMenuOpen = ref(false)
-useClickOutside(langMenuRef, () => { langMenuOpen.value = false })
-
 function setLocale(code: string) {
   locale.value = code
-  langMenuOpen.value = false
 }
 
 const menuRef = ref<HTMLElement | null>(null)
@@ -132,55 +127,6 @@ function activateMenuItem(e: KeyboardEvent) {
     <div class="flex-1" />
 
     <div class="flex items-center gap-2">
-      <div
-        ref="langMenuRef"
-        style="position: relative;"
-        @keydown.escape.stop="langMenuOpen = false"
-      >
-        <button
-          v-wave
-          class="mui-icon-btn text-xs font-bold tracking-widest text-appbar-emphasis"
-          style="--hover-bg: rgba(255,255,255,0.12); width: auto; padding: 4px 10px; border-radius: 4px;"
-          :aria-label="$t('header.language')"
-          :aria-expanded="langMenuOpen"
-          data-testid="language-menu-button"
-          @click="langMenuOpen = !langMenuOpen"
-        >
-          {{ locale === 'uk' ? 'UA' : 'EN' }}
-        </button>
-        <ul
-          v-if="langMenuOpen"
-          class="mui-menu z-50"
-          role="menu"
-          style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 160px;"
-          @keydown.escape="langMenuOpen = false"
-        >
-          <li
-            v-for="loc in LOCALES"
-            :key="loc.code"
-            v-wave
-            class="mui-menu-item whitespace-nowrap"
-            role="menuitemradio"
-            :aria-checked="locale === loc.code"
-            tabindex="0"
-            @click="setLocale(loc.code)"
-            @keydown.enter.prevent="setLocale(loc.code)"
-            @keydown.space.prevent="setLocale(loc.code)"
-          >
-            <AppIcon
-              class="mui-menu-icon"
-              :icon="locale === loc.code ? 'ic:baseline-check' : 'ic:baseline-language'"
-            />
-            <span class="flex-1">{{ loc.label }}</span>
-          </li>
-        </ul>
-      </div>
-      <span
-        v-if="headerLabel"
-        class="text-sm text-appbar-emphasis"
-      >
-        {{ headerLabel }}
-      </span>
       <button
         v-wave
         class="mui-icon-btn text-appbar-emphasis"
@@ -194,6 +140,12 @@ function activateMenuItem(e: KeyboardEvent) {
           style="font-size: 1.5rem;"
         />
       </button>
+      <span
+        v-if="headerLabel"
+        class="text-sm text-appbar-emphasis"
+      >
+        {{ headerLabel }}
+      </span>
       <div
         ref="menuRef"
         style="position: relative;"
@@ -232,54 +184,6 @@ function activateMenuItem(e: KeyboardEvent) {
           @keydown.enter.prevent="activateMenuItem"
           @keydown.space.prevent="activateMenuItem"
         >
-          <template v-if="isModerator">
-            <li
-              v-wave
-              class="mui-menu-item whitespace-nowrap"
-              role="menuitem"
-              tabindex="0"
-              @click="emit('openCardDeck'); menuOpen = false"
-            >
-              <AppIcon
-                class="mui-menu-icon"
-                icon="ic:baseline-settings"
-              />
-              {{ $t('header.configureCardDeck') }}
-            </li>
-            <li
-              v-if="user"
-              v-wave
-              class="mui-menu-item whitespace-nowrap"
-              role="menuitem"
-              tabindex="0"
-              @click="emit('openRenameRoom'); menuOpen = false"
-            >
-              <AppIcon
-                class="mui-menu-icon"
-                icon="ic:baseline-edit"
-              />
-              {{ $t('header.renameRoom') }}
-            </li>
-            <hr class="mui-divider">
-          </template>
-
-          <template v-if="user">
-            <li
-              v-wave
-              class="mui-menu-item whitespace-nowrap"
-              role="menuitem"
-              tabindex="0"
-              @click="emit('openAccountSettings'); menuOpen = false"
-            >
-              <AppIcon
-                class="mui-menu-icon"
-                icon="ic:baseline-settings"
-              />
-              {{ $t('header.accountSettings') }}
-            </li>
-            <hr class="mui-divider">
-          </template>
-
           <li
             v-wave
             class="mui-menu-item whitespace-nowrap"
@@ -306,34 +210,88 @@ function activateMenuItem(e: KeyboardEvent) {
             />
             {{ $t('header.alignmentTrends') }}
           </li>
-          <hr class="mui-divider">
 
+          <template v-if="isModerator">
+            <hr class="mui-divider">
+            <li
+              v-if="user"
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              role="menuitem"
+              tabindex="0"
+              @click="emit('openRenameRoom'); menuOpen = false"
+            >
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-edit"
+              />
+              {{ $t('header.renameRoom') }}
+            </li>
+            <li
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              role="menuitem"
+              tabindex="0"
+              @click="emit('openCardDeck'); menuOpen = false"
+            >
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-settings"
+              />
+              {{ $t('header.configureCardDeck') }}
+            </li>
+          </template>
+
+          <hr class="mui-divider">
           <li
+            v-for="loc in LOCALES"
+            :key="loc.code"
             v-wave
             class="mui-menu-item whitespace-nowrap"
-            role="menuitem"
+            role="menuitemradio"
+            :aria-checked="locale === loc.code"
             tabindex="0"
-            @click.stop="toggleTheme($event); menuOpen = false"
+            :data-testid="`language-option-${loc.code}`"
+            @click="setLocale(loc.code); menuOpen = false"
           >
             <AppIcon
               class="mui-menu-icon"
-              :icon="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'"
+              :icon="locale === loc.code ? 'ic:baseline-check' : 'ic:baseline-language'"
             />
-            <span class="flex-1">{{ isLight ? $t('header.lightTheme') : $t('header.darkTheme') }}</span>
-            <span class="mui-switch">
-              <input
-                type="checkbox"
-                name="theme-toggle"
-                :checked="isLight"
-                tabindex="-1"
-                readonly
-              >
-              <span class="track" />
-              <span class="thumb" />
-            </span>
+            <span class="flex-1">{{ loc.label }}</span>
           </li>
 
-          <template v-if="!user">
+          <template v-if="user">
+            <hr class="mui-divider">
+            <li
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              role="menuitem"
+              tabindex="0"
+              @click="emit('openAccountSettings'); menuOpen = false"
+            >
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-settings"
+              />
+              {{ $t('header.accountSettings') }}
+            </li>
+            <li
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              role="menuitem"
+              tabindex="0"
+              data-testid="auth-sign-out-menu-item"
+              @click="emit('signOut'); menuOpen = false"
+            >
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-logout"
+              />
+              {{ $t('common.signOut') }}
+            </li>
+          </template>
+          <template v-else>
             <hr class="mui-divider">
             <li
               v-wave
@@ -361,23 +319,6 @@ function activateMenuItem(e: KeyboardEvent) {
                 icon="ic:baseline-person-add"
               />
               {{ $t('common.signUp') }}
-            </li>
-          </template>
-          <template v-else>
-            <hr class="mui-divider">
-            <li
-              v-wave
-              class="mui-menu-item whitespace-nowrap"
-              role="menuitem"
-              tabindex="0"
-              data-testid="auth-sign-out-menu-item"
-              @click="emit('signOut'); menuOpen = false"
-            >
-              <AppIcon
-                class="mui-menu-icon"
-                icon="ic:baseline-logout"
-              />
-              {{ $t('common.signOut') }}
             </li>
           </template>
         </ul>

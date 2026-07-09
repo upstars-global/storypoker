@@ -4,7 +4,7 @@ type Theme = 'light' | 'dark'
 const STORAGE_KEY = 'sp-theme'
 
 type ViewTransitionDocument = Document & {
-  startViewTransition?: (callback: () => void) => { ready: Promise<void> }
+  startViewTransition?: (callback: () => void) => { ready: Promise<void>; finished: Promise<void> }
 }
 
 const theme = ref<Theme>('dark')
@@ -41,16 +41,19 @@ export function useTheme() {
     const x = event?.clientX ?? window.innerWidth / 2
     const y = event?.clientY ?? window.innerHeight / 2
 
+    const root = document.documentElement
+    root.setAttribute('data-theme-transition', '')
     const transition = doc.startViewTransition(() => apply(next, true))
     transition.ready
       .then(() => {
         const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
-        document.documentElement.animate(
+        root.animate(
           { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
           { duration: 450, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' },
         )
       })
       .catch(() => {})
+    transition.finished.finally(() => root.removeAttribute('data-theme-transition'))
   }
 
   function setTheme(value: Theme) {

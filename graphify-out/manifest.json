@@ -25,8 +25,8 @@
     "semantic_hash": ""
   },
   "app/components/AppHeader.vue": {
-    "mtime": 1783541260.5986037,
-    "ast_hash": "c0d7c927387d13d6794052438f9b10d0",
+    "mtime": 1783544643.981587,
+    "ast_hash": "324fb34e88c81d3739156c4efa6e64ad",
     "semantic_hash": ""
   },
   "app/components/AppIcon.vue": {
@@ -290,8 +290,8 @@
     "semantic_hash": "bbe0305aa50aafe0faf78b252c264324"
   },
   "package.json": {
-    "mtime": 1783536817.538134,
-    "ast_hash": "691e1817e3785b71a6affb0040e6f4af",
+    "mtime": 1783541938.27474,
+    "ast_hash": "883f7779f38e2b077111d166d93c51fd",
     "semantic_hash": ""
   },
   "playwright.config.ts": {
@@ -685,8 +685,8 @@
     "semantic_hash": ""
   },
   "tests/e2e/page-load.spec.ts": {
-    "mtime": 1783536436.1750863,
-    "ast_hash": "5af39274c46ad92b6b8d6e5785d2f69b",
+    "mtime": 1783544638.8870244,
+    "ast_hash": "91ace8f382d40269eec0851df914be8e",
     "semantic_hash": ""
   },
   "tests/unit/components/AppModal.spec.ts": {
