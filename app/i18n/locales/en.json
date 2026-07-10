@@ -54,9 +54,11 @@
     "subtitle": "invite your team and start estimating together",
     "nameLabel": "Your name",
     "createRoom": "Create Room",
-    "recentRooms": "Recent Rooms",
+    "recentRooms": "Rooms",
     "players": "Players",
-    "lastVisited": "Last Visited"
+    "rounds": "Rounds",
+    "alignment": "Alignment",
+    "lastVisited": "Visited"
   },
   "join": {
     "title": "Invitation",

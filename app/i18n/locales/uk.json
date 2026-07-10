@@ -54,9 +54,11 @@
     "subtitle": "запроси команду і починайте оцінювати разом",
     "nameLabel": "Твоє ім'я",
     "createRoom": "Створити кімнату",
-    "recentRooms": "Нещодавні кімнати",
+    "recentRooms": "Кімнати",
     "players": "Гравці",
-    "lastVisited": "Остання відвідана"
+    "rounds": "Раундів",
+    "alignment": "Узгодженість",
+    "lastVisited": "Вхід"
   },
   "join": {
     "title": "Запрошення",

@@ -8,6 +8,8 @@ import { useAuthStore } from '~/stores/auth'
 import { useProfilesStore } from '~/stores/profiles'
 import { listRecentRooms, touchRecentRoom, type RecentRoomEntry } from '~/utils/recentRooms'
 import { relativeTime } from '~/utils/relativeTime'
+import { roundAlignment } from '~/utils/roundStats'
+import type { RoundHistory } from '~/stores/types'
 import { getSupabase } from '~/lib/supabase-instance'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
@@ -25,6 +27,8 @@ interface RecentRoomDisplay extends RecentRoomEntry {
   playerNames: string[]
   slug: string | null
   name: string | null
+  roundsCount: number
+  alignment: number | null
 }
 
 const recentRooms = ref<RecentRoomDisplay[]>([])
@@ -45,17 +49,20 @@ onMounted(async () => {
 
   const supabase = getSupabase()
   const ids = local.map(r => r.roomId)
-  const [{ data: playersData }, { data: roomsData }] = await Promise.all([
-    supabase.from('players').select('room_id, name').in('room_id', ids).is('left_at', null),
+  const [{ data: playersData }, { data: roomsData }, { data: historyData }] = await Promise.all([
+    supabase.from('players').select('id, room_id, name, shields').in('room_id', ids).is('left_at', null),
     supabase.from('rooms').select('id, slug, name').in('id', ids),
+    supabase.from('round_history').select('*').in('room_id', ids),
   ])
 
   const namesByRoom: Record<string, string[]> = {}
+  const shieldsByPlayer = new Map<string, string[]>()
   for (const row of playersData ?? []) {
     if (!row.room_id) continue
     const names = namesByRoom[row.room_id] ?? []
     names.push(row.name)
     namesByRoom[row.room_id] = names
+    shieldsByPlayer.set(row.id, row.shields ?? [])
   }
 
   const slugByRoom: Record<string, { slug: string | null; name: string | null }> = {}
@@ -63,13 +70,42 @@ onMounted(async () => {
     slugByRoom[row.id] = { slug: row.slug ?? null, name: row.name ?? null }
   }
 
-  recentRooms.value = local.map(r => ({
-    ...r,
-    playerNames: namesByRoom[r.roomId] ?? [],
-    slug: slugByRoom[r.roomId]?.slug ?? null,
-    name: slugByRoom[r.roomId]?.name ?? null,
-  }))
+  const roundsByRoom: Record<string, RoundHistory[]> = {}
+  for (const row of (historyData ?? []) as RoundHistory[]) {
+    if (!row.room_id) continue
+    const rounds = roundsByRoom[row.room_id] ?? []
+    rounds.push(row)
+    roundsByRoom[row.room_id] = rounds
+  }
+
+  function avgAlignment(rounds: RoundHistory[]): number | null {
+    const scores: number[] = []
+    for (const round of rounds) {
+      const score = roundAlignment(round, shieldsByPlayer)
+      if (score !== null) scores.push(score)
+    }
+    if (!scores.length) return null
+    return Math.round(scores.reduce((s, v) => s + v, 0) / scores.length)
+  }
+
+  recentRooms.value = local.map(r => {
+    const rounds = roundsByRoom[r.roomId] ?? []
+    return {
+      ...r,
+      playerNames: namesByRoom[r.roomId] ?? [],
+      slug: slugByRoom[r.roomId]?.slug ?? null,
+      name: slugByRoom[r.roomId]?.name ?? null,
+      roundsCount: rounds.length,
+      alignment: avgAlignment(rounds),
+    }
+  })
 })
+
+function alignmentColor(a: number): string {
+  if (a >= 60) return '#43a047'
+  if (a >= 40) return '#fbc02d'
+  return '#e64a19'
+}
 
 async function createRoom() {
   if (!name.value.trim()) {
@@ -168,6 +204,12 @@ async function createRoom() {
               <th class="px-3 py-3 font-medium">
                 {{ $t('home.players') }}
               </th>
+              <th class="px-3 py-3 font-medium whitespace-nowrap">
+                {{ $t('home.rounds') }}
+              </th>
+              <th class="px-3 py-3 font-medium whitespace-nowrap">
+                {{ $t('home.alignment') }}
+              </th>
               <th class="px-3 py-3 font-medium text-right whitespace-nowrap">
                 {{ $t('home.lastVisited') }}
               </th>
@@ -189,6 +231,24 @@ async function createRoom() {
               </td>
               <td class="px-3 py-3 align-top">
                 <span v-if="room.playerNames.length">{{ room.playerNames.join(', ') }}</span>
+                <span
+                  v-else
+                  class="text-muted"
+                >—</span>
+              </td>
+              <td class="px-3 py-3 align-top whitespace-nowrap tabular-nums">
+                <span v-if="room.roundsCount">{{ room.roundsCount }}</span>
+                <span
+                  v-else
+                  class="text-muted"
+                >—</span>
+              </td>
+              <td class="px-3 py-3 align-top whitespace-nowrap tabular-nums">
+                <span
+                  v-if="room.alignment !== null"
+                  class="font-semibold"
+                  :style="{ color: alignmentColor(room.alignment) }"
+                >{{ room.alignment }}</span>
                 <span
                   v-else
                   class="text-muted"

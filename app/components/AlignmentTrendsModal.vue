@@ -7,11 +7,8 @@ import AppModalPaper from '~/components/AppModalPaper.vue'
 import { storeToRefs } from 'pinia'
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
-import { summarizeRound, isNumericPreset, voteToNumber } from '~/utils/roundStats'
-import { alignmentScore } from '~/utils/alignment'
-import { isQaPlayer } from '~/utils/shields'
+import { summarizeRound, isNumericPreset, voteToNumber, splitRoundAlignment } from '~/utils/roundStats'
 import { DECK_PRESETS } from '~/utils/cardDecks'
-import type { RoundHistory } from '~/stores/types'
 
 const emit = defineEmits<{ close: [] }>()
 
@@ -39,23 +36,6 @@ const shieldsMap = computed(() => {
   return m
 })
 
-function splitRound(round: RoundHistory): { dev: number | null; qa: number | null } {
-  const devCounts: Record<string, number> = {}
-  const qaCounts: Record<string, number> = {}
-  for (const v of round.votes) {
-    const shields = shieldsMap.value.get(v.player_id) ?? []
-    if (isQaPlayer(shields)) {
-      qaCounts[v.vote] = (qaCounts[v.vote] ?? 0) + 1
-    } else {
-      devCounts[v.vote] = (devCounts[v.vote] ?? 0) + 1
-    }
-  }
-  return {
-    dev: alignmentScore(devCounts, round.active_cards),
-    qa: alignmentScore(qaCounts, round.active_cards),
-  }
-}
-
 onMounted(async () => {
   try {
     const rounds = await roomStore.fetchHistory()
@@ -67,7 +47,7 @@ onMounted(async () => {
         return true
       })
       .map(r => {
-        const { dev, qa } = splitRound(r)
+        const { dev, qa } = splitRoundAlignment(r, shieldsMap.value)
         return { date: new Date(r.revealed_at), devAlignment: dev, qaAlignment: qa, deckPreset: r.deck_preset }
       })
       .sort((a, b) => a.date.getTime() - b.date.getTime())

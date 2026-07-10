@@ -69,7 +69,8 @@ const myAvatarUri = computed(() => {
 
 const headerLabel = computed(() => {
   if (props.roomName) return props.playerName
-  return user.value?.email ?? ''
+  const email = user.value?.email ?? ''
+  return email.split('@')[0]
 })
 
 const profileFetched = ref(!user.value)
@@ -184,32 +185,34 @@ function activateMenuItem(e: KeyboardEvent) {
           @keydown.enter.prevent="activateMenuItem"
           @keydown.space.prevent="activateMenuItem"
         >
-          <li
-            v-wave
-            class="mui-menu-item whitespace-nowrap"
-            role="menuitem"
-            tabindex="0"
-            @click="emit('openHistory'); menuOpen = false"
-          >
-            <AppIcon
-              class="mui-menu-icon"
-              icon="ic:baseline-history"
-            />
-            {{ $t('header.history') }}
-          </li>
-          <li
-            v-wave
-            class="mui-menu-item whitespace-nowrap"
-            role="menuitem"
-            tabindex="0"
-            @click="emit('openAlignmentTrends'); menuOpen = false"
-          >
-            <AppIcon
-              class="mui-menu-icon"
-              icon="ic:baseline-trending-up"
-            />
-            {{ $t('header.alignmentTrends') }}
-          </li>
+          <template v-if="roomName">
+            <li
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              role="menuitem"
+              tabindex="0"
+              @click="emit('openHistory'); menuOpen = false"
+            >
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-history"
+              />
+              {{ $t('header.history') }}
+            </li>
+            <li
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              role="menuitem"
+              tabindex="0"
+              @click="emit('openAlignmentTrends'); menuOpen = false"
+            >
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-trending-up"
+              />
+              {{ $t('header.alignmentTrends') }}
+            </li>
+          </template>
 
           <template v-if="isModerator">
             <hr class="mui-divider">
@@ -242,7 +245,10 @@ function activateMenuItem(e: KeyboardEvent) {
             </li>
           </template>
 
-          <hr class="mui-divider">
+          <hr
+            v-if="roomName || isModerator"
+            class="mui-divider"
+          >
           <li
             v-for="loc in LOCALES"
             :key="loc.code"
@@ -272,7 +278,7 @@ function activateMenuItem(e: KeyboardEvent) {
             >
               <AppIcon
                 class="mui-menu-icon"
-                icon="ic:baseline-settings"
+                icon="lucide:id-card"
               />
               {{ $t('header.accountSettings') }}
             </li>

@@ -98,13 +98,6 @@ npx skills add sentimony/skills -s typescript -a codex claude-code -y
 # uninstall
 # npx impeccable skills uninstall
 
-# GRAPH
-# uv tool install graphifyy
-# than in project folder
-# graphify install --project
-# uninstall
-# uv tool uninstall graphifyy
-
 # TOKENOMICS
 # npx skills add forrestchang/andrej-karpathy-skills -s karpathy-guidelines -a codex claude-code -y
 # npx skills add dietrichgebert/ponytail -s ponytail -a codex claude-code -y
