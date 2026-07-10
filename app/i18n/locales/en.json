@@ -64,9 +64,7 @@
     "players": "Players",
     "rounds": "Rounds",
     "alignment": "Alignment",
-    "lastVisited": "Last Visited",
-    "editRoomName": "Rename room",
-    "editRoomNameHint": "The name is visible to everyone. Leave empty to remove it."
+    "lastVisited": "Last Visited"
   },
   "join": {
     "title": "Invitation",
