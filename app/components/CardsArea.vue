@@ -224,10 +224,7 @@ watch(countdownMode, value => localStorage.setItem(countdownModeLSKey, value))
       </div>
     </div>
 
-    <div
-      v-if="isModerator"
-      class="flex flex-wrap items-end justify-center gap-4 pt-8"
-    >
+    <div class="flex flex-wrap items-end justify-center gap-4 pt-8">
       <button
         v-wave
         class="mui-icon-btn"

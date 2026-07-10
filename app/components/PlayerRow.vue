@@ -28,6 +28,7 @@ const props = defineProps<{
   }
   phase: 'voting' | 'revealed'
   currentPlayerId: string | null
+  currentUserIsModerator: boolean
   currentUserIsAuthorizedModerator: boolean
   truncateVotes?: boolean
 }>()
@@ -246,7 +247,7 @@ const playerAvatar = computed(() => {
       style="width: 36px; height: 36px; position: relative;"
     >
       <button
-        v-if="isOwn || currentUserIsAuthorizedModerator"
+        v-if="isOwn || currentUserIsModerator"
         v-wave
         class="mui-icon-btn"
         style="padding: 4px;"
@@ -321,8 +322,9 @@ const playerAvatar = computed(() => {
             {{ $t('players.leaveRoom') }}
           </li>
         </template>
-        <template v-else-if="currentUserIsAuthorizedModerator">
+        <template v-else-if="currentUserIsModerator">
           <li
+            v-if="currentUserIsAuthorizedModerator"
             v-wave
             class="mui-menu-item"
             role="menuitem"

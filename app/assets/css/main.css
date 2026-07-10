@@ -42,6 +42,7 @@
 }
 @utility bg-appbar {
   background-color: var(--bg-appbar);
+  background-image: var(--appbar-gradient, none);
 }
 @utility bg-paper {
   background-color: var(--bg-paper);
@@ -102,6 +103,10 @@ html[data-theme='dark'] {
   --card-value-color: #e0e0e0;
   --card-bg-color: #424242;
   --card-bg-hover: #525252;
+
+  --appbar-gradient: none;
+  --btn-md-bg: #607d8b;
+  --btn-md-bg-hover: #1c313a;
 }
 
 html[data-theme='light'] {
@@ -139,13 +144,230 @@ html[data-theme='light'] {
   --card-bg-hover: rgb(248, 248, 248);
 }
 
+/* Theme: Cyberdeck — neon terminal. The only theme allowed a (subtle) gradient. */
+html[data-palette='cyberdeck'] {
+  --font-app: 'Geist', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  --font-display: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --radius-paper: 2px;
+  --radius-btn: 4px;
+  --radius-card: 2px;
+  --radius-input: 2px;
+  --btn-transform: uppercase;
+}
+html[data-palette='cyberdeck'] .mui-paper-header {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.875rem;
+}
+html[data-palette='cyberdeck'] .mui-btn {
+  letter-spacing: 0.1em;
+  font-size: 0.875rem;
+}
+html[data-palette='cyberdeck'][data-theme='dark'] {
+  --bg-app: #070b14;
+  --bg-appbar: #0b1220;
+  --appbar-gradient: linear-gradient(90deg, rgba(0, 229, 195, 0.16), rgba(124, 77, 255, 0.1) 55%, transparent 80%);
+  --bg-paper: #0d1526;
+  --bg-paper-header: #0b1220;
+  --bg-paper-header-text: #00e5c3;
+  --bg-elevated: #111b30;
+  --bg-overlay: rgba(2, 6, 16, 0.72);
+  --bg-skeleton: rgba(0, 229, 195, 0.08);
+
+  --text-primary: #e6fffa;
+  --text-body: #bfd8d3;
+  --text-muted: rgba(191, 216, 211, 0.65);
+  --text-disabled: rgba(191, 216, 211, 0.32);
+
+  --primary: #00e5c3;
+  --primary-hover: #5cffe4;
+  --primary-soft: rgba(0, 229, 195, 0.12);
+  --primary-soft-hover: rgba(0, 229, 195, 0.2);
+  --btn-text: #04211b;
+
+  --danger: #ff5370;
+  --success: #00e676;
+
+  --border: rgba(0, 229, 195, 0.16);
+  --border-input: rgba(0, 229, 195, 0.35);
+  --hover-bg: rgba(0, 229, 195, 0.08);
+  --paper-overlay: none;
+  --paper-border: 1px solid rgba(0, 229, 195, 0.2);
+  --card-border: 1px solid rgba(0, 229, 195, 0.28);
+
+  --icon-player-color: #00e5c3;
+  --card-value-color: #9ef5e4;
+  --card-bg-color: #0b1322;
+  --card-bg-hover: #12203a;
+
+  --btn-md-bg: #00cdb0;
+  --btn-md-bg-hover: #5cffe4;
+
+  --shadow-1: 0 0 0 1px rgba(0, 229, 195, 0.06), 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 0 0 1px rgba(0, 229, 195, 0.08), 0 0 10px rgba(0, 229, 195, 0.08), 0 3px 10px rgba(0, 0, 0, 0.5);
+  --shadow-3: 0 0 0 1px rgba(0, 229, 195, 0.1), 0 0 14px rgba(0, 229, 195, 0.14), 0 4px 12px rgba(0, 0, 0, 0.55);
+  --shadow-4: 0 0 0 1px rgba(0, 229, 195, 0.1), 0 0 18px rgba(0, 229, 195, 0.16), 0 6px 16px rgba(0, 0, 0, 0.55);
+  --shadow-8: 0 0 0 1px rgba(0, 229, 195, 0.12), 0 0 26px rgba(0, 229, 195, 0.2), 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+html[data-palette='cyberdeck'][data-theme='light'] {
+  --bg-app: #eef4f3;
+  --bg-appbar: #073b34;
+  --appbar-gradient: linear-gradient(90deg, rgba(0, 229, 195, 0.22), transparent 70%);
+  --bg-paper: #ffffff;
+  --bg-paper-header: #073b34;
+  --bg-paper-header-text: #86f0dc;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(6, 35, 31, 0.5);
+  --bg-skeleton: rgba(0, 95, 80, 0.08);
+
+  --text-primary: #06231f;
+  --text-body: rgba(6, 35, 31, 0.87);
+  --text-muted: rgba(6, 35, 31, 0.55);
+  --text-disabled: rgba(6, 35, 31, 0.38);
+
+  --primary: #00806c;
+  --primary-hover: #005f50;
+  --primary-soft: rgba(0, 128, 108, 0.1);
+  --primary-soft-hover: rgba(0, 128, 108, 0.18);
+  --btn-text: #ffffff;
+
+  --danger: #d3335b;
+  --success: #00875a;
+
+  --border: rgba(0, 95, 80, 0.18);
+  --border-input: rgba(0, 95, 80, 0.4);
+  --hover-bg: rgba(0, 128, 108, 0.06);
+  --paper-overlay: none;
+  --paper-border: 1px solid rgba(0, 128, 108, 0.25);
+  --card-border: 1px solid rgba(0, 128, 108, 0.3);
+
+  --icon-player-color: #00806c;
+  --card-value-color: #00695c;
+  --card-bg-color: #ffffff;
+  --card-bg-hover: #f0faf8;
+
+  --btn-md-bg: #00806c;
+  --btn-md-bg-hover: #005f50;
+
+  --shadow-1: 0 1px 3px rgba(6, 35, 31, 0.14);
+  --shadow-2: 0 2px 5px rgba(6, 35, 31, 0.16);
+  --shadow-3: 0 3px 8px rgba(6, 35, 31, 0.18);
+  --shadow-4: 0 4px 10px rgba(6, 35, 31, 0.18);
+  --shadow-8: 0 8px 24px rgba(6, 35, 31, 0.22);
+}
+
+/* Theme: Matcha — soft, rounded, cozy greens */
+html[data-palette='matcha'] {
+  --font-app: 'Nunito', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  --font-display: 'Nunito', 'Roboto', sans-serif;
+  --radius-paper: 18px;
+  --radius-btn: 14px;
+  --radius-card: 14px;
+  --radius-input: 12px;
+  --btn-transform: none;
+}
+html[data-palette='matcha'] .mui-paper-header {
+  font-weight: 700;
+  padding-left: 16px;
+}
+html[data-palette='matcha'] .mui-btn {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+html[data-palette='matcha'][data-theme='dark'] {
+  --bg-app: #171b13;
+  --bg-appbar: #242c1e;
+  --bg-paper: #1f2718;
+  --bg-paper-header: #242c1e;
+  --bg-paper-header-text: #dcefc8;
+  --bg-elevated: #29321f;
+  --bg-overlay: rgba(10, 14, 6, 0.6);
+  --bg-skeleton: rgba(220, 239, 200, 0.1);
+
+  --text-primary: #f0f4e4;
+  --text-body: #dde5cc;
+  --text-muted: rgba(221, 229, 204, 0.68);
+  --text-disabled: rgba(221, 229, 204, 0.34);
+
+  --primary: #8fb573;
+  --primary-hover: #a2c785;
+  --primary-soft: rgba(143, 181, 115, 0.14);
+  --primary-soft-hover: rgba(143, 181, 115, 0.22);
+  --btn-text: #1d2913;
+
+  --danger: #e07856;
+  --success: #a5cf7f;
+
+  --border: rgba(220, 239, 200, 0.12);
+  --border-input: rgba(220, 239, 200, 0.3);
+  --hover-bg: rgba(220, 239, 200, 0.07);
+  --paper-overlay: none;
+
+  --icon-player-color: #b4d295;
+  --card-value-color: #dde5cc;
+  --card-bg-color: #252e1b;
+  --card-bg-hover: #2f3a23;
+
+  --btn-md-bg: #6f9455;
+  --btn-md-bg-hover: #86ab6c;
+
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.28);
+  --shadow-2: 0 3px 10px rgba(0, 0, 0, 0.3);
+  --shadow-3: 0 5px 14px rgba(0, 0, 0, 0.32);
+  --shadow-4: 0 7px 18px rgba(0, 0, 0, 0.34);
+  --shadow-8: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+html[data-palette='matcha'][data-theme='light'] {
+  --bg-app: #f5f3e8;
+  --bg-appbar: #5b7750;
+  --bg-paper: #fbfaf2;
+  --bg-paper-header: #5b7750;
+  --bg-paper-header-text: #f7fbe9;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(43, 51, 30, 0.45);
+  --bg-skeleton: rgba(91, 119, 80, 0.1);
+
+  --text-primary: #26301d;
+  --text-body: rgba(38, 48, 29, 0.87);
+  --text-muted: rgba(38, 48, 29, 0.55);
+  --text-disabled: rgba(38, 48, 29, 0.38);
+
+  --primary: #5f8a4a;
+  --primary-hover: #4a6f3a;
+  --primary-soft: rgba(95, 138, 74, 0.12);
+  --primary-soft-hover: rgba(95, 138, 74, 0.2);
+  --btn-text: #ffffff;
+
+  --danger: #c14e2e;
+  --success: #4c7f3d;
+
+  --border: rgba(91, 119, 80, 0.18);
+  --border-input: rgba(91, 119, 80, 0.36);
+  --hover-bg: rgba(91, 119, 80, 0.07);
+  --paper-overlay: none;
+
+  --icon-player-color: #5b7750;
+  --card-value-color: #4a6f3a;
+  --card-bg-color: #ffffff;
+  --card-bg-hover: #f4f7ea;
+
+  --btn-md-bg: #6f9455;
+  --btn-md-bg-hover: #557a42;
+
+  --shadow-1: 0 2px 8px rgba(60, 78, 42, 0.1);
+  --shadow-2: 0 3px 10px rgba(60, 78, 42, 0.12);
+  --shadow-3: 0 5px 14px rgba(60, 78, 42, 0.14);
+  --shadow-4: 0 7px 18px rgba(60, 78, 42, 0.16);
+  --shadow-8: 0 12px 32px rgba(60, 78, 42, 0.2);
+}
+
 html,
 body,
 input,
 button,
 textarea,
 select {
-  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-family: var(--font-app, 'Roboto', 'Helvetica', 'Arial', sans-serif);
 }
 
 html,
@@ -162,7 +384,8 @@ body {
   .mui-paper {
     background-color: var(--bg-paper);
     background-image: var(--paper-overlay);
-    border-radius: 5px;
+    border: var(--paper-border, none);
+    border-radius: var(--radius-paper, 5px);
     overflow: visible;
     transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -174,11 +397,12 @@ body {
     min-height: 35px;
     display: flex;
     align-items: center;
+    font-family: var(--font-display, inherit);
     font-size: 1.0938rem;
     font-weight: 600;
     line-height: 1.6;
     letter-spacing: 0.0075em;
-    border-radius: 5px 5px 0 0;
+    border-radius: var(--radius-paper, 5px) var(--radius-paper, 5px) 0 0;
   }
 
   .mui-btn {
@@ -188,16 +412,16 @@ body {
     padding: 8px 22px;
     min-width: 220px;
     min-height: 50px;
-    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    font-family: var(--font-display, var(--font-app, 'Roboto', 'Helvetica', 'Arial', sans-serif));
     font-size: 0.9375rem;
     font-weight: 500;
     line-height: 1.75;
     letter-spacing: 0.02857em;
-    text-transform: uppercase;
-    color: #fff;
+    text-transform: var(--btn-transform, uppercase);
+    color: var(--btn-text, #fff);
     background-color: var(--primary);
     border: 0;
-    border-radius: 25px;
+    border-radius: var(--radius-btn, 25px);
     cursor: pointer;
     user-select: none;
     box-shadow: var(--shadow-2);
@@ -238,7 +462,7 @@ body {
     min-width: 64px;
     min-height: 36px;
     padding: 6px 16px;
-    border-radius: 4px;
+    border-radius: var(--radius-input, 4px);
   }
   .mui-btn-text:hover {
     background-color: var(--primary-soft);
@@ -288,12 +512,12 @@ body {
     min-width: 180px;
     min-height: 46px;
     padding: 8px 22px;
-    border-radius: 23px;
+    border-radius: var(--radius-btn, 23px);
     font-size: 0.8125rem;
-    background-color: #607d8b;
+    background-color: var(--btn-md-bg);
   }
   .mui-btn-md:hover {
-    background-color: #1c313a;
+    background-color: var(--btn-md-bg-hover);
   }
 
   .mui-icon-btn {
@@ -397,7 +621,7 @@ body {
     color: var(--text-primary);
     background: transparent;
     border: 1px solid var(--border-input);
-    border-radius: 4px;
+    border-radius: var(--radius-input, 4px);
     padding: 16.5px 14px;
     font-size: 1rem;
     line-height: 1.4375em;
@@ -491,7 +715,8 @@ body {
   .mui-card {
     background-color: var(--card-bg-color);
     color: var(--text-body);
-    border-radius: 4px;
+    border: var(--card-border, none);
+    border-radius: var(--radius-card, 4px);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -508,7 +733,7 @@ body {
   }
   .mui-card.is-selected {
     background-color: var(--primary);
-    color: #fff;
+    color: var(--btn-text, #fff);
   }
   .mui-card.is-selected:hover {
     background-color: var(--primary);
@@ -516,12 +741,12 @@ body {
     transform: scale(1.05);
   }
   .mui-card.is-selected .mui-card-value {
-    color: #fff;
+    color: var(--btn-text, #fff);
   }
 
   .mui-card-value {
     margin: 0;
-    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    font-family: var(--font-display, var(--font-app, 'Roboto', 'Helvetica', 'Arial', sans-serif));
     font-weight: 400;
     font-size: 1.5rem;
     line-height: 1.167;
@@ -547,7 +772,8 @@ body {
     background-color: var(--bg-elevated);
     background-image: var(--paper-overlay);
     color: var(--text-primary);
-    border-radius: 4px;
+    border: var(--paper-border, none);
+    border-radius: var(--radius-input, 4px);
     box-shadow: var(--shadow-8);
     padding: 8px 0;
     min-width: 180px;
@@ -654,7 +880,8 @@ body {
     background-color: var(--bg-paper);
     background-image: var(--paper-overlay);
     color: var(--text-body);
-    border-radius: 4px;
+    border: var(--paper-border, none);
+    border-radius: var(--radius-paper, 4px);
     box-shadow: var(--shadow-8);
     padding: 24px;
     width: 100%;
@@ -663,6 +890,7 @@ body {
   }
 
   .mui-h6 {
+    font-family: var(--font-display, inherit);
     font-size: 1.0938rem;
     font-weight: 600;
     line-height: 1.6;
@@ -672,6 +900,7 @@ body {
   }
 
   .mui-h5 {
+    font-family: var(--font-display, inherit);
     font-size: 1.5rem;
     font-weight: 600;
     line-height: 1.334;

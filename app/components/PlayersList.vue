@@ -15,6 +15,7 @@ const props = defineProps<{
   }>
   phase: 'voting' | 'revealed'
   currentPlayerId: string | null
+  currentUserIsModerator: boolean
   currentUserIsAuthorizedModerator: boolean
   truncateVotes?: boolean
 }>()
@@ -48,6 +49,7 @@ const totalCount = computed(() => props.players.length)
         :player="player"
         :phase="phase"
         :current-player-id="currentPlayerId"
+        :current-user-is-moderator="currentUserIsModerator"
         :current-user-is-authorized-moderator="currentUserIsAuthorizedModerator"
         :truncate-votes="truncateVotes"
         @edit="emit('edit', $event)"

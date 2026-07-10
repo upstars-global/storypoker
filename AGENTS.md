@@ -176,8 +176,9 @@ Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `ap
 ## LocalStorage
 
 - `storypoker_session_<roomId>` — `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms
-- `sp-theme` — `light | dark`; inline script у `index.html` застосовує тему до завантаження JS
+- `sp-theme` — `light | dark`; `sp-palette` — `classic | cyberdeck | matcha` (повноцінні теми, кожна має light/dark: cyberdeck — неоновий термінал, Geist Mono, гострі кути, неонові рамки/тіні, єдиний дозволений градієнт в appbar; matcha — м'яка округла, Nunito, великі радіуси). Теми задають змінні `--font-app/--font-display/--radius-*/--btn-text/--btn-transform/--paper-border/--card-border/--shadow-*` у `main.css` через `html[data-palette=…][data-theme=…]`; inline script у `index.html` застосовує обидва атрибути до завантаження JS; вибір — меню в AppHeader (`PALETTES` з `useTheme.ts`)
 - `FEATURE_FLAGS` — override flags з `app/configs/featureFlags.ts` (керується на `/ffc`)
+- `sp-side-widget` — `timer | slot`; лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine). Слот: 3 барабани, зважена випадковість (`utils/slotMachine.ts`), 3 спіни на гравця за раунд (скидаються за `round_started_at`), джекпот = 3 однакові символи → broadcast `slot-win` на `countdown:<roomId>` каналі → `SlotWinBanner` (fixed-оверлей поверх AppHeader + невеликий салют, «+1 вихідний день») у всіх учасників
 
 ## Code Style
 
@@ -189,9 +190,9 @@ Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `ap
 
 ## Roles
 
-- **Player:** vote, rename self, leave room
-- **Moderator:** reveal, start new round, configure deck; own moderator toggle доступний у меню гравця
-- **Authorized moderator:** rename room, rename/kick other players, set slug/name; контролі таймера (reset/pause/resume/±30s)
+- **Player:** vote, rename self, leave room; **усі контроли раунду доступні всім**: reveal, start new round, reset votes, countdown (з режимами), last-round toggle
+- **Moderator:** configure deck, kick players, poll question setup, контролі таймера; own moderator toggle доступний у меню гравця
+- **Authorized moderator:** rename room, rename other players, set slug/name; контролі таймера (reset/pause/resume/±30s)
 - **Shields:** `app/utils/shields.ts` — роль обирається з `PLAYER_ROLES` (бейджі-селектор у PlayerEditModal) і пишеться як один shield у `players.shields` через `shieldForRoleTag()` (кастомні — префікс `custom:`); `SHIELD_CATALOG` (групи role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` виводить QA-гравців в окрему пилу
 - **Consensus:** при QA-розщепленні салют + decision-sound тригерять, якщо **хоча б одна** група (DEV/QA) одноголосна; без QA — всі голоси однакові (≥ 2). Логіка в `utils/resultCelebration.ts → shouldCelebrateGroupedVotes`; sound через `isConsensus` у `pages/[slug].vue`
 

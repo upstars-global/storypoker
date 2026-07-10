@@ -23,7 +23,13 @@
     "currentUserAccount": "акаунт поточного користувача",
     "accountSettings": "Налаштування акаунту",
     "history": "Історія раундів",
-    "alignmentTrends": "Тренди узгодженості"
+    "alignmentTrends": "Тренди узгодженості",
+    "themePalette": "Кольорова тема"
+  },
+  "theme": {
+    "classic": "Classic",
+    "cyberdeck": "Cyberdeck",
+    "matcha": "Matcha"
   },
   "trends": {
     "title": "Тренди узгодженості команди",
@@ -58,7 +64,9 @@
     "players": "Гравці",
     "rounds": "Раундів",
     "alignment": "Узгодженість",
-    "lastVisited": "Вхід"
+    "lastVisited": "Остання відвідана",
+    "editRoomName": "Перейменувати кімнату",
+    "editRoomNameHint": "Назву бачать усі учасники. Залиште порожнім, щоб прибрати."
   },
   "join": {
     "title": "Запрошення",
@@ -87,6 +95,15 @@
     "continue": "Продовжити",
     "minus30": "-30с",
     "plus30": "+30с"
+  },
+  "slot": {
+    "title": "Слот 777",
+    "spin": "Spin",
+    "jackpot": "Джекпот! {name} отримує +1 вихідний день 🏖",
+    "spinsLeft": "Залишилось спінів: {n}",
+    "noSpinsLeft": "Спіни скінчились — чекай новий раунд",
+    "switchToSlot": "Показати слот",
+    "switchToTimer": "Показати таймер"
   },
   "deck": {
     "configure": "Налаштувати колоду",

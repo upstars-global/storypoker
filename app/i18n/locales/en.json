@@ -23,7 +23,13 @@
     "currentUserAccount": "account of current user",
     "accountSettings": "Account Settings",
     "history": "Round History",
-    "alignmentTrends": "Alignment Trends"
+    "alignmentTrends": "Alignment Trends",
+    "themePalette": "Color theme"
+  },
+  "theme": {
+    "classic": "Classic",
+    "cyberdeck": "Cyberdeck",
+    "matcha": "Matcha"
   },
   "trends": {
     "title": "Team Alignment Trends",
@@ -58,7 +64,9 @@
     "players": "Players",
     "rounds": "Rounds",
     "alignment": "Alignment",
-    "lastVisited": "Visited"
+    "lastVisited": "Last Visited",
+    "editRoomName": "Rename room",
+    "editRoomNameHint": "The name is visible to everyone. Leave empty to remove it."
   },
   "join": {
     "title": "Invitation",
@@ -87,6 +95,15 @@
     "continue": "Continue",
     "minus30": "-30s",
     "plus30": "+30s"
+  },
+  "slot": {
+    "title": "Slot 777",
+    "spin": "Spin",
+    "jackpot": "Jackpot! {name} gets +1 day off 🏖",
+    "spinsLeft": "Spins left: {n}",
+    "noSpinsLeft": "No spins left — wait for the next round",
+    "switchToSlot": "Show slot machine",
+    "switchToTimer": "Show timer"
   },
   "deck": {
     "configure": "Configure Card Deck",

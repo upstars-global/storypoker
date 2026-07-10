@@ -28,6 +28,7 @@ function mountRow() {
       },
       phase: 'voting' as const,
       currentPlayerId: 'p1',
+      currentUserIsModerator: false,
       currentUserIsAuthorizedModerator: false,
     },
     global: {
