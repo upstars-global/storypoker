@@ -88,6 +88,9 @@ const points = computed(() => allPoints.value.filter(p =>
 
 const hasQaData = computed(() => points.value.some(p => p.qaAlignment !== null))
 
+const showDevSeries = ref(true)
+const showQaSeries = ref(true)
+
 const currentDevScore = computed(() => {
   const last = [...points.value].reverse().find(p => p.devAlignment !== null)
   return last?.devAlignment ?? null
@@ -187,6 +190,7 @@ const chartData = computed(() => {
 })
 
 const dateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'short' }))
+const tooltipDateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'short', timeStyle: 'short' }))
 
 const xAxisLabels = computed(() => {
   if (!chartData.value || points.value.length < 2) return []
@@ -310,23 +314,33 @@ const xAxisLabels = computed(() => {
                 {{ $t('trends.chartTitle') }}
               </span>
               <div class="flex items-center gap-3">
-                <span class="flex items-center gap-1 text-mui-caption">
+                <button
+                  type="button"
+                  class="flex items-center gap-1 text-mui-caption transition-opacity"
+                  :class="{ 'opacity-40': !showDevSeries }"
+                  :aria-pressed="showDevSeries"
+                  @click="showDevSeries = !showDevSeries"
+                >
                   <span
                     class="inline-block h-2 w-4 rounded"
                     style="background:#26a69a"
                   />
                   DEV
-                </span>
-                <span
+                </button>
+                <button
                   v-if="hasQaData"
-                  class="flex items-center gap-1 text-mui-caption"
+                  type="button"
+                  class="flex items-center gap-1 text-mui-caption transition-opacity"
+                  :class="{ 'opacity-40': !showQaSeries }"
+                  :aria-pressed="showQaSeries"
+                  @click="showQaSeries = !showQaSeries"
                 >
                   <span
                     class="inline-block h-2 w-4 rounded"
                     style="background:#ffa726"
                   />
                   QA
-                </span>
+                </button>
               </div>
             </div>
             <div class="flex gap-1">
@@ -424,83 +438,87 @@ const xAxisLabels = computed(() => {
             >{{ lbl.label }}</text>
 
             <!-- DEV line -->
-            <polyline
-              v-if="chartData.devPolyline"
-              :points="chartData.devPolyline"
-              fill="none"
-              stroke="#26a69a"
-              stroke-width="2"
-              stroke-linejoin="round"
-              stroke-linecap="round"
-            />
-            <g
-              v-for="(dot, i) in chartData.devDots"
-              :key="`dev-${i}`"
-            >
-              <circle
-                :cx="dot.x"
-                :cy="dot.y"
-                r="3"
-                fill="#26a69a"
-                stroke="#1a1a2e"
-                stroke-width="1.5"
-                style="pointer-events: none;"
+            <template v-if="showDevSeries">
+              <polyline
+                v-if="chartData.devPolyline"
+                :points="chartData.devPolyline"
+                fill="none"
+                stroke="#26a69a"
+                stroke-width="2"
+                stroke-linejoin="round"
+                stroke-linecap="round"
               />
-              <circle
-                :cx="dot.x"
-                :cy="dot.y"
-                r="8"
-                fill="transparent"
-                style="cursor: pointer;"
-                @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'DEV' }"
-                @mouseleave="hoveredDot = null"
-              />
-            </g>
+              <g
+                v-for="(dot, i) in chartData.devDots"
+                :key="`dev-${i}`"
+              >
+                <circle
+                  :cx="dot.x"
+                  :cy="dot.y"
+                  r="3"
+                  fill="#26a69a"
+                  stroke="#1a1a2e"
+                  stroke-width="1.5"
+                  style="pointer-events: none;"
+                />
+                <circle
+                  :cx="dot.x"
+                  :cy="dot.y"
+                  r="8"
+                  fill="transparent"
+                  style="cursor: pointer;"
+                  @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'DEV' }"
+                  @mouseleave="hoveredDot = null"
+                />
+              </g>
+            </template>
 
             <!-- QA line -->
-            <polyline
-              v-if="chartData.qaPolyline"
-              :points="chartData.qaPolyline"
-              fill="none"
-              stroke="#ffa726"
-              stroke-width="2"
-              stroke-linejoin="round"
-              stroke-linecap="round"
-            />
-            <g
-              v-for="(dot, i) in chartData.qaDots"
-              :key="`qa-${i}`"
-            >
-              <circle
-                :cx="dot.x"
-                :cy="dot.y"
-                r="3"
-                fill="#ffa726"
-                stroke="#1a1a2e"
-                stroke-width="1.5"
-                style="pointer-events: none;"
+            <template v-if="showQaSeries">
+              <polyline
+                v-if="chartData.qaPolyline"
+                :points="chartData.qaPolyline"
+                fill="none"
+                stroke="#ffa726"
+                stroke-width="2"
+                stroke-linejoin="round"
+                stroke-linecap="round"
               />
-              <circle
-                :cx="dot.x"
-                :cy="dot.y"
-                r="8"
-                fill="transparent"
-                style="cursor: pointer;"
-                @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'QA' }"
-                @mouseleave="hoveredDot = null"
-              />
-            </g>
+              <g
+                v-for="(dot, i) in chartData.qaDots"
+                :key="`qa-${i}`"
+              >
+                <circle
+                  :cx="dot.x"
+                  :cy="dot.y"
+                  r="3"
+                  fill="#ffa726"
+                  stroke="#1a1a2e"
+                  stroke-width="1.5"
+                  style="pointer-events: none;"
+                />
+                <circle
+                  :cx="dot.x"
+                  :cy="dot.y"
+                  r="8"
+                  fill="transparent"
+                  style="cursor: pointer;"
+                  @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'QA' }"
+                  @mouseleave="hoveredDot = null"
+                />
+              </g>
+            </template>
 
             <!-- Hover tooltip -->
             <g
               v-if="hoveredDot"
-              :transform="`translate(${Math.min(Math.max(hoveredDot.x, PAD.left + 34), VB_W - PAD.right - 34)}, ${Math.max(hoveredDot.y - 34, PAD.top + 14)})`"
+              :transform="`translate(${Math.min(Math.max(hoveredDot.x, PAD.left + 44), VB_W - PAD.right - 44)}, ${Math.max(hoveredDot.y - 34, PAD.top + 14)})`"
               style="pointer-events: none;"
             >
               <rect
-                x="-34"
+                x="-44"
                 y="-16"
-                width="68"
+                width="88"
                 height="30"
                 rx="4"
                 fill="#1a1a2e"
@@ -521,8 +539,25 @@ const xAxisLabels = computed(() => {
                 fill="#b0bec5"
                 font-size="9"
                 text-anchor="middle"
-              >{{ dateFmt.format(hoveredDot.date) }}</text>
+              >{{ tooltipDateFmt.format(hoveredDot.date) }}</text>
             </g>
+
+            <!-- Axis titles -->
+            <text
+              :x="PAD.left + INNER_W / 2"
+              :y="VB_H - 4"
+              fill="#78909c"
+              font-size="9"
+              text-anchor="middle"
+            >{{ $t('trends.axisTime') }}</text>
+            <text
+              :x="10"
+              :y="PAD.top + INNER_H / 2"
+              fill="#78909c"
+              font-size="9"
+              text-anchor="middle"
+              :transform="`rotate(-90, 10, ${PAD.top + INNER_H / 2})`"
+            >{{ $t('trends.axisAlignment') }}</text>
           </svg>
         </div>
       </template>

@@ -43,7 +43,9 @@
     "up": "Rising",
     "down": "Declining",
     "noData": "Not enough data for this period",
-    "chartTitle": "Alignment Trend Chart"
+    "chartTitle": "Alignment Trend Chart",
+    "axisTime": "Time",
+    "axisAlignment": "Alignment, %"
   },
   "history": {
     "title": "Round History",
