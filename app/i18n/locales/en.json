@@ -76,9 +76,9 @@
   "cards": {
     "reveal": "Reveal Estimates",
     "reset": "Reset Estimates",
-    "revealCountdown": "Start Countdown",
-    "countdownSilent": "Silent",
-    "countdownDry": "Plain sound",
+    "countdownGroupLabel": "Please vote (hold)",
+    "countdownSilent": "Countdown without sound",
+    "countdownDry": "Countdown with sound",
     "countdownWet": "With ambience",
     "startNewRound": "Start New Estimation Round",
     "lastRound": "Previous Round",
@@ -110,14 +110,17 @@
       "yes": "Yes",
       "no": "No"
     },
-    "voteQuestionInfo": "Question and answers are configured in the voting area"
+    "voteQuestionInfo": "Question and answers are configured in the voting area",
+    "alwaysIncluded": "Always included"
   },
   "poll": {
     "thirdCard": "Third card",
     "questionPlaceholder": "Question to vote on…",
     "startVoting": "Start voting",
     "waiting": "Waiting for the moderator's question…",
-    "answerPlaceholder": "Answer {n}"
+    "answerPlaceholder": "Answer {n}",
+    "addAnswer": "Add answer",
+    "removeAnswer": "Remove answer"
   },
   "players": {
     "title": "Players",

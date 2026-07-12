@@ -76,9 +76,9 @@
   "cards": {
     "reveal": "Показати оцінки",
     "reset": "Скинути оцінки",
-    "revealCountdown": "Зворотній відлік",
-    "countdownSilent": "Без звуку",
-    "countdownDry": "Простий звук",
+    "countdownGroupLabel": "Прошу голосувати (утримати)",
+    "countdownSilent": "Відлік без звуку",
+    "countdownDry": "Відлік зі звуком",
     "countdownWet": "З атмосферою",
     "startNewRound": "Почати новий раунд",
     "lastRound": "Попередній раунд",
@@ -110,14 +110,17 @@
       "yes": "Так",
       "no": "Ні"
     },
-    "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні"
+    "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні",
+    "alwaysIncluded": "Завжди включено"
   },
   "poll": {
     "thirdCard": "Третя картка",
     "questionPlaceholder": "Питання для голосування…",
     "startVoting": "Почати голосування",
     "waiting": "Очікування питання від модератора…",
-    "answerPlaceholder": "Відповідь {n}"
+    "answerPlaceholder": "Відповідь {n}",
+    "addAnswer": "Додати варіант",
+    "removeAnswer": "Прибрати варіант"
   },
   "players": {
     "title": "Гравці",

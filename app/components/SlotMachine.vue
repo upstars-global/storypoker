@@ -26,13 +26,82 @@ const jackpotFlash = ref(false)
 
 let finishTimer: ReturnType<typeof setTimeout> | undefined
 let flashTimer: ReturnType<typeof setTimeout> | undefined
-onUnmounted(() => { clearTimeout(finishTimer); clearTimeout(flashTimer) })
+let tickRaf: number | undefined
+onUnmounted(() => {
+  clearTimeout(finishTimer)
+  clearTimeout(flashTimer)
+  if (tickRaf !== undefined) cancelAnimationFrame(tickRaf)
+})
+
+// synthesized via Web Audio (no asset) so it stays lightweight and easy to keep quiet
+let audioCtx: AudioContext | undefined
+function playTick() {
+  audioCtx ??= new AudioContext()
+  const osc = audioCtx.createOscillator()
+  const gain = audioCtx.createGain()
+  osc.type = 'triangle'
+  osc.frequency.value = 1400
+  gain.gain.setValueAtTime(0.045, audioCtx.currentTime)
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.025)
+  osc.connect(gain).connect(audioCtx.destination)
+  osc.start()
+  osc.stop(audioCtx.currentTime + 0.03)
+}
+
+// mirrors the CSS `cubic-bezier(0.22, 0.9, 0.3, 1)` driving the reel transform,
+// so ticks land exactly on the cells the eye sees passing (fast start, slow stop)
+function cubicBezierEasing(p1x: number, p1y: number, p2x: number, p2y: number) {
+  const a = (a1: number, a2: number) => 1 - 3 * a2 + 3 * a1
+  const b = (a1: number, a2: number) => 3 * a2 - 6 * a1
+  const c = (a1: number) => 3 * a1
+  const bezier = (t: number, a1: number, a2: number) => ((a(a1, a2) * t + b(a1, a2)) * t + c(a1)) * t
+  const slope = (t: number, a1: number, a2: number) => 3 * a(a1, a2) * t * t + 2 * b(a1, a2) * t + c(a1)
+  return (x: number) => {
+    if (x <= 0) return 0
+    if (x >= 1) return 1
+    let t = x
+    for (let i = 0; i < 8; i++) {
+      const currentSlope = slope(t, p1x, p2x)
+      if (Math.abs(currentSlope) < 1e-6) break
+      t -= (bezier(t, p1x, p2x) - x) / currentSlope
+    }
+    return bezier(t, p1y, p2y)
+  }
+}
+const reelEasing = cubicBezierEasing(0.22, 0.9, 0.3, 1)
+
+function startTickLoop(totalSteps: number[]) {
+  const startTime = performance.now()
+  const lastCell = [0, 0, 0]
+  const lastReelIndex = totalSteps.length - 1
+  function frame(now: number) {
+    let anyActive = false
+    for (let i = 0; i < 3; i++) {
+      const duration = REEL_DURATIONS_MS[i]!
+      const elapsed = now - startTime
+      if (elapsed >= duration) {
+        if (i === lastReelIndex) playTick()
+        continue
+      }
+      anyActive = true
+      const progress = reelEasing(Math.min(elapsed / duration, 1))
+      const cell = Math.floor(progress * totalSteps[i]!)
+      if (cell > lastCell[i]!) {
+        for (let c = lastCell[i]! + 1; c <= cell; c++) playTick()
+        lastCell[i] = cell
+      }
+    }
+    tickRaf = anyActive ? requestAnimationFrame(frame) : undefined
+  }
+  tickRaf = requestAnimationFrame(frame)
+}
 
 async function spin() {
   if (spinning.value || props.spinsLeft <= 0) return
   emit('spin')
   spinning.value = true
   jackpotFlash.value = false
+  if (tickRaf !== undefined) cancelAnimationFrame(tickRaf)
   const targets = spinReels()
   strips.value = targets.map((target, i) => [reels.value[i]!, ...buildReelStrip(10 + i * 6), target])
   transitions.value = ['none', 'none', 'none']
@@ -41,6 +110,7 @@ async function spin() {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     transitions.value = REEL_DURATIONS_MS.map(d => `transform ${d}ms cubic-bezier(0.22, 0.9, 0.3, 1)`)
     offsets.value = strips.value.map(strip => -(strip.length - 1) * CELL_PX)
+    startTickLoop(strips.value.map(s => s.length - 1))
   }))
   finishTimer = setTimeout(() => {
     reels.value = [...targets]

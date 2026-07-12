@@ -142,6 +142,10 @@ html[data-theme='light'] {
   --card-value-color: #525252;
   --card-bg-color: rgb(255, 255, 255);
   --card-bg-hover: rgb(248, 248, 248);
+  --card-border: 1px solid rgba(0, 0, 0, 0.192);
+  --card-shadow: 0px 1px 2px rgba(0, 0, 0, 0.096);
+  --paper-border: var(--card-border);
+  --paper-shadow: var(--card-shadow);
 }
 
 /* Theme: Cyberdeck — neon terminal. The only theme allowed a (subtle) gradient. */
@@ -386,6 +390,7 @@ body {
     background-image: var(--paper-overlay);
     border: var(--paper-border, none);
     border-radius: var(--radius-paper, 5px);
+    box-shadow: var(--paper-shadow, none);
     overflow: visible;
     transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -539,6 +544,53 @@ body {
     outline: 2px solid var(--primary);
     outline-offset: -2px;
   }
+  html[data-theme='light'] .mui-icon-btn {
+    border: var(--card-border, none);
+    box-shadow: var(--card-shadow, none);
+  }
+  html[data-theme='light'] .bg-appbar .mui-icon-btn,
+  html[data-theme='light'] .mui-paper-header .mui-icon-btn {
+    border: none;
+    box-shadow: none;
+  }
+
+  .mui-icon-group {
+    border: 1px solid var(--border-input);
+    border-radius: 999px;
+    min-width: 128px;
+    min-height: 44px;
+    padding: 2px;
+    gap: 2px;
+  }
+  html[data-theme='light'] .mui-icon-group .mui-icon-btn {
+    border: none;
+    box-shadow: none;
+  }
+
+  .hold-btn {
+    position: relative;
+    overflow: visible;
+  }
+  .hold-ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    transform: rotate(-90deg);
+  }
+  .hold-ring-fill {
+    fill: none;
+    stroke: var(--text-primary);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 106.81;
+    stroke-dashoffset: 106.81;
+  }
+  .hold-btn.is-holding .hold-ring-fill {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1400ms linear;
+  }
 
   .mui-tooltip-content {
     background-color: rgba(97, 97, 97, 0.92);
@@ -580,6 +632,38 @@ body {
     background-color: var(--primary-soft);
     color: var(--text-primary);
   }
+  .mui-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 14px;
+    border-radius: var(--radius-chip, 999px);
+    border: 1px solid var(--border-input);
+    background-color: transparent;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 150ms, background-color 150ms, color 150ms;
+  }
+  .mui-chip:hover {
+    border-color: var(--primary);
+  }
+  .mui-chip.is-selected {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--btn-text, #fff);
+  }
+  .mui-chip.is-disabled {
+    opacity: 0.7;
+    cursor: default;
+  }
+  .mui-chip .mui-chip-check {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
   .mui-shield-tag {
     padding: 3px 8px;
     border-radius: 6px;
@@ -717,6 +801,7 @@ body {
     color: var(--text-body);
     border: var(--card-border, none);
     border-radius: var(--radius-card, 4px);
+    box-shadow: var(--card-shadow, none);
     cursor: pointer;
     display: flex;
     align-items: center;

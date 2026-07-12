@@ -125,14 +125,13 @@ const trend = computed(() => {
 
 function alignmentLevel(a: number): string {
   if (a >= 90) return 'Perfect'
-  if (a >= 75) return 'Very High'
-  if (a >= 60) return 'High'
+  if (a >= 75) return 'High'
   if (a >= 40) return 'Medium'
   return 'Low'
 }
 
 function levelColor(a: number): string {
-  if (a >= 60) return '#43a047'
+  if (a >= 75) return '#43a047'
   if (a >= 40) return '#fbc02d'
   return '#e64a19'
 }
@@ -150,11 +149,13 @@ function valToY(v: number): number {
 
 const REF_LINES = [
   { v: 100, label: 'Perfect', color: '#43a047', dashed: false },
-  { v: 75, label: 'Very High', color: '#43a047', dashed: false },
-  { v: 60, label: 'High', color: '#43a047', dashed: false },
+  { v: 75, label: 'High', color: '#43a047', dashed: false },
   { v: 50, label: 'Medium', color: '#fbc02d', dashed: true },
   { v: 25, label: 'Low', color: '#e64a19', dashed: true },
 ]
+
+interface HoveredDot { x: number; y: number; date: Date; value: number; series: 'DEV' | 'QA' }
+const hoveredDot = ref<HoveredDot | null>(null)
 
 const chartData = computed(() => {
   if (points.value.length < 2) return null
@@ -213,7 +214,7 @@ const xAxisLabels = computed(() => {
     >
       <h2
         id="alignment-trends-modal-title"
-        class="text-mui-h2 font-bold text-white"
+        class="text-mui-h2 font-bold text-primary"
       >
         {{ $t('trends.title') }}
       </h2>
@@ -258,13 +259,13 @@ const xAxisLabels = computed(() => {
                 :icon="trend.dir === 'up' ? 'ic:baseline-trending-up' : trend.dir === 'down' ? 'ic:baseline-trending-down' : 'ic:baseline-trending-flat'"
                 :style="{ fontSize: '1.4rem', color: trend.dir === 'up' ? '#43a047' : trend.dir === 'down' ? '#e64a19' : '#90a4ae' }"
               />
-              <span class="text-lg font-bold text-white">
+              <span class="text-lg font-bold text-primary">
                 {{ trend.dir === 'up' ? $t('trends.up') : trend.dir === 'down' ? $t('trends.down') : $t('trends.stable') }}
               </span>
             </div>
             <span
               v-else
-              class="text-lg font-bold text-white"
+              class="text-lg font-bold text-primary"
             >—</span>
             <span
               v-if="trend"
@@ -296,7 +297,7 @@ const xAxisLabels = computed(() => {
 
           <div class="flex flex-col gap-1 rounded border p-3">
             <span class="text-mui-caption text-muted">{{ $t('trends.estimates') }}</span>
-            <span class="text-2xl font-bold text-white">{{ estimatesCount }}</span>
+            <span class="text-2xl font-bold text-primary">{{ estimatesCount }}</span>
             <span class="text-mui-caption text-muted">{{ $t('trends.currentPeriod') }}</span>
           </div>
         </div>
@@ -333,7 +334,7 @@ const xAxisLabels = computed(() => {
                 v-for="r in (['30D', '90D', '6M', '1Y'] as const)"
                 :key="r"
                 class="rounded px-2 py-0.5 text-mui-caption font-medium transition-colors"
-                :class="timeRange === r ? 'bg-elevated text-white' : 'text-muted hover:text-body'"
+                :class="timeRange === r ? 'bg-elevated text-primary' : 'text-muted hover:text-body'"
                 @click="timeRange = r"
               >
                 {{ r }}
@@ -347,7 +348,7 @@ const xAxisLabels = computed(() => {
           >
             <button
               class="rounded px-3 py-0.5 text-mui-caption font-medium transition-colors"
-              :class="deckFilter === null ? 'bg-elevated text-white' : 'text-muted hover:text-body'"
+              :class="deckFilter === null ? 'bg-elevated text-primary' : 'text-muted hover:text-body'"
               @click="deckFilter = null"
             >
               {{ $t('history.filter.allDecks') }}
@@ -356,7 +357,7 @@ const xAxisLabels = computed(() => {
               v-for="deck in availableDecks"
               :key="deck"
               class="rounded px-3 py-0.5 text-mui-caption font-medium transition-colors"
-              :class="deckFilter === deck ? 'bg-elevated text-white' : 'text-muted hover:text-body'"
+              :class="deckFilter === deck ? 'bg-elevated text-primary' : 'text-muted hover:text-body'"
               @click="deckFilter = deck"
             >
               {{ deckName(deck) }}
@@ -432,16 +433,29 @@ const xAxisLabels = computed(() => {
               stroke-linejoin="round"
               stroke-linecap="round"
             />
-            <circle
+            <g
               v-for="(dot, i) in chartData.devDots"
               :key="`dev-${i}`"
-              :cx="dot.x"
-              :cy="dot.y"
-              r="3"
-              fill="#26a69a"
-              stroke="#1a1a2e"
-              stroke-width="1.5"
-            />
+            >
+              <circle
+                :cx="dot.x"
+                :cy="dot.y"
+                r="3"
+                fill="#26a69a"
+                stroke="#1a1a2e"
+                stroke-width="1.5"
+                style="pointer-events: none;"
+              />
+              <circle
+                :cx="dot.x"
+                :cy="dot.y"
+                r="8"
+                fill="transparent"
+                style="cursor: pointer;"
+                @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'DEV' }"
+                @mouseleave="hoveredDot = null"
+              />
+            </g>
 
             <!-- QA line -->
             <polyline
@@ -453,16 +467,62 @@ const xAxisLabels = computed(() => {
               stroke-linejoin="round"
               stroke-linecap="round"
             />
-            <circle
+            <g
               v-for="(dot, i) in chartData.qaDots"
               :key="`qa-${i}`"
-              :cx="dot.x"
-              :cy="dot.y"
-              r="3"
-              fill="#ffa726"
-              stroke="#1a1a2e"
-              stroke-width="1.5"
-            />
+            >
+              <circle
+                :cx="dot.x"
+                :cy="dot.y"
+                r="3"
+                fill="#ffa726"
+                stroke="#1a1a2e"
+                stroke-width="1.5"
+                style="pointer-events: none;"
+              />
+              <circle
+                :cx="dot.x"
+                :cy="dot.y"
+                r="8"
+                fill="transparent"
+                style="cursor: pointer;"
+                @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'QA' }"
+                @mouseleave="hoveredDot = null"
+              />
+            </g>
+
+            <!-- Hover tooltip -->
+            <g
+              v-if="hoveredDot"
+              :transform="`translate(${Math.min(Math.max(hoveredDot.x, PAD.left + 34), VB_W - PAD.right - 34)}, ${Math.max(hoveredDot.y - 34, PAD.top + 14)})`"
+              style="pointer-events: none;"
+            >
+              <rect
+                x="-34"
+                y="-16"
+                width="68"
+                height="30"
+                rx="4"
+                fill="#1a1a2e"
+                stroke="#546e7a"
+                stroke-width="1"
+              />
+              <text
+                x="0"
+                y="-4"
+                fill="#fff"
+                font-size="10"
+                font-weight="600"
+                text-anchor="middle"
+              >{{ hoveredDot.series }} {{ hoveredDot.value }}</text>
+              <text
+                x="0"
+                y="8"
+                fill="#b0bec5"
+                font-size="9"
+                text-anchor="middle"
+              >{{ dateFmt.format(hoveredDot.date) }}</text>
+            </g>
           </svg>
         </div>
       </template>

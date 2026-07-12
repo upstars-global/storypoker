@@ -609,7 +609,7 @@ async function submitRenameRoom() {
           v-if="roomState?.phase === 'revealed'"
           :votes="voteCounts"
           :grouped-votes="groupedVoteCounts"
-          :show-new-round="true"
+          :show-new-round="isModerator"
           :poll-question="isPollDeck ? (roomState.poll_question ?? null) : null"
           :disable-celebration="isPollDeck"
           :show-alignment="!isPollDeck"

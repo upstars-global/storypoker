@@ -156,7 +156,7 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
     >
       <h2
         id="history-modal-title"
-        class="text-center text-mui-h2 font-bold text-white"
+        class="text-center text-mui-h2 font-bold text-primary"
       >
         {{ $t('history.title') }}
       </h2>
@@ -170,7 +170,7 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
                 :key="year"
                 class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
                 :class="selectedYear === year
-                  ? 'bg-elevated text-white'
+                  ? 'bg-elevated text-primary'
                   : 'text-muted hover:text-body'"
                 @click="selectedYear = year; selectedQuarter = null"
               >
@@ -183,7 +183,7 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
                 :key="q"
                 class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
                 :class="selectedQuarter === q
-                  ? 'bg-elevated text-white'
+                  ? 'bg-elevated text-primary'
                   : 'text-muted hover:text-body'"
                 @click="selectedQuarter = selectedQuarter === q ? null : q"
               >
@@ -212,7 +212,7 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
           <button
             class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
             :class="deckFilter === null
-              ? 'bg-elevated text-white'
+              ? 'bg-elevated text-primary'
               : 'text-muted hover:text-body'"
             @click="deckFilter = null"
           >
@@ -223,7 +223,7 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
             :key="deck"
             class="rounded px-3 py-1 text-mui-caption font-medium transition-colors"
             :class="deckFilter === deck
-              ? 'bg-elevated text-white'
+              ? 'bg-elevated text-primary'
               : 'text-muted hover:text-body'"
             @click="deckFilter = deck"
           >
@@ -269,7 +269,7 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
             class="flex flex-col gap-2 rounded border p-3"
             data-testid="history-round"
           >
-            <div class="flex items-center justify-between gap-3 text-mui-body text-white">
+            <div class="flex items-center justify-between gap-3 text-mui-body text-primary">
               <div class="flex items-center gap-2">
                 <span>{{ dateFmt.format(new Date(r.revealedAt)) }}</span>
                 <span class="text-muted">·</span>

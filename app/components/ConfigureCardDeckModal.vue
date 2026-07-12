@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
+import AppIcon from '~/components/AppIcon.vue'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
 import { useCardLabel } from '~/composables/useCardLabel'
 
@@ -67,7 +68,7 @@ function save() {
     >
       <h2
         id="card-deck-modal-title"
-        class="text-center text-mui-h2 font-bold text-white"
+        class="text-center text-mui-h2 font-bold text-primary"
       >
         {{ $t('deck.configure') }}
       </h2>
@@ -93,38 +94,43 @@ function save() {
         v-if="isVoting"
         class="flex flex-col items-center gap-6 mt-8 mb-2"
       >
-        <div class="flex flex-col items-start gap-3">
-          <label
-            v-for="card in VOTING_BASE_CARDS"
-            :key="card"
-            class="flex items-center gap-3 text-mui-body text-white opacity-70 cursor-not-allowed"
-          >
-            <input
-              :id="`voting-base-${card}`"
-              type="checkbox"
-              :name="`voting-base-${card}`"
-              checked
-              disabled
-              style="accent-color: var(--primary); width: 18px; height: 18px;"
+        <div class="flex flex-col items-center gap-2">
+          <span class="text-mui-caption font-semibold uppercase tracking-wide text-muted">
+            {{ $t('deck.alwaysIncluded') }}
+          </span>
+          <div class="flex flex-wrap justify-center gap-2">
+            <span
+              v-for="card in VOTING_BASE_CARDS"
+              :key="card"
+              class="mui-chip is-selected is-disabled"
             >
-            <span>{{ cardLabel(card) }}</span>
-          </label>
+              <AppIcon
+                class="mui-chip-check"
+                icon="ic:baseline-check"
+              />
+              {{ cardLabel(card) }}
+            </span>
+          </div>
         </div>
         <div class="flex flex-col items-center gap-2">
-          <span class="text-mui-caption font-semibold uppercase tracking-wide text-white">
+          <span class="text-mui-caption font-semibold uppercase tracking-wide text-primary">
             {{ $t('poll.thirdCard') }}
           </span>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <button
               v-for="card in VOTING_THIRD_CARDS"
               :key="card"
               type="button"
-              class="mui-shield"
-              style="padding: 6px 16px; font-size: 1.25rem;"
+              class="mui-chip"
               :class="{ 'is-selected': votingThird === card }"
               :aria-pressed="votingThird === card"
               @click="setVotingThird(card)"
             >
+              <AppIcon
+                v-if="votingThird === card"
+                class="mui-chip-check"
+                icon="ic:baseline-check"
+              />
               {{ card }}
             </button>
           </div>
@@ -140,23 +146,29 @@ function save() {
       </div>
       <div
         v-else
-        class="grid grid-cols-3 gap-x-8 gap-y-3 mt-8 mb-2 mx-auto"
-        style="max-width: 380px;"
+        class="flex flex-wrap justify-center gap-2 mt-8 mb-2 mx-auto"
+        style="max-width: 420px;"
       >
         <label
           v-for="card in currentDeck.cards"
           :key="card"
-          class="flex items-center gap-3 cursor-pointer text-mui-body text-white"
+          class="mui-chip"
+          :class="{ 'is-selected': selected.includes(card) }"
         >
           <input
             :id="`deck-card-${card}`"
             type="checkbox"
             :name="`deck-card-${card}`"
             :checked="selected.includes(card)"
-            style="accent-color: var(--primary); width: 18px; height: 18px;"
+            class="sr-only"
             @change="toggle(card)"
           >
-          <span>{{ card }}</span>
+          <AppIcon
+            v-if="selected.includes(card)"
+            class="mui-chip-check"
+            icon="ic:baseline-check"
+          />
+          {{ card }}
         </label>
       </div>
 

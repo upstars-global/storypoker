@@ -99,7 +99,7 @@ RLS зараз public read/write для anon key; логіка в клієнті
 
 ## Round History
 
-`reveal()` оновлює `room_state.phase='revealed'` і пише `round_history` зі snapshot `{player_id,name,vote}[]` тільки коли `votes.length >= 2`. `?` і `☕` рахуються як голоси. Snapshot містить `name`, щоб історія лишалась читабельною після rename/leave.
+`reveal()` оновлює `room_state.phase='revealed'` і пише `round_history` зі snapshot `{player_id,name,vote}[]` тільки коли `votes.length >= 2`. `?` і `☕` рахуються як голоси. Snapshot містить `name`, щоб історія лишалась читабельною після rename/leave. Also зберігає `active_cards`/`deck_preset` знятого раунду. Формули `alignmentScore`/`averageOf`, CSV export (`HistoryModal.vue`) і pipeline графіка узгодженості (`AlignmentTrendsModal.vue`) — `DESIGN.md` §11.3–11.5.
 
 ## State Management
 
@@ -123,7 +123,7 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 - `rooms:<roomId>` → sync `slug/name`, redirect між id і slug
 - `user_profiles:<roomId>` → `profilesStore.applyChange`
 - `room:<roomId>` Presence → online players
-- `countdown:<roomId>` broadcast (`self:true`) → синхронний відлік перед reveal; initiator викликає `reveal()`
+- `countdown:<roomId>` broadcast (`self:true`) → синхронний відлік перед reveal; initiator викликає `reveal()`. Hold-to-start UI (silent/dry/wet, `useCountdown.ts`) — `DESIGN.md` §11.6
 
 Після `'reconnecting' → 'online'` виконується reconciliation refetch. Optimistic vote пишеться в `pendingVotes[playerId]`, success/realtime ACK очищає запис, error робить rollback.
 
@@ -190,9 +190,9 @@ Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `ap
 
 ## Roles
 
-- **Player:** vote, rename self, leave room; **усі контроли раунду доступні всім**: reveal, start new round, reset votes, countdown (з режимами), last-round toggle
-- **Moderator:** configure deck, kick players, poll question setup, контролі таймера; own moderator toggle доступний у меню гравця
-- **Authorized moderator:** rename room, rename other players, set slug/name; контролі таймера (reset/pause/resume/±30s)
+- **Player:** vote, rename self, set own shields, leave room, **toggle own moderator flag** (self-promote/demote — доступно будь-кому, не лише поточному модератору); history/trends/theme/language/widget/slot — без ролевих обмежень
+- **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet), start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s) — усе гейтиться `v-if="isModerator"` в `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
+- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, rename other players + set їхні shields. Детальна матриця — `DESIGN.md` §11.1–11.2
 - **Shields:** `app/utils/shields.ts` — роль обирається з `PLAYER_ROLES` (бейджі-селектор у PlayerEditModal) і пишеться як один shield у `players.shields` через `shieldForRoleTag()` (кастомні — префікс `custom:`); `SHIELD_CATALOG` (групи role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` виводить QA-гравців в окрему пилу
 - **Consensus:** при QA-розщепленні салют + decision-sound тригерять, якщо **хоча б одна** група (DEV/QA) одноголосна; без QA — всі голоси однакові (≥ 2). Логіка в `utils/resultCelebration.ts → shouldCelebrateGroupedVotes`; sound через `isConsensus` у `pages/[slug].vue`
 

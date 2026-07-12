@@ -103,7 +103,7 @@ watch(celebrate, (next, prev) => {
     </div>
     <h3
       v-if="pollQuestion"
-      class="text-center text-mui-h2 font-bold text-white"
+      class="text-center text-mui-h2 font-bold text-primary"
       data-testid="poll-question"
     >
       {{ pollQuestion }}
@@ -127,7 +127,7 @@ watch(celebrate, (next, prev) => {
             :style="{ fontSize: `${Math.max(Math.min(b.size * 0.22, b.size * 1.2 / Math.max(cardLabel(b.card).length, 1)), 9)}px`, wordBreak: 'break-word', padding: '0 8px' }"
           >{{ cardLabel(b.card) }}</span>
         </div>
-        <span class="text-white font-medium text-base">{{ b.count }}</span>
+        <span class="text-primary font-medium text-base">{{ b.count }}</span>
       </div>
     </div>
     <div
