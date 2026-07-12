@@ -73,7 +73,9 @@ const reelEasing = cubicBezierEasing(0.22, 0.9, 0.3, 1)
 function startTickLoop(totalSteps: number[]) {
   const startTime = performance.now()
   const lastCell = [0, 0, 0]
+  const lastCellTickTime = [0, 0, 0]
   const lastReelIndex = totalSteps.length - 1
+  let finalLeadTickDone = false
   function frame(now: number) {
     let anyActive = false
     for (let i = 0; i < 3; i++) {
@@ -89,6 +91,14 @@ function startTickLoop(totalSteps: number[]) {
       if (cell > lastCell[i]!) {
         for (let c = lastCell[i]! + 1; c <= cell; c++) playTick()
         lastCell[i] = cell
+        lastCellTickTime[i] = elapsed
+      }
+      if (i === lastReelIndex && !finalLeadTickDone) {
+        const leadPoint = lastCellTickTime[i]! + (duration - lastCellTickTime[i]!) * 0.35
+        if (elapsed >= leadPoint) {
+          playTick()
+          finalLeadTickDone = true
+        }
       }
     }
     tickRaf = anyActive ? requestAnimationFrame(frame) : undefined
