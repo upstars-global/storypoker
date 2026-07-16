@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Побудувати веб-застосунок Story Poker з реалтайм синхронізацією через Supabase — від головної сторінки до повного флоу голосування.
+**Goal:** Побудувати веб-застосунок Story Poker з реалтайм синхронізацією через Supabase - від головної сторінки до повного флоу голосування.
 
 **Architecture:** Nuxt 4 SPA без власного бекенду. Весь стан зберігається в Supabase Postgres, синхронізація між клієнтами через Supabase Realtime subscriptions. Анонімна ідентифікація гравців через localStorage, авторизація через Supabase Auth (email+пароль) для розблокування функції Kick Player.
 
@@ -147,7 +147,7 @@ git commit -m "feat: init Nuxt 4 project with Tailwind and base config"
 
 ---
 
-## Task 2: Supabase — схема БД та клієнт
+## Task 2: Supabase - схема БД та клієнт
 
 **Files:**
 - Create: `supabase/migrations/001_initial_schema.sql`
@@ -268,7 +268,7 @@ git commit -m "feat: add Supabase schema and client plugin"
 
 ---
 
-## Task 3: Утиліти — roomId та relativeTime
+## Task 3: Утиліти - roomId та relativeTime
 
 **Files:**
 - Create: `app/utils/roomId.ts`
@@ -310,7 +310,7 @@ git commit -m "feat: add roomId generator and relativeTime util"
 
 ---
 
-## Task 4: Composable — useAuth
+## Task 4: Composable - useAuth
 
 **Files:**
 - Create: `app/composables/useAuth.ts`
@@ -357,7 +357,7 @@ git commit -m "feat: add useAuth composable"
 
 ---
 
-## Task 5: Composable — useDylanAvatar
+## Task 5: Composable - useDylanAvatar
 
 **Files:**
 - Create: `app/composables/useDylanAvatar.ts`
@@ -395,7 +395,7 @@ git commit -m "feat: add useDylanAvatar composable with DiceBear Dylan"
 
 ---
 
-## Task 6: Composable — usePlayer
+## Task 6: Composable - usePlayer
 
 **Files:**
 - Create: `app/composables/usePlayer.ts`
@@ -509,7 +509,7 @@ git commit -m "feat: add usePlayer composable"
 
 ---
 
-## Task 7: Composable — useRoom
+## Task 7: Composable - useRoom
 
 **Files:**
 - Create: `app/composables/useRoom.ts`
@@ -681,7 +681,7 @@ async function createRoom() {
 - [ ] **Step 2: Відкрити `http://localhost:3000` і перевірити**
 
 - Поле порожнє → клік "Create Room" → рамка стає червоною
-- Ввести ім'я → клік → редірект на `/room/[id]` (404 поки що — це нормально)
+- Ввести ім'я → клік → редірект на `/room/[id]` (404 поки що - це нормально)
 - Перевірити в Supabase Dashboard що у таблицях `rooms`, `room_state`, `players` з'явились записи
 
 - [ ] **Step 3: Зкомітити**
@@ -832,7 +832,7 @@ function close() { showMenu.value = false }
           class="text-green-500 w-4 h-4 flex-shrink-0"
         />
       </template>
-      <span v-else class="text-sm text-gray-300 flex-shrink-0">{{ player.vote ?? '—' }}</span>
+      <span v-else class="text-sm text-gray-300 flex-shrink-0">{{ player.vote ?? '-' }}</span>
     </template>
     <Icon v-else name="mdi:wifi-off" class="text-gray-600 w-4 h-4 flex-shrink-0" />
 
@@ -1396,7 +1396,7 @@ git commit -m "feat: add JoinOverlay component"
 
 ---
 
-## Task 19: Сторінка кімнати — фінальна збірка
+## Task 19: Сторінка кімнати - фінальна збірка
 
 **Files:**
 - Create: `app/pages/room/[slug].vue`
@@ -1624,7 +1624,7 @@ async function handleSaveCardDeck(cards: string[]) {
 
 ```bash
 git add app/pages/room/
-git commit -m "feat: add room page — full voting flow"
+git commit -m "feat: add room page - full voting flow"
 ```
 
 ---
@@ -1640,7 +1640,7 @@ git commit -m "feat: add room page — full voting flow"
 cat .gitignore | grep .env
 ```
 
-Якщо немає — додати:
+Якщо немає - додати:
 ```
 .env
 .env.local

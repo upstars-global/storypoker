@@ -6,18 +6,24 @@ _Vibe Story Poker - Every story point counts_
 
 A web-based planning poker tool that helps Scrum and Agile teams estimate tasks in a fun, collaborative, and efficient way.
 
-### Used
-* [Vue](https://vuejs.org)
-* [Vite](https://vitejs.dev)
-* [Pinia](https://pinia.vuejs.org)
-* [Vue Router](https://router.vuejs.org)
-* [Vue I18n](https://vue-i18n.intlify.dev)
-* [Tailwind](https://tailwindcss.com)
-* [Supabase](https://supabase.com)
-* [Netlify](https://netlify.com)
-* [Iconify](https://icon-sets.iconify.design)
-* [DiceBear](https://www.dicebear.com/)
-* [v-wave](https://v-wave.graham42.com)
+### Used:
+* <img src="https://cdn.simpleicons.org/nodedotjs" width="16" height="16"> [Node.js](https://nodejs.org)
+* <img src="https://cdn.simpleicons.org/typescript" width="16" height="16"> [TypeScript](https://www.typescriptlang.org)
+* <img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"> [Vue](https://vuejs.org)
+* <img src="https://cdn.simpleicons.org/vite" width="16" height="16"> [Vite](https://vitejs.dev)
+* <img src="https://cdn.simpleicons.org/pinia" width="16" height="16"> [Pinia](https://pinia.vuejs.org)
+* <img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"> [Vue Router](https://router.vuejs.org)
+* <img src="https://api.iconify.design/logos/i18next.svg" width="16" height="16"> [Vue I18n](https://vue-i18n.intlify.dev)
+* <img src="https://cdn.simpleicons.org/tailwindcss" width="16" height="16"> [Tailwind](https://tailwindcss.com)
+* <img src="https://cdn.simpleicons.org/pwa" width="16" height="16"> [Vite PWA](https://vite-pwa-org.netlify.app)
+* <img src="https://cdn.simpleicons.org/supabase" width="16" height="16"> [Supabase](https://supabase.com)
+* <img src="https://cdn.simpleicons.org/netlify" width="16" height="16"> [Netlify](https://netlify.com)
+* <img src="https://cdn.simpleicons.org/iconify" width="16" height="16"> [Iconify](https://icon-sets.iconify.design)
+* <img src="https://cdn.simpleicons.org/simpleicons" width="16" height="16"> [Simple Icons](https://simpleicons.org)
+* <img src="https://api.iconify.design/tabler/mood-smile.svg" width="16" height="16"> [DiceBear](https://www.dicebear.com/)
+* <img src="https://api.iconify.design/tabler/ripple.svg" width="16" height="16"> [v-wave](https://v-wave.graham42.com)
+* <img src="https://cdn.simpleicons.org/vitest" width="16" height="16"> [Vitest](https://vitest.dev)
+* <img src="https://api.iconify.design/logos/playwright.svg" width="16" height="16"> [Playwright](https://playwright.dev)
 
 ### Install
 ```bash
@@ -52,61 +58,11 @@ claude --dangerously-skip-permissions
 ```
 
 ### Skills
-```bash
-# META
-npx skills add anthropics/claude-plugins-official -s claude-md-improver -a codex claude-code -y
-
-# FRONTEND
-npx skills add anthropics/skills -s frontend-design -a codex claude-code -y
-# npx skills add giuseppe-trisciuoglio/developer-kit -s tailwind-css-patterns -a codex claude-code -y
-# npx skills add skilld-dev/vue-ecosystem-skills -s reka-ui-skilld -a codex claude-code -y
-# npx skills add unovue/shadcn-vue -s shadcn-vue -a codex claude-code -y
-
-# TESTS
-# npx skills add anthropics/skills -s webapp-testing -a codex claude-code -y
-npx skills add sentimony/skills -s web-debug -a codex claude-code -y
-# npx skills add antfu/skills -s vitest -a codex claude-code -y
-npx skills add sentimony/skills -s vitest -a codex claude-code -y
-# npx skills add currents-dev/playwright-best-practices-skill -a codex claude-code -y
-
-# SUPABASE
-# npx skills add supabase/agent-skills -s supabase -a codex claude-code -y
-# npx skills add supabase/agent-skills -s supabase-postgres-best-practices -a codex claude-code -y
-
-# WORKFLOW
-npx skills add obra/superpowers -s brainstorming -a codex claude-code -y
-npx skills add obra/superpowers -s writing-plans -a codex claude-code -y
-# npx skills add obra/superpowers -s dispatching-parallel-agents -a codex claude-code -y
-npx skills add obra/superpowers -s executing-plans -a codex claude-code -y
-# npx skills add obra/superpowers -s subagent-driven-development -a codex claude-code -y
-npx skills add obra/superpowers -s systematic-debugging -a codex claude-code -y
-npx skills add obra/superpowers -s test-driven-development -a codex claude-code -y
-npx skills add obra/superpowers -s using-git-worktrees -a codex claude-code -y
-npx skills add obra/superpowers -s verification-before-completion -a codex claude-code -y
-npx skills add obra/superpowers -s receiving-code-review -a codex claude-code -y
-npx skills add obra/superpowers -s requesting-code-review -a codex claude-code -y
-npx skills add obra/superpowers -s finishing-a-development-branch -a codex claude-code -y
-
-# TYPESCRIPT
-# npx skills add sickn33/antigravity-awesome-skills -s typescript-expert -a codex claude-code -y
-npx skills add sentimony/skills -s typescript -a codex claude-code -y
-
-# DESIGN
-# npx skills add better-auth/better-icons -s better-icons -a codex claude-code -y
-# npx skills add wshobson/agents -s tailwind-design-system -a codex claude-code -y
-# npx impeccable skills install
-# uninstall
-# npx impeccable skills uninstall
-
-# TOKENOMICS
-# npx skills add forrestchang/andrej-karpathy-skills -s karpathy-guidelines -a codex claude-code -y
-# npx skills add dietrichgebert/ponytail -s ponytail -a codex claude-code -y
-```
+* [scripts/skills.sh](scripts/skills.sh)
 
 ### Як подивитись скільки і яких скілів використовували агенти
 ```bash
 npm i -g skillio
-
 skl usg -p 3h
 ```
 

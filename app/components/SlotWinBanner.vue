@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import AppIcon from '~/components/AppIcon.vue'
 import { createCelebrationParticles, type CelebrationParticle } from '~/utils/resultCelebration'
 
 const props = defineProps<{
@@ -41,7 +42,11 @@ watch(() => props.burstKey, () => {
       />
     </div>
     <div class="mui-paper shadow-8 px-4 py-1.5 text-mui-body text-primary flex items-center gap-2 whitespace-nowrap">
-      <span>{{ symbol }}{{ symbol }}{{ symbol }}</span>
+      <span class="inline-flex items-center gap-0.5 text-primary">
+        <AppIcon :icon="symbol" />
+        <AppIcon :icon="symbol" />
+        <AppIcon :icon="symbol" />
+      </span>
       <span class="font-semibold">{{ $t('slot.jackpot', { name }) }}</span>
     </div>
   </div>

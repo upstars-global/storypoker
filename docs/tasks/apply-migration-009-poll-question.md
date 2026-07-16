@@ -1,11 +1,11 @@
 # Задача для Claude Code: застосувати міграцію 009 (poll_question)
 
 > Хендоф для тіммейта. Передай цей файл своїй сесії Claude Code (або виконай кроки вручну).
-> Мова спілкування в репозиторії — українська.
+> Мова спілкування в репозиторії - українська.
 
 ## Контекст
 
-Додано нову фічу — колода **«Голосовалка»** (Planning Poker, репозиторій `storypoker`).
+Додано нову фічу - колода **«Голосовалка»** (Planning Poker, репозиторій `storypoker`).
 Код уже в `main`, але **неробочий**, бо в БД Supabase бракує колонки `room_state.poll_question`.
 
 Міграції накатуються **вручну** (див. `CLAUDE.md` → Database). Файл міграції вже є в репо:
@@ -27,7 +27,7 @@
 
 Застосувати міграцію `009` до **prod** Supabase-проєкту (і до тестового проєкту в `.env/.env.test`, якщо ганяєте E2E).
 
-### Варіант A — Supabase SQL Editor (найшвидше)
+### Варіант A - Supabase SQL Editor (найшвидше)
 
 Відкрити **Supabase Dashboard → SQL Editor** потрібного проєкту і виконати:
 
@@ -36,14 +36,14 @@ alter table room_state
   add column if not exists poll_question text;
 ```
 
-### Варіант B — Supabase CLI (якщо проєкт залінковано)
+### Варіант B - Supabase CLI (якщо проєкт залінковано)
 
 ```bash
 npx supabase link --project-ref <PROJECT_REF>   # одноразово
 npx supabase db push
 ```
 
-### Варіант C — пряме підключення (якщо є connection string з паролем БД)
+### Варіант C - пряме підключення (якщо є connection string з паролем БД)
 
 ```bash
 psql "<POSTGRES_CONNECTION_STRING>" -f supabase/migrations/009_room_state_poll_question.sql

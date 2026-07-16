@@ -234,14 +234,14 @@ async function createRoom() {
                 <span
                   v-else
                   class="text-muted"
-                >—</span>
+                >-</span>
               </td>
               <td class="px-3 py-3 align-top whitespace-nowrap tabular-nums">
                 <span v-if="room.roundsCount">{{ room.roundsCount }}</span>
                 <span
                   v-else
                   class="text-muted"
-                >—</span>
+                >-</span>
               </td>
               <td class="px-3 py-3 align-top whitespace-nowrap tabular-nums">
                 <span
@@ -252,10 +252,10 @@ async function createRoom() {
                 <span
                   v-else
                   class="text-muted"
-                >—</span>
+                >-</span>
               </td>
               <td class="px-3 py-3 align-top text-right whitespace-nowrap text-muted">
-                {{ room.lastVisitedAt ? relativeTime(room.lastVisitedAt) : '—' }}
+                {{ room.lastVisitedAt ? relativeTime(room.lastVisitedAt) : '-' }}
               </td>
             </tr>
           </tbody>

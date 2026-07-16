@@ -94,7 +94,7 @@ const holdingMode = ref<CountdownMode | null>(null)
 let holdTimeout: number | undefined
 
 // once the countdown finishes naturally, `reveal()` still needs a realtime
-// round-trip before `phase` flips to 'revealed' — without this flag the mode
+// round-trip before `phase` flips to 'revealed' - without this flag the mode
 // buttons would flash back in for that gap before CardsArea unmounts
 const revealPending = ref(false)
 watch(() => props.countdownRunning, (running, wasRunning) => {

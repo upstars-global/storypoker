@@ -4,7 +4,7 @@
 
 **Goal:** Migrate Story Poker з Nuxt 4 SSG на pure Vue 3 + Vite 6 SPA без зміни UI/UX/функціональності.
 
-**Architecture:** Big-bang міграція на гілці `vue-and-vite`. Кожен таск = один коміт. Repo не запускається з кінця Task 1 до завершення Task 7 — це нормально, big-bang дозволяє це. Sanity-run `npm run dev` після Task 7. Vitest standalone (працює одразу). E2E прогоняємо тільки після Task 10.
+**Architecture:** Big-bang міграція на гілці `vue-and-vite`. Кожен таск = один коміт. Repo не запускається з кінця Task 1 до завершення Task 7 - це нормально, big-bang дозволяє це. Sanity-run `npm run dev` після Task 7. Vitest standalone (працює одразу). E2E прогоняємо тільки після Task 10.
 
 **Tech Stack:** Vue 3.5, Vite 6, vue-router 5, Pinia 3, vue-i18n 10 (runtime compilation), @iconify/vue 4, Tailwind v3 (PostCSS), ESLint 9 flat config, Vitest 4, Playwright 1.60.
 
@@ -24,7 +24,7 @@ du -sh .output/public/_nuxt 2>/dev/null
 find .output/public/_nuxt -name '*.js' -exec wc -c {} + | tail -1
 ```
 
-Запиши результат — потім в Task 11 порівняємо з `dist/assets`.
+Запиши результат - потім в Task 11 порівняємо з `dist/assets`.
 
 - [ ] **Step 0.2: Verify clean working tree**
 
@@ -45,7 +45,7 @@ git branch --show-current
 - Modify: `package.json` (deps + scripts)
 - Delete: `nuxt.config.ts`, `.nuxt/`, `.output/`
 
-Repo після цього таску ще не запускається — підкреслюємо тільки скелет.
+Repo після цього таску ще не запускається - підкреслюємо тільки скелет.
 
 - [ ] **Step 1.1: Update package.json deps + scripts**
 
@@ -109,7 +109,7 @@ Repo після цього таску ще не запускається — п�
 ```
 
 Removed: `nuxt`, `@nuxt/eslint`, `@nuxt/icon`, `@nuxtjs/i18n`, `@nuxtjs/tailwindcss`, `@pinia/nuxt`.
-Added (devDeps): `@vitejs/plugin-vue`, `@vue/eslint-config-typescript`, `autoprefixer`, `eslint-plugin-vue`, `postcss`, `tailwindcss` (явно — раніше тягнувся @nuxtjs/tailwindcss), `vite`, `vue-eslint-parser`, `vue-tsc`.
+Added (devDeps): `@vitejs/plugin-vue`, `@vue/eslint-config-typescript`, `autoprefixer`, `eslint-plugin-vue`, `postcss`, `tailwindcss` (явно - раніше тягнувся @nuxtjs/tailwindcss), `vite`, `vue-eslint-parser`, `vue-tsc`.
 Added (deps): `@iconify/vue`, `vue-i18n`.
 Kept `dotenv` (потрібен для Playwright).
 
@@ -120,7 +120,7 @@ rm -rf node_modules .nuxt .output package-lock.json
 npm install
 ```
 
-Очікувано: `package-lock.json` створено, install без помилок. Якщо є peer-warnings про vue-router 5.x — це норма (це вже мажор для Vue 3).
+Очікувано: `package-lock.json` створено, install без помилок. Якщо є peer-warnings про vue-router 5.x - це норма (це вже мажор для Vue 3).
 
 - [ ] **Step 1.3: Create vite.config.ts**
 
@@ -242,12 +242,12 @@ git mv i18n app/i18n
 
 ```bash
 mkdir -p public
-# якщо favicon.svg вже в public/ (Nuxt convention) — skip
+# якщо favicon.svg вже в public/ (Nuxt convention) - skip
 if [ -f app/public/favicon.svg ]; then git mv app/public/favicon.svg public/favicon.svg; fi
-if [ -f public/favicon.svg ]; then echo "ok"; else echo "MISSING — find it: find . -name favicon.svg"; fi
+if [ -f public/favicon.svg ]; then echo "ok"; else echo "MISSING - find it: find . -name favicon.svg"; fi
 ```
 
-Якщо `MISSING` — знайди через `find . -name favicon.svg -not -path './node_modules/*'` і перенеси в `public/favicon.svg` через `git mv`.
+Якщо `MISSING` - знайди через `find . -name favicon.svg -not -path './node_modules/*'` і перенеси в `public/favicon.svg` через `git mv`.
 
 - [ ] **Step 1.10: Create app/main.ts (skeleton)**
 
@@ -258,7 +258,7 @@ import App from './App.vue'
 createApp(App).mount('#app')
 ```
 
-Це тимчасовий мінімум — у Task 4 і 5 розширимо.
+Це тимчасовий мінімум - у Task 4 і 5 розширимо.
 
 - [ ] **Step 1.11: Delete Nuxt config**
 
@@ -417,7 +417,7 @@ git commit -m "feat: vue-i18n bootstrap + pinia wiring"
 
 ## Task 4: Explicit imports refactor
 
-Найбільший коміт. Кожен SFC/store/composable, що використовував Nuxt auto-imports, отримує явні `import`-и. Виконуй файл за файлом, після кожних 5-7 файлів — sanity-check `npx vue-tsc --noEmit -p tsconfig.json` (очікувано: помилок поменшає поступово).
+Найбільший коміт. Кожен SFC/store/composable, що використовував Nuxt auto-imports, отримує явні `import`-и. Виконуй файл за файлом, після кожних 5-7 файлів - sanity-check `npx vue-tsc --noEmit -p tsconfig.json` (очікувано: помилок поменшає поступово).
 
 ### Маппінг (Nuxt auto-import → явний import)
 
@@ -429,9 +429,9 @@ git commit -m "feat: vue-i18n bootstrap + pinia wiring"
 | `storeToRefs`, `defineStore` | `from 'pinia'` |
 | `useTheme` | `from '~/composables/useTheme'` |
 | `useDylanAvatar` | `from '~/composables/useDylanAvatar'` |
-| `defineNuxtPlugin` | (видаляється — див. Task 7) |
-| `import.meta.client` | (видаляється — завжди true в SPA) |
-| `import.meta.server` | (видаляється — завжди false) |
+| `defineNuxtPlugin` | (видаляється - див. Task 7) |
+| `import.meta.client` | (видаляється - завжди true в SPA) |
+| `import.meta.server` | (видаляється - завжди false) |
 | `useRuntimeConfig().public.X` | (рефакториться в Task 5 під `import.meta.env.VITE_X`) |
 
 **Файли для оновлення (повний список з grep):**
@@ -445,7 +445,7 @@ git commit -m "feat: vue-i18n bootstrap + pinia wiring"
 - `app/components/ResultsArea.vue`
 - `app/components/Timer.vue`
 - `app/components/UserSettingsModal.vue`
-- `app/components/ConnectionBanner.vue` (якщо у `<script setup>` є auto-imports — verify)
+- `app/components/ConnectionBanner.vue` (якщо у `<script setup>` є auto-imports - verify)
 - `app/composables/useTheme.ts`
 - `app/composables/useDylanAvatar.ts`
 - `app/pages/index.vue`
@@ -459,11 +459,11 @@ git commit -m "feat: vue-i18n bootstrap + pinia wiring"
 - `app/stores/players.ts`
 - `app/stores/presence.ts`
 - `app/stores/profiles.ts`
-- `app/lib/supabase-instance.ts` (нічого додавати — він вже з явними імпортами)
+- `app/lib/supabase-instance.ts` (нічого додавати - він вже з явними імпортами)
 
 - [ ] **Step 4.1: Update composables**
 
-`app/composables/useTheme.ts` — заміни весь файл:
+`app/composables/useTheme.ts` - заміни весь файл:
 
 ```ts
 import { ref, computed } from 'vue'
@@ -506,16 +506,16 @@ export function useTheme() {
 }
 ```
 
-`app/composables/useDylanAvatar.ts` — без `import.meta.*` guards, файл вже працює як є (читаючи код, він автономний). Перевір `grep "import.meta" app/composables/useDylanAvatar.ts` — очікувано 0 результатів.
+`app/composables/useDylanAvatar.ts` - без `import.meta.*` guards, файл вже працює як є (читаючи код, він автономний). Перевір `grep "import.meta" app/composables/useDylanAvatar.ts` - очікувано 0 результатів.
 
 - [ ] **Step 4.2: Update stores**
 
 Для КОЖНОГО store файлу (`auth.ts`, `room.ts`, `players.ts`, `presence.ts`, `profiles.ts`):
 
 1. Відкрий файл.
-2. Якщо `defineStore` ще не імпортовано — додай `import { defineStore } from 'pinia'` зверху.
-3. Якщо `ref`/`computed`/etc використовуються — додай `import { ref, computed } from 'vue'` (точний список залежить від файлу — використовуй `grep -oE "\b(ref|computed|reactive|watch|onMounted|onUnmounted|nextTick|toRef|toRefs)\(" app/stores/X.ts | sort -u`).
-4. Якщо `storeToRefs` — додай в той самий pinia import.
+2. Якщо `defineStore` ще не імпортовано - додай `import { defineStore } from 'pinia'` зверху.
+3. Якщо `ref`/`computed`/etc використовуються - додай `import { ref, computed } from 'vue'` (точний список залежить від файлу - використовуй `grep -oE "\b(ref|computed|reactive|watch|onMounted|onUnmounted|nextTick|toRef|toRefs)\(" app/stores/X.ts | sort -u`).
+4. Якщо `storeToRefs` - додай в той самий pinia import.
 
 **Sanity check** після всіх 5 stores:
 
@@ -523,7 +523,7 @@ export function useTheme() {
 npx vue-tsc --noEmit -p tsconfig.json 2>&1 | grep -E "(stores/|error)" | head -30
 ```
 
-Очікувано: store-помилки зникли (можуть лишатись помилки в components/pages — це норма, перейдемо до них).
+Очікувано: store-помилки зникли (можуть лишатись помилки в components/pages - це норма, перейдемо до них).
 
 - [ ] **Step 4.3: Update components (10 файлів)**
 
@@ -534,7 +534,7 @@ npx vue-tsc --noEmit -p tsconfig.json 2>&1 | grep -E "(stores/|error)" | head -3
    grep -oE "\b(ref|computed|reactive|watch|onMounted|onUnmounted|onBeforeUnmount|nextTick|toRef|toRefs|useRoute|useRouter|useI18n|storeToRefs|useTheme|useDylanAvatar)\(" app/components/X.vue | sort -u
    ```
 2. Додай відповідні `import`-и в самий початок `<script setup lang="ts">` (за маппінгом вище).
-3. Прибери все `import.meta.client`/`import.meta.server` — для client guard просто видали умову (код виконається завжди), для server guard видали увесь блок.
+3. Прибери все `import.meta.client`/`import.meta.server` - для client guard просто видали умову (код виконається завжди), для server guard видали увесь блок.
 
 Працюй по 3-4 файли, потім після кожної пачки:
 
@@ -554,9 +554,9 @@ const router = useRouter()
 const urlParam = route.params.slug as string
 ```
 
-Якщо у будь-якій сторінці зустрінеш `navigateTo('/path')` — заміни на `router.push('/path')`.
+Якщо у будь-якій сторінці зустрінеш `navigateTo('/path')` - заміни на `router.push('/path')`.
 
-Якщо `definePageMeta({ ... })` — видали (Nuxt-only).
+Якщо `definePageMeta({ ... })` - видали (Nuxt-only).
 
 - [ ] **Step 4.5: Verify typecheck**
 
@@ -564,7 +564,7 @@ const urlParam = route.params.slug as string
 npx vue-tsc --noEmit -p tsconfig.json
 ```
 
-Очікувано: 0 помилок. Якщо щось лишилось — це або пропущений auto-import (повторити grep), або реальний баг.
+Очікувано: 0 помилок. Якщо щось лишилось - це або пропущений auto-import (повторити grep), або реальний баг.
 
 - [ ] **Step 4.6: Run unit tests**
 
@@ -664,7 +664,7 @@ createApp(App)
 
 Виконай у редакторі: знайди `SUPABASE_URL=` → `VITE_SUPABASE_URL=`, `SUPABASE_KEY=` → `VITE_SUPABASE_KEY=`. НЕ чіпай `SUPABASE_SECRET_KEY`, `SUPABASE_TEST_SERVICE_ROLE_KEY`, `E2E_*`.
 
-**Playwright config:** залиш як є — `playwright.config.ts` пишe `SUPABASE_URL`/`SUPABASE_KEY` в env webServer-а. Onовіть лише саме передавання:
+**Playwright config:** залиш як є - `playwright.config.ts` пишe `SUPABASE_URL`/`SUPABASE_KEY` в env webServer-а. Onовіть лише саме передавання:
 
 Знайди в `playwright.config.ts`:
 ```ts
@@ -683,11 +683,11 @@ env: {
 },
 ```
 
-Fallback на старі імена — для зворотньої сумісності з GitHub Actions secrets (вони називаються `E2E_SUPABASE_URL`/`E2E_SUPABASE_ANON_KEY`, мапяться в `SUPABASE_URL`/`SUPABASE_KEY` в ci.yml — окремо оновимо в Task 10).
+Fallback на старі імена - для зворотньої сумісності з GitHub Actions secrets (вони називаються `E2E_SUPABASE_URL`/`E2E_SUPABASE_ANON_KEY`, мапяться в `SUPABASE_URL`/`SUPABASE_KEY` в ci.yml - окремо оновимо в Task 10).
 
 - [ ] **Step 5.5: Update CLAUDE.md env paragraph**
 
-У `CLAUDE.md` секція `Environment Setup` — поточний приклад:
+У `CLAUDE.md` секція `Environment Setup` - поточний приклад:
 ```
 SUPABASE_URL=...
 SUPABASE_KEY=...
@@ -791,7 +791,7 @@ createApp(App)
    import { Icon } from '@iconify/vue'
    ```
 2. Заміни всі `<Icon name=` на `<Icon icon=` (regex `s/<Icon name=/<Icon icon=/g` в файлі).
-3. Якщо є `<Icon :name="...">` — заміни на `<Icon :icon="...">`.
+3. Якщо є `<Icon :name="...">` - заміни на `<Icon :icon="...">`.
 
 Швидкий sweep (sed in-place, BSD-compatible):
 ```bash
@@ -885,7 +885,7 @@ createApp(App)
   .mount('#app')
 ```
 
-CSS import (`~/assets/css/main.css`) — критичний. Це активує Tailwind та custom styles.
+CSS import (`~/assets/css/main.css`) - критичний. Це активує Tailwind та custom styles.
 
 - [ ] **Step 7.3: Delete Nuxt plugins**
 
@@ -983,7 +983,7 @@ grep -n "nuxt" tailwind.config.ts || echo 'clean'
 npm run lint
 ```
 
-Очікувано: 0 errors (можуть бути warnings — це OK). Якщо є errors про невідому конфігурацію плагіну — перевір що `eslint-plugin-vue` і `@vue/eslint-config-typescript` встановлені.
+Очікувано: 0 errors (можуть бути warnings - це OK). Якщо є errors про невідому конфігурацію плагіну - перевір що `eslint-plugin-vue` і `@vue/eslint-config-typescript` встановлені.
 
 - [ ] **Step 8.4: Run typecheck**
 
@@ -1001,7 +1001,7 @@ npm run test:ci
 
 Це виконає: lint + typecheck + unit tests + vite build.
 
-Очікувано: усе зелене. Якщо build падає — діагностуй конкретну помилку (часто це `~` alias у CSS-import або пропущений explicit import).
+Очікувано: усе зелене. Якщо build падає - діагностуй конкретну помилку (часто це `~` alias у CSS-import або пропущений explicit import).
 
 - [ ] **Step 8.6: Commit**
 
@@ -1103,14 +1103,14 @@ git commit -m "chore: netlify spa + ci update"
 
 ```markdown
 - **Framework:** Vue 3.5 + Vite 6 SPA, Composition API `<script setup>`, `srcDir: app/`
-- **Routing:** `vue-router@5` — явні маршрути в `app/router.ts`, без file-based routing
+- **Routing:** `vue-router@5` - явні маршрути в `app/router.ts`, без file-based routing
 - **Styling:** Tailwind v3 через PostCSS (autoprefixer), токени в `tailwind.config.ts`, MUI-like класи в `app/assets/css/main.css`
   - utilities: `text-{primary,body,muted,disabled,inverse,danger,success}`, `bg-{app,appbar,paper,elevated,overlay,skeleton}`, `border` (DEFAULT = `var(--border)`), `shadow-{1..8}`
   - button modifiers (compose з `.mui-btn`): `.mui-btn-md` (180×46 / 23rad / `#607d8b`), `.mui-btn-sm`, `.mui-btn-text`, `.mui-btn-secondary`
-- **State:** Pinia 3 (без auto-imports — явні `from 'pinia'`)
+- **State:** Pinia 3 (без auto-imports - явні `from 'pinia'`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **i18n:** `vue-i18n@10` (runtime compilation), `legacy: false`, локалі `app/i18n/locales/{uk,en}.json`
-- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`); custom collection `app:` для `moderator`, `deciding`, `offline`, `leave-room` — зареєстровано через `addCollection` у `app/lib/registerAppIcons.ts`; `v-wave`, DiceBear, Roboto 300–700
+- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`); custom collection `app:` для `moderator`, `deciding`, `offline`, `leave-room` - зареєстровано через `addCollection` у `app/lib/registerAppIcons.ts`; `v-wave`, DiceBear, Roboto 300–700
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 ```
 
@@ -1136,11 +1136,11 @@ npm run test:ci      # lint + typecheck + unit + build (CI runs this)
 Перепиши секцію `## Environment Setup`:
 
 ```markdown
-Усі env-файли — у `/.env/` (gitignored, окрім `*.example`):
+Усі env-файли - у `/.env/` (gitignored, окрім `*.example`):
 
-- `/.env/.env.local` — персональні override
-- `/.env/.env` — командні defaults
-- `/.env/.env.test` — креди тестового Supabase project для Playwright
+- `/.env/.env.local` - персональні override
+- `/.env/.env` - командні defaults
+- `/.env/.env.test` - креди тестового Supabase project для Playwright
 - Vite читає через `envDir: '.env'` у `vite.config.ts`
 
 Шаблон:
@@ -1154,7 +1154,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 Клієнтський код читає через `import.meta.env.VITE_*` (тільки змінні з префіксом `VITE_` потрапляють у browser bundle).
 ```
 
-Перепиши секцію `## Project Structure` — заміни Nuxt-структуру на:
+Перепиши секцію `## Project Structure` - заміни Nuxt-структуру на:
 
 ```text
 /
@@ -1187,11 +1187,11 @@ VITE_SUPABASE_KEY=...        # publishable client key
     ├── fixtures/, page-objects/, support/, e2e/
 ```
 
-Видали з CLAUDE.md будь-які згадки `nuxt.config.ts`, `@nuxtjs/*`, `@nuxt/*`, `defineNuxtPlugin`, `useRuntimeConfig`, `<NuxtPage />`, `nuxt generate`, `.output/public`. Якщо CLAUDE.md перевищить 200 рядків — перенеси розширені деталі в DESIGN.md, а в CLAUDE.md залиш короткі посилання.
+Видали з CLAUDE.md будь-які згадки `nuxt.config.ts`, `@nuxtjs/*`, `@nuxt/*`, `defineNuxtPlugin`, `useRuntimeConfig`, `<NuxtPage />`, `nuxt generate`, `.output/public`. Якщо CLAUDE.md перевищить 200 рядків - перенеси розширені деталі в DESIGN.md, а в CLAUDE.md залиш короткі посилання.
 
 - [ ] **Step 10.2: Update README.md**
 
-Знайди в `README.md` згадки `Nuxt`, `nuxt dev`, `nuxt generate` — заміни на Vite-еквіваленти. Якщо є badge "Built with Nuxt" — заміни на "Built with Vue + Vite".
+Знайди в `README.md` згадки `Nuxt`, `nuxt dev`, `nuxt generate` - заміни на Vite-еквіваленти. Якщо є badge "Built with Nuxt" - заміни на "Built with Vue + Vite".
 
 - [ ] **Step 10.3: Update ROADMAP.md**
 
@@ -1210,13 +1210,13 @@ Pure Vue 3 + Vite 6 SPA замість Nuxt 4 SSG. Менший dep-surface, я�
 ## Post-migration tech debt ⏳ planned
 
 ### Tailwind v4
-Перенести з v3 (`@nuxtjs/tailwindcss` спадщина — вже зрізана) на native `@tailwindcss/vite` plugin з CSS-first `@theme` config. Перенести `tailwind.config.ts` у `app/assets/css/main.css`. Візуальна регресійна перевірка через Playwright screenshots (новий iter).
+Перенести з v3 (`@nuxtjs/tailwindcss` спадщина - вже зрізана) на native `@tailwindcss/vite` plugin з CSS-first `@theme` config. Перенести `tailwind.config.ts` у `app/assets/css/main.css`. Візуальна регресійна перевірка через Playwright screenshots (новий iter).
 
 ### vue-i18n precompile
 Перейти з runtime compilation на `@intlify/unplugin-vue-i18n` (precompile messages у render-функції під час build). Швидший runtime + менший bundle + прибере dev warning `[intlify] Runtime compilation is being used`.
 
 ### Bundle metrics
-Зафіксувати в репозиторії before/after сумарного розміру `dist/assets/*.js` після завершення міграції (PR-комент). Якщо bundle gorsche — діагностика через `rollup-plugin-visualizer`.
+Зафіксувати в репозиторії before/after сумарного розміру `dist/assets/*.js` після завершення міграції (PR-комент). Якщо bundle gorsche - діагностика через `rollup-plugin-visualizer`.
 ```
 
 - [ ] **Step 10.4: Run full test:ci**
@@ -1234,7 +1234,7 @@ du -sh dist/assets
 find dist/assets -name '*.js' -exec wc -c {} + | tail -1
 ```
 
-Запиши результат у PR-опис як `Before: <baseline>  After: <new>`. Якщо after > before — додай у ROADMAP TODO для post-migration аналізу через `rollup-plugin-visualizer`.
+Запиши результат у PR-опис як `Before: <baseline>  After: <new>`. Якщо after > before - додай у ROADMAP TODO для post-migration аналізу через `rollup-plugin-visualizer`.
 
 - [ ] **Step 10.6: E2E smoke**
 
@@ -1243,7 +1243,7 @@ find dist/assets -name '*.js' -exec wc -c {} + | tail -1
 npm run test:e2e:smoke
 ```
 
-Очікувано: smoke pack зелений на chromium і webkit. Якщо webkit фейлить через `critical-flows.spec.ts` — це очікувано (testIgnore, P2 у ROADMAP).
+Очікувано: smoke pack зелений на chromium і webkit. Якщо webkit фейлить через `critical-flows.spec.ts` - це очікувано (testIgnore, P2 у ROADMAP).
 
 - [ ] **Step 10.7: Manual UI smoke**
 
@@ -1254,7 +1254,7 @@ npm run build && npm run preview
 Відкрий `http://localhost:3000` і перевір вручну:
 - Home → "Create room" → потрапляє в кімнату з 8-символьним id
 - У кімнаті: тема toggle (dark/light), мова toggle (uk/en), `Configure card deck` modal
-- Голосування: вибір карти, `Reveal` (потрібен другий гравець або соло — `?` рахується)
+- Голосування: вибір карти, `Reveal` (потрібен другий гравець або соло - `?` рахується)
 - Login/Logout, Sign up flow
 - AppHeader avatar editor
 - Recent Rooms на головній
@@ -1284,7 +1284,7 @@ Body має містити:
 - Посилання на spec і plan
 - Bundle-size diff (Before / After з Step 10.5)
 - Чек-лист manual smoke з Step 10.7
-- Note: Tailwind v4 і vue-i18n precompile — у ROADMAP як наступні iters
+- Note: Tailwind v4 і vue-i18n precompile - у ROADMAP як наступні iters
 
 - [ ] **Step P.3: Очисти TaskList**
 
@@ -1294,11 +1294,11 @@ Body має містити:
 
 ## Notes for the executing agent
 
-- **Не намагайся писати нові тести для міграції.** Існуюча suite (unit + E2E) — це регресійний контроль; жодних змін у функціональності не вноситься, тому нові тести не потрібні.
+- **Не намагайся писати нові тести для міграції.** Існуюча suite (unit + E2E) - це регресійний контроль; жодних змін у функціональності не вноситься, тому нові тести не потрібні.
 - **Не торкайся stores API.** Стори лишаються байт-в-байт з функціональної точки зору; додаються тільки `import` statements.
 - **Не змінюй структуру JSON-локалей** і не міняй ключів. Це окрема робота, поза скоупом.
 - **Не намагайся одночасно мігрувати на Tailwind v4.** Це окремий iter, зафіксований у ROADMAP після цієї міграції.
-- **Якщо `git mv` фейлить через `pathspec`** — файл уже міг бути переміщений. Перевір `git status` і `ls` цільового шляху перед повтором.
-- **Якщо `vue-tsc` показує помилки про `import.meta.env`** — додай `/// <reference types="vite/client" />` в `app/main.ts` або переконайся, що `tsconfig.json` має `"types": ["vite/client"]` (Step 1.5).
-- **Якщо `npm run dev` показує `[vue-i18n] Runtime compilation is being used`** — це warning, не error. Лишаємо як є (зафіксовано в ROADMAP як precompile follow-up).
-- **Якщо Iconify icons не рендеряться** — перевір, що `registerAppIcons()` викликається ПЕРЕД `createApp(...).mount(...)` у `main.ts`. Для `ic:baseline-*` нічого додатково не треба — `@iconify-json/ic` встановлений як devDep і `@iconify/vue` ESM лазено резолвить.
+- **Якщо `git mv` фейлить через `pathspec`** - файл уже міг бути переміщений. Перевір `git status` і `ls` цільового шляху перед повтором.
+- **Якщо `vue-tsc` показує помилки про `import.meta.env`** - додай `/// <reference types="vite/client" />` в `app/main.ts` або переконайся, що `tsconfig.json` має `"types": ["vite/client"]` (Step 1.5).
+- **Якщо `npm run dev` показує `[vue-i18n] Runtime compilation is being used`** - це warning, не error. Лишаємо як є (зафіксовано в ROADMAP як precompile follow-up).
+- **Якщо Iconify icons не рендеряться** - перевір, що `registerAppIcons()` викликається ПЕРЕД `createApp(...).mount(...)` у `main.ts`. Для `ic:baseline-*` нічого додатково не треба - `@iconify-json/ic` встановлений як devDep і `@iconify/vue` ESM лазено резолвить.

@@ -1,11 +1,11 @@
 export const SLOT_SYMBOL_WEIGHTS: [symbol: string, weight: number][] = [
-  ['🍒', 5],
-  ['🍋', 5],
-  ['🍊', 4],
-  ['🍇', 4],
-  ['🔔', 3],
-  ['⭐', 2],
-  ['7️⃣', 1],
+  ['tabler:cherry', 5],
+  ['tabler:lemon-2', 5],
+  ['tabler:apple', 4],
+  ['tabler:grape', 4],
+  ['tabler:bell', 3],
+  ['tabler:star', 2],
+  ['tabler:play-card-7', 1],
 ]
 
 export const SLOT_SYMBOLS = SLOT_SYMBOL_WEIGHTS.map(([symbol]) => symbol)

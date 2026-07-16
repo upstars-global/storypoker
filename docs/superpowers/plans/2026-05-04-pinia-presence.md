@@ -15,30 +15,30 @@
 ## File Structure
 
 **Create:**
-- `app/lib/supabase-instance.ts` — singleton getter/setter for SupabaseClient
-- `app/stores/types.ts` — `Player`, `RoomState`, `ConnectionStatus`
-- `app/stores/auth.ts` — auth domain
-- `app/stores/room.ts` — `room_state` + `applyChange` + reveal/start/saveDeck
-- `app/stores/players.ts` — `players[]`, `pendingVotes`, optimistic `castVote`, `applyChange`
-- `app/stores/presence.ts` — connection state machine + Supabase Presence + Visibility/Network handlers
+- `app/lib/supabase-instance.ts` - singleton getter/setter for SupabaseClient
+- `app/stores/types.ts` - `Player`, `RoomState`, `ConnectionStatus`
+- `app/stores/auth.ts` - auth domain
+- `app/stores/room.ts` - `room_state` + `applyChange` + reveal/start/saveDeck
+- `app/stores/players.ts` - `players[]`, `pendingVotes`, optimistic `castVote`, `applyChange`
+- `app/stores/presence.ts` - connection state machine + Supabase Presence + Visibility/Network handlers
 - `app/stores/__tests__/players.spec.ts`
 - `app/stores/__tests__/room.spec.ts`
 - `app/stores/__tests__/presence.spec.ts`
 - `app/components/ConnectionBanner.vue`
 - `supabase/migrations/002_drop_is_online.sql`
 - `vitest.config.ts`
-- `tests/setup.ts` — vitest global setup (happy-dom hooks)
+- `tests/setup.ts` - vitest global setup (happy-dom hooks)
 
 **Modify:**
-- `nuxt.config.ts` — add `@pinia/nuxt` module
-- `app/plugins/supabase.ts` — call `setSupabase(client)`
-- `app/app.vue` — mount `<ConnectionBanner />`
-- `app/pages/[slug].vue` — thin wrapper around stores
-- `app/pages/index.vue` — use `roomStore.create()` instead of inline supabase
-- `app/components/AppHeader.vue` — read from `authStore` directly
-- `app/components/AuthModal.vue` — call `authStore.signIn/signUp`
-- `package.json` — add deps + scripts
-- `CLAUDE.md` — new "State Management" section
+- `nuxt.config.ts` - add `@pinia/nuxt` module
+- `app/plugins/supabase.ts` - call `setSupabase(client)`
+- `app/app.vue` - mount `<ConnectionBanner />`
+- `app/pages/[slug].vue` - thin wrapper around stores
+- `app/pages/index.vue` - use `roomStore.create()` instead of inline supabase
+- `app/components/AppHeader.vue` - read from `authStore` directly
+- `app/components/AuthModal.vue` - call `authStore.signIn/signUp`
+- `package.json` - add deps + scripts
+- `CLAUDE.md` - new "State Management" section
 
 **Delete:**
 - `app/composables/useRoom.ts`
@@ -227,7 +227,7 @@ export interface RoomState {
 export type ConnectionStatus = 'connecting' | 'online' | 'reconnecting' | 'offline'
 ```
 
-Note: `Player` no longer has `is_online` — it's computed from `presenceStore`.
+Note: `Player` no longer has `is_online` - it's computed from `presenceStore`.
 
 - [ ] **Step 2: Commit**
 
@@ -350,13 +350,13 @@ describe('roomStore actions', () => {
 })
 ```
 
-- [ ] **Step 2: Run — should fail with import error**
+- [ ] **Step 2: Run - should fail with import error**
 
 ```bash
 npm test -- room.spec
 ```
 
-Expected: FAIL — `Cannot find module '../room'`.
+Expected: FAIL - `Cannot find module '../room'`.
 
 - [ ] **Step 3: Implement `app/stores/room.ts`**
 
@@ -404,7 +404,7 @@ export const useRoomStore = defineStore('room', () => {
 })
 ```
 
-- [ ] **Step 4: Run — should pass**
+- [ ] **Step 4: Run - should pass**
 
 ```bash
 npm test -- room.spec
@@ -421,7 +421,7 @@ git commit -m "feat(store): add roomStore with applyChange and actions"
 
 ---
 
-## Task 5a: playersStore — applyChange (TDD)
+## Task 5a: playersStore - applyChange (TDD)
 
 **Files:**
 - Create: `app/stores/players.ts`
@@ -501,13 +501,13 @@ describe('playersStore.applyChange', () => {
 })
 ```
 
-- [ ] **Step 2: Run — should fail**
+- [ ] **Step 2: Run - should fail**
 
 ```bash
 npm test -- players.spec
 ```
 
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement `app/stores/players.ts` (applyChange + visiblePlayers only for now)**
 
@@ -554,7 +554,7 @@ export const usePlayersStore = defineStore('players', () => {
 })
 ```
 
-- [ ] **Step 4: Run — should pass**
+- [ ] **Step 4: Run - should pass**
 
 ```bash
 npm test -- players.spec
@@ -571,7 +571,7 @@ git commit -m "feat(store): add playersStore.applyChange + visiblePlayers"
 
 ---
 
-## Task 5b: playersStore — castVote optimistic flow (TDD)
+## Task 5b: playersStore - castVote optimistic flow (TDD)
 
 **Files:**
 - Modify: `app/stores/players.ts`
@@ -644,13 +644,13 @@ describe('playersStore.castVote (optimistic)', () => {
 })
 ```
 
-- [ ] **Step 2: Run — should fail**
+- [ ] **Step 2: Run - should fail**
 
 ```bash
 npm test -- players.spec
 ```
 
-Expected: FAIL — `castVote`/`voteOf`/`clearPendingVotes` undefined.
+Expected: FAIL - `castVote`/`voteOf`/`clearPendingVotes` undefined.
 
 - [ ] **Step 3: Extend `app/stores/players.ts`**
 
@@ -690,7 +690,7 @@ return {
 }
 ```
 
-- [ ] **Step 4: Run — should pass**
+- [ ] **Step 4: Run - should pass**
 
 ```bash
 npm test -- players.spec
@@ -707,7 +707,7 @@ git commit -m "feat(store): add optimistic castVote with rollback and reconcilia
 
 ---
 
-## Task 5c: playersStore — remaining actions (rename, kick, toggleModerator, join, rejoin, leave, linkUser, fetchAll)
+## Task 5c: playersStore - remaining actions (rename, kick, toggleModerator, join, rejoin, leave, linkUser, fetchAll)
 
 **Files:**
 - Modify: `app/stores/players.ts`
@@ -784,13 +784,13 @@ describe('playersStore actions', () => {
 })
 ```
 
-- [ ] **Step 2: Run — should fail**
+- [ ] **Step 2: Run - should fail**
 
 ```bash
 npm test -- players.spec
 ```
 
-Expected: FAIL — `rename`/`toggleModerator`/etc. undefined.
+Expected: FAIL - `rename`/`toggleModerator`/etc. undefined.
 
 - [ ] **Step 3: Extend `app/stores/players.ts`**
 
@@ -865,7 +865,7 @@ return {
 }
 ```
 
-- [ ] **Step 4: Run — should pass**
+- [ ] **Step 4: Run - should pass**
 
 ```bash
 npm test -- players.spec
@@ -927,7 +927,7 @@ function fakeSupabase(channel: any) {
   return { channel: vi.fn().mockReturnValue(channel) }
 }
 
-describe('presenceStore — initial state', () => {
+describe('presenceStore - initial state', () => {
   beforeEach(() => resetSupabase())
 
   it('starts in connecting status', () => {
@@ -937,7 +937,7 @@ describe('presenceStore — initial state', () => {
   })
 })
 
-describe('presenceStore — start/stop', () => {
+describe('presenceStore - start/stop', () => {
   beforeEach(() => resetSupabase())
 
   it('start() subscribes and tracks the player', async () => {
@@ -963,7 +963,7 @@ describe('presenceStore — start/stop', () => {
   })
 })
 
-describe('presenceStore — presence sync', () => {
+describe('presenceStore - presence sync', () => {
   beforeEach(() => resetSupabase())
 
   it('sync event populates online set from presenceState()', async () => {
@@ -982,7 +982,7 @@ describe('presenceStore — presence sync', () => {
   })
 })
 
-describe('presenceStore — visibility handler', () => {
+describe('presenceStore - visibility handler', () => {
   beforeEach(() => resetSupabase())
 
   it('hidden visibility → status becomes offline + untrack called', async () => {
@@ -1014,7 +1014,7 @@ describe('presenceStore — visibility handler', () => {
   })
 })
 
-describe('presenceStore — network handler', () => {
+describe('presenceStore - network handler', () => {
   beforeEach(() => resetSupabase())
 
   it('window offline event → status becomes reconnecting', async () => {
@@ -1029,13 +1029,13 @@ describe('presenceStore — network handler', () => {
 })
 ```
 
-- [ ] **Step 2: Run — should fail**
+- [ ] **Step 2: Run - should fail**
 
 ```bash
 npm test -- presence.spec
 ```
 
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement `app/stores/presence.ts`**
 
@@ -1132,7 +1132,7 @@ export const usePresenceStore = defineStore('presence', () => {
 })
 ```
 
-- [ ] **Step 4: Run — should pass**
+- [ ] **Step 4: Run - should pass**
 
 ```bash
 npm test -- presence.spec
@@ -1154,7 +1154,7 @@ git commit -m "feat(store): add presenceStore with visibility/network state mach
 **Files:**
 - Create: `app/stores/auth.ts`
 
-No tests — store is a thin wrapper around Supabase auth, behavior fully delegated.
+No tests - store is a thin wrapper around Supabase auth, behavior fully delegated.
 
 - [ ] **Step 1: Implement `app/stores/auth.ts`**
 
@@ -1587,7 +1587,7 @@ git commit -m "refactor(page): rewrite room page on top of pinia stores"
 
 - [ ] **Step 1: Add `roomStore.create()` method to roomStore**
 
-Edit `app/stores/room.ts` — add inside the setup before the return:
+Edit `app/stores/room.ts` - add inside the setup before the return:
 
 ```ts
 function generateRoomId(): string {
@@ -1657,7 +1657,7 @@ Template block stays unchanged.
 npm run dev
 ```
 
-Click Create Room — should redirect to `/<roomId>` and you appear as moderator.
+Click Create Room - should redirect to `/<roomId>` and you appear as moderator.
 
 - [ ] **Step 4: Commit**
 
@@ -1674,7 +1674,7 @@ git commit -m "refactor(page): index uses roomStore.create + playersStore.join"
 - Modify: `app/components/AppHeader.vue`
 - Modify: `app/components/AuthModal.vue`
 
-- [ ] **Step 1: AppHeader — replace `useAuth` import**
+- [ ] **Step 1: AppHeader - replace `useAuth` import**
 
 Find the line:
 
@@ -1690,7 +1690,7 @@ import { useAuthStore } from '~/stores/auth'
 const { user } = storeToRefs(useAuthStore())
 ```
 
-- [ ] **Step 2: AuthModal — replace `useAuth` import**
+- [ ] **Step 2: AuthModal - replace `useAuth` import**
 
 Find:
 
@@ -1752,7 +1752,7 @@ npm test
 
 Both should pass.
 
-- [ ] **Step 4: Dev smoke — full acceptance criteria walk**
+- [ ] **Step 4: Dev smoke - full acceptance criteria walk**
 
 ```bash
 npm run dev
@@ -1766,7 +1766,7 @@ Open two tabs at `http://localhost:3000`, create room in tab A, join in tab B wi
 | Mobile background = offline ≤ 1s | Tab A: hide tab (Cmd+Tab to another window) → tab B sees online count drop |
 | Auto-rejoin on return | Switch back to tab A → online count restores |
 | Reconnect banner | DevTools → Network → Offline → banner appears in ~1–2s |
-| `is_online` removed | Check Supabase Table Editor — column gone |
+| `is_online` removed | Check Supabase Table Editor - column gone |
 | No refetch on every event | DevTools → Network → vote in tab A → tab B shows no `select` request |
 | Stores in DevTools | Vue DevTools → Pinia tab shows 4 stores |
 | Vitest green | `npm test` from step 3 |
@@ -1796,10 +1796,10 @@ Insert after the `## Database` section, before `## Realtime`:
 
 Pinia stores in `app/stores/`:
 
-- **`auth.ts`** — Supabase session + signIn/signUp/signOut
-- **`room.ts`** — `room_state` (phase, active_cards), `create()`, `reveal()`, `startNewRound()`, `saveCardDeck()`
-- **`players.ts`** — `players[]`, `pendingVotes`, optimistic `castVote()`, CRUD (join/rejoin/rename/kick/leave/linkUser), `applyChange()`
-- **`presence.ts`** — connection status (`connecting`/`online`/`reconnecting`/`offline`), live `online: Set<playerId>` from Supabase Presence, visibility/network handlers
+- **`auth.ts`** - Supabase session + signIn/signUp/signOut
+- **`room.ts`** - `room_state` (phase, active_cards), `create()`, `reveal()`, `startNewRound()`, `saveCardDeck()`
+- **`players.ts`** - `players[]`, `pendingVotes`, optimistic `castVote()`, CRUD (join/rejoin/rename/kick/leave/linkUser), `applyChange()`
+- **`presence.ts`** - connection status (`connecting`/`online`/`reconnecting`/`offline`), live `online: Set<playerId>` from Supabase Presence, visibility/network handlers
 
 **Store ↔ Supabase:** stores access the client via `getSupabase()` from `app/lib/supabase-instance.ts`. The `supabase` Nuxt plugin calls `setSupabase(client)` once at startup. Tests inject a mock with `setSupabase(mock)`.
 
@@ -1807,7 +1807,7 @@ Pinia stores in `app/stores/`:
 
 **Optimistic vote:** `playersStore.castVote()` writes to `pendingVotes[playerId]` immediately, then async UPDATE; success/realtime ACK clears the entry, error rolls back.
 
-**Presence:** `is_online` column does NOT exist — online status is derived from `presenceStore.online`. `left_at` (soft-delete) is unrelated.
+**Presence:** `is_online` column does NOT exist - online status is derived from `presenceStore.online`. `left_at` (soft-delete) is unrelated.
 
 ## Testing
 

@@ -71,7 +71,7 @@
   "join": {
     "title": "Invitation",
     "subtitle": "planning poker",
-    "subtitleNamed": "planning poker {name}",
+    "subtitleNamed": "to planning poker room {name}",
     "nameLabel": "your name",
     "joinRoom": "Join Room"
   },
@@ -101,7 +101,7 @@
     "spin": "Spin",
     "jackpot": "Jackpot! {name} gets +1 day off 🏖",
     "spinsLeft": "Spins left: {n}",
-    "noSpinsLeft": "No spins left — wait for the next round",
+    "noSpinsLeft": "No spins left - wait for the next round",
     "switchToSlot": "Show slot machine",
     "switchToTimer": "Show timer"
   },

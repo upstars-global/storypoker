@@ -30,7 +30,7 @@ function fakeSupabase(channel: any) {
   return { channel: vi.fn().mockReturnValue(channel) }
 }
 
-describe('presenceStore — initial state', () => {
+describe('presenceStore - initial state', () => {
   beforeEach(() => resetSupabase())
 
   it('starts in connecting status', () => {
@@ -40,7 +40,7 @@ describe('presenceStore — initial state', () => {
   })
 })
 
-describe('presenceStore — start/stop', () => {
+describe('presenceStore - start/stop', () => {
   beforeEach(() => resetSupabase())
 
   it('start() subscribes and tracks the player', async () => {
@@ -66,7 +66,7 @@ describe('presenceStore — start/stop', () => {
   })
 })
 
-describe('presenceStore — presence sync', () => {
+describe('presenceStore - presence sync', () => {
   beforeEach(() => resetSupabase())
 
   it('sync event populates online set from presenceState()', async () => {
@@ -115,7 +115,7 @@ describe('presenceStore — presence sync', () => {
   })
 })
 
-describe('presenceStore — visibility handler', () => {
+describe('presenceStore - visibility handler', () => {
   beforeEach(() => resetSupabase())
 
   it('hidden visibility → stays online until 5 min pass, then untrack + offline', async () => {
@@ -182,7 +182,7 @@ describe('presenceStore — visibility handler', () => {
   })
 })
 
-describe('presenceStore — network handler', () => {
+describe('presenceStore - network handler', () => {
   beforeEach(() => resetSupabase())
 
   it('window offline event → status becomes reconnecting', async () => {

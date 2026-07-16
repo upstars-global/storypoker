@@ -17,8 +17,8 @@ const emit = defineEmits<{
 const CELL_PX = 56
 const REEL_DURATIONS_MS = [1100, 1700, 2300] as const
 
-const reels = ref<string[]>(['7️⃣', '7️⃣', '7️⃣'])
-const strips = ref<string[][]>([['7️⃣'], ['7️⃣'], ['7️⃣']])
+const reels = ref<string[]>(['tabler:play-card-7', 'tabler:play-card-7', 'tabler:play-card-7'])
+const strips = ref<string[][]>([['tabler:play-card-7'], ['tabler:play-card-7'], ['tabler:play-card-7']])
 const offsets = ref<number[]>([0, 0, 0])
 const transitions = ref<string[]>(['none', 'none', 'none'])
 const spinning = ref(false)
@@ -191,7 +191,10 @@ async function spin() {
               v-for="(symbol, j) in strip"
               :key="j"
               class="slot-cell"
-            >{{ symbol }}</span>
+            ><AppIcon
+              class="mui-svg-icon"
+              :icon="symbol"
+            /></span>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
-# Vue + Vite Migration — Design
+# Vue + Vite Migration - Design
 
 **Date:** 2026-05-16
-**Status:** Spec — pending implementation plan
+**Status:** Spec - pending implementation plan
 **Branch:** `vue-and-vite`
 **Related:** [`ROADMAP.md`](../../../ROADMAP.md), [`CLAUDE.md`](../../../CLAUDE.md)
 
@@ -9,7 +9,7 @@
 
 ## Context
 
-Story Poker зараз працює на Nuxt 4.4 у SSG-режимі (`nuxt generate` → Netlify static). Реальна продакшн-поведінка — pure SPA: усе client-only проти Supabase (Auth + Postgres + Realtime + Presence), SSR/SSG не дає бізнес-вигоди, лише overhead у dep-surface, bundle size і build time. Спеціальних SEO-вимог немає (приватні кімнати по slug).
+Story Poker зараз працює на Nuxt 4.4 у SSG-режимі (`nuxt generate` → Netlify static). Реальна продакшн-поведінка - pure SPA: усе client-only проти Supabase (Auth + Postgres + Realtime + Presence), SSR/SSG не дає бізнес-вигоди, лише overhead у dep-surface, bundle size і build time. Спеціальних SEO-вимог немає (приватні кімнати по slug).
 
 ## Goals
 
@@ -24,7 +24,7 @@ Story Poker зараз працює на Nuxt 4.4 у SSG-режимі (`nuxt gen
 - Не мігруємо на Tailwind v4 (фіксується в ROADMAP як наступний крок).
 - Не перейменовуємо `app/` → `src/` (Vite-конвенція, але `app/` як srcDir підтримується через alias).
 - Не змінюємо JSON-структуру локалей.
-- Не вводимо `@unhead/vue` — `<head>` повністю в статичному `index.html`.
+- Не вводимо `@unhead/vue` - `<head>` повністю в статичному `index.html`.
 
 ---
 
@@ -48,7 +48,7 @@ Story Poker зараз працює на Nuxt 4.4 у SSG-режимі (`nuxt gen
 - `@pinia/nuxt`
 
 ### Keep
-- `dotenv` — Vite сам читає `.env` через `envDir`, але `playwright.config.ts` досі використовує `loadDotenv({ path: '.env/.env.test' })` для E2E кредів (server-only ключі, не VITE_*).
+- `dotenv` - Vite сам читає `.env` через `envDir`, але `playwright.config.ts` досі використовує `loadDotenv({ path: '.env/.env.test' })` для E2E кредів (server-only ключі, не VITE_*).
 
 ### File-level removals
 - `nuxt.config.ts`
@@ -62,19 +62,19 @@ Story Poker зараз працює на Nuxt 4.4 у SSG-режимі (`nuxt gen
 
 ```
 /                          # vite root
-├── index.html             # NEW — head/meta/inline theme script + entry script
+├── index.html             # NEW - head/meta/inline theme script + entry script
 ├── vite.config.ts         # NEW
-├── postcss.config.js      # NEW — tailwindcss + autoprefixer
-├── tsconfig.json          # adjust — no Nuxt extends
-├── tsconfig.node.json     # NEW — для vite.config.ts
+├── postcss.config.js      # NEW - tailwindcss + autoprefixer
+├── tsconfig.json          # adjust - no Nuxt extends
+├── tsconfig.node.json     # NEW - для vite.config.ts
 ├── eslint.config.js       # replace .eslintrc* / @nuxt/eslint
 ├── netlify.toml           # NEW
 ├── public/
-│   └── _redirects         # NEW — /*  /index.html  200
+│   └── _redirects         # NEW - /*  /index.html  200
 ├── app/                   # KEEP як srcDir, ~ alias → app/
-│   ├── main.ts            # NEW — entry: createApp + pinia + router + i18n + plugins
-│   ├── router.ts          # NEW — 6 explicit routes
-│   ├── i18n.ts            # NEW — createI18n + locale messages import
+│   ├── main.ts            # NEW - entry: createApp + pinia + router + i18n + plugins
+│   ├── router.ts          # NEW - 6 explicit routes
+│   ├── i18n.ts            # NEW - createI18n + locale messages import
 │   ├── App.vue            # rename з app.vue, <NuxtPage /> → <RouterView />
 │   ├── pages/             # KEEP файли, імпортуються router-ом явно
 │   ├── components/        # KEEP
@@ -82,9 +82,9 @@ Story Poker зараз працює на Nuxt 4.4 у SSG-режимі (`nuxt gen
 │   ├── stores/            # KEEP
 │   ├── lib/               # KEEP
 │   ├── utils/             # KEEP
-│   ├── directives/        # NEW — clickOutside переноситься сюди з plugins/
-│   ├── assets/            # NEW — переносимо з кореня /assets/ (css/main.css + icons/)
-│   └── i18n/locales/{uk,en}.json  # MOVE з /i18n/locales/ — чистіші import paths
+│   ├── directives/        # NEW - clickOutside переноситься сюди з plugins/
+│   ├── assets/            # NEW - переносимо з кореня /assets/ (css/main.css + icons/)
+│   └── i18n/locales/{uk,en}.json  # MOVE з /i18n/locales/ - чистіші import paths
 └── tests/                 # KEEP без змін (Vitest standalone + Playwright)
 ```
 
@@ -94,7 +94,7 @@ Story Poker зараз працює на Nuxt 4.4 у SSG-режимі (`nuxt gen
 
 ### `index.html`
 
-Усе з `nuxt.config.ts → app.head` переноситься статично. Theme script — ПЕРШИЙ у `<head>` (до Vite entry script), щоб уникнути FOUC при першому paint.
+Усе з `nuxt.config.ts → app.head` переноситься статично. Theme script - ПЕРШИЙ у `<head>` (до Vite entry script), щоб уникнути FOUC при першому paint.
 
 ```html
 <!doctype html>
@@ -115,7 +115,7 @@ Story Poker зараз працює на Nuxt 4.4 у SSG-режимі (`nuxt gen
 </html>
 ```
 
-Dynamic `<title>` per route — у `router.afterEach(to => { document.title = to.meta.title ? `${to.meta.title} | Story Poker` : 'Story Poker' })`.
+Dynamic `<title>` per route - у `router.afterEach(to => { document.title = to.meta.title ? `${to.meta.title} | Story Poker` : 'Story Poker' })`.
 
 ### `vite.config.ts`
 
@@ -167,7 +167,7 @@ router.afterEach((to) => {
 })
 ```
 
-`[slug].vue` — `useRoute().params.slug` працює як раніше. `vue-router@5` сумісний з Vue 3 (це нова мажорна гілка router-а, не плутати з історичним 4.x для Vue 3 — обидві лінії існують одночасно).
+`[slug].vue` - `useRoute().params.slug` працює як раніше. `vue-router@5` сумісний з Vue 3 (це нова мажорна гілка router-а, не плутати з історичним 4.x для Vue 3 - обидві лінії існують одночасно).
 
 ### `app/main.ts`
 
@@ -195,9 +195,9 @@ createApp(App)
 
 ### Plugins → Vue API
 
-- **Supabase** — `initSupabase()` функція в `app/lib/supabase-instance.ts`, читає `import.meta.env.VITE_SUPABASE_URL/KEY`, викликається в `main.ts` перед `mount`. `getSupabase()` залишається з тим самим контрактом (stores не міняються).
-- **vWave** — `app.use(VWave, {})` напряму.
-- **clickOutside** — `app/plugins/clickOutside.ts` → `app/directives/clickOutside.ts`, named export із directive-логікою; реєструється через `app.directive('click-outside', clickOutside)`.
+- **Supabase** - `initSupabase()` функція в `app/lib/supabase-instance.ts`, читає `import.meta.env.VITE_SUPABASE_URL/KEY`, викликається в `main.ts` перед `mount`. `getSupabase()` залишається з тим самим контрактом (stores не міняються).
+- **vWave** - `app.use(VWave, {})` напряму.
+- **clickOutside** - `app/plugins/clickOutside.ts` → `app/directives/clickOutside.ts`, named export із directive-логікою; реєструється через `app.directive('click-outside', clickOutside)`.
 
 ### `app/i18n.ts`
 
@@ -214,26 +214,26 @@ export const i18n = createI18n({
 })
 ```
 
-Локалі переносяться з `/i18n/locales/` у `app/i18n/locales/` — чистіший import шлях через `~` alias.
+Локалі переносяться з `/i18n/locales/` у `app/i18n/locales/` - чистіший import шлях через `~` alias.
 
-Runtime compilation (без `@intlify/unplugin-vue-i18n`) — приймаємо як дефолт; precompile фіксується в ROADMAP. Без auto-detection / route-based switching — відповідає поточному `strategy: 'no_prefix'`.
+Runtime compilation (без `@intlify/unplugin-vue-i18n`) - приймаємо як дефолт; precompile фіксується в ROADMAP. Без auto-detection / route-based switching - відповідає поточному `strategy: 'no_prefix'`.
 
 ### Env vars
 
 - `.env/.env`, `.env/.env.local`, `.env/.env.test`: `SUPABASE_URL` → `VITE_SUPABASE_URL`, `SUPABASE_KEY` → `VITE_SUPABASE_KEY`.
-- `vite.config.ts` `envDir: '.env'` — Vite нативно підвантажить `.env`, `.env.local`, `.env.<mode>` з цієї папки.
-- Server-only `SUPABASE_SECRET_KEY` — лишається тільки для Playwright (`dotenv` локально в `playwright.config.ts`).
+- `vite.config.ts` `envDir: '.env'` - Vite нативно підвантажить `.env`, `.env.local`, `.env.<mode>` з цієї папки.
+- Server-only `SUPABASE_SECRET_KEY` - лишається тільки для Playwright (`dotenv` локально в `playwright.config.ts`).
 - Оновити: `.env/.env.example`, `.env/.env.test.example`, `CLAUDE.md`, `README.md`.
 
 ### Icons (@iconify/vue)
 
 Заміна use-sites: `<Icon name="ic:baseline-edit" />` → `<Icon icon="ic:baseline-edit" />` + `import { Icon } from '@iconify/vue'` per file. Іконки tree-shake-аться з `@iconify-json/ic` через `@iconify/vue` ESM.
 
-Custom collection `app:moderator|deciding|offline|leave-room` — реєструємо одноразово в `main.ts` через `addCollection({ prefix: 'app', icons: {...} })`, де `icons` будуються з 4 SVG (`?raw` import → витяг `<path>`/`<g>` body в Iconify-формат, ~20 рядків utility-коду в `app/lib/registerAppIcons.ts`).
+Custom collection `app:moderator|deciding|offline|leave-room` - реєструємо одноразово в `main.ts` через `addCollection({ prefix: 'app', icons: {...} })`, де `icons` будуються з 4 SVG (`?raw` import → витяг `<path>`/`<g>` body в Iconify-формат, ~20 рядків utility-коду в `app/lib/registerAppIcons.ts`).
 
 ### Tailwind v3 (PostCSS)
 
-- `tailwind.config.ts` — без змін (content paths уже вказують на `app/**/*.vue|ts`).
+- `tailwind.config.ts` - без змін (content paths уже вказують на `app/**/*.vue|ts`).
 - `postcss.config.js`:
   ```js
   module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } }
@@ -317,7 +317,7 @@ export default [
 /*  /index.html  200
 ```
 
-**CI** (`.github/workflows/ci.yml`) — мінімальні зміни:
+**CI** (`.github/workflows/ci.yml`) - мінімальні зміни:
 - `npm run test:ci` (назва без змін, всередині build вже Vite)
 - Deploy: `npm run build` замість `npm run generate`; publish dir `dist` замість `.output/public`
 
@@ -325,30 +325,30 @@ export default [
 
 ## Migration sequence (commits на гілці `vue-and-vite`)
 
-1. **`chore: scaffold vite + remove nuxt`** — `vite.config.ts`, `index.html`, `app/main.ts` (skeleton), видалити `nuxt.config.ts`, `.nuxt/`, оновити `package.json` deps + scripts, додати `postcss.config.js`, `tsconfig.json`, `tsconfig.node.json`, `eslint.config.js`. Move `assets/` → `app/assets/`, `i18n/locales/` → `app/i18n/locales/`. Repo поки не запускається — це навмисно.
-2. **`feat: explicit vue-router + App.vue`** — `app/router.ts`, `app/App.vue` (`<RouterView />`), видалити `app/app.vue` зі старим `<NuxtPage />`.
-3. **`feat: vue-i18n bootstrap`** — `app/i18n.ts`, інжект у `main.ts`. Verify локалі рендеряться.
-4. **`refactor: explicit imports у SFC і stores`** — додати `import { ref, computed, onMounted, ... } from 'vue'`, `import { useRoute, useRouter } from 'vue-router'`, `import { useI18n } from 'vue-i18n'`, `import { storeToRefs } from 'pinia'`, локальні composables (`useTheme`, `useDylanAvatar`). Скоуп: ~30 файлів (29 use-sites Nuxt auto-imports + ~72 для Vue API). Найбільший коміт — самоперевірка по 5-7 файлів за раз.
-5. **`refactor: supabase init + VITE_* env vars`** — `initSupabase()`, оновити `.env/.env.example`, `.env/.env.test.example`, документацію.
-6. **`refactor: @iconify/vue замість @nuxt/icon`** — заміна `<Icon name=...>` → `<Icon icon=...>`, реєстрація `app:` collection через `addCollection`.
-7. **`refactor: vWave + clickOutside як Vue plugins`** — move `plugins/clickOutside.ts` → `directives/clickOutside.ts`, wire через `main.ts`.
-8. **`chore: eslint flat config + tailwind postcss`** — flat config, postcss.config.js, devDeps.
-9. **`chore: netlify spa + ci update`** — `netlify.toml`, `public/_redirects`, CI workflow.
-10. **`docs: оновити CLAUDE.md, README, ROADMAP`** — нові розділи (див. нижче).
+1. **`chore: scaffold vite + remove nuxt`** - `vite.config.ts`, `index.html`, `app/main.ts` (skeleton), видалити `nuxt.config.ts`, `.nuxt/`, оновити `package.json` deps + scripts, додати `postcss.config.js`, `tsconfig.json`, `tsconfig.node.json`, `eslint.config.js`. Move `assets/` → `app/assets/`, `i18n/locales/` → `app/i18n/locales/`. Repo поки не запускається - це навмисно.
+2. **`feat: explicit vue-router + App.vue`** - `app/router.ts`, `app/App.vue` (`<RouterView />`), видалити `app/app.vue` зі старим `<NuxtPage />`.
+3. **`feat: vue-i18n bootstrap`** - `app/i18n.ts`, інжект у `main.ts`. Verify локалі рендеряться.
+4. **`refactor: explicit imports у SFC і stores`** - додати `import { ref, computed, onMounted, ... } from 'vue'`, `import { useRoute, useRouter } from 'vue-router'`, `import { useI18n } from 'vue-i18n'`, `import { storeToRefs } from 'pinia'`, локальні composables (`useTheme`, `useDylanAvatar`). Скоуп: ~30 файлів (29 use-sites Nuxt auto-imports + ~72 для Vue API). Найбільший коміт - самоперевірка по 5-7 файлів за раз.
+5. **`refactor: supabase init + VITE_* env vars`** - `initSupabase()`, оновити `.env/.env.example`, `.env/.env.test.example`, документацію.
+6. **`refactor: @iconify/vue замість @nuxt/icon`** - заміна `<Icon name=...>` → `<Icon icon=...>`, реєстрація `app:` collection через `addCollection`.
+7. **`refactor: vWave + clickOutside як Vue plugins`** - move `plugins/clickOutside.ts` → `directives/clickOutside.ts`, wire через `main.ts`.
+8. **`chore: eslint flat config + tailwind postcss`** - flat config, postcss.config.js, devDeps.
+9. **`chore: netlify spa + ci update`** - `netlify.toml`, `public/_redirects`, CI workflow.
+10. **`docs: оновити CLAUDE.md, README, ROADMAP`** - нові розділи (див. нижче).
 
-Між комітами 4 і 6 — точкові sanity-runs `npm run dev`, перевірка кожного route. E2E smoke перевіряємо лише після коміту 9 — коли preview port фіксований.
+Між комітами 4 і 6 - точкові sanity-runs `npm run dev`, перевірка кожного route. E2E smoke перевіряємо лише після коміту 9 - коли preview port фіксований.
 
 ---
 
 ## Risks / Open items
 
-- **R1. Bundle size delta** — мета: фіксуємо before/after `dist/assets/*.js` сумарно після коміту 9. Якщо not improved або gorsche — діагностика через `rollup-plugin-visualizer`.
-- **R2. Custom icons (`app:moderator|deciding|offline|leave-room`)** — `addCollection` приймає Iconify JSON; з SVG потрібно витягти body. Через `?raw` Vite-import читаємо SVG як string, парсимо в Iconify-формат (~20 рядків). Альтернатива: 4 inline Vue-компоненти — простіше, але втрачаємо однорідний `<Icon icon="app:..."/>` API. Обираємо `addCollection` для консистентності.
-- **R3. vue-i18n runtime warning** — `[intlify] Runtime compilation is being used` — приймаємо як дефолт, у ROADMAP як можливість для `@intlify/unplugin-vue-i18n` precompile.
-- **R4. Roboto Google Fonts CDN** — лишається як зараз; вже зафіксовано в ROADMAP E2E debt (P8).
-- **R5. `clickOutside` directive перейменування** — будь-який код, що імпортує `~/plugins/clickOutside`, треба оновити (grep — 0 use-sites за межами plugin-реєстрації, безпечно).
-- **R6. Recent Rooms localStorage** — формат `storypoker_session_<roomId>` не змінюється; сесії продовжать працювати при cutover (pure browser API).
-- **R7. SSR/server guards** — увесь код вже client-only. Перевіряємо `grep -rn "process\.server\|process\.client\|import\.meta\.server" app` — очікую 0; якщо знайдеться, рефакторимо.
+- **R1. Bundle size delta** - мета: фіксуємо before/after `dist/assets/*.js` сумарно після коміту 9. Якщо not improved або gorsche - діагностика через `rollup-plugin-visualizer`.
+- **R2. Custom icons (`app:moderator|deciding|offline|leave-room`)** - `addCollection` приймає Iconify JSON; з SVG потрібно витягти body. Через `?raw` Vite-import читаємо SVG як string, парсимо в Iconify-формат (~20 рядків). Альтернатива: 4 inline Vue-компоненти - простіше, але втрачаємо однорідний `<Icon icon="app:..."/>` API. Обираємо `addCollection` для консистентності.
+- **R3. vue-i18n runtime warning** - `[intlify] Runtime compilation is being used` - приймаємо як дефолт, у ROADMAP як можливість для `@intlify/unplugin-vue-i18n` precompile.
+- **R4. Roboto Google Fonts CDN** - лишається як зараз; вже зафіксовано в ROADMAP E2E debt (P8).
+- **R5. `clickOutside` directive перейменування** - будь-який код, що імпортує `~/plugins/clickOutside`, треба оновити (grep - 0 use-sites за межами plugin-реєстрації, безпечно).
+- **R6. Recent Rooms localStorage** - формат `storypoker_session_<roomId>` не змінюється; сесії продовжать працювати при cutover (pure browser API).
+- **R7. SSR/server guards** - увесь код вже client-only. Перевіряємо `grep -rn "process\.server\|process\.client\|import\.meta\.server" app` - очікую 0; якщо знайдеться, рефакторимо.
 
 ---
 
@@ -356,9 +356,9 @@ export default [
 
 Додати в `ROADMAP.md`:
 
-- **Vue + Vite migration ⏳ planned** — посилання на цей spec, статус оновлюється під час виконання.
-- **Tailwind v4 migration ⏳ planned** — окремий iter після Vite-міграції: `@tailwindcss/vite` plugin, CSS-first `@theme` config, перенос `tailwind.config.ts` → `app/assets/css/main.css`, візуальна регресійна перевірка через Playwright screenshots.
-- **vue-i18n precompile ⏳ planned** — `@intlify/unplugin-vue-i18n` для production bundle, прибрати runtime compilation warning.
+- **Vue + Vite migration ⏳ planned** - посилання на цей spec, статус оновлюється під час виконання.
+- **Tailwind v4 migration ⏳ planned** - окремий iter після Vite-міграції: `@tailwindcss/vite` plugin, CSS-first `@theme` config, перенос `tailwind.config.ts` → `app/assets/css/main.css`, візуальна регресійна перевірка через Playwright screenshots.
+- **vue-i18n precompile ⏳ planned** - `@intlify/unplugin-vue-i18n` для production bundle, прибрати runtime compilation warning.
 
 ## Success criteria
 

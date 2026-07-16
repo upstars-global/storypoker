@@ -5,7 +5,7 @@
 
 ## Problem
 
-Two separate workflow files (`.github/workflows/ci.yml` and `.github/workflows/deploy-netlify.yml`) duplicate `checkout`, `setup-node`, `npm ci`, and `npm run test:ci`. On every push to `main`, tests run twice — once per file.
+Two separate workflow files (`.github/workflows/ci.yml` and `.github/workflows/deploy-netlify.yml`) duplicate `checkout`, `setup-node`, `npm ci`, and `npm run test:ci`. On every push to `main`, tests run twice - once per file.
 
 ## Solution
 
@@ -21,7 +21,7 @@ Merge into a single `.github/workflows/ci.yml` with two jobs:
 - Steps: `checkout` → `setup-node 24 + npm cache` → `npm ci` → `npm run generate` → `netlify deploy --prod`
 
 ### Removed
-- `.github/workflows/deploy-netlify.yml` — deleted entirely
+- `.github/workflows/deploy-netlify.yml` - deleted entirely
 
 ## Notes
 

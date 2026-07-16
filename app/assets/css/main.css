@@ -152,7 +152,7 @@ html[data-theme='light'] {
   --paper-shadow: var(--card-shadow);
 }
 
-/* Theme: Cyberdeck — neon terminal. The only theme allowed a (subtle) gradient. */
+/* Theme: Cyberdeck - neon terminal. The only theme allowed a (subtle) gradient. */
 html[data-palette='cyberdeck'] {
   --font-app: 'Geist', 'Roboto', 'Helvetica', 'Arial', sans-serif;
   --font-display: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -264,7 +264,7 @@ html[data-palette='cyberdeck'][data-theme='light'] {
   --shadow-8: 0 8px 24px rgba(6, 35, 31, 0.22);
 }
 
-/* Theme: Matcha — soft, rounded, cozy greens */
+/* Theme: Matcha - soft, rounded, cozy greens */
 html[data-palette='matcha'] {
   --font-app: 'Nunito', 'Roboto', 'Helvetica', 'Arial', sans-serif;
   --font-display: 'Nunito', 'Roboto', sans-serif;
@@ -689,7 +689,8 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.75rem;
+    min-width: 1.75rem;
+    padding: 0 0.375rem;
     border-radius: 6px;
     border: 0.0625rem solid var(--border-input);
     color: var(--icon-player-color);
@@ -700,6 +701,20 @@ body {
     letter-spacing: 0.04em;
     white-space: nowrap;
     cursor: default;
+    background-color: transparent;
+    transition: border-color 150ms, background-color 150ms, color 150ms;
+  }
+  .mui-role-tag.is-interactive {
+    cursor: pointer;
+  }
+  .mui-role-tag.is-interactive:hover {
+    border-color: var(--primary);
+    color: var(--text-primary);
+  }
+  .mui-role-tag.is-selected {
+    border-color: var(--primary);
+    background-color: var(--primary-soft);
+    color: var(--text-primary);
   }
   .mui-input {
     width: 100%;

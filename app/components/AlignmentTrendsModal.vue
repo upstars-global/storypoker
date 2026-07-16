@@ -239,12 +239,12 @@ const xAxisLabels = computed(() => {
               <span
                 class="text-2xl font-bold"
                 style="color:#26a69a"
-              >{{ currentDevScore ?? '—' }}</span>
+              >{{ currentDevScore ?? '-' }}</span>
               <span
                 v-if="hasQaData"
                 class="text-2xl font-bold"
                 style="color:#ffa726"
-              >/ {{ currentQaScore ?? '—' }}</span>
+              >/ {{ currentQaScore ?? '-' }}</span>
             </div>
             <span
               v-if="currentDevScore !== null"
@@ -270,7 +270,7 @@ const xAxisLabels = computed(() => {
             <span
               v-else
               class="text-lg font-bold text-primary"
-            >—</span>
+            >-</span>
             <span
               v-if="trend"
               class="text-mui-caption text-muted"
@@ -285,12 +285,12 @@ const xAxisLabels = computed(() => {
               <span
                 class="text-2xl font-bold"
                 style="color:#26a69a"
-              >{{ avgDev ?? '—' }}</span>
+              >{{ avgDev ?? '-' }}</span>
               <span
                 v-if="hasQaData"
                 class="text-2xl font-bold"
                 style="color:#ffa726"
-              >/ {{ avgQa ?? '—' }}</span>
+              >/ {{ avgQa ?? '-' }}</span>
             </div>
             <span
               v-if="avgDev !== null"

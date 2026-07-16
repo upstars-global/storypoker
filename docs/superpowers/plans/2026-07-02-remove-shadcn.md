@@ -12,7 +12,7 @@
 
 - `npm run typecheck` must pass after every task
 - `npm test` must pass (no regressions in unit tests)
-- No changes to visual appearance or behavior — pure structural swap
+- No changes to visual appearance or behavior - pure structural swap
 - Keep all existing `.mui-*` CSS classes; do not rename or restructure them
 - 2 spaces, no tabs; single trailing newline in all files
 - No comments in code unless the WHY is non-obvious
@@ -20,7 +20,7 @@
 
 ---
 
-### Task 1: New primitives — AppModal, AppTooltip, useClickOutside + CSS
+### Task 1: New primitives - AppModal, AppTooltip, useClickOutside + CSS
 
 **Files:**
 - Create: `app/components/AppModal.vue`
@@ -30,8 +30,8 @@
 - Test: `tests/unit/utils/useClickOutside.spec.ts`
 
 **Interfaces:**
-- Produces: `AppModal` — props `{ open: boolean, lockDismiss?: boolean }`, emits `close`
-- Produces: `AppTooltip` — props `{ side?: 'top'|'bottom'|'left'|'right', sideOffset?: number }`, slots `#trigger` `#content`
+- Produces: `AppModal` - props `{ open: boolean, lockDismiss?: boolean }`, emits `close`
+- Produces: `AppTooltip` - props `{ side?: 'top'|'bottom'|'left'|'right', sideOffset?: number }`, slots `#trigger` `#content`
 - Produces: `useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): void`
 
 ---
@@ -215,21 +215,21 @@ describe('useClickOutside', () => {
 })
 ```
 
-- [ ] **Step 1.6: Run the test — expect it to fail**
+- [ ] **Step 1.6: Run the test - expect it to fail**
 
 ```bash
 npm run test:unit -- useClickOutside
 ```
 
-Expected: FAIL with "Cannot find module '~/composables/useClickOutside'" (file was created in step 1.4, this should actually pass — if `@vue/test-utils` is not installed this will fail differently; proceed to next step)
+Expected: FAIL with "Cannot find module '~/composables/useClickOutside'" (file was created in step 1.4, this should actually pass - if `@vue/test-utils` is not installed this will fail differently; proceed to next step)
 
-- [ ] **Step 1.7: Run the test — expect it to pass**
+- [ ] **Step 1.7: Run the test - expect it to pass**
 
 ```bash
 npm run test:unit -- useClickOutside
 ```
 
-Expected: all 3 tests PASS. If `@vue/test-utils` is missing from devDependencies, check `package.json` — if absent, skip this test file and delete it (component mounting test requires it). Run `npm run typecheck` instead to verify the composable.
+Expected: all 3 tests PASS. If `@vue/test-utils` is missing from devDependencies, check `package.json` - if absent, skip this test file and delete it (component mounting test requires it). Run `npm run typecheck` instead to verify the composable.
 
 - [ ] **Step 1.8: Typecheck**
 
@@ -243,7 +243,7 @@ Expected: no errors.
 
 ```bash
 git add app/components/AppModal.vue app/components/AppTooltip.vue app/composables/useClickOutside.ts app/assets/css/main.css tests/unit/utils/useClickOutside.spec.ts
-git commit -m "feat: add AppModal, AppTooltip, useClickOutside — reka-ui replacements"
+git commit -m "feat: add AppModal, AppTooltip, useClickOutside - reka-ui replacements"
 ```
 
 ---
@@ -416,11 +416,11 @@ Replace the entire `<template>`:
 
 - [ ] **Step 2.2: Migrate JoinOverlay.vue**
 
-JoinOverlay must NOT close on ESC or backdrop click — use `lock-dismiss`.
+JoinOverlay must NOT close on ESC or backdrop click - use `lock-dismiss`.
 
 Also remove `@escape-key-down` and `@interact-outside` attributes (no longer needed).
 
-Also remove Tooltip imports from this file — those are handled in Task 3. For now, replace the reka-ui import line with imports for AppModal and AppTooltip:
+Also remove Tooltip imports from this file - those are handled in Task 3. For now, replace the reka-ui import line with imports for AppModal and AppTooltip:
 
 In `<script setup>`, replace:
 ```ts
@@ -540,7 +540,7 @@ with:
 import AppModal from '~/components/AppModal.vue'
 ```
 
-In template: apply the same pattern. This modal has `style="max-width: 420px; padding: 32px 40px 40px;"` on `DialogContent` — move that `style` to the `<div class="mui-modal-paper">`.
+In template: apply the same pattern. This modal has `style="max-width: 420px; padding: 32px 40px 40px;"` on `DialogContent` - move that `style` to the `<div class="mui-modal-paper">`.
 
 - [ ] **Step 2.5: Migrate AlignmentTrendsModal.vue**
 
@@ -628,7 +628,7 @@ import {
 import AppModal from '~/components/AppModal.vue'
 ```
 
-In template: apply Dialog→AppModal pattern. `DialogContent` here has `style="max-width: 560px; padding: 32px 40px 40px;"` — move that to `<div class="mui-modal-paper">`. The Select block inside remains unchanged.
+In template: apply Dialog→AppModal pattern. `DialogContent` here has `style="max-width: 560px; padding: 32px 40px 40px;"` - move that to `<div class="mui-modal-paper">`. The Select block inside remains unchanged.
 
 - [ ] **Step 2.8: Migrate pages/[slug].vue**
 
@@ -691,7 +691,7 @@ For **kick-confirm** dialog (currently `<DialogRoot v-if="kickTargetId" default-
 npm run typecheck
 ```
 
-Expected: no errors. If errors about missing `reka-ui` symbols — check that all `Dialog*` imports were removed from every file.
+Expected: no errors. If errors about missing `reka-ui` symbols - check that all `Dialog*` imports were removed from every file.
 
 - [ ] **Step 2.10: Build check**
 
@@ -756,7 +756,7 @@ import AppTooltip from '~/components/AppTooltip.vue'
 </AppTooltip>
 ```
 
-Note: drop the `class="mui-tooltip-content"` from the content slot — `AppTooltip` applies it automatically.
+Note: drop the `class="mui-tooltip-content"` from the content slot - `AppTooltip` applies it automatically.
 
 ---
 
@@ -1316,7 +1316,7 @@ Replace with:
 }
 ```
 
-(Remove `@apply border-border outline-ring/50` — uses shadcn tokens. Remove `@apply bg-background text-foreground` — uses shadcn tokens; the app sets body colors directly below. Remove `@apply font-sans` — font set in `html, body { font-family: ... }` below.)
+(Remove `@apply border-border outline-ring/50` - uses shadcn tokens. Remove `@apply bg-background text-foreground` - uses shadcn tokens; the app sets body colors directly below. Remove `@apply font-sans` - font set in `html, body { font-family: ... }` below.)
 
 - [ ] **Step 6.7: Build and verify**
 
@@ -1403,10 +1403,10 @@ git commit -m "chore: remove shadcn-vue and all 6 associated packages"
 
 Remove the line `* [Reka UI](https://reka-ui.com)` from the **Used** section.
 
-- [ ] **Step 8.2: Update CLAUDE.md — UI section**
+- [ ] **Step 8.2: Update CLAUDE.md - UI section**
 
 Find the **UI** bullet in the Tech Stack section. It currently lists `reka-ui@2.9.8` and references shadcn-vue. Update to remove those references and add the new primitives. The key changes:
-- Remove: `reka-ui@2.9.8 (headless Radix-Vue port) — TooltipProvider в App.vue, dialog/popover/switch-примітиви в модалках, CardsArea, AppHeader, PlayerRow, Timer, [slug].vue`
+- Remove: `reka-ui@2.9.8 (headless Radix-Vue port) - TooltipProvider в App.vue, dialog/popover/switch-примітиви в модалках, CardsArea, AppHeader, PlayerRow, Timer, [slug].vue`
 - Remove: shadcn-vue paragraph (`shadcn-vue ініціалізовано...`)
 - Add (to Components bullet): `AppModal` (native `<dialog>`, `app/components/AppModal.vue`), `AppTooltip` (`app/components/AppTooltip.vue`), `useClickOutside` (`app/composables/useClickOutside.ts`)
 
@@ -1430,7 +1430,7 @@ After all tasks are complete, manually verify in the browser (`npm run dev`):
 - [ ] PlayerRow dropdown (⋮ button) opens/closes; moderator toggle works without closing menu; leave/kick/edit close menu
 - [ ] Deck preset selector in ConfigureCardDeckModal switches presets correctly
 - [ ] Light/dark theme toggle in header menu works
-- [ ] `npm run typecheck` — no errors
-- [ ] `npm test` — all pass
-- [ ] `npm run build` — no errors
-- [ ] `grep -r "reka-ui\|shadcn-vue" app/` — no output
+- [ ] `npm run typecheck` - no errors
+- [ ] `npm test` - all pass
+- [ ] `npm run build` - no errors
+- [ ] `grep -r "reka-ui\|shadcn-vue" app/` - no output

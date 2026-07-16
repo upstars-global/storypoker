@@ -8,10 +8,10 @@
 
 Поточний стан:
 - Стан тримається у композаблах (`useRoom`, `usePlayer`, `useAuth`) з локальними `ref`. Розкидано, без єдиного DevTools-візиту.
-- Realtime через Supabase `postgres_changes` робить **повний refetch** на будь-яку подію — зайва латенсі та БД-навантаження.
-- "Online" статус — `players.is_online` колонка в БД, оновлюється через `beforeunload` (ненадійно: на mobile часто не спрацьовує).
-- Немає optimistic feedback: між кліком по карті і реальним підсвічуванням — 100–300 мс round-trip.
-- Немає індикатора втрати з'єднання — UI просто застигає.
+- Realtime через Supabase `postgres_changes` робить **повний refetch** на будь-яку подію - зайва латенсі та БД-навантаження.
+- "Online" статус - `players.is_online` колонка в БД, оновлюється через `beforeunload` (ненадійно: на mobile часто не спрацьовує).
+- Немає optimistic feedback: між кліком по карті і реальним підсвічуванням - 100–300 мс round-trip.
+- Немає індикатора втрати з'єднання - UI просто застигає.
 
 ## Goals
 
@@ -25,9 +25,9 @@
 
 - Typing indicators, "думає" анімації при voting.
 - Optimistic для дій крім cast vote (rename/kick/reveal/start round/save deck чекають ACK).
-- Persistence stores через `pinia-plugin-persistedstate` (поточний ручний localStorage — достатньо).
+- Persistence stores через `pinia-plugin-persistedstate` (поточний ручний localStorage - достатньо).
 - E2E тести.
-- Будь-які UI-зміни крім нового `ConnectionBanner` — UI-редизайн іде у Spec B.
+- Будь-які UI-зміни крім нового `ConnectionBanner` - UI-редизайн іде у Spec B.
 
 ## Architecture
 
@@ -42,11 +42,11 @@ app/stores/
 ```
 
 **Принципи:**
-- Кожен store — одна доменна одиниця. Cross-store mutations заборонені — тільки експортовані getters.
+- Кожен store - одна доменна одиниця. Cross-store mutations заборонені - тільки експортовані getters.
 - Композаблі `useRoom`/`usePlayer`/`useAuth` видаляються повністю; логіку поглинають stores.
 - Plugins (`supabase`, `vWave`, `clickOutside`) лишаються.
 - Сторінка `[slug].vue` стає тонкою: `onMounted` лише `roomStore.init(slug)` + `presenceStore.start(slug, playerId)`. Реактивні дані через `storeToRefs`.
-- `playersStore` залежить від `presenceStore` для derived `isOnline(playerId)`. `presenceStore` нічого не знає про `players` — лише `Set<playerId>`.
+- `playersStore` залежить від `presenceStore` для derived `isOnline(playerId)`. `presenceStore` нічого не знає про `players` - лише `Set<playerId>`.
 
 ### Залежності
 
@@ -61,7 +61,7 @@ app/stores/
 alter table players drop column is_online;
 ```
 
-`left_at` лишається — це окрема дія "Leave room", не presence.
+`left_at` лишається - це окрема дія "Leave room", не presence.
 
 ## Presence model
 
@@ -88,14 +88,14 @@ type ConnectionStatus = 'connecting' | 'online' | 'reconnecting' | 'offline'
 - Один канал на кімнату: `room:<roomId>`
 - На join: `channel.track({ playerId })`
 - `presenceStore.online: Set<playerId>` оновлюється на presence events (`sync`/`join`/`leave`)
-- При visibility=hidden — агресивний `untrack` + `unsubscribe` (не чекаємо timeout, щоб інші побачили offline миттєво)
+- При visibility=hidden - агресивний `untrack` + `unsubscribe` (не чекаємо timeout, щоб інші побачили offline миттєво)
 
 ### Reconnect-банер
 
 - Глобальний `<ConnectionBanner />` у `app.vue`
 - Висота 32px, `position: fixed; top: 0`, видимий лише при `status === 'reconnecting'`
 - Текст: "Reconnecting…" + spinner. Без actions
-- При `'offline'` (явний background через visibility) — прихований, бо це нормальна поведінка для mobile
+- При `'offline'` (явний background через visibility) - прихований, бо це нормальна поведінка для mobile
 
 ### Mobile-нюанс
 
@@ -117,18 +117,18 @@ voteOf(playerId): string | null
   // pendingVotes.get(playerId) ?? players.find(...)?.vote ?? null
 ```
 
-UI читає `voteOf(currentPlayerId)` — бачить голос миттєво.
+UI читає `voteOf(currentPlayerId)` - бачить голос миттєво.
 
 ### Action `castVote(playerId, card)`
 
-1. `pendingVotes.set(playerId, card)` — UI підсвічує одразу
+1. `pendingVotes.set(playerId, card)` - UI підсвічує одразу
 2. `await supabase.from('players').update({ vote: card }).eq('id', playerId)`
 3. **Success або realtime event з `vote === card`** → `pendingVotes.delete(playerId)`
 4. **Error** → `pendingVotes.delete(playerId)` + toast "Failed to save vote, try again". UI повертається до серверного стану.
 
 ### Реконсиляція
 
-При UPDATE через realtime: якщо `players[id].vote === pendingVotes.get(id)` — pending чиститься.
+При UPDATE через realtime: якщо `players[id].vote === pendingVotes.get(id)` - pending чиститься.
 
 ### Race conditions
 
@@ -137,7 +137,7 @@ UI читає `voteOf(currentPlayerId)` — бачить голос миттєв
 
 ### Чому тільки для current user
 
-Оптимізм для інших не має сенсу — невідомо, як вони проголосують. Realtime подія прийде з payload (~100–200 ms) — достатньо швидко.
+Оптимізм для інших не має сенсу - невідомо, як вони проголосують. Realtime подія прийде з payload (~100–200 ms) - достатньо швидко.
 
 ## Realtime differential updates
 
@@ -180,21 +180,21 @@ function applyChange(payload: RealtimePostgresChangesPayload<Player>) {
 }
 ```
 
-Примітка: DELETE event надходить лише при kick (hard delete). Leave room — це UPDATE з `left_at`.
+Примітка: DELETE event надходить лише при kick (hard delete). Leave room - це UPDATE з `left_at`.
 
 Аналогічно `roomStore.applyChange(payload)` для `room_state`.
 
 ### Initial load
 
-`roomStore.init(slug)` робить **один** паралельний select з трьох таблиць. Після — лише deltas.
+`roomStore.init(slug)` робить **один** паралельний select з трьох таблиць. Після - лише deltas.
 
 ### Soft-delete
 
-UPDATE з `left_at != null` — `playersStore` маркує `players[idx].left_at`, геттер `visiblePlayers` фільтрує `is null`. Не видаляємо з масиву (запобігає index-flickering).
+UPDATE з `left_at != null` - `playersStore` маркує `players[idx].left_at`, геттер `visiblePlayers` фільтрує `is null`. Не видаляємо з масиву (запобігає index-flickering).
 
 ### Reconciliation refetch
 
-Після `'reconnecting' → 'online'` — одноразовий повний select (могли пропустити events між disconnect і resubscribe). Тільки в цьому випадку.
+Після `'reconnecting' → 'online'` - одноразовий повний select (могли пропустити events між disconnect і resubscribe). Тільки в цьому випадку.
 
 ## Файлові зміни
 
@@ -207,22 +207,22 @@ UPDATE з `left_at != null` — `playersStore` маркує `players[idx].left_a
 | Видалити | `app/composables/useRoom.ts`, `usePlayer.ts`, `useAuth.ts` |
 | Оновити | `app/pages/[slug].vue` (тонкий wrapper навколо stores) |
 | Оновити | `app/pages/index.vue` (auth+room через stores) |
-| Оновити | компоненти, що читали композаблі — переходять на `useXxxStore()` + `storeToRefs` |
-| Оновити | `app/app.vue` — додати `<ConnectionBanner />` |
-| Оновити | `nuxt.config.ts` — додати `'@pinia/nuxt'` у `modules` |
-| Оновити | `package.json` — `pinia`, `@pinia/nuxt`, `vitest` (dev) |
-| Оновити | `CLAUDE.md` — нова секція State Management |
+| Оновити | компоненти, що читали композаблі - переходять на `useXxxStore()` + `storeToRefs` |
+| Оновити | `app/app.vue` - додати `<ConnectionBanner />` |
+| Оновити | `nuxt.config.ts` - додати `'@pinia/nuxt'` у `modules` |
+| Оновити | `package.json` - `pinia`, `@pinia/nuxt`, `vitest` (dev) |
+| Оновити | `CLAUDE.md` - нова секція State Management |
 
 ## Testing
 
 Vitest, юніт-тести у `app/stores/__tests__/`:
 
-- `playersStore.applyChange()` — INSERT/UPDATE/DELETE/soft-delete
-- `playersStore.castVote()` — optimistic flow + rollback при помилці + reconciliation з realtime
-- `presenceStore` — переходи стану на visibility/network events (моки на `document.visibilityState`, `navigator.onLine`, fake supabase channel)
-- `roomStore.applyChange()` — phase transitions, active_cards updates
+- `playersStore.applyChange()` - INSERT/UPDATE/DELETE/soft-delete
+- `playersStore.castVote()` - optimistic flow + rollback при помилці + reconciliation з realtime
+- `presenceStore` - переходи стану на visibility/network events (моки на `document.visibilityState`, `navigator.onLine`, fake supabase channel)
+- `roomStore.applyChange()` - phase transitions, active_cards updates
 
-E2E — поза цією спекою.
+E2E - поза цією спекою.
 
 ## Acceptance criteria
 
@@ -233,10 +233,10 @@ E2E — поза цією спекою.
 5. Колонка `is_online` видалена; "online" обчислюється з presence.
 6. Realtime події не тригерять refetch (тільки initial + post-reconnect reconciliation).
 7. Старі composables видалені, компоненти споживають stores.
-8. Vitest suite — green.
+8. Vitest suite - green.
 
 ## Risks
 
-- **Supabase Presence quota:** на free tier ліміт concurrent connections — для невеликих команд (≤ 50 кімнат × ≤ 10 гравців) запас великий.
-- **iOS Safari зморожування таба** до того, як visibility handler встигне `untrack`: малоймовірно, бо handler синхронний; як fallback — Supabase сам викине через server-side timeout (~30 сек), просто з лагом.
-- **Pinia + SSR:** Nuxt у SSG/SSR режимі — Pinia працює коробково через `@pinia/nuxt`, але треба перевірити, що stores не ініціалізуються на server-side з window-залежним кодом (visibility, navigator). Захист — guard `if (import.meta.client)` у `presenceStore.start()`.
+- **Supabase Presence quota:** на free tier ліміт concurrent connections - для невеликих команд (≤ 50 кімнат × ≤ 10 гравців) запас великий.
+- **iOS Safari зморожування таба** до того, як visibility handler встигне `untrack`: малоймовірно, бо handler синхронний; як fallback - Supabase сам викине через server-side timeout (~30 сек), просто з лагом.
+- **Pinia + SSR:** Nuxt у SSG/SSR режимі - Pinia працює коробково через `@pinia/nuxt`, але треба перевірити, що stores не ініціалізуються на server-side з window-залежним кодом (visibility, navigator). Захист - guard `if (import.meta.client)` у `presenceStore.start()`.

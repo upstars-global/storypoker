@@ -15,12 +15,12 @@ shadcn-vue і reka-ui використовуються виключно як hea
 
 | Пакет | Поточне використання |
 |---|---|
-| `reka-ui` | Dialog, Tooltip, Select, DropdownMenu примітиви — 13 файлів |
+| `reka-ui` | Dialog, Tooltip, Select, DropdownMenu примітиви - 13 файлів |
 | `shadcn-vue` | `@import` у `main.css`, CLI-генератор |
-| `class-variance-authority` | тільки `app/lib/utils.ts` — ніхто не імпортує |
+| `class-variance-authority` | тільки `app/lib/utils.ts` - ніхто не імпортує |
 | `clsx` | тільки `app/lib/utils.ts` |
 | `tailwind-merge` | тільки `app/lib/utils.ts` |
-| `tw-animate-css` | `@import` у `main.css` — не використовується |
+| `tw-animate-css` | `@import` у `main.css` - не використовується |
 | `@lucide/vue` | жодних прямих imports; назви іконок у `iconMap.ts` резолвляться через Iconify API |
 
 Команда видалення:
@@ -35,35 +35,35 @@ npm remove reka-ui shadcn-vue class-variance-authority clsx tailwind-merge tw-an
 **Розташування:** `app/components/AppModal.vue`
 
 **Props:**
-- `open: boolean` — керує видимістю
+- `open: boolean` - керує видимістю
 
 **Emits:**
-- `close` — закриття (ESC, клік на backdrop)
+- `close` - закриття (ESC, клік на backdrop)
 
 **Slots:**
-- `default` — вміст модалки (кожна модалка сама задає `.mui-modal-paper`)
+- `default` - вміст модалки (кожна модалка сама задає `.mui-modal-paper`)
 
 **Поведінка:**
-- `<dialog>` отримує клас `mui-modal-overlay` (fixed overlay з flex-centering) — так само як `DialogOverlay` зараз
+- `<dialog>` отримує клас `mui-modal-overlay` (fixed overlay з flex-centering) - так само як `DialogOverlay` зараз
 - `watch(open, val => val ? dialogEl.showModal() : dialogEl.close())`
 - ESC: `@cancel.prevent="$emit('close')"`
-- Клік на backdrop: `@click.self="$emit('close')"` на `<dialog>` — спрацьовує лише якщо target є самим `<dialog>` (область поза `.mui-modal-paper`)
+- Клік на backdrop: `@click.self="$emit('close')"` на `<dialog>` - спрацьовує лише якщо target є самим `<dialog>` (область поза `.mui-modal-paper`)
 - `@pointerdown.stop` залишається на `.mui-modal-paper` у кожній модалці (запобігає bubbling)
-- Не додає власного `.mui-modal-paper` — він залишається у кожній модалці як зараз
+- Не додає власного `.mui-modal-paper` - він залишається у кожній модалці як зараз
 
-**Чому native `<dialog>`:** вбудований focus trap, ESC, backdrop, aria-modal — безкоштовно. Підтримка 96%+.
+**Чому native `<dialog>`:** вбудований focus trap, ESC, backdrop, aria-modal - безкоштовно. Підтримка 96%+.
 
 ### AppTooltip.vue
 
 **Розташування:** `app/components/AppTooltip.vue`
 
 **Props:**
-- `side?: 'top' | 'bottom' | 'left' | 'right'` — default `'top'`
-- `sideOffset?: number` — default `6` (px)
+- `side?: 'top' | 'bottom' | 'left' | 'right'` - default `'top'`
+- `sideOffset?: number` - default `6` (px)
 
 **Slots:**
-- `#trigger` — елемент-тригер (рендериться через `as-child` паттерн або обгортку)
-- `#content` — вміст тултіпу
+- `#trigger` - елемент-тригер (рендериться через `as-child` паттерн або обгортку)
+- `#content` - вміст тултіпу
 
 **Поведінка:**
 - Показ: `mouseenter` / `focusin` на тригері
@@ -147,7 +147,7 @@ function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): 
 
 Файл: `ConfigureCardDeckModal.vue`
 
-`SelectRoot/Trigger/Value/Portal/Content/Viewport/Item/ItemText` → `<select class="mui-input" v-model="…">` з `<option v-for>`. Значення — прості рядки (DeckPresetId), кастомний рендеринг не потрібен.
+`SelectRoot/Trigger/Value/Portal/Content/Viewport/Item/ItemText` → `<select class="mui-input" v-model="…">` з `<option v-for>`. Значення - прості рядки (DeckPresetId), кастомний рендеринг не потрібен.
 
 ### DropdownMenu → inline v-if (1 файл)
 
@@ -157,12 +157,12 @@ function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): 
 
 ### TooltipProvider → видалити (App.vue)
 
-Прибрати `import { TooltipProvider }`, прибрати обгортку `<TooltipProvider>` — залишити тільки `<RouterView />`.
+Прибрати `import { TooltipProvider }`, прибрати обгортку `<TooltipProvider>` - залишити тільки `<RouterView />`.
 
 ## Файли до видалення
 
-- `app/lib/utils.ts` — `cn()` ніде не використовується
-- `components.json` — shadcn CLI конфіг
+- `app/lib/utils.ts` - `cn()` ніде не використовується
+- `components.json` - shadcn CLI конфіг
 
 ## Зміни в CSS (main.css)
 
@@ -173,7 +173,7 @@ function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): 
 - Shadcn `:root { --background: oklch... }` блок
 - Shadcn `html[data-theme='dark'] { --background: oklch... }` блок
 
-**Виправити `@layer base`** — замінити shadcn applies на прямий CSS:
+**Виправити `@layer base`** - замінити shadcn applies на прямий CSS:
 ```css
 @layer base {
   *,
@@ -187,8 +187,8 @@ function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): 
 
 ## Зміни в CLAUDE.md та README.md
 
-- `CLAUDE.md` — прибрати абзац про shadcn-vue з секції Components; прибрати `reka-ui` з переліку UI-бібліотек; додати `AppModal`, `AppTooltip`, `useClickOutside` як власні примітиви
-- `README.md` — прибрати рядок `* [Reka UI](https://reka-ui.com)` з секції Used
+- `CLAUDE.md` - прибрати абзац про shadcn-vue з секції Components; прибрати `reka-ui` з переліку UI-бібліотек; додати `AppModal`, `AppTooltip`, `useClickOutside` як власні примітиви
+- `README.md` - прибрати рядок `* [Reka UI](https://reka-ui.com)` з секції Used
 
 ## Критерії успіху
 

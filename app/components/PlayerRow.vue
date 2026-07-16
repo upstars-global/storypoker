@@ -2,6 +2,7 @@
 import AppIcon from '~/components/AppIcon.vue'
 import { computed, ref } from 'vue'
 import AppTooltip from '~/components/AppTooltip.vue'
+import RoleBadge from '~/components/RoleBadge.vue'
 import { useClickOutside } from '~/composables/useClickOutside'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
@@ -88,18 +89,11 @@ const playerAvatar = computed(() => {
       </template>
     </AppTooltip>
     <div class="flex items-center gap-1.5 min-w-0">
-      <AppTooltip
+      <RoleBadge
         v-if="roleTag"
-        side="top"
-        :side-offset="6"
-      >
-        <template #trigger>
-          <span class="flex-none mui-role-tag">{{ roleTag }}</span>
-        </template>
-        <template #content>
-          {{ $t(`players.roleNames.${roleTag}`, roleTag) }}
-        </template>
-      </AppTooltip>
+        :tag="roleTag"
+        class="flex-none"
+      />
       <span
         class="truncate text-base"
         :style="{ color: player.is_online ? 'var(--text-primary)' : 'var(--text-muted)' }"

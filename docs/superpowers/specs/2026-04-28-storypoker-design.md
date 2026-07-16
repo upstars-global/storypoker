@@ -1,8 +1,8 @@
-# Story Poker — Design Spec v1
+# Story Poker - Design Spec v1
 
 ## Overview
 
-Story Poker — веб-застосунок для планінг покеру (оцінювання User Stories) з реалтайм синхронізацією між учасниками. Jamstack, без власного бекенду — Supabase як база даних і реалтайм транспорт.
+Story Poker - веб-застосунок для планінг покеру (оцінювання User Stories) з реалтайм синхронізацією між учасниками. Jamstack, без власного бекенду - Supabase як база даних і реалтайм транспорт.
 
 ## Tech Stack
 
@@ -41,26 +41,26 @@ user_id      uuid NULL REFERENCES auth.users(id)  -- NULL для анонімн�
 created_at   timestamptz DEFAULT now()
 ```
 
-Realtime підписки на таблиці `players` та `room_state` — всі зміни миттєво видно всім у кімнаті.
+Realtime підписки на таблиці `players` та `room_state` - всі зміни миттєво видно всім у кімнаті.
 
 ## localStorage
 
-Ключ: `storypoker_session_<roomId>`  
+Ключ: `storypoker_session_<roomId>`
 Значення: `{ playerId: string, playerName: string }`
 
-При вході на `/room/[slug]` — перевіряє localStorage. Якщо є збережений `playerId` для цієї кімнати, одразу підключається без форми імені.
+При вході на `/room/[slug]` - перевіряє localStorage. Якщо є збережений `playerId` для цієї кімнати, одразу підключається без форми імені.
 
 ## Pages
 
-### `pages/index.vue` — Головна
+### `pages/index.vue` - Головна
 
 - Заголовок: "Create a planning poker room"
 - Поле імені з placeholder "Please enter your name"
 - Кнопка "Create Room"
-- Валідація: якщо поле порожнє — червона рамка інпуту, кімната не створюється
+- Валідація: якщо поле порожнє - червона рамка інпуту, кімната не створюється
 - При успіху: генерує 8-char ID → INSERT у `rooms` + `room_state` + `players` → зберігає в localStorage → redirect на `/room/[id]`
 
-### `pages/room/[slug].vue` — Кімната
+### `pages/room/[slug].vue` - Кімната
 
 **При завантаженні:**
 1. Перевіряє localStorage для цього `roomId`
@@ -97,17 +97,17 @@ Realtime підписки на таблиці `players` та `room_state` — в
 - `voting` фаза: порожньо = не голосував, ✓ = проголосував (значення приховане)
 - `revealed` фаза: показує числове значення голосу
 
-**Меню `⋮` (свій рядок — всі гравці):**
+**Меню `⋮` (свій рядок - всі гравці):**
 - Перейменувати
 - Стати модератором / Перестати бути модератором (toggle)
 - Вийти з кімнати
 
-**Меню `⋮` (чужий рядок — тільки авторизований модератор):**
+**Меню `⋮` (чужий рядок - тільки авторизований модератор):**
 - Kick Player → видаляє гравця з кімнати (DELETE з `players`)
 
 ### Cards Area (фаза `voting`)
 
-Сітка карт: `0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`  
+Сітка карт: `0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`
 (відображаються тільки активні карти з `room_state.active_cards`)
 
 - Вибрана карта підсвічується синім
@@ -116,13 +116,13 @@ Realtime підписки на таблиці `players` та `room_state` — в
 
 ### Results Area (фаза `revealed`)
 
-- Кругова діаграма — сектори пропорційні кількості голосів за кожне значення, різні кольори
+- Кругова діаграма - сектори пропорційні кількості голосів за кожне значення, різні кольори
 - У списку гравців видно числові значення голосів
 - Кнопка "Start New Estimation Round" (тільки модератор) → скидає всі votes до NULL, phase → 'voting', оновлює `round_started_at`
 
 ### Moderator Insights Panel
 
-Видимий тільки гравцям з `is_moderator = true`.  
+Видимий тільки гравцям з `is_moderator = true`.
 Відображає: "This round started N minutes ago" (відносний час від `round_started_at`).
 
 ### Configure Card Deck Modal
@@ -131,7 +131,7 @@ Realtime підписки на таблиці `players` та `room_state` — в
 
 - Dropdown: тільки "Fibonacci scale" (перша ітерація)
 - Повний пул карт шкали: `0, 0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`
-- Чекбокс біля кожної карти — увімкнути/вимкнути
+- Чекбокс біля кожної карти - увімкнути/вимкнути
 - За замовчуванням активні: `0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`
 - Кнопка "Save Card Deck" → UPDATE `room_state.active_cards` → синхронізується до всіх
 
@@ -148,11 +148,11 @@ Realtime підписки на таблиці `players` та `room_state` — в
 |---|:---:|:---:|:---:|:---:|
 | Голосувати | ✓ | ✓ | ✓ | ✓ |
 | Перейменувати себе | ✓ | ✓ | ✓ | ✓ |
-| Стати модератором | ✓ | — | ✓ | — |
-| Reveal Estimates | — | ✓ | — | ✓ |
-| Start New Round | — | ✓ | — | ✓ |
-| Configure Card Deck | — | ✓ | — | ✓ |
-| Kick Player | — | — | — | ✓ |
+| Стати модератором | ✓ | - | ✓ | - |
+| Reveal Estimates | - | ✓ | - | ✓ |
+| Start New Round | - | ✓ | - | ✓ |
+| Configure Card Deck | - | ✓ | - | ✓ |
+| Kick Player | - | - | - | ✓ |
 
 ## Realtime Flow
 

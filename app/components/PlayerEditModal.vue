@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
-import AppTooltip from '~/components/AppTooltip.vue'
-import { PLAYER_ROLES, roleTagForShields, shieldForRoleTag } from '~/utils/shields'
+import RolePicker from '~/components/RolePicker.vue'
+import { roleTagForShields, shieldForRoleTag } from '~/utils/shields'
 
 const props = defineProps<{
   name: string
@@ -14,8 +14,6 @@ const emit = defineEmits<{
   save: [payload: { name: string; shields: string[] }]
   close: []
 }>()
-
-const ROLE_TAGS = PLAYER_ROLES.map(r => r.tag)
 
 const nameValue = ref(props.name)
 const nameInput = ref<HTMLInputElement | null>(null)
@@ -51,35 +49,10 @@ function save() {
         {{ $t('players.editSubtitle') }}
       </p>
 
-      <section class="mt-6">
-        <h3 class="text-mui-caption font-semibold uppercase tracking-wide text-muted mb-2">
-          {{ $t('players.roleLabel') }}
-        </h3>
-        <div class="flex flex-wrap gap-2">
-          <AppTooltip
-            v-for="opt in ROLE_TAGS"
-            :key="opt"
-            side="top"
-            :side-offset="6"
-          >
-            <template #trigger>
-              <button
-                type="button"
-                class="mui-shield"
-                style="padding: 6px 12px;"
-                :class="{ 'is-selected': tag === opt }"
-                :aria-pressed="tag === opt"
-                @click="tag = tag === opt ? '' : opt"
-              >
-                {{ opt }}
-              </button>
-            </template>
-            <template #content>
-              {{ $t(`players.roleNames.${opt}`, opt) }}
-            </template>
-          </AppTooltip>
-        </div>
-      </section>
+      <RolePicker
+        v-model="tag"
+        class="mt-6"
+      />
 
       <div class="mui-field mt-5">
         <input
