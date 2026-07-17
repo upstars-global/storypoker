@@ -244,7 +244,7 @@ const playerAvatar = computed(() => {
         v-if="isOwn || currentUserIsModerator"
         v-wave
         class="mui-icon-btn"
-        style="padding: 4px;"
+        style="padding: 4px; border: none; box-shadow: none;"
         :aria-expanded="menuOpen"
         @click="menuOpen = !menuOpen"
       >

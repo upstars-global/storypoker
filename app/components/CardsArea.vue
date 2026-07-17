@@ -289,7 +289,7 @@ function cancelHold(mode: CountdownMode) {
             >
               <AppIcon
                 icon="lucide:undo"
-                style="font-size: 1.5rem;"
+                :style="{ fontSize: '1.5rem', transform: showLastRound ? 'scaleX(-1)' : undefined }"
               />
             </button>
           </template>
