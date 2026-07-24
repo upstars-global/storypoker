@@ -101,17 +101,17 @@ const groups = computed(() => {
   }))
 })
 
-const CSV_EXPORT_DECK = 'scrum'
+const CSV_EXPORT_DECKS = ['scrum', 'fibonacci'] as const
 
-const scrumExportSummaries = computed(() => {
+function exportSummariesFor(deck: string) {
   return summaries.value.filter(s => {
-    if (s.deckPreset !== CSV_EXPORT_DECK) return false
+    if (s.deckPreset !== deck) return false
     const d = new Date(s.revealedAt)
     if (selectedYear.value !== null && d.getFullYear() !== selectedYear.value) return false
     if (selectedQuarter.value !== null && Math.floor(d.getMonth() / 3) + 1 !== selectedQuarter.value) return false
     return true
   })
-})
+}
 
 function formatFileDate(d: Date): string {
   const dd = String(d.getDate()).padStart(2, '0')
@@ -120,11 +120,11 @@ function formatFileDate(d: Date): string {
   return `${dd}.${mm}.${yy}`
 }
 
-function exportCsv() {
+function exportCsv(deck: string) {
   const dateColFmt = new Intl.DateTimeFormat(locale.value, { dateStyle: 'short' })
   const escape = (v: string | number | null | undefined) => `"${String(v ?? '').replace(/"/g, '""')}"`
 
-  const rowsSource = scrumExportSummaries.value
+  const rowsSource = exportSummariesFor(deck)
   const allCards = [...new Set(rowsSource.flatMap(s => Object.keys(s.counts)))]
 
   const header = ['Date', 'Time', 'Week', 'Deck', 'Average', 'Alignment', 'Voters', ...allCards]
@@ -151,7 +151,7 @@ function exportCsv() {
   const dates = rowsSource.map(s => new Date(s.revealedAt).getTime())
   const rangeStart = formatFileDate(new Date(Math.min(...dates)))
   const rangeEnd = formatFileDate(new Date(Math.max(...dates)))
-  a.download = `${team}_${CSV_EXPORT_DECK}_${rangeStart}-${rangeEnd}.csv`
+  a.download = `${team}_${deck}_${rangeStart}-${rangeEnd}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -215,17 +215,19 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
             </div>
           </div>
           <button
-            v-if="scrumExportSummaries.length"
+            v-for="deck in CSV_EXPORT_DECKS"
+            v-show="exportSummariesFor(deck).length"
+            :key="deck"
             v-wave
             class="flex items-center gap-1 rounded px-2 py-1 text-mui-caption text-muted transition-colors hover:text-body"
-            :aria-label="$t('history.exportCsv')"
-            @click="exportCsv"
+            :aria-label="`${$t('history.exportCsv')} ${deckName(deck)}`"
+            @click="exportCsv(deck)"
           >
             <AppIcon
               icon="ic:baseline-download"
               style="font-size: 1rem;"
             />
-            {{ $t('history.exportCsv') }}
+            {{ $t('history.exportCsv') }} ({{ deckName(deck) }})
           </button>
         </div>
         <div
