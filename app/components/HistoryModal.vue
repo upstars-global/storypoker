@@ -101,14 +101,27 @@ const groups = computed(() => {
   }))
 })
 
+const CSV_EXPORT_DECK = 'scrum'
+
+const scrumExportSummaries = computed(() => {
+  return summaries.value.filter(s => {
+    if (s.deckPreset !== CSV_EXPORT_DECK) return false
+    const d = new Date(s.revealedAt)
+    if (selectedYear.value !== null && d.getFullYear() !== selectedYear.value) return false
+    if (selectedQuarter.value !== null && Math.floor(d.getMonth() / 3) + 1 !== selectedQuarter.value) return false
+    return true
+  })
+})
+
 function exportCsv() {
   const dateColFmt = new Intl.DateTimeFormat(locale.value, { dateStyle: 'short' })
   const escape = (v: string | number | null | undefined) => `"${String(v ?? '').replace(/"/g, '""')}"`
 
-  const allCards = [...new Set(filteredSummaries.value.flatMap(s => Object.keys(s.counts)))]
+  const rowsSource = scrumExportSummaries.value
+  const allCards = [...new Set(rowsSource.flatMap(s => Object.keys(s.counts)))]
 
   const header = ['Date', 'Time', 'Week', 'Deck', 'Average', 'Alignment', 'Voters', ...allCards]
-  const rows = filteredSummaries.value.map(s => {
+  const rows = rowsSource.map(s => {
     const d = new Date(s.revealedAt)
     return [
       escape(dateColFmt.format(d)),
@@ -128,7 +141,9 @@ function exportCsv() {
   const a = document.createElement('a')
   a.href = url
   const prefix = props.roomName ? `${props.roomName.replace(/[^\w\d-]/g, '_')}-` : ''
-  a.download = `${prefix}round-history-${new Date().toISOString().slice(0, 10)}.csv`
+  const quarterPart = selectedQuarter.value ? `Q${selectedQuarter.value}` : 'all-quarters'
+  const yearPart = selectedYear.value ?? new Date().getFullYear()
+  a.download = `${prefix}${CSV_EXPORT_DECK}-${quarterPart}-${yearPart}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -192,7 +207,7 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
             </div>
           </div>
           <button
-            v-if="filteredSummaries.length"
+            v-if="scrumExportSummaries.length"
             v-wave
             class="flex items-center gap-1 rounded px-2 py-1 text-mui-caption text-muted transition-colors hover:text-body"
             :aria-label="$t('history.exportCsv')"
