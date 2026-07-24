@@ -672,7 +672,6 @@ async function submitRenameRoom() {
 
     <HistoryModal
       v-if="showHistory"
-      :room-name="currentRoomName ?? currentSlug ?? undefined"
       @close="showHistory = false"
     />
     <AlignmentTrendsModal

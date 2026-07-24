@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 // Same alignment/average scoring as app/utils/alignment.ts + app/utils/roundStats.ts,
 // duplicated here (not imported) so this function has no dependency on Vite path
@@ -43,10 +43,20 @@ function averageOf(votes: Record<string, number>): number | null {
   return Math.round((sum / count) * 10) / 10
 }
 
-// Deck presets that carry a numeric estimate — mirrors CSV_EXPORT_DECKS in HistoryModal.vue
+// Human-readable names for the deck presets that carry a numeric estimate.
+// Mirrors DECK_PRESETS in app/utils/cardDecks.ts for just the numeric subset.
 const DECK_NAMES: Record<string, string> = {
   scrum: 'Scrum Scale',
   fibonacci: 'Fibonacci Sequence',
+  hours: 'Hours',
+}
+
+// A deck contributes to alignment/average only when its cards form an ordered
+// numeric scale - mirrors isNumericPreset() in app/utils/roundStats.ts. Poll-style
+// decks (vote_question, voting) and non-scalar decks (tshirt, boolean) are excluded;
+// `null` covers legacy rounds recorded before deck_preset existed.
+function isNumericPreset(preset: string | null): boolean {
+  return preset === null || preset in DECK_NAMES
 }
 
 // QA disciplines route a player's vote into the separate QA pile — mirrors
@@ -93,6 +103,12 @@ function json(body: unknown, status = 200): Response {
   })
 }
 
+interface RoomRow {
+  id: string
+  slug: string | null
+  name: string | null
+}
+
 interface RoundRow {
   id: string
   revealed_at: string | null
@@ -101,25 +117,7 @@ interface RoundRow {
   deck_preset: string | null
 }
 
-export default async (req: Request): Promise<Response> => {
-  const slug = decodeURIComponent(new URL(req.url).pathname.replace(/^\/api\//, '').replace(/\.json$/i, ''))
-  if (!slug) return json({ error: 'missing room slug' }, 400)
-
-  const url = process.env.VITE_SUPABASE_URL
-  const key = process.env.VITE_SUPABASE_KEY
-  if (!url || !key) return json({ error: 'server misconfigured' }, 500)
-
-  const supabase = createClient(url, key)
-
-  const { data: room, error: roomErr } = await supabase
-    .from('rooms')
-    .select('id, slug, name')
-    .or(`id.eq.${slug},slug.eq.${slug}`)
-    .maybeSingle()
-
-  if (roomErr) return json({ error: 'query failed' }, 500)
-  if (!room) return json({ error: 'room not found' }, 404)
-
+async function buildRoomPayload(supabase: SupabaseClient, room: RoomRow) {
   const [{ data: rounds, error: roundsErr }, { data: players, error: playersErr }] = await Promise.all([
     supabase
       .from('round_history')
@@ -133,7 +131,7 @@ export default async (req: Request): Promise<Response> => {
       .eq('room_id', room.id),
   ])
 
-  if (roundsErr || playersErr) return json({ error: 'query failed' }, 500)
+  if (roundsErr || playersErr) return { room: { id: room.id, slug: room.slug, name: room.name }, rounds: [], error: 'query failed' }
 
   // Mirrors visiblePlayers in stores/players.ts — a player who has since left the
   // room falls back to being counted as DEV, same as in the storypoker app itself.
@@ -142,7 +140,7 @@ export default async (req: Request): Promise<Response> => {
   )
 
   const result = ((rounds ?? []) as RoundRow[])
-    .filter(r => r.deck_preset != null && r.deck_preset in DECK_NAMES)
+    .filter(r => isNumericPreset(r.deck_preset))
     .map((r) => {
       const counts: Record<string, number> = {}
       for (const v of r.votes ?? []) counts[v.vote] = (counts[v.vote] ?? 0) + 1
@@ -152,7 +150,7 @@ export default async (req: Request): Promise<Response> => {
         id: r.id,
         date: r.revealed_at,
         week: isoWeek(date),
-        deck: DECK_NAMES[r.deck_preset as string],
+        deck: r.deck_preset ? (DECK_NAMES[r.deck_preset] ?? r.deck_preset) : '',
         average: averageOf(counts),
         devAlignment: dev,
         qaAlignment: qa,
@@ -161,7 +159,36 @@ export default async (req: Request): Promise<Response> => {
     })
     .filter(r => r.average !== null && (r.devAlignment !== null || r.qaAlignment !== null))
 
-  return json({ room: { id: room.id, slug: room.slug, name: room.name }, rounds: result })
+  return { room: { id: room.id, slug: room.slug, name: room.name }, rounds: result }
+}
+
+export default async (req: Request): Promise<Response> => {
+  const rawSlug = decodeURIComponent(new URL(req.url).pathname.replace(/^\/api\//, '').replace(/\.json$/i, ''))
+  if (!rawSlug) return json({ error: 'missing room slug' }, 400)
+
+  const url = process.env.VITE_SUPABASE_URL
+  const key = process.env.VITE_SUPABASE_KEY
+  if (!url || !key) return json({ error: 'server misconfigured' }, 500)
+
+  const supabase = createClient(url, key)
+
+  if (rawSlug === 'teams') {
+    const { data: rooms, error: roomsErr } = await supabase.from('rooms').select('id, slug, name')
+    if (roomsErr) return json({ error: 'query failed' }, 500)
+    const teams = await Promise.all((rooms ?? []).map(room => buildRoomPayload(supabase, room as RoomRow)))
+    return json({ teams })
+  }
+
+  const { data: room, error: roomErr } = await supabase
+    .from('rooms')
+    .select('id, slug, name')
+    .or(`id.eq.${rawSlug},slug.eq.${rawSlug}`)
+    .maybeSingle()
+
+  if (roomErr) return json({ error: 'query failed' }, 500)
+  if (!room) return json({ error: 'room not found' }, 404)
+
+  return json(await buildRoomPayload(supabase, room as RoomRow))
 }
 
 export const config = {

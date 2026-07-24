@@ -9,7 +9,6 @@ import { useCardLabel } from '~/composables/useCardLabel'
 import { summarizeRound, isNumericPreset, voteToNumber, type RoundSummary } from '~/utils/roundStats'
 import { DECK_PRESETS } from '~/utils/cardDecks'
 
-const props = defineProps<{ roomName?: string }>()
 const emit = defineEmits<{ close: [] }>()
 
 const roomStore = useRoomStore()
@@ -62,13 +61,6 @@ function deckName(id: string): string {
   return DECK_PRESETS.find(p => p.id === id)?.name ?? id
 }
 
-function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
-}
-
 function hasNumericVote(counts: Record<string, number>): boolean {
   return Object.keys(counts).some(v => voteToNumber(v) !== null)
 }
@@ -100,61 +92,6 @@ const groups = computed(() => {
     rounds,
   }))
 })
-
-const CSV_EXPORT_DECKS = ['scrum', 'fibonacci'] as const
-
-function exportSummariesFor(deck: string) {
-  return summaries.value.filter(s => {
-    if (s.deckPreset !== deck) return false
-    const d = new Date(s.revealedAt)
-    if (selectedYear.value !== null && d.getFullYear() !== selectedYear.value) return false
-    if (selectedQuarter.value !== null && Math.floor(d.getMonth() / 3) + 1 !== selectedQuarter.value) return false
-    return true
-  })
-}
-
-function formatFileDate(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yy = String(d.getFullYear()).slice(-2)
-  return `${dd}.${mm}.${yy}`
-}
-
-function exportCsv(deck: string) {
-  const dateColFmt = new Intl.DateTimeFormat(locale.value, { dateStyle: 'short' })
-  const escape = (v: string | number | null | undefined) => `"${String(v ?? '').replace(/"/g, '""')}"`
-
-  const rowsSource = exportSummariesFor(deck)
-  const allCards = [...new Set(rowsSource.flatMap(s => Object.keys(s.counts)))]
-
-  const header = ['Date', 'Time', 'Week', 'Deck', 'Average', 'Alignment', 'Voters', ...allCards]
-  const rows = rowsSource.map(s => {
-    const d = new Date(s.revealedAt)
-    return [
-      escape(dateColFmt.format(d)),
-      escape(timeFmt.value.format(d)),
-      escape(`W${getISOWeek(d)}`),
-      escape(s.deckPreset ? deckName(s.deckPreset) : ''),
-      escape(s.average),
-      escape(s.alignment),
-      escape(s.voterCount),
-      ...allCards.map(c => escape(s.counts[c] ?? 0)),
-    ].join(';')
-  })
-
-  const csv = '﻿' + [header.join(';'), ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  const team = (props.roomName ?? 'team').replace(/[^\w\d-]/g, '_')
-  const dates = rowsSource.map(s => new Date(s.revealedAt).getTime())
-  const rangeStart = formatFileDate(new Date(Math.min(...dates)))
-  const rangeEnd = formatFileDate(new Date(Math.max(...dates)))
-  a.download = `${team}_${deck}_${rangeStart}-${rangeEnd}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
-}
 
 function alignmentColor(a: number): string {
   if (a >= 80) return '#43a047'
@@ -214,21 +151,6 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
               </button>
             </div>
           </div>
-          <button
-            v-for="deck in CSV_EXPORT_DECKS"
-            v-show="exportSummariesFor(deck).length"
-            :key="deck"
-            v-wave
-            class="flex items-center gap-1 rounded px-2 py-1 text-mui-caption text-muted transition-colors hover:text-body"
-            :aria-label="`${$t('history.exportCsv')} ${deckName(deck)}`"
-            @click="exportCsv(deck)"
-          >
-            <AppIcon
-              icon="ic:baseline-download"
-              style="font-size: 1rem;"
-            />
-            {{ $t('history.exportCsv') }} ({{ deckName(deck) }})
-          </button>
         </div>
         <div
           v-if="availableDecks.length > 1"

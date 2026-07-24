@@ -408,22 +408,9 @@ round_history (
 
 **`HistoryModal.vue`** читає весь `fetchHistory()`, групує по рік/квартал, фільтрує по колоді; для кожного раунду показує `summarizeRound()` (`app/utils/roundStats.ts`): `average` (зважене середнє числових голосів, `.toFixed(1)`), `alignment` (`alignmentScore`), `counts` (кількість голосів по кожному значенню), `voterCount`. Для poll-колод (`voting`/`vote_question`) `average`/`alignment` - завжди `null`.
 
-### 11.5 Export (CSV)
+### 11.5 Export (видалено)
 
-Кнопка в `HistoryModal.vue` - тільки коли є хоч один раунд колоди **`scrum`** у обраних рік/квартал (`scrumExportSummaries`). Експорт **завжди обмежений колодою `scrum`**, незалежно від того, яку колоду обрано у фільтрі перегляду історії (`deckFilter` впливає тільки на те, що показано на екрані, не на вміст CSV) - інші колоди (Fibonacci, T-Shirt тощо) у файл не потрапляють ніколи.
-
-**Колонки (динамічні):** `Date;Time;Week;Deck;Average;Alignment;Voters;<card1>;<card2>;...` - колонки карт генеруються з унікальних значень голосів, побачених у вибірці; кожна містить кількість голосів за це значення в даному раунді.
-
-- `Date`/`Time` - `Intl.DateTimeFormat` (`dateStyle: 'short'` / `timeStyle: 'short'`) поточної локалі
-- `Week` - реальний ISO-8601 номер тижня (`W28`, не місяць/квартал)
-- `Deck` - людська назва пресету (`DECK_PRESETS`); завжди `Scrum Scale` (див. вище)
-- Кожне поле в лапках, внутрішні лапки подвоюються (стандартний CSV-escaping)
-
-**Формат файлу:** роздільник `;` (не кома - сумісність з Excel-локалями, де `,` це десятковий роздільник), UTF-8 BOM (`﻿`) на початку - щоб Excel коректно відкривав кирилицю.
-
-**Ім'я файлу:** `{команда}_{колода}_{дд.мм.рр}-{дд.мм.рр}.csv` - назва кімнати (`props.roomName`, санітизована `[^\w\d-]` → `_`), потім завжди `scrum`, потім діапазон дат **фактичних експортованих раундів** (мін/макс `revealed_at` серед `scrumExportSummaries`, формат `dd.mm.yy`) - не дата експорту і не межі обраного кварталу.
-
-**Механізм:** `Blob({type:'text/csv;charset=utf-8;'})` → `URL.createObjectURL` → програмний клік по відкріпленому `<a download>` → `URL.revokeObjectURL`.
+Ручний CSV-експорт з `HistoryModal.vue` (кнопка на колоду, обмежена `scrum`/`fibonacci`) видалено - його роль тепер виконує публічний JSON API `netlify/functions/room-json.mts` (`GET /api/<room>.json` і `GET /api/teams.json`), яким живиться `agilecharts`. Деталі - AGENTS.md, розділ "Зовнішні інтеграції".
 
 ### 11.6 Механіка таймера і відліку розкриття
 

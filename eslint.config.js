@@ -16,6 +16,7 @@ export default [
   {
     ignores: [
       'dist/**',
+      '.netlify/**',
       '.nuxt/**',
       '.output/**',
       'coverage/**',

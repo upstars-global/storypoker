@@ -52,7 +52,6 @@
     "empty": "No completed rounds yet",
     "emptyRange": "No rounds in this period",
     "average": "Average",
-    "exportCsv": "Export CSV",
     "filter": {
       "allDecks": "All decks"
     }
