@@ -59,6 +59,22 @@ function isNumericPreset(preset: string | null): boolean {
   return preset === null || preset in DECK_NAMES
 }
 
+// Fallback deck order for rounds recorded before active_cards existed
+// (supabase/migrations/010_round_history_deck.sql) - defaultActive from
+// app/utils/cardDecks.ts for each numeric preset. An approximation (the deck
+// actually shown at the time may have had a different active subset), used
+// only when active_cards is null so legacy rounds still contribute alignment.
+const DEFAULT_ACTIVE_CARDS: Record<string, string[]> = {
+  scrum: ['1/2', '1', '2', '3', '5', '8', '13', '20', '?', '☕'],
+  fibonacci: ['1', '2', '3', '5', '8', '13', '21', '?', '☕'],
+  hours: ['1/2h', '1h', '2h', '3h', '5h', '8h', '13h', '20h', '?', '☕'],
+}
+
+function resolveActiveCards(activeCards: string[] | null, deckPreset: string | null): string[] | null {
+  if (activeCards?.length) return activeCards
+  return deckPreset ? (DEFAULT_ACTIVE_CARDS[deckPreset] ?? null) : null
+}
+
 // QA disciplines route a player's vote into the separate QA pile — mirrors
 // QA_SHIELDS/isQaPlayer in app/utils/shields.ts.
 const QA_SHIELDS = new Set(['qa', 'aqa', 'gqa'])
@@ -145,7 +161,7 @@ async function buildRoomPayload(supabase: SupabaseClient, room: RoomRow) {
       const counts: Record<string, number> = {}
       for (const v of r.votes ?? []) counts[v.vote] = (counts[v.vote] ?? 0) + 1
       const date = new Date(r.revealed_at as string)
-      const { dev, qa } = splitAlignment(r.votes ?? [], shieldsByPlayer, r.active_cards)
+      const { dev, qa } = splitAlignment(r.votes ?? [], shieldsByPlayer, resolveActiveCards(r.active_cards, r.deck_preset))
       return {
         id: r.id,
         date: r.revealed_at,
