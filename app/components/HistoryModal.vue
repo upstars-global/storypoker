@@ -113,6 +113,13 @@ const scrumExportSummaries = computed(() => {
   })
 })
 
+function formatFileDate(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const yy = String(d.getFullYear()).slice(-2)
+  return `${dd}.${mm}.${yy}`
+}
+
 function exportCsv() {
   const dateColFmt = new Intl.DateTimeFormat(locale.value, { dateStyle: 'short' })
   const escape = (v: string | number | null | undefined) => `"${String(v ?? '').replace(/"/g, '""')}"`
@@ -140,10 +147,11 @@ function exportCsv() {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  const prefix = props.roomName ? `${props.roomName.replace(/[^\w\d-]/g, '_')}-` : ''
-  const quarterPart = selectedQuarter.value ? `Q${selectedQuarter.value}` : 'all-quarters'
-  const yearPart = selectedYear.value ?? new Date().getFullYear()
-  a.download = `${prefix}${CSV_EXPORT_DECK}-${quarterPart}-${yearPart}.csv`
+  const team = (props.roomName ?? 'team').replace(/[^\w\d-]/g, '_')
+  const dates = rowsSource.map(s => new Date(s.revealedAt).getTime())
+  const rangeStart = formatFileDate(new Date(Math.min(...dates)))
+  const rangeEnd = formatFileDate(new Date(Math.max(...dates)))
+  a.download = `${team}_${rangeStart}-${rangeEnd}__${CSV_EXPORT_DECK}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }
