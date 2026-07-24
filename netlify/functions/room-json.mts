@@ -49,6 +49,31 @@ const DECK_NAMES: Record<string, string> = {
   fibonacci: 'Fibonacci Sequence',
 }
 
+// QA disciplines route a player's vote into the separate QA pile — mirrors
+// QA_SHIELDS/isQaPlayer in app/utils/shields.ts.
+const QA_SHIELDS = new Set(['qa', 'aqa', 'gqa'])
+
+function isQaPlayer(shields: string[] | null | undefined): boolean {
+  return Boolean(shields?.some(id => QA_SHIELDS.has(id)))
+}
+
+// Mirrors splitRoundAlignment() in app/utils/roundStats.ts — same per-round
+// DEV/QA split shown in the storypoker app's own Alignment Trends modal.
+function splitAlignment(
+  votes: { player_id: string; vote: string }[],
+  shieldsByPlayer: Map<string, string[]>,
+  activeCards: string[] | null,
+): { dev: number | null; qa: number | null } {
+  const devCounts: Record<string, number> = {}
+  const qaCounts: Record<string, number> = {}
+  for (const v of votes) {
+    const shields = shieldsByPlayer.get(v.player_id) ?? []
+    if (isQaPlayer(shields)) qaCounts[v.vote] = (qaCounts[v.vote] ?? 0) + 1
+    else devCounts[v.vote] = (devCounts[v.vote] ?? 0) + 1
+  }
+  return { dev: alignmentScore(devCounts, activeCards), qa: alignmentScore(qaCounts, activeCards) }
+}
+
 function isoWeek(d: Date): string {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7))
@@ -95,14 +120,26 @@ export default async (req: Request): Promise<Response> => {
   if (roomErr) return json({ error: 'query failed' }, 500)
   if (!room) return json({ error: 'room not found' }, 404)
 
-  const { data: rounds, error: roundsErr } = await supabase
-    .from('round_history')
-    .select('id, revealed_at, votes, active_cards, deck_preset')
-    .eq('room_id', room.id)
-    .not('revealed_at', 'is', null)
-    .order('revealed_at', { ascending: true })
+  const [{ data: rounds, error: roundsErr }, { data: players, error: playersErr }] = await Promise.all([
+    supabase
+      .from('round_history')
+      .select('id, revealed_at, votes, active_cards, deck_preset')
+      .eq('room_id', room.id)
+      .not('revealed_at', 'is', null)
+      .order('revealed_at', { ascending: true }),
+    supabase
+      .from('players')
+      .select('id, shields, left_at')
+      .eq('room_id', room.id),
+  ])
 
-  if (roundsErr) return json({ error: 'query failed' }, 500)
+  if (roundsErr || playersErr) return json({ error: 'query failed' }, 500)
+
+  // Mirrors visiblePlayers in stores/players.ts — a player who has since left the
+  // room falls back to being counted as DEV, same as in the storypoker app itself.
+  const shieldsByPlayer = new Map<string, string[]>(
+    (players ?? []).filter(p => p.left_at === null).map(p => [p.id as string, (p.shields ?? []) as string[]]),
+  )
 
   const result = ((rounds ?? []) as RoundRow[])
     .filter(r => r.deck_preset != null && r.deck_preset in DECK_NAMES)
@@ -110,17 +147,19 @@ export default async (req: Request): Promise<Response> => {
       const counts: Record<string, number> = {}
       for (const v of r.votes ?? []) counts[v.vote] = (counts[v.vote] ?? 0) + 1
       const date = new Date(r.revealed_at as string)
+      const { dev, qa } = splitAlignment(r.votes ?? [], shieldsByPlayer, r.active_cards)
       return {
         id: r.id,
         date: r.revealed_at,
         week: isoWeek(date),
         deck: DECK_NAMES[r.deck_preset as string],
         average: averageOf(counts),
-        alignment: alignmentScore(counts, r.active_cards),
+        devAlignment: dev,
+        qaAlignment: qa,
         voters: (r.votes ?? []).length,
       }
     })
-    .filter(r => r.alignment !== null && r.average !== null)
+    .filter(r => r.average !== null && (r.devAlignment !== null || r.qaAlignment !== null))
 
   return json({ room: { id: room.id, slug: room.slug, name: room.name }, rounds: result })
 }
