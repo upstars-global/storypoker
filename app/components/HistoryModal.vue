@@ -151,7 +151,7 @@ function exportCsv() {
   const dates = rowsSource.map(s => new Date(s.revealedAt).getTime())
   const rangeStart = formatFileDate(new Date(Math.min(...dates)))
   const rangeEnd = formatFileDate(new Date(Math.max(...dates)))
-  a.download = `${team}_${rangeStart}-${rangeEnd}__${CSV_EXPORT_DECK}.csv`
+  a.download = `${team}_${CSV_EXPORT_DECK}_${rangeStart}-${rangeEnd}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }
