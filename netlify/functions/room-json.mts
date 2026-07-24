@@ -183,7 +183,20 @@ async function buildRoomPayload(supabase: SupabaseClient, room: RoomRow) {
   return { room: { id: room.id, slug: room.slug, name: room.name }, rounds: result }
 }
 
+// Shared-secret gate - mirrors the Authorization: Bearer pattern used by
+// agilecharts' own webhooks (server/api/webhooks/fe-weekly-report.post.ts).
+// Without it, anyone who knows a room slug (or /api/teams.json, which needs
+// no slug at all) could read every team's voting history.
+function isAuthorized(req: Request): boolean {
+  const token = process.env.STORYPOKER_API_TOKEN
+  if (!token) return false
+  return req.headers.get('authorization') === `Bearer ${token}`
+}
+
 export default async (req: Request): Promise<Response> => {
+  if (!process.env.STORYPOKER_API_TOKEN) return json({ error: 'server misconfigured' }, 500)
+  if (!isAuthorized(req)) return json({ error: 'unauthorized' }, 401)
+
   const rawSlug = decodeURIComponent(new URL(req.url).pathname.replace(/^\/api\//, '').replace(/\.json$/i, ''))
   if (!rawSlug) return json({ error: 'missing room slug' }, 400)
 
