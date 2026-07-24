@@ -70,9 +70,14 @@ const DEFAULT_ACTIVE_CARDS: Record<string, string[]> = {
   hours: ['1/2h', '1h', '2h', '3h', '5h', '8h', '13h', '20h', '?', '☕'],
 }
 
+// Rounds recorded before deck_preset existed have no preset at all - a second,
+// bigger approximation on top of the one above: assume DEFAULT_PRESET_ID
+// ('scrum' in app/utils/cardDecks.ts) rather than dropping them entirely.
+const LEGACY_DEFAULT_PRESET = 'scrum'
+
 function resolveActiveCards(activeCards: string[] | null, deckPreset: string | null): string[] | null {
   if (activeCards?.length) return activeCards
-  return deckPreset ? (DEFAULT_ACTIVE_CARDS[deckPreset] ?? null) : null
+  return DEFAULT_ACTIVE_CARDS[deckPreset ?? LEGACY_DEFAULT_PRESET] ?? null
 }
 
 // QA disciplines route a player's vote into the separate QA pile — mirrors
