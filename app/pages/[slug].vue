@@ -676,6 +676,7 @@ async function submitRenameRoom() {
     />
     <AlignmentTrendsModal
       v-if="showAlignmentTrends"
+      :room-name="currentRoomName ?? currentSlug ?? roomId"
       @close="showAlignmentTrends = false"
     />
 

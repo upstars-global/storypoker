@@ -4,12 +4,15 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
+import RoundSnapshotModal from '~/components/RoundSnapshotModal.vue'
 import { storeToRefs } from 'pinia'
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { summarizeRound, isNumericPreset, voteToNumber, splitRoundAlignment } from '~/utils/roundStats'
 import { DECK_PRESETS } from '~/utils/cardDecks'
+import type { RoundHistory } from '~/stores/types'
 
+const props = defineProps<{ roomName?: string }>()
 const emit = defineEmits<{ close: [] }>()
 
 const roomStore = useRoomStore()
@@ -25,6 +28,7 @@ interface ChartPoint {
   devAlignment: number | null
   qaAlignment: number | null
   deckPreset: string | null
+  round: RoundHistory
 }
 
 const allPoints = ref<ChartPoint[]>([])
@@ -48,7 +52,7 @@ onMounted(async () => {
       })
       .map(r => {
         const { dev, qa } = splitRoundAlignment(r, shieldsMap.value)
-        return { date: new Date(r.revealed_at), devAlignment: dev, qaAlignment: qa, deckPreset: r.deck_preset }
+        return { date: new Date(r.revealed_at), devAlignment: dev, qaAlignment: qa, deckPreset: r.deck_preset, round: r }
       })
       .sort((a, b) => a.date.getTime() - b.date.getTime())
   } catch (e) {
@@ -151,17 +155,67 @@ function valToY(v: number): number {
 }
 
 const REF_LINES = [
-  { v: 100, label: 'Perfect', color: '#43a047', dashed: false },
-  { v: 75, label: 'High', color: '#43a047', dashed: false },
-  { v: 50, label: 'Medium', color: '#fbc02d', dashed: true },
-  { v: 25, label: 'Low', color: '#e64a19', dashed: true },
+  { v: 100, label: '100%', color: '#43a047', dashed: false },
+  { v: 75, label: '75%', color: '#43a047', dashed: false },
+  { v: 50, label: '50%', color: '#fbc02d', dashed: true },
+  { v: 25, label: '25%', color: '#e64a19', dashed: true },
 ]
 
-interface HoveredDot { x: number; y: number; date: Date; value: number; series: 'DEV' | 'QA' }
+interface HoveredDot { x: number; y: number; date: Date; value: number; series: 'DEV' | 'QA'; round: RoundHistory }
 const hoveredDot = ref<HoveredDot | null>(null)
+const selectedRound = ref<RoundHistory | null>(null)
+let hideTooltipTimer: ReturnType<typeof setTimeout> | null = null
+
+function showTooltip(dot: { x: number; y: number; date: Date; alignment: number; round: RoundHistory }, series: 'DEV' | 'QA') {
+  if (hideTooltipTimer) {
+    clearTimeout(hideTooltipTimer)
+    hideTooltipTimer = null
+  }
+  hoveredDot.value = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series, round: dot.round }
+}
+
+function scheduleHideTooltip() {
+  hideTooltipTimer = setTimeout(() => {
+    hoveredDot.value = null
+    hideTooltipTimer = null
+  }, 200)
+}
+
+function cancelHideTooltip() {
+  if (hideTooltipTimer) {
+    clearTimeout(hideTooltipTimer)
+    hideTooltipTimer = null
+  }
+}
+
+function openRoundSnapshot() {
+  if (!hoveredDot.value) return
+  selectedRound.value = hoveredDot.value.round
+  hoveredDot.value = null
+}
 
 function indexToX(i: number): number {
   return PAD.left + (i / (points.value.length - 1)) * INNER_W
+}
+
+function smoothPath(pts: { x: number; y: number }[]): string {
+  const first = pts[0]
+  const second = pts[1]
+  if (!first || !second) return ''
+  if (pts.length === 2) return `M ${first.x},${first.y} L ${second.x},${second.y}`
+  let d = `M ${first.x},${first.y}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i === 0 ? i : i - 1]!
+    const p1 = pts[i]!
+    const p2 = pts[i + 1]!
+    const p3 = pts[i + 2 < pts.length ? i + 2 : i + 1]!
+    const cp1x = p1.x + (p2.x - p0.x) / 6
+    const cp1y = p1.y + (p2.y - p0.y) / 6
+    const cp2x = p2.x - (p3.x - p1.x) / 6
+    const cp2y = p2.y - (p3.y - p1.y) / 6
+    d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`
+  }
+  return d
 }
 
 const chartData = computed(() => {
@@ -174,34 +228,51 @@ const chartData = computed(() => {
       y: valToY(val),
       alignment: val,
       date: p.date,
+      round: p.round,
     }
   }
 
-  const devDots = points.value.map((p, i) => toXY(i, p, p.devAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date }[]
-  const qaDots = points.value.map((p, i) => toXY(i, p, p.qaAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date }[]
+  const devDots = points.value.map((p, i) => toXY(i, p, p.devAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date; round: RoundHistory }[]
+  const qaDots = points.value.map((p, i) => toXY(i, p, p.qaAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date; round: RoundHistory }[]
 
   return {
-    devPolyline: devDots.map(d => `${d.x},${d.y}`).join(' '),
-    qaPolyline: qaDots.map(d => `${d.x},${d.y}`).join(' '),
+    devPath: smoothPath(devDots),
+    qaPath: smoothPath(qaDots),
     devDots,
     qaDots,
   }
 })
 
-const dateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'short' }))
 const tooltipDateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'short', timeStyle: 'short' }))
+
+function isoWeek(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+}
+
+function weekLabel(date: Date): string {
+  return `w${isoWeek(date)}`
+}
 
 const xAxisLabels = computed(() => {
   if (!chartData.value || points.value.length < 2) return []
-  const step = Math.max(1, Math.floor(points.value.length / 6))
-  return points.value
-    .map((p, i) => ({ p, i }))
-    .filter(({ i }) => i % step === 0 || i === points.value.length - 1)
-    .slice(0, 7)
-    .map(({ p, i }) => ({
-      x: indexToX(i),
-      label: dateFmt.value.format(p.date),
-    }))
+  const lastIndex = points.value.length - 1
+  const tickCount = Math.min(7, points.value.length)
+  const seen = new Set<number>()
+  const indices: number[] = []
+  for (let i = 0; i < tickCount; i++) {
+    const idx = Math.round((i * lastIndex) / (tickCount - 1))
+    if (!seen.has(idx)) {
+      seen.add(idx)
+      indices.push(idx)
+    }
+  }
+  return indices.map(idx => ({
+    x: indexToX(idx),
+    label: weekLabel(points.value[idx]!.date),
+  }))
 })
 </script>
 
@@ -219,7 +290,7 @@ const xAxisLabels = computed(() => {
         id="alignment-trends-modal-title"
         class="text-mui-h2 font-bold text-primary"
       >
-        {{ $t('trends.title') }}
+        {{ props.roomName ? $t('trends.titleWithTeam', { name: props.roomName }) : $t('trends.title') }}
       </h2>
 
       <p
@@ -438,9 +509,9 @@ const xAxisLabels = computed(() => {
 
             <!-- DEV line -->
             <template v-if="showDevSeries">
-              <polyline
-                v-if="chartData.devPolyline"
-                :points="chartData.devPolyline"
+              <path
+                v-if="chartData.devPath"
+                :d="chartData.devPath"
                 fill="none"
                 stroke="#26a69a"
                 stroke-width="2"
@@ -466,17 +537,17 @@ const xAxisLabels = computed(() => {
                   r="8"
                   fill="transparent"
                   style="cursor: pointer;"
-                  @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'DEV' }"
-                  @mouseleave="hoveredDot = null"
+                  @mouseenter="showTooltip(dot, 'DEV')"
+                  @mouseleave="scheduleHideTooltip"
                 />
               </g>
             </template>
 
             <!-- QA line -->
             <template v-if="showQaSeries">
-              <polyline
-                v-if="chartData.qaPolyline"
-                :points="chartData.qaPolyline"
+              <path
+                v-if="chartData.qaPath"
+                :d="chartData.qaPath"
                 fill="none"
                 stroke="#ffa726"
                 stroke-width="2"
@@ -502,8 +573,8 @@ const xAxisLabels = computed(() => {
                   r="8"
                   fill="transparent"
                   style="cursor: pointer;"
-                  @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'QA' }"
-                  @mouseleave="hoveredDot = null"
+                  @mouseenter="showTooltip(dot, 'QA')"
+                  @mouseleave="scheduleHideTooltip"
                 />
               </g>
             </template>
@@ -511,18 +582,20 @@ const xAxisLabels = computed(() => {
             <!-- Hover tooltip -->
             <g
               v-if="hoveredDot"
-              :transform="`translate(${Math.min(Math.max(hoveredDot.x, PAD.left + 44), VB_W - PAD.right - 44)}, ${Math.max(hoveredDot.y - 34, PAD.top + 14)})`"
-              style="pointer-events: none;"
+              :transform="`translate(${Math.min(Math.max(hoveredDot.x, PAD.left + 44), VB_W - PAD.right - 44)}, ${Math.max(hoveredDot.y - 52, PAD.top + 34)})`"
+              @mouseenter="cancelHideTooltip"
+              @mouseleave="scheduleHideTooltip"
             >
               <rect
                 x="-44"
                 y="-16"
                 width="88"
-                height="30"
+                height="48"
                 rx="4"
                 fill="#1a1a2e"
                 stroke="#546e7a"
                 stroke-width="1"
+                style="pointer-events: none;"
               />
               <text
                 x="0"
@@ -531,14 +604,26 @@ const xAxisLabels = computed(() => {
                 font-size="10"
                 font-weight="600"
                 text-anchor="middle"
-              >{{ hoveredDot.series }} {{ hoveredDot.value }}</text>
+                style="pointer-events: none;"
+              >{{ hoveredDot.series }} {{ hoveredDot.value }}%</text>
               <text
                 x="0"
                 y="8"
                 fill="#b0bec5"
                 font-size="9"
                 text-anchor="middle"
+                style="pointer-events: none;"
               >{{ tooltipDateFmt.format(hoveredDot.date) }}</text>
+              <text
+                x="0"
+                y="24"
+                fill="#4fc3f7"
+                font-size="9"
+                font-weight="600"
+                text-anchor="middle"
+                style="cursor: pointer; text-decoration: underline;"
+                @click="openRoundSnapshot"
+              >{{ $t('trends.viewDetails') }}</text>
             </g>
 
             <!-- Axis titles -->
@@ -562,4 +647,11 @@ const xAxisLabels = computed(() => {
       </template>
     </AppModalPaper>
   </AppModal>
+
+  <RoundSnapshotModal
+    v-if="selectedRound"
+    :round="selectedRound"
+    :shields-map="shieldsMap"
+    @close="selectedRound = null"
+  />
 </template>
