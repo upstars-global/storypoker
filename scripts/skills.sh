@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-# ANTHROPIC
+# ANTHROPIC SKILLS
 npx skills add https://github.com/anthropics/skills -s \
   frontend-design \
   -a codex claude-code -y
@@ -11,6 +11,8 @@ npx skills add https://github.com/anthropics/skills -s \
   # doc-coauthoring \
   # skill-creator \
   # webapp-testing \
+
+# ANTHROPIC CLAUDE-PLUGINS-OFFICIAL
 npx skills add https://github.com/anthropics/claude-plugins-official -s \
   claude-md-improver \
   -a codex claude-code -y
@@ -21,29 +23,33 @@ npx skills add https://github.com/anthropics/claude-plugins-official -s \
   # session-report \
   # skill-development \
 
-# SENTIMONY
-npx skills add https://github.com/sentimony/skills -s \
-  web-debug \
-  vitest \
-  typescript \
-  echarts \
-  -a codex claude-code -y
-
-# SUPERPOWERS
+# OBRA SUPERPOWERS
 npx skills add https://github.com/obra/superpowers -s \
   brainstorming \
   writing-plans \
   executing-plans \
-  test-driven-development \
-  systematic-debugging \
-  verification-before-completion \
-  finishing-a-development-branch \
   -a codex claude-code -y
+  # test-driven-development \
+  # systematic-debugging \
+  # verification-before-completion \
   # using-git-worktrees \
-  # receiving-code-review \
   # requesting-code-review \
+  # receiving-code-review \
   # dispatching-parallel-agents \
   # subagent-driven-development \
+  # finishing-a-development-branch \
   # writing-skills \
 
+# SENTIMONY SKILLS
+npx skills add https://github.com/sentimony/skills -s \
+  web-debug \
+  typescript \
+  vitest \
+  echarts \
+  -a codex claude-code -y
+
+# TASTE SKILL
+npx skills add https://github.com/Leonxlnx/taste-skill -s design-taste-frontend -a codex claude-code -y
+
+echo ""
 echo "npx skillio ls" && npx skillio ls

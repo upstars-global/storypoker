@@ -8,16 +8,17 @@ Guidance for Claude Code working with this repository.
 
 ## Workflow
 - **Заборонено git worktrees.** Не створюй linked worktrees (`git worktree add`, `EnterWorktree`, `isolation: "worktree"`). Працюй у головному робочому каталозі; ізоляцію роби через гілки.
+- **Діаграми - тільки ECharts.** Перед будь-якою роботою з графіками активуй skill `echarts`. Нові діаграми пиши на Apache ECharts; `AlignmentTrendsModal.vue` уже мігрований, саморобний SVG лишився тільки в `PieChart.vue` - при дотику переписуй на ECharts.
 
 ## Project Overview
 
 **Story Poker** - Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 7 пресетів або кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
 
-Джерела контексту: `DESIGN.md` (дизайн + audit §10), `ROADMAP.md` (статус, gaps, iter-цілі), `docs/superpowers/{plans,specs}/` (iter-плани і специфікації), `examples/` (ескізи, gitignored).
+Джерела контексту: `DESIGN.md` (дизайн + audit §10), `ROADMAP.md` (статус, gaps, iter-цілі), `docs/superpowers/{plans,specs}/` (iter-плани і специфікації), `docs/tasks/` (разові операційні інструкції).
 
 ## Tech Stack
 
-- **Framework:** Vue 3.5 + Vite 8 (Rolldown bundler) SPA, Composition API `<script setup>`, `srcDir: app/`
+- **Framework:** Vue 3.5 + Vite 8 (Rolldown bundler) SPA, Composition API `<script setup>`; код у `app/`, alias `~` і `@` → `app/` (`vite.config.ts` + `vitest.config.ts`)
 - **Routing:** `vue-router@5` - явні маршрути в `app/router.ts` (7 routes, без file-based routing)
 - **Styling:** Tailwind v4 через `@tailwindcss/vite` (нативний Vite-плагін; без PostCSS/autoprefixer - vendor-prefixing робить вбудований Lightning CSS), CSS-first config у `app/assets/css/main.css` (`@theme`, `@utility`, `@custom-variant dark`), MUI-like класи там само
   - text utilities з `@theme --color-*`: `text-{primary,body,muted,disabled,inverse,danger,success,appbar-{subtle,muted,emphasis}}`
@@ -25,7 +26,7 @@ Guidance for Claude Code working with this repository.
   - дефолтний `border` зберігає колір `var(--border)` через `@layer base` override (v4 default - `currentColor`); `border-input` - явний `@utility`
   - `shadow-{1..4,8}` - значення живуть у `@theme`; `text-mui-{h2,body,table,caption}` - `--text-mui-*` + `--line-height`/`--letter-spacing` modifiers
   - button modifiers (compose з `.mui-btn`): `.mui-btn-md` (180×46 / 23rad / `#607d8b`), `.mui-btn-sm`, `.mui-btn-text`, `.mui-btn-secondary`
-- **State:** Pinia 3 (без auto-imports - явні `from 'pinia'`)
+- **State:** Pinia 4 (без auto-imports - явні `from 'pinia'`)
 - **Charts:** `echarts` + `vue-echarts` (тільки потрібні модулі через `echarts/core` + `use([...])` заради розміру бандла) - графік тренди узгодженості (`AlignmentTrendsModal.vue`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **i18n:** `vue-i18n@11` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
@@ -37,12 +38,16 @@ Guidance for Claude Code working with this repository.
 ## Common Commands
 
 ```bash
-npm install
+npm install          # preinstall → scripts/setup.sh (створює .env/, .agents/, .claude/settings.json)
+                     # postinstall → scripts/skills.sh (мережеві npx skills add; skills-lock.json)
+npm run setup        # тільки setup.sh
+npm run skills       # тільки перевстановлення skills
+npm run clean        # scripts/clean.sh
 npm run dev          # Vite dev, port 3000 (host enabled)
 npm run build        # vite build → dist/
 npm run preview      # vite preview, port 3000
 npm run lint         # ESLint flat config
-npm run typecheck    # vue-tsc --noEmit
+npm run typecheck    # vue-tsc по tsconfig.json + tsconfig.node.json
 npm test             # vitest run
 npm run test:watch
 npm run test:unit
@@ -147,10 +152,11 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 ```text
 /
 ├── index.html             # head/meta + theme inline script
-├── vite.config.ts
+├── vite.config.ts, vitest.config.ts, playwright.config.ts
 ├── tsconfig.json, tsconfig.node.json
 ├── eslint.config.js
 ├── netlify.toml
+├── scripts/               # clean.sh, setup.sh, skills.sh (npm lifecycle hooks)
 ├── public/
 │   ├── _redirects         # /*  /index.html  200
 │   └── favicon.svg
@@ -163,20 +169,20 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 │   ├── components/        # AppHeader, CardsArea, PlayersList, modals, icons
 │   ├── composables/       # useTheme, useDylanAvatar, useCountdown, useCardLabel, useClickOutside
 │   ├── stores/            # auth, room, players, presence, profiles
-│   ├── lib/               # supabase-instance, registerAppIcons
+│   ├── lib/               # supabase-instance, registerAppIcons, database.types
 │   ├── configs/           # featureFlags (runtime toggles з localStorage)
-│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, shields, resultCelebration, relativeTime, iconMap, alignment, roundStats
+│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, shields, resultCelebration, relativeTime, iconMap, alignment, roundStats, slotMachine
 │   ├── i18n/locales/{uk,en}.json
 │   └── assets/css/main.css, assets/icons/
 ├── supabase/migrations/*.sql
 └── tests/
-    ├── unit/stores|utils/   # Vitest (alias ~ → app/)
+    ├── unit/stores|utils|components/   # Vitest (alias ~ і @ → app/)
     ├── fixtures/, page-objects/, support/, e2e/
 ```
 
 ## Testing
 
-Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `app/`. E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`. Локально зупини dev server на `:3000` або задай `E2E_BASE_URL`, бо Playwright має `reuseExistingServer: true`.
+Unit tests: Vitest + happy-dom, конфіг - окремий `vitest.config.ts` (`include`: `tests/unit/**`, `tests/components/**`, `tests/integration/**`; `passWithNoTests`, setup - `tests/support/setup/vitest.ts`). Наявні тести - у `tests/unit/{stores,utils,components}/`. E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`. Локально зупини dev server на `:3000` або задай `E2E_BASE_URL`, бо Playwright має `reuseExistingServer: true`.
 
 ## URL Schema
 
@@ -192,7 +198,7 @@ Unit tests: Vitest + happy-dom. Лежать у `tests/unit/`; alias `~` → `ap
 
 - `storypoker_session_<roomId>` - `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms
 - `sp-theme` - `light | dark`; `sp-palette` - `classic | cyberdeck | matcha` (повноцінні теми, кожна має light/dark: cyberdeck - неоновий термінал, Geist Mono, гострі кути, неонові рамки/тіні, єдиний дозволений градієнт в appbar; matcha - м'яка округла, Nunito, великі радіуси). Теми задають змінні `--font-app/--font-display/--radius-*/--btn-text/--btn-transform/--paper-border/--card-border/--shadow-*` у `main.css` через `html[data-palette=…][data-theme=…]`; inline script у `index.html` застосовує обидва атрибути до завантаження JS; вибір - меню в AppHeader (`PALETTES` з `useTheme.ts`)
-- `FEATURE_FLAGS` - override flags з `app/configs/featureFlags.ts` (керується на `/ffc`)
+- `FEATURE_FLAGS` - override flags з `app/configs/featureFlags.ts` (керується на `/ffc`): `countdownEnabled` (hold-to-start відлік перед reveal), `iconsLucide`, `iconsRounded`, `example`
 - `sp-side-widget` - `timer | slot`; лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine). Слот: 3 барабани, зважена випадковість (`utils/slotMachine.ts`; символи - tabler icon-id у `SLOT_SYMBOL_WEIGHTS`, рендеряться через `<AppIcon>`), 3 спіни на гравця за раунд (скидаються за `round_started_at`), джекпот = 3 однакові символи → broadcast `slot-win` на `countdown:<roomId>` каналі → `SlotWinBanner` (fixed-оверлей поверх AppHeader + невеликий салют, «+1 вихідний день») у всіх учасників
 
 ## Code Style
