@@ -161,22 +161,36 @@ const REF_LINES = [
   { v: 25, label: '25%', color: '#e64a19', dashed: true },
 ]
 
-interface HoveredDot { x: number; y: number; date: Date; value: number; series: 'DEV' | 'QA'; round: RoundHistory }
+interface HoveredDot { x: number; y: number; date: Date; value: number; series: 'DEV' | 'QA'; round: RoundHistory; pinned: boolean }
 const hoveredDot = ref<HoveredDot | null>(null)
 const selectedRound = ref<RoundHistory | null>(null)
 let hideTooltipTimer: ReturnType<typeof setTimeout> | null = null
 
+const DEV_COHORT_LABEL = 'DEV/FE/BE'
+
+function seriesLabel(series: 'DEV' | 'QA'): string {
+  return series === 'DEV' ? DEV_COHORT_LABEL : 'QA'
+}
+
 function showTooltip(dot: { x: number; y: number; date: Date; alignment: number; round: RoundHistory }, series: 'DEV' | 'QA') {
-  if (hideTooltipTimer) {
-    clearTimeout(hideTooltipTimer)
-    hideTooltipTimer = null
+  if (hoveredDot.value?.pinned) return
+  cancelHideTooltip()
+  hoveredDot.value = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series, round: dot.round, pinned: false }
+}
+
+function toggleTooltipPin(dot: { x: number; y: number; date: Date; alignment: number; round: RoundHistory }, series: 'DEV' | 'QA') {
+  if (hoveredDot.value?.pinned && hoveredDot.value.round.id === dot.round.id && hoveredDot.value.series === series) {
+    hoveredDot.value = null
+    return
   }
-  hoveredDot.value = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series, round: dot.round }
+  cancelHideTooltip()
+  hoveredDot.value = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series, round: dot.round, pinned: true }
 }
 
 function scheduleHideTooltip() {
+  if (hoveredDot.value?.pinned) return
   hideTooltipTimer = setTimeout(() => {
-    hoveredDot.value = null
+    if (!hoveredDot.value?.pinned) hoveredDot.value = null
     hideTooltipTimer = null
   }, 200)
 }
@@ -186,6 +200,10 @@ function cancelHideTooltip() {
     clearTimeout(hideTooltipTimer)
     hideTooltipTimer = null
   }
+}
+
+function closeTooltip() {
+  hoveredDot.value = null
 }
 
 function openRoundSnapshot() {
@@ -395,7 +413,7 @@ const xAxisLabels = computed(() => {
                     class="inline-block h-2 w-4 rounded"
                     style="background:#26a69a"
                   />
-                  DEV
+                  {{ DEV_COHORT_LABEL }}
                 </button>
                 <button
                   v-if="hasQaData"
@@ -539,6 +557,7 @@ const xAxisLabels = computed(() => {
                   style="cursor: pointer;"
                   @mouseenter="showTooltip(dot, 'DEV')"
                   @mouseleave="scheduleHideTooltip"
+                  @click="toggleTooltipPin(dot, 'DEV')"
                 />
               </g>
             </template>
@@ -575,6 +594,7 @@ const xAxisLabels = computed(() => {
                   style="cursor: pointer;"
                   @mouseenter="showTooltip(dot, 'QA')"
                   @mouseleave="scheduleHideTooltip"
+                  @click="toggleTooltipPin(dot, 'QA')"
                 />
               </g>
             </template>
@@ -582,14 +602,14 @@ const xAxisLabels = computed(() => {
             <!-- Hover tooltip -->
             <g
               v-if="hoveredDot"
-              :transform="`translate(${Math.min(Math.max(hoveredDot.x, PAD.left + 44), VB_W - PAD.right - 44)}, ${Math.max(hoveredDot.y - 52, PAD.top + 34)})`"
+              :transform="`translate(${Math.min(Math.max(hoveredDot.x, PAD.left + 52), VB_W - PAD.right - 52)}, ${Math.max(hoveredDot.y - 42, PAD.top + 24)})`"
               @mouseenter="cancelHideTooltip"
               @mouseleave="scheduleHideTooltip"
             >
               <rect
-                x="-44"
+                x="-52"
                 y="-16"
-                width="88"
+                width="104"
                 height="48"
                 rx="4"
                 fill="#1a1a2e"
@@ -598,6 +618,17 @@ const xAxisLabels = computed(() => {
                 style="pointer-events: none;"
               />
               <text
+                v-if="hoveredDot.pinned"
+                x="44"
+                y="-6"
+                fill="#b0bec5"
+                font-size="11"
+                font-weight="700"
+                text-anchor="middle"
+                style="cursor: pointer;"
+                @click="closeTooltip"
+              >×</text>
+              <text
                 x="0"
                 y="-4"
                 fill="#fff"
@@ -605,7 +636,7 @@ const xAxisLabels = computed(() => {
                 font-weight="600"
                 text-anchor="middle"
                 style="pointer-events: none;"
-              >{{ hoveredDot.series }} {{ hoveredDot.value }}%</text>
+              >{{ seriesLabel(hoveredDot.series) }} {{ hoveredDot.value }}%</text>
               <text
                 x="0"
                 y="8"
