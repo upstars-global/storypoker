@@ -26,6 +26,7 @@ Guidance for Claude Code working with this repository.
   - `shadow-{1..4,8}` - значення живуть у `@theme`; `text-mui-{h2,body,table,caption}` - `--text-mui-*` + `--line-height`/`--letter-spacing` modifiers
   - button modifiers (compose з `.mui-btn`): `.mui-btn-md` (180×46 / 23rad / `#607d8b`), `.mui-btn-sm`, `.mui-btn-text`, `.mui-btn-secondary`
 - **State:** Pinia 3 (без auto-imports - явні `from 'pinia'`)
+- **Charts:** `echarts` + `vue-echarts` (тільки потрібні модулі через `echarts/core` + `use([...])` заради розміру бандла) - графік тренди узгодженості (`AlignmentTrendsModal.vue`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **i18n:** `vue-i18n@11` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
 - **PWA:** `vite-plugin-pwa` (Workbox, `autoUpdate`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий файл); splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`

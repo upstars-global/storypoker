@@ -52,9 +52,11 @@
     "@dicebear/styles": "^10.2.0",
     "@iconify/vue": "^5.0.1",
     "@supabase/supabase-js": "^2.110.7",
+    "echarts": "^6.1.0",
     "pinia": "^4.0.2",
     "v-wave": "^3.1.1",
     "vue": "^3.5.40",
+    "vue-echarts": "^8.0.1",
     "vue-i18n": "^11.4.6",
     "vue-router": "^5.2.0"
   },

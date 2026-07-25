@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppIcon from '~/components/AppIcon.vue'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
@@ -11,6 +11,13 @@ import { usePlayersStore } from '~/stores/players'
 import { summarizeRound, isNumericPreset, voteToNumber, splitRoundAlignment } from '~/utils/roundStats'
 import { DECK_PRESETS } from '~/utils/cardDecks'
 import type { RoundHistory } from '~/stores/types'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, DataZoomComponent, MarkLineComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, DataZoomComponent, MarkLineComponent])
 
 const props = defineProps<{ roomName?: string }>()
 const emit = defineEmits<{ close: [] }>()
@@ -18,7 +25,7 @@ const emit = defineEmits<{ close: [] }>()
 const roomStore = useRoomStore()
 const playersStore = usePlayersStore()
 const { visiblePlayers } = storeToRefs(playersStore)
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 type TimeRange = '30D' | '90D' | '6M' | '1Y'
 const timeRange = ref<TimeRange>('6M')
@@ -143,16 +150,7 @@ function levelColor(a: number): string {
   return '#e64a19'
 }
 
-// SVG chart
-const VB_W = 560
-const VB_H = 220
-const PAD = { top: 12, right: 88, bottom: 28, left: 36 }
-const INNER_W = VB_W - PAD.left - PAD.right
-const INNER_H = VB_H - PAD.top - PAD.bottom
-
-function valToY(v: number): number {
-  return PAD.top + INNER_H - (v / 100) * INNER_H
-}
+const DEV_COHORT_LABEL = 'DEV/FE/BE'
 
 const REF_LINES = [
   { v: 100, label: '100%', color: '#43a047', dashed: false },
@@ -161,107 +159,7 @@ const REF_LINES = [
   { v: 25, label: '25%', color: '#e64a19', dashed: true },
 ]
 
-interface HoveredDot { x: number; y: number; date: Date; value: number; series: 'DEV' | 'QA'; round: RoundHistory; pinned: boolean }
-const hoveredDot = ref<HoveredDot | null>(null)
 const selectedRound = ref<RoundHistory | null>(null)
-let hideTooltipTimer: ReturnType<typeof setTimeout> | null = null
-
-const DEV_COHORT_LABEL = 'DEV/FE/BE'
-
-function seriesLabel(series: 'DEV' | 'QA'): string {
-  return series === 'DEV' ? DEV_COHORT_LABEL : 'QA'
-}
-
-function showTooltip(dot: { x: number; y: number; date: Date; alignment: number; round: RoundHistory }, series: 'DEV' | 'QA') {
-  if (hoveredDot.value?.pinned) return
-  cancelHideTooltip()
-  hoveredDot.value = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series, round: dot.round, pinned: false }
-}
-
-function toggleTooltipPin(dot: { x: number; y: number; date: Date; alignment: number; round: RoundHistory }, series: 'DEV' | 'QA') {
-  if (hoveredDot.value?.pinned && hoveredDot.value.round.id === dot.round.id && hoveredDot.value.series === series) {
-    hoveredDot.value = null
-    return
-  }
-  cancelHideTooltip()
-  hoveredDot.value = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series, round: dot.round, pinned: true }
-}
-
-function scheduleHideTooltip() {
-  if (hoveredDot.value?.pinned) return
-  hideTooltipTimer = setTimeout(() => {
-    if (!hoveredDot.value?.pinned) hoveredDot.value = null
-    hideTooltipTimer = null
-  }, 200)
-}
-
-function cancelHideTooltip() {
-  if (hideTooltipTimer) {
-    clearTimeout(hideTooltipTimer)
-    hideTooltipTimer = null
-  }
-}
-
-function closeTooltip() {
-  hoveredDot.value = null
-}
-
-function openRoundSnapshot() {
-  if (!hoveredDot.value) return
-  selectedRound.value = hoveredDot.value.round
-  hoveredDot.value = null
-}
-
-function indexToX(i: number): number {
-  return PAD.left + (i / (points.value.length - 1)) * INNER_W
-}
-
-function smoothPath(pts: { x: number; y: number }[]): string {
-  const first = pts[0]
-  const second = pts[1]
-  if (!first || !second) return ''
-  if (pts.length === 2) return `M ${first.x},${first.y} L ${second.x},${second.y}`
-  let d = `M ${first.x},${first.y}`
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i === 0 ? i : i - 1]!
-    const p1 = pts[i]!
-    const p2 = pts[i + 1]!
-    const p3 = pts[i + 2 < pts.length ? i + 2 : i + 1]!
-    const cp1x = p1.x + (p2.x - p0.x) / 6
-    const cp1y = p1.y + (p2.y - p0.y) / 6
-    const cp2x = p2.x - (p3.x - p1.x) / 6
-    const cp2y = p2.y - (p3.y - p1.y) / 6
-    d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`
-  }
-  return d
-}
-
-const chartData = computed(() => {
-  if (points.value.length < 2) return null
-
-  function toXY(i: number, p: ChartPoint, val: number | null) {
-    if (val === null) return null
-    return {
-      x: indexToX(i),
-      y: valToY(val),
-      alignment: val,
-      date: p.date,
-      round: p.round,
-    }
-  }
-
-  const devDots = points.value.map((p, i) => toXY(i, p, p.devAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date; round: RoundHistory }[]
-  const qaDots = points.value.map((p, i) => toXY(i, p, p.qaAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date; round: RoundHistory }[]
-
-  return {
-    devPath: smoothPath(devDots),
-    qaPath: smoothPath(qaDots),
-    devDots,
-    qaDots,
-  }
-})
-
-const tooltipDateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'short', timeStyle: 'short' }))
 
 function isoWeek(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
@@ -274,24 +172,153 @@ function weekLabel(date: Date): string {
   return `w${isoWeek(date)}`
 }
 
-const xAxisLabels = computed(() => {
-  if (!chartData.value || points.value.length < 2) return []
-  const lastIndex = points.value.length - 1
-  const tickCount = Math.min(7, points.value.length)
-  const seen = new Set<number>()
-  const indices: number[] = []
-  for (let i = 0; i < tickCount; i++) {
-    const idx = Math.round((i * lastIndex) / (tickCount - 1))
-    if (!seen.has(idx)) {
-      seen.add(idx)
-      indices.push(idx)
-    }
+const tooltipDateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'short', timeStyle: 'short' }))
+
+const hasEnoughData = computed(() => points.value.length >= 2)
+
+function tooltipFormatter(params: { dataIndex: number; seriesName?: string; value?: unknown }): string {
+  const point = points.value[params.dataIndex]
+  if (!point || params.value === null || params.value === undefined) return ''
+  const dateStr = tooltipDateFmt.value.format(point.date)
+  return `<div style="min-width:130px">`
+    + `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">`
+    + `<span style="font-weight:600;color:#fff;font-size:11px;">${params.seriesName} ${params.value}%</span>`
+    + `<span data-close-tooltip style="cursor:pointer;color:#b0bec5;font-weight:700;">×</span>`
+    + `</div>`
+    + `<div style="color:#b0bec5;font-size:10px;margin-top:2px;">${dateStr}</div>`
+    + `<div data-view-details data-index="${params.dataIndex}" style="color:#4fc3f7;text-decoration:underline;cursor:pointer;font-size:10px;margin-top:6px;">${t('trends.viewDetails')}</div>`
+    + `</div>`
+}
+
+const chartOption = computed(() => {
+  const categories = points.value.map(p => weekLabel(p.date))
+
+  const devSeries = {
+    name: DEV_COHORT_LABEL,
+    type: 'line',
+    smooth: true,
+    symbol: 'circle',
+    symbolSize: 8,
+    connectNulls: false,
+    lineStyle: { width: 2, color: '#26a69a' },
+    itemStyle: { color: '#26a69a' },
+    data: points.value.map(p => p.devAlignment),
   }
-  return indices.map(idx => ({
-    x: indexToX(idx),
-    label: weekLabel(points.value[idx]!.date),
-  }))
+
+  const qaSeries = {
+    name: 'QA',
+    type: 'line',
+    smooth: true,
+    symbol: 'circle',
+    symbolSize: 8,
+    connectNulls: false,
+    lineStyle: { width: 2, color: '#ffa726' },
+    itemStyle: { color: '#ffa726' },
+    data: points.value.map(p => p.qaAlignment),
+  }
+
+  const refLineSeries = {
+    name: '__refLines',
+    type: 'line',
+    data: [],
+    silent: true,
+    showSymbol: false,
+    tooltip: { show: false },
+    markLine: {
+      silent: true,
+      symbol: 'none',
+      label: { formatter: '{b}', fontSize: 10 },
+      data: REF_LINES.map(r => ({
+        yAxis: r.v,
+        name: r.label,
+        lineStyle: { color: r.color, type: r.dashed ? 'dashed' : 'solid', opacity: 0.4 },
+        label: { color: r.color },
+      })),
+    },
+  }
+
+  const series = []
+  if (showDevSeries.value) series.push(devSeries)
+  if (showQaSeries.value && hasQaData.value) series.push(qaSeries)
+  series.push(refLineSeries)
+
+  return {
+    backgroundColor: 'transparent',
+    grid: { left: 44, right: 56, top: 20, bottom: 68 },
+    xAxis: {
+      type: 'category',
+      data: categories,
+      boundaryGap: false,
+      axisLine: { lineStyle: { color: '#546e7a' } },
+      axisLabel: { color: '#78909c', fontSize: 9 },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 100,
+      name: t('trends.axisAlignment'),
+      nameLocation: 'middle',
+      nameGap: 32,
+      nameTextStyle: { color: '#78909c', fontSize: 9 },
+      axisLine: { show: false },
+      axisLabel: { color: '#78909c', fontSize: 9, formatter: '{value}%' },
+      splitLine: { show: false },
+    },
+    tooltip: {
+      trigger: 'item',
+      triggerOn: 'click',
+      enterable: true,
+      backgroundColor: '#1a1a2e',
+      borderColor: '#546e7a',
+      borderWidth: 1,
+      extraCssText: 'border-radius:4px;',
+      formatter: tooltipFormatter,
+    },
+    dataZoom: [
+      {
+        type: 'slider',
+        xAxisIndex: 0,
+        bottom: 4,
+        height: 24,
+        borderColor: '#546e7a',
+        fillerColor: 'rgba(120,144,156,0.2)',
+        dataBackground: {
+          lineStyle: { color: '#26a69a' },
+          areaStyle: { color: 'rgba(38,166,154,0.15)' },
+        },
+        handleStyle: { color: '#26a69a' },
+        textStyle: { color: '#78909c', fontSize: 9 },
+      },
+      { type: 'inside', xAxisIndex: 0 },
+    ],
+    series,
+  }
 })
+
+const chartRef = ref<InstanceType<typeof VChart> | null>(null)
+
+function openRoundSnapshotAt(idx: number) {
+  const round = points.value[idx]?.round
+  if (round) selectedRound.value = round
+}
+
+function onDocumentClick(e: MouseEvent) {
+  const target = e.target as HTMLElement | null
+  if (!target) return
+  const detailsEl = target.closest('[data-view-details]') as HTMLElement | null
+  if (detailsEl) {
+    openRoundSnapshotAt(Number(detailsEl.dataset.index))
+    chartRef.value?.dispatchAction({ type: 'hideTip' })
+    return
+  }
+  if (target.closest('[data-close-tooltip]')) {
+    chartRef.value?.dispatchAction({ type: 'hideTip' })
+  }
+}
+
+onMounted(() => document.addEventListener('click', onDocumentClick))
+onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
 </script>
 
 <template>
@@ -467,213 +494,19 @@ const xAxisLabels = computed(() => {
           </div>
 
           <div
-            v-if="!chartData"
+            v-if="!hasEnoughData"
             class="flex h-32 items-center justify-center"
           >
             <span class="text-mui-body text-muted">{{ $t('trends.noData') }}</span>
           </div>
 
-          <svg
+          <VChart
             v-else
-            :viewBox="`0 0 ${VB_W} ${VB_H}`"
-            width="100%"
-            preserveAspectRatio="xMidYMid meet"
-            style="display: block;"
-          >
-            <!-- Reference lines -->
-            <g
-              v-for="refLine in REF_LINES"
-              :key="refLine.v"
-            >
-              <line
-                :x1="PAD.left"
-                :y1="valToY(refLine.v)"
-                :x2="VB_W - PAD.right"
-                :y2="valToY(refLine.v)"
-                :stroke="refLine.color"
-                stroke-width="1"
-                :stroke-dasharray="refLine.dashed ? '4 4' : 'none'"
-                opacity="0.4"
-              />
-              <text
-                :x="VB_W - PAD.right + 6"
-                :y="valToY(refLine.v) + 4"
-                :fill="refLine.color"
-                font-size="10"
-                opacity="0.8"
-              >{{ refLine.label }}</text>
-            </g>
-
-            <!-- X-axis baseline -->
-            <line
-              :x1="PAD.left"
-              :y1="PAD.top + INNER_H"
-              :x2="VB_W - PAD.right"
-              :y2="PAD.top + INNER_H"
-              stroke="#546e7a"
-              stroke-width="1"
-            />
-
-            <!-- X-axis labels -->
-            <text
-              v-for="lbl in xAxisLabels"
-              :key="lbl.x"
-              :x="lbl.x"
-              :y="PAD.top + INNER_H + 16"
-              fill="#78909c"
-              font-size="9"
-              text-anchor="middle"
-            >{{ lbl.label }}</text>
-
-            <!-- DEV line -->
-            <template v-if="showDevSeries">
-              <path
-                v-if="chartData.devPath"
-                :d="chartData.devPath"
-                fill="none"
-                stroke="#26a69a"
-                stroke-width="2"
-                stroke-linejoin="round"
-                stroke-linecap="round"
-              />
-              <g
-                v-for="(dot, i) in chartData.devDots"
-                :key="`dev-${i}`"
-              >
-                <circle
-                  :cx="dot.x"
-                  :cy="dot.y"
-                  r="3"
-                  fill="#26a69a"
-                  stroke="#1a1a2e"
-                  stroke-width="1.5"
-                  style="pointer-events: none;"
-                />
-                <circle
-                  :cx="dot.x"
-                  :cy="dot.y"
-                  r="8"
-                  fill="transparent"
-                  style="cursor: pointer;"
-                  @mouseenter="showTooltip(dot, 'DEV')"
-                  @mouseleave="scheduleHideTooltip"
-                  @click="toggleTooltipPin(dot, 'DEV')"
-                />
-              </g>
-            </template>
-
-            <!-- QA line -->
-            <template v-if="showQaSeries">
-              <path
-                v-if="chartData.qaPath"
-                :d="chartData.qaPath"
-                fill="none"
-                stroke="#ffa726"
-                stroke-width="2"
-                stroke-linejoin="round"
-                stroke-linecap="round"
-              />
-              <g
-                v-for="(dot, i) in chartData.qaDots"
-                :key="`qa-${i}`"
-              >
-                <circle
-                  :cx="dot.x"
-                  :cy="dot.y"
-                  r="3"
-                  fill="#ffa726"
-                  stroke="#1a1a2e"
-                  stroke-width="1.5"
-                  style="pointer-events: none;"
-                />
-                <circle
-                  :cx="dot.x"
-                  :cy="dot.y"
-                  r="8"
-                  fill="transparent"
-                  style="cursor: pointer;"
-                  @mouseenter="showTooltip(dot, 'QA')"
-                  @mouseleave="scheduleHideTooltip"
-                  @click="toggleTooltipPin(dot, 'QA')"
-                />
-              </g>
-            </template>
-
-            <!-- Hover tooltip -->
-            <g
-              v-if="hoveredDot"
-              :transform="`translate(${Math.min(Math.max(hoveredDot.x, PAD.left + 52), VB_W - PAD.right - 52)}, ${Math.max(hoveredDot.y - 42, PAD.top + 24)})`"
-              @mouseenter="cancelHideTooltip"
-              @mouseleave="scheduleHideTooltip"
-            >
-              <rect
-                x="-52"
-                y="-16"
-                width="104"
-                height="48"
-                rx="4"
-                fill="#1a1a2e"
-                stroke="#546e7a"
-                stroke-width="1"
-                style="pointer-events: none;"
-              />
-              <text
-                v-if="hoveredDot.pinned"
-                x="44"
-                y="-6"
-                fill="#b0bec5"
-                font-size="11"
-                font-weight="700"
-                text-anchor="middle"
-                style="cursor: pointer;"
-                @click="closeTooltip"
-              >×</text>
-              <text
-                x="0"
-                y="-4"
-                fill="#fff"
-                font-size="10"
-                font-weight="600"
-                text-anchor="middle"
-                style="pointer-events: none;"
-              >{{ seriesLabel(hoveredDot.series) }} {{ hoveredDot.value }}%</text>
-              <text
-                x="0"
-                y="8"
-                fill="#b0bec5"
-                font-size="9"
-                text-anchor="middle"
-                style="pointer-events: none;"
-              >{{ tooltipDateFmt.format(hoveredDot.date) }}</text>
-              <text
-                x="0"
-                y="24"
-                fill="#4fc3f7"
-                font-size="9"
-                font-weight="600"
-                text-anchor="middle"
-                style="cursor: pointer; text-decoration: underline;"
-                @click="openRoundSnapshot"
-              >{{ $t('trends.viewDetails') }}</text>
-            </g>
-
-            <!-- Axis titles -->
-            <text
-              :x="PAD.left + INNER_W / 2"
-              :y="VB_H - 4"
-              fill="#78909c"
-              font-size="9"
-              text-anchor="middle"
-            >{{ $t('trends.axisTime') }}</text>
-            <text
-              :x="10"
-              :y="PAD.top + INNER_H / 2"
-              fill="#78909c"
-              font-size="9"
-              text-anchor="middle"
-              :transform="`rotate(-90, 10, ${PAD.top + INNER_H / 2})`"
-            >{{ $t('trends.axisAlignment') }}</text>
-          </svg>
+            ref="chartRef"
+            :option="chartOption"
+            autoresize
+            style="height: 300px;"
+          />
         </div>
       </template>
     </AppModalPaper>
