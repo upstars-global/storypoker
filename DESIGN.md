@@ -376,6 +376,8 @@ const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 
 DEV/QA рахуються окремо (`splitRoundAlignment` ділить голоси по `isQaPlayer(shields)`), кожен - той самий `alignmentScore` над своєю підмножиною.
 
+**Legacy rounds без `active_cards`/`deck_preset`** (виправлено 2026-07-26): `alignmentScore` повертає `null`, якщо `deckOrder` порожній - а раунди, записані до міграції `010_round_history_deck.sql`, мають `active_cards = null` (і найстаріші - ще й `deck_preset = null`), тому їхній alignment мовчки випадав з графіка, хоча голоси в них цілком реальні й числові. `resolveActiveCards(activeCards, deckPreset)` (`app/utils/roundStats.ts`) підставляє `defaultActive` відповідного пресету з `cardDecks.ts`, а якщо навіть `deck_preset` відсутній - `DEFAULT_PRESET_ID` (`'scrum'`); це наближення (реальна колода на момент раунду могла бути звуженою), але краще за повне випадання точки. Викликається в `splitRoundAlignment`/`roundAlignment`/`summarizeRound` - тому й `AlignmentTrendsModal`, і `HistoryModal` тепер бачать ці раунди. **Дзеркалить** `resolveActiveCards` у `netlify/functions/room-json.mts` (комміти `e1dcf02`/`beca0e5`) - синхронізувати вручну при зміні формули в обох місцях.
+
 **Агрегати поверх відфільтрованих точок:**
 - Поточний бал / середній бал - останнє непусте значення / середнє арифметичне
 - Тренд - тільки якщо ≥4 точок: `pct = (середнє нової половини − середнє старої половини) / стара половина × 100`; `up` якщо `pct > 1`, `down` якщо `< -1`, інакше `stable`

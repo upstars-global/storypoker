@@ -66,7 +66,7 @@ describe('summarizeRound', () => {
     expect(s.alignment).toBeNull()
   })
 
-  it('leaves alignment null when deck snapshot is missing (legacy rows)', () => {
+  it('falls back to defaultActive deck order when active_cards is missing (legacy rows)', () => {
     const s = summarizeRound(round({
       active_cards: null,
       votes: [
@@ -74,7 +74,19 @@ describe('summarizeRound', () => {
         { player_id: 'p2', name: 'B', vote: '8' },
       ],
     }))
-    expect(s.alignment).toBeNull()
+    expect(s.alignment).toBe(83)
     expect(s.average).toBe('6.5')
+  })
+
+  it('falls back to scrum defaultActive when both active_cards and deck_preset are missing', () => {
+    const s = summarizeRound(round({
+      active_cards: null,
+      deck_preset: null,
+      votes: [
+        { player_id: 'p1', name: 'A', vote: '5' },
+        { player_id: 'p2', name: 'B', vote: '8' },
+      ],
+    }))
+    expect(s.alignment).toBe(86)
   })
 })

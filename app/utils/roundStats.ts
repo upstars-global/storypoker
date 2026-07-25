@@ -1,6 +1,18 @@
 import { alignmentScore } from './alignment'
 import { isQaPlayer } from './shields'
+import { DECK_PRESETS, DEFAULT_PRESET_ID } from './cardDecks'
 import type { RoundHistory } from '~/stores/types'
+
+// Rounds recorded before migration 010 (active_cards) - or before deck_preset
+// existed at all - have no deck snapshot to compute alignment against.
+// Approximate with defaultActive for the round's preset (or DEFAULT_PRESET_ID
+// when even the preset is missing) so legacy history still contributes.
+// Mirrors resolveActiveCards in netlify/functions/room-json.mts - keep both in sync.
+function resolveActiveCards(activeCards: string[] | null, deckPreset: string | null): string[] | null {
+  if (activeCards?.length) return activeCards
+  const preset = DECK_PRESETS.find(p => p.id === (deckPreset ?? DEFAULT_PRESET_ID))
+  return preset?.defaultActive ?? null
+}
 
 export function voteToNumber(v: string): number | null {
   const trimmed = v.replace(/\s*\*$/, '').replace(/h$/i, '')
@@ -56,9 +68,10 @@ export function splitRoundAlignment(
       devCounts[v.vote] = (devCounts[v.vote] ?? 0) + 1
     }
   }
+  const activeCards = resolveActiveCards(round.active_cards, round.deck_preset)
   return {
-    dev: alignmentScore(devCounts, round.active_cards),
-    qa: alignmentScore(qaCounts, round.active_cards),
+    dev: alignmentScore(devCounts, activeCards),
+    qa: alignmentScore(qaCounts, activeCards),
   }
 }
 
@@ -71,7 +84,7 @@ export function roundAlignment(
   if (dev !== null || qa !== null) return dev ?? qa
   const counts: Record<string, number> = {}
   for (const v of round.votes) counts[v.vote] = (counts[v.vote] ?? 0) + 1
-  return alignmentScore(counts, round.active_cards)
+  return alignmentScore(counts, resolveActiveCards(round.active_cards, round.deck_preset))
 }
 
 export function summarizeRound(round: RoundHistory): RoundSummary {
@@ -83,7 +96,7 @@ export function summarizeRound(round: RoundHistory): RoundSummary {
     revealedAt: round.revealed_at,
     voterCount: round.votes.length,
     average: isPoll ? null : averageOf(counts),
-    alignment: isPoll ? null : alignmentScore(counts, round.active_cards),
+    alignment: isPoll ? null : alignmentScore(counts, resolveActiveCards(round.active_cards, round.deck_preset)),
     counts,
     isPoll,
     deckPreset: round.deck_preset,
