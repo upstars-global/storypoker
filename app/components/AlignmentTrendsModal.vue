@@ -1,21 +1,31 @@
 <script setup lang="ts">
 import AppIcon from '~/components/AppIcon.vue'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
+import RoundSnapshotModal from '~/components/RoundSnapshotModal.vue'
 import { storeToRefs } from 'pinia'
 import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { summarizeRound, isNumericPreset, voteToNumber, splitRoundAlignment } from '~/utils/roundStats'
 import { DECK_PRESETS } from '~/utils/cardDecks'
+import type { RoundHistory } from '~/stores/types'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, DataZoomComponent, MarkLineComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
 
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, DataZoomComponent, MarkLineComponent])
+
+const props = defineProps<{ roomName?: string }>()
 const emit = defineEmits<{ close: [] }>()
 
 const roomStore = useRoomStore()
 const playersStore = usePlayersStore()
 const { visiblePlayers } = storeToRefs(playersStore)
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 type TimeRange = '30D' | '90D' | '6M' | '1Y'
 const timeRange = ref<TimeRange>('6M')
@@ -25,6 +35,7 @@ interface ChartPoint {
   devAlignment: number | null
   qaAlignment: number | null
   deckPreset: string | null
+  round: RoundHistory
 }
 
 const allPoints = ref<ChartPoint[]>([])
@@ -48,7 +59,7 @@ onMounted(async () => {
       })
       .map(r => {
         const { dev, qa } = splitRoundAlignment(r, shieldsMap.value)
-        return { date: new Date(r.revealed_at), devAlignment: dev, qaAlignment: qa, deckPreset: r.deck_preset }
+        return { date: new Date(r.revealed_at), devAlignment: dev, qaAlignment: qa, deckPreset: r.deck_preset, round: r }
       })
       .sort((a, b) => a.date.getTime() - b.date.getTime())
   } catch (e) {
@@ -139,71 +150,175 @@ function levelColor(a: number): string {
   return '#e64a19'
 }
 
-// SVG chart
-const VB_W = 560
-const VB_H = 220
-const PAD = { top: 12, right: 88, bottom: 28, left: 36 }
-const INNER_W = VB_W - PAD.left - PAD.right
-const INNER_H = VB_H - PAD.top - PAD.bottom
-
-function valToY(v: number): number {
-  return PAD.top + INNER_H - (v / 100) * INNER_H
-}
+const DEV_COHORT_LABEL = 'DEV/FE/BE'
 
 const REF_LINES = [
-  { v: 100, label: 'Perfect', color: '#43a047', dashed: false },
-  { v: 75, label: 'High', color: '#43a047', dashed: false },
-  { v: 50, label: 'Medium', color: '#fbc02d', dashed: true },
-  { v: 25, label: 'Low', color: '#e64a19', dashed: true },
+  { v: 100, label: '100%', color: '#43a047', dashed: false },
+  { v: 75, label: '75%', color: '#43a047', dashed: false },
+  { v: 50, label: '50%', color: '#fbc02d', dashed: true },
+  { v: 25, label: '25%', color: '#e64a19', dashed: true },
 ]
 
-interface HoveredDot { x: number; y: number; date: Date; value: number; series: 'DEV' | 'QA' }
-const hoveredDot = ref<HoveredDot | null>(null)
+const selectedRound = ref<RoundHistory | null>(null)
 
-const chartData = computed(() => {
-  if (points.value.length < 2) return null
-  const xs = points.value.map(p => p.date.getTime())
-  const minX = Math.min(...xs)
-  const xRange = Math.max(...xs) - minX || 1
+function isoWeek(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+}
 
-  function toXY(p: ChartPoint, val: number | null) {
-    if (val === null) return null
-    return {
-      x: PAD.left + ((p.date.getTime() - minX) / xRange) * INNER_W,
-      y: valToY(val),
-      alignment: val,
-      date: p.date,
-    }
-  }
+function weekLabel(date: Date): string {
+  return `w${isoWeek(date)}`
+}
 
-  const devDots = points.value.map(p => toXY(p, p.devAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date }[]
-  const qaDots = points.value.map(p => toXY(p, p.qaAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date }[]
-
-  return {
-    devPolyline: devDots.map(d => `${d.x},${d.y}`).join(' '),
-    qaPolyline: qaDots.map(d => `${d.x},${d.y}`).join(' '),
-    devDots,
-    qaDots,
-    minX,
-    xRange,
-  }
-})
-
-const dateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'short' }))
 const tooltipDateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'short', timeStyle: 'short' }))
 
-const xAxisLabels = computed(() => {
-  if (!chartData.value || points.value.length < 2) return []
-  const { minX, xRange } = chartData.value
-  const step = Math.max(1, Math.floor(points.value.length / 6))
-  return points.value
-    .filter((_, i) => i % step === 0 || i === points.value.length - 1)
-    .slice(0, 7)
-    .map(p => ({
-      x: PAD.left + ((p.date.getTime() - minX) / xRange) * INNER_W,
-      label: dateFmt.value.format(p.date),
-    }))
+const hasEnoughData = computed(() => points.value.length >= 2)
+
+function tooltipFormatter(params: { dataIndex: number; seriesName?: string; value?: unknown }): string {
+  const point = points.value[params.dataIndex]
+  if (!point || params.value === null || params.value === undefined) return ''
+  const dateStr = tooltipDateFmt.value.format(point.date)
+  return `<div style="min-width:130px">`
+    + `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">`
+    + `<span style="font-weight:600;color:#fff;font-size:11px;">${params.seriesName} ${params.value}%</span>`
+    + `<span data-close-tooltip style="cursor:pointer;color:#b0bec5;font-weight:700;">×</span>`
+    + `</div>`
+    + `<div style="color:#b0bec5;font-size:10px;margin-top:2px;">${dateStr}</div>`
+    + `<div data-view-details data-index="${params.dataIndex}" style="color:#4fc3f7;text-decoration:underline;cursor:pointer;font-size:10px;margin-top:6px;">${t('trends.viewDetails')}</div>`
+    + `</div>`
+}
+
+const chartOption = computed(() => {
+  const categories = points.value.map(p => weekLabel(p.date))
+
+  const devSeries = {
+    name: DEV_COHORT_LABEL,
+    type: 'line',
+    smooth: true,
+    symbol: 'circle',
+    symbolSize: 8,
+    connectNulls: false,
+    lineStyle: { width: 2, color: '#26a69a' },
+    itemStyle: { color: '#26a69a' },
+    data: points.value.map(p => p.devAlignment),
+  }
+
+  const qaSeries = {
+    name: 'QA',
+    type: 'line',
+    smooth: true,
+    symbol: 'circle',
+    symbolSize: 8,
+    connectNulls: false,
+    lineStyle: { width: 2, color: '#ffa726' },
+    itemStyle: { color: '#ffa726' },
+    data: points.value.map(p => p.qaAlignment),
+  }
+
+  const refLineSeries = {
+    name: '__refLines',
+    type: 'line',
+    data: [],
+    silent: true,
+    showSymbol: false,
+    tooltip: { show: false },
+    markLine: {
+      silent: true,
+      symbol: 'none',
+      label: { formatter: '{b}', fontSize: 10 },
+      data: REF_LINES.map(r => ({
+        yAxis: r.v,
+        name: r.label,
+        lineStyle: { color: r.color, type: r.dashed ? 'dashed' : 'solid', opacity: 0.4 },
+        label: { color: r.color },
+      })),
+    },
+  }
+
+  const series = []
+  if (showDevSeries.value) series.push(devSeries)
+  if (showQaSeries.value && hasQaData.value) series.push(qaSeries)
+  series.push(refLineSeries)
+
+  return {
+    backgroundColor: 'transparent',
+    grid: { left: 44, right: 56, top: 20, bottom: 68 },
+    xAxis: {
+      type: 'category',
+      data: categories,
+      boundaryGap: false,
+      axisLine: { lineStyle: { color: '#546e7a' } },
+      axisLabel: { color: '#78909c', fontSize: 9 },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 100,
+      name: t('trends.axisAlignment'),
+      nameLocation: 'middle',
+      nameGap: 32,
+      nameTextStyle: { color: '#78909c', fontSize: 9 },
+      axisLine: { show: false },
+      axisLabel: { color: '#78909c', fontSize: 9, formatter: '{value}%' },
+      splitLine: { show: false },
+    },
+    tooltip: {
+      trigger: 'item',
+      triggerOn: 'click',
+      enterable: true,
+      backgroundColor: '#1a1a2e',
+      borderColor: '#546e7a',
+      borderWidth: 1,
+      extraCssText: 'border-radius:4px;',
+      formatter: tooltipFormatter,
+    },
+    dataZoom: [
+      {
+        type: 'slider',
+        xAxisIndex: 0,
+        bottom: 4,
+        height: 24,
+        borderColor: '#546e7a',
+        fillerColor: 'rgba(120,144,156,0.2)',
+        dataBackground: {
+          lineStyle: { color: '#26a69a' },
+          areaStyle: { color: 'rgba(38,166,154,0.15)' },
+        },
+        handleStyle: { color: '#26a69a' },
+        textStyle: { color: '#78909c', fontSize: 9 },
+      },
+      { type: 'inside', xAxisIndex: 0 },
+    ],
+    series,
+  }
 })
+
+const chartRef = ref<InstanceType<typeof VChart> | null>(null)
+
+function openRoundSnapshotAt(idx: number) {
+  const round = points.value[idx]?.round
+  if (round) selectedRound.value = round
+}
+
+function onDocumentClick(e: MouseEvent) {
+  const target = e.target as HTMLElement | null
+  if (!target) return
+  const detailsEl = target.closest('[data-view-details]') as HTMLElement | null
+  if (detailsEl) {
+    openRoundSnapshotAt(Number(detailsEl.dataset.index))
+    chartRef.value?.dispatchAction({ type: 'hideTip' })
+    return
+  }
+  if (target.closest('[data-close-tooltip]')) {
+    chartRef.value?.dispatchAction({ type: 'hideTip' })
+  }
+}
+
+onMounted(() => document.addEventListener('click', onDocumentClick))
+onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
 </script>
 
 <template>
@@ -220,7 +335,7 @@ const xAxisLabels = computed(() => {
         id="alignment-trends-modal-title"
         class="text-mui-h2 font-bold text-primary"
       >
-        {{ $t('trends.title') }}
+        {{ props.roomName ? $t('trends.titleWithTeam', { name: props.roomName }) : $t('trends.title') }}
       </h2>
 
       <p
@@ -325,7 +440,7 @@ const xAxisLabels = computed(() => {
                     class="inline-block h-2 w-4 rounded"
                     style="background:#26a69a"
                   />
-                  DEV
+                  {{ DEV_COHORT_LABEL }}
                 </button>
                 <button
                   v-if="hasQaData"
@@ -379,188 +494,28 @@ const xAxisLabels = computed(() => {
           </div>
 
           <div
-            v-if="!chartData"
+            v-if="!hasEnoughData"
             class="flex h-32 items-center justify-center"
           >
             <span class="text-mui-body text-muted">{{ $t('trends.noData') }}</span>
           </div>
 
-          <svg
+          <VChart
             v-else
-            :viewBox="`0 0 ${VB_W} ${VB_H}`"
-            width="100%"
-            preserveAspectRatio="xMidYMid meet"
-            style="display: block;"
-          >
-            <!-- Reference lines -->
-            <g
-              v-for="refLine in REF_LINES"
-              :key="refLine.v"
-            >
-              <line
-                :x1="PAD.left"
-                :y1="valToY(refLine.v)"
-                :x2="VB_W - PAD.right"
-                :y2="valToY(refLine.v)"
-                :stroke="refLine.color"
-                stroke-width="1"
-                :stroke-dasharray="refLine.dashed ? '4 4' : 'none'"
-                opacity="0.4"
-              />
-              <text
-                :x="VB_W - PAD.right + 6"
-                :y="valToY(refLine.v) + 4"
-                :fill="refLine.color"
-                font-size="10"
-                opacity="0.8"
-              >{{ refLine.label }}</text>
-            </g>
-
-            <!-- X-axis baseline -->
-            <line
-              :x1="PAD.left"
-              :y1="PAD.top + INNER_H"
-              :x2="VB_W - PAD.right"
-              :y2="PAD.top + INNER_H"
-              stroke="#546e7a"
-              stroke-width="1"
-            />
-
-            <!-- X-axis labels -->
-            <text
-              v-for="lbl in xAxisLabels"
-              :key="lbl.x"
-              :x="lbl.x"
-              :y="PAD.top + INNER_H + 16"
-              fill="#78909c"
-              font-size="9"
-              text-anchor="middle"
-            >{{ lbl.label }}</text>
-
-            <!-- DEV line -->
-            <template v-if="showDevSeries">
-              <polyline
-                v-if="chartData.devPolyline"
-                :points="chartData.devPolyline"
-                fill="none"
-                stroke="#26a69a"
-                stroke-width="2"
-                stroke-linejoin="round"
-                stroke-linecap="round"
-              />
-              <g
-                v-for="(dot, i) in chartData.devDots"
-                :key="`dev-${i}`"
-              >
-                <circle
-                  :cx="dot.x"
-                  :cy="dot.y"
-                  r="3"
-                  fill="#26a69a"
-                  stroke="#1a1a2e"
-                  stroke-width="1.5"
-                  style="pointer-events: none;"
-                />
-                <circle
-                  :cx="dot.x"
-                  :cy="dot.y"
-                  r="8"
-                  fill="transparent"
-                  style="cursor: pointer;"
-                  @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'DEV' }"
-                  @mouseleave="hoveredDot = null"
-                />
-              </g>
-            </template>
-
-            <!-- QA line -->
-            <template v-if="showQaSeries">
-              <polyline
-                v-if="chartData.qaPolyline"
-                :points="chartData.qaPolyline"
-                fill="none"
-                stroke="#ffa726"
-                stroke-width="2"
-                stroke-linejoin="round"
-                stroke-linecap="round"
-              />
-              <g
-                v-for="(dot, i) in chartData.qaDots"
-                :key="`qa-${i}`"
-              >
-                <circle
-                  :cx="dot.x"
-                  :cy="dot.y"
-                  r="3"
-                  fill="#ffa726"
-                  stroke="#1a1a2e"
-                  stroke-width="1.5"
-                  style="pointer-events: none;"
-                />
-                <circle
-                  :cx="dot.x"
-                  :cy="dot.y"
-                  r="8"
-                  fill="transparent"
-                  style="cursor: pointer;"
-                  @mouseenter="hoveredDot = { x: dot.x, y: dot.y, date: dot.date, value: dot.alignment, series: 'QA' }"
-                  @mouseleave="hoveredDot = null"
-                />
-              </g>
-            </template>
-
-            <!-- Hover tooltip -->
-            <g
-              v-if="hoveredDot"
-              :transform="`translate(${Math.min(Math.max(hoveredDot.x, PAD.left + 44), VB_W - PAD.right - 44)}, ${Math.max(hoveredDot.y - 34, PAD.top + 14)})`"
-              style="pointer-events: none;"
-            >
-              <rect
-                x="-44"
-                y="-16"
-                width="88"
-                height="30"
-                rx="4"
-                fill="#1a1a2e"
-                stroke="#546e7a"
-                stroke-width="1"
-              />
-              <text
-                x="0"
-                y="-4"
-                fill="#fff"
-                font-size="10"
-                font-weight="600"
-                text-anchor="middle"
-              >{{ hoveredDot.series }} {{ hoveredDot.value }}</text>
-              <text
-                x="0"
-                y="8"
-                fill="#b0bec5"
-                font-size="9"
-                text-anchor="middle"
-              >{{ tooltipDateFmt.format(hoveredDot.date) }}</text>
-            </g>
-
-            <!-- Axis titles -->
-            <text
-              :x="PAD.left + INNER_W / 2"
-              :y="VB_H - 4"
-              fill="#78909c"
-              font-size="9"
-              text-anchor="middle"
-            >{{ $t('trends.axisTime') }}</text>
-            <text
-              :x="10"
-              :y="PAD.top + INNER_H / 2"
-              fill="#78909c"
-              font-size="9"
-              text-anchor="middle"
-              :transform="`rotate(-90, 10, ${PAD.top + INNER_H / 2})`"
-            >{{ $t('trends.axisAlignment') }}</text>
-          </svg>
+            ref="chartRef"
+            :option="chartOption"
+            autoresize
+            style="height: 300px;"
+          />
         </div>
       </template>
     </AppModalPaper>
   </AppModal>
+
+  <RoundSnapshotModal
+    v-if="selectedRound"
+    :round="selectedRound"
+    :shields-map="shieldsMap"
+    @close="selectedRound = null"
+  />
 </template>

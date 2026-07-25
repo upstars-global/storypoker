@@ -33,6 +33,7 @@
   },
   "trends": {
     "title": "Team Alignment Trends",
+    "titleWithTeam": "Team Alignment Trends — {name}",
     "currentScore": "Current Score",
     "trend": "Trend",
     "averageScore": "Average Score",
@@ -45,14 +46,15 @@
     "noData": "Not enough data for this period",
     "chartTitle": "Alignment Trend Chart",
     "axisTime": "Time",
-    "axisAlignment": "Alignment, %"
+    "axisAlignment": "Alignment, %",
+    "viewDetails": "Details",
+    "roundSnapshotTitle": "Round Votes"
   },
   "history": {
     "title": "Round History",
     "empty": "No completed rounds yet",
     "emptyRange": "No rounds in this period",
     "average": "Average",
-    "exportCsv": "Export CSV",
     "filter": {
       "allDecks": "All decks"
     }

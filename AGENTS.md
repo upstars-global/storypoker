@@ -8,7 +8,7 @@ Guidance for Claude Code working with this repository.
 
 ## Workflow
 - **Заборонено git worktrees.** Не створюй linked worktrees (`git worktree add`, `EnterWorktree`, `isolation: "worktree"`). Працюй у головному робочому каталозі; ізоляцію роби через гілки.
-- **Діаграми - тільки ECharts.** Перед будь-якою роботою з графіками активуй skill `echarts`. Нові діаграми пиши на Apache ECharts; наявні саморобні SVG-графіки (`PieChart.vue`, `AlignmentTrendsModal.vue`) при дотику переписуй на ECharts. Залежності вже стоять: `echarts` + `vue-echarts`.
+- **Діаграми - тільки ECharts.** Перед будь-якою роботою з графіками активуй skill `echarts`. Нові діаграми пиши на Apache ECharts; `AlignmentTrendsModal.vue` уже мігрований, саморобний SVG лишився тільки в `PieChart.vue` - при дотику переписуй на ECharts.
 
 ## Project Overview
 
@@ -27,6 +27,7 @@ Guidance for Claude Code working with this repository.
   - `shadow-{1..4,8}` - значення живуть у `@theme`; `text-mui-{h2,body,table,caption}` - `--text-mui-*` + `--line-height`/`--letter-spacing` modifiers
   - button modifiers (compose з `.mui-btn`): `.mui-btn-md` (180×46 / 23rad / `#607d8b`), `.mui-btn-sm`, `.mui-btn-text`, `.mui-btn-secondary`
 - **State:** Pinia 4 (без auto-imports - явні `from 'pinia'`)
+- **Charts:** `echarts` + `vue-echarts` (тільки потрібні модулі через `echarts/core` + `use([...])` заради розміру бандла) - графік тренди узгодженості (`AlignmentTrendsModal.vue`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **i18n:** `vue-i18n@11` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
 - **PWA:** `vite-plugin-pwa` (Workbox, `autoUpdate`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий файл); splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
@@ -108,7 +109,17 @@ RLS зараз public read/write для anon key; логіка в клієнті
 
 ## Round History
 
-`reveal()` оновлює `room_state.phase='revealed'` і пише `round_history` зі snapshot `{player_id,name,vote}[]` тільки коли `votes.length >= 2`. `?` і `☕` рахуються як голоси. Snapshot містить `name`, щоб історія лишалась читабельною після rename/leave. Also зберігає `active_cards`/`deck_preset` знятого раунду. Формули `alignmentScore`/`averageOf`, CSV export (`HistoryModal.vue`) і pipeline графіка узгодженості (`AlignmentTrendsModal.vue`) - `DESIGN.md` §11.3–11.5.
+`reveal()` оновлює `room_state.phase='revealed'` і пише `round_history` зі snapshot `{player_id,name,vote}[]` тільки коли `votes.length >= 2`. `?` і `☕` рахуються як голоси. Snapshot містить `name`, щоб історія лишалась читабельною після rename/leave. Also зберігає `active_cards`/`deck_preset` знятого раунду. Формули `alignmentScore`/`averageOf` і pipeline графіка узгодженості (`AlignmentTrendsModal.vue`) - `DESIGN.md` §11.3–11.4. Ручного CSV-експорту немає (видалено) - `netlify/functions/room-json.mts` покриває цю потребу.
+
+## Зовнішні інтеграції
+
+`netlify/functions/room-json.mts` - read-only Netlify Function (`path: '/api/*'`, дефолтна `netlify/functions` без явного `[functions]` у `netlify.toml`):
+- `GET /api/<roomId|slug>.json` → `{room, rounds:[{id,date,week,deck,average,devAlignment,qaAlignment,voters}]}` для однієї кімнати
+- `GET /api/teams.json` → `{teams:[{room,rounds:[...]}]}` по **всіх** кімнатах у базі
+
+Захищено shared-secret: `Authorization: Bearer <STORYPOKER_API_TOKEN>` (env var, server-side only, БЕЗ `VITE_` префіксу - ставиться в Netlify site env, не в `/.env/`). Без заголовка чи з неправильним токеном - `401`; якщо `STORYPOKER_API_TOKEN` не заданий на сервері - `500` (`server misconfigured`). Той самий Bearer-патерн, що й `fe-weekly-report.post.ts` у agilecharts - саме agilecharts (`server/utils/storypokerFiles.ts`) додає цей заголовок на кожен запит.
+
+Колода в `rounds` визначається автоматично (`isNumericPreset`-логіка: `scrum`/`fibonacci`/`hours` + legacy `deck_preset=null`), poll-колоди (`voting`/`vote_question`) і нечислові (`tshirt`/`boolean`) виключаються з узгодженості. Читає `rooms`+`round_history`+`players` напряму через `@supabase/supabase-js` (той самий `VITE_SUPABASE_*`), рахунок `alignmentScore`/`averageOf`/DEV-QA split - навмисно продубльований з `app/utils/alignment.ts`/`roundStats.ts`/`shields.ts` (Netlify bundler не резолвить Vite alias `~/*`) - зміни формул синхронізувати вручну в обох місцях. Споживач - `agilecharts` (сусідній репо, Nuxt), вкладка "Estimation Trends" (`app/components/team/TeamConsistencyTrends.vue`).
 
 ## State Management
 

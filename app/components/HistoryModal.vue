@@ -9,7 +9,6 @@ import { useCardLabel } from '~/composables/useCardLabel'
 import { summarizeRound, isNumericPreset, voteToNumber, type RoundSummary } from '~/utils/roundStats'
 import { DECK_PRESETS } from '~/utils/cardDecks'
 
-const props = defineProps<{ roomName?: string }>()
 const emit = defineEmits<{ close: [] }>()
 
 const roomStore = useRoomStore()
@@ -62,13 +61,6 @@ function deckName(id: string): string {
   return DECK_PRESETS.find(p => p.id === id)?.name ?? id
 }
 
-function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
-}
-
 function hasNumericVote(counts: Record<string, number>): boolean {
   return Object.keys(counts).some(v => voteToNumber(v) !== null)
 }
@@ -100,38 +92,6 @@ const groups = computed(() => {
     rounds,
   }))
 })
-
-function exportCsv() {
-  const dateColFmt = new Intl.DateTimeFormat(locale.value, { dateStyle: 'short' })
-  const escape = (v: string | number | null | undefined) => `"${String(v ?? '').replace(/"/g, '""')}"`
-
-  const allCards = [...new Set(filteredSummaries.value.flatMap(s => Object.keys(s.counts)))]
-
-  const header = ['Date', 'Time', 'Week', 'Deck', 'Average', 'Alignment', 'Voters', ...allCards]
-  const rows = filteredSummaries.value.map(s => {
-    const d = new Date(s.revealedAt)
-    return [
-      escape(dateColFmt.format(d)),
-      escape(timeFmt.value.format(d)),
-      escape(`W${getISOWeek(d)}`),
-      escape(s.deckPreset ? deckName(s.deckPreset) : ''),
-      escape(s.average),
-      escape(s.alignment),
-      escape(s.voterCount),
-      ...allCards.map(c => escape(s.counts[c] ?? 0)),
-    ].join(';')
-  })
-
-  const csv = '﻿' + [header.join(';'), ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  const prefix = props.roomName ? `${props.roomName.replace(/[^\w\d-]/g, '_')}-` : ''
-  a.download = `${prefix}round-history-${new Date().toISOString().slice(0, 10)}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
-}
 
 function alignmentColor(a: number): string {
   if (a >= 80) return '#43a047'
@@ -191,19 +151,6 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
               </button>
             </div>
           </div>
-          <button
-            v-if="filteredSummaries.length"
-            v-wave
-            class="flex items-center gap-1 rounded px-2 py-1 text-mui-caption text-muted transition-colors hover:text-body"
-            :aria-label="$t('history.exportCsv')"
-            @click="exportCsv"
-          >
-            <AppIcon
-              icon="ic:baseline-download"
-              style="font-size: 1rem;"
-            />
-            {{ $t('history.exportCsv') }}
-          </button>
         </div>
         <div
           v-if="availableDecks.length > 1"

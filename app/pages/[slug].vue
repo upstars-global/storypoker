@@ -672,11 +672,11 @@ async function submitRenameRoom() {
 
     <HistoryModal
       v-if="showHistory"
-      :room-name="currentRoomName ?? currentSlug ?? undefined"
       @close="showHistory = false"
     />
     <AlignmentTrendsModal
       v-if="showAlignmentTrends"
+      :room-name="currentRoomName ?? currentSlug ?? roomId"
       @close="showAlignmentTrends = false"
     />
 
