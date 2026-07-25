@@ -10,6 +10,7 @@ import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { summarizeRound, isNumericPreset, voteToNumber, splitRoundAlignment } from '~/utils/roundStats'
 import { DECK_PRESETS } from '~/utils/cardDecks'
+import { DEV_COHORT_LABEL } from '~/utils/shields'
 import type { RoundHistory } from '~/stores/types'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -150,8 +151,6 @@ function levelColor(a: number): string {
   return '#e64a19'
 }
 
-const DEV_COHORT_LABEL = 'DEV/FE/BE'
-
 const REF_LINES = [
   { v: 100, label: '100%', color: '#43a047', dashed: false },
   { v: 75, label: '75%', color: '#43a047', dashed: false },
@@ -160,6 +159,7 @@ const REF_LINES = [
 ]
 
 const selectedRound = ref<RoundHistory | null>(null)
+const selectedCohort = ref<'DEV' | 'QA' | null>(null)
 
 function isoWeek(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
@@ -180,13 +180,14 @@ function tooltipFormatter(params: { dataIndex: number; seriesName?: string; valu
   const point = points.value[params.dataIndex]
   if (!point || params.value === null || params.value === undefined) return ''
   const dateStr = tooltipDateFmt.value.format(point.date)
+  const cohort: 'DEV' | 'QA' = params.seriesName === 'QA' ? 'QA' : 'DEV'
   return `<div style="min-width:130px">`
     + `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">`
     + `<span style="font-weight:600;color:#fff;font-size:11px;">${params.seriesName} ${params.value}%</span>`
     + `<span data-close-tooltip style="cursor:pointer;color:#b0bec5;font-weight:700;">×</span>`
     + `</div>`
     + `<div style="color:#b0bec5;font-size:10px;margin-top:2px;">${dateStr}</div>`
-    + `<div data-view-details data-index="${params.dataIndex}" style="color:#4fc3f7;text-decoration:underline;cursor:pointer;font-size:10px;margin-top:6px;">${t('trends.viewDetails')}</div>`
+    + `<div data-view-details data-index="${params.dataIndex}" data-cohort="${cohort}" style="color:#4fc3f7;text-decoration:underline;cursor:pointer;font-size:10px;margin-top:6px;">${t('trends.viewDetails')}</div>`
     + `</div>`
 }
 
@@ -298,9 +299,11 @@ const chartOption = computed(() => {
 
 const chartRef = ref<InstanceType<typeof VChart> | null>(null)
 
-function openRoundSnapshotAt(idx: number) {
+function openRoundSnapshotAt(idx: number, cohort: 'DEV' | 'QA') {
   const round = points.value[idx]?.round
-  if (round) selectedRound.value = round
+  if (!round) return
+  selectedRound.value = round
+  selectedCohort.value = cohort
 }
 
 function onDocumentClick(e: MouseEvent) {
@@ -308,7 +311,8 @@ function onDocumentClick(e: MouseEvent) {
   if (!target) return
   const detailsEl = target.closest('[data-view-details]') as HTMLElement | null
   if (detailsEl) {
-    openRoundSnapshotAt(Number(detailsEl.dataset.index))
+    const cohort = detailsEl.dataset.cohort === 'QA' ? 'QA' : 'DEV'
+    openRoundSnapshotAt(Number(detailsEl.dataset.index), cohort)
     chartRef.value?.dispatchAction({ type: 'hideTip' })
     return
   }
@@ -516,6 +520,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
     v-if="selectedRound"
     :round="selectedRound"
     :shields-map="shieldsMap"
-    @close="selectedRound = null"
+    :cohort="selectedCohort"
+    @close="selectedRound = null; selectedCohort = null"
   />
 </template>

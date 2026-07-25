@@ -396,6 +396,8 @@ DEV/QA рахуються окремо (`splitRoundAlignment` ділить го�
 
 **Round snapshot** - клік на `data-view-details` у tooltip ловиться делегованим `document`-listener'ом (ECharts рендерить tooltip у `document.body`, не всередині компонента), звідти `points.value[dataIndex].round` → `selectedRound` → `RoundSnapshotModal.vue` (вкладена `<dialog>` поверх поточної модалки) зі списком `{ім'я, голос}` усіх гравців того раунду (`round_history.votes`, повний знімок, не лише агреговані `counts`). Поруч з іменем - `RoleBadge` з тегом ролі (`roleTagForShields(shieldsMap.get(player_id))`, той самий `shieldsMap` з **поточних** shields, що й для DEV/QA split вище - те саме застереження про неактуальність ролі на момент голосування).
 
+**Когорта в round snapshot** - `data-view-details` несе ще й `data-cohort` (`'DEV'`/`'QA'`, з `params.seriesName` серії, на якій клікнули); прокидається як `selectedCohort` у `RoundSnapshotModal :cohort`. Модалка фільтрує `round.votes` через `isQaPlayer(shieldsMap.get(player_id))` під обрану когорту (лише QA-гравці / лише не-QA), у заголовку - кольоровий бейдж когорти (`QA` жовтий `#ffa726` / `DEV_COHORT_LABEL` бірюзовий `#26a69a`, константа винесена в `utils/shields.ts`, бо тепер спільна для `AlignmentTrendsModal` і `RoundSnapshotModal`). Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
+
 ### 11.4 Історія раундів (`round_history`)
 
 **Схема** (`supabase/migrations/001_initial_schema.sql` + `010_round_history_deck.sql`):

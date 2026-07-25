@@ -130,6 +130,8 @@ export function toggleShield(selected: string[], shield: Shield): string[] {
 // QA disciplines route a player's vote into the separate QA pile.
 const QA_SHIELDS = new Set(['qa', 'aqa', 'gqa'])
 
+export const DEV_COHORT_LABEL = 'DEV/FE/BE'
+
 export function isQaPlayer(shields: string[] | null | undefined): boolean {
   return Boolean(shields?.some(id => QA_SHIELDS.has(id)))
 }

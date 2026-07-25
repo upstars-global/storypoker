@@ -6,10 +6,10 @@ import AppModalPaper from '~/components/AppModalPaper.vue'
 import RoleBadge from '~/components/RoleBadge.vue'
 import { useCardLabel } from '~/composables/useCardLabel'
 import { DECK_PRESETS } from '~/utils/cardDecks'
-import { roleTagForShields } from '~/utils/shields'
+import { roleTagForShields, isQaPlayer, DEV_COHORT_LABEL } from '~/utils/shields'
 import type { RoundHistory } from '~/stores/types'
 
-const props = defineProps<{ round: RoundHistory; shieldsMap?: Map<string, string[]> }>()
+const props = defineProps<{ round: RoundHistory; shieldsMap?: Map<string, string[]>; cohort?: 'DEV' | 'QA' | null }>()
 const emit = defineEmits<{ close: [] }>()
 
 const cardLabel = useCardLabel()
@@ -22,7 +22,17 @@ const deckName = computed(() => {
   return DECK_PRESETS.find(p => p.id === props.round.deck_preset)?.name ?? props.round.deck_preset
 })
 
+const cohortLabel = computed(() => {
+  if (!props.cohort) return null
+  return props.cohort === 'QA' ? 'QA' : DEV_COHORT_LABEL
+})
+
 const sortedVotes = computed(() => [...props.round.votes]
+  .filter(v => {
+    if (!props.cohort) return true
+    const isQa = isQaPlayer(props.shieldsMap?.get(v.player_id))
+    return props.cohort === 'QA' ? isQa : !isQa
+  })
   .map(v => ({ ...v, roleTag: roleTagForShields(props.shieldsMap?.get(v.player_id)) }))
   .sort((a, b) => a.name.localeCompare(b.name)))
 </script>
@@ -39,9 +49,14 @@ const sortedVotes = computed(() => [...props.round.votes]
     >
       <h3
         id="round-snapshot-modal-title"
-        class="text-mui-h2 font-bold text-primary"
+        class="flex items-center gap-2 text-mui-h2 font-bold text-primary"
       >
         {{ $t('trends.roundSnapshotTitle') }}
+        <span
+          v-if="cohortLabel"
+          class="rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
+          :style="{ backgroundColor: cohort === 'QA' ? '#ffa726' : '#26a69a' }"
+        >{{ cohortLabel }}</span>
       </h3>
       <p class="mt-1 text-mui-caption text-muted">
         {{ dateFmt.format(new Date(round.revealed_at)) }}
@@ -62,6 +77,12 @@ const sortedVotes = computed(() => [...props.round.votes]
           </span>
           <span class="font-semibold text-primary">{{ cardLabel(v.vote) }}</span>
         </div>
+        <p
+          v-if="!sortedVotes.length"
+          class="text-mui-body text-muted"
+        >
+          {{ $t('trends.noVotesInCohort') }}
+        </p>
       </div>
     </AppModalPaper>
   </AppModal>

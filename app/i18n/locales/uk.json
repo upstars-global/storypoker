@@ -48,7 +48,8 @@
     "axisTime": "Час",
     "axisAlignment": "Узгодженість, %",
     "viewDetails": "Деталі",
-    "roundSnapshotTitle": "Голосування раунду"
+    "roundSnapshotTitle": "Голосування раунду",
+    "noVotesInCohort": "У цій групі немає голосів цього раунду"
   },
   "history": {
     "title": "Історія раундів",

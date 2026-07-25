@@ -48,7 +48,8 @@
     "axisTime": "Time",
     "axisAlignment": "Alignment, %",
     "viewDetails": "Details",
-    "roundSnapshotTitle": "Round Votes"
+    "roundSnapshotTitle": "Round Votes",
+    "noVotesInCohort": "No votes from this group in this round"
   },
   "history": {
     "title": "Round History",
