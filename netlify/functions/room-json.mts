@@ -176,6 +176,16 @@ async function buildRoomPayload(supabase: SupabaseClient, room: RoomRow) {
         devAlignment: dev,
         qaAlignment: qa,
         voters: (r.votes ?? []).length,
+        // Per-player breakdown for consumers wanting "who voted what" drill-down
+        // (storypoker's own Alignment Trends modal, agilecharts' round snapshot).
+        // Player names are already visible to anyone who joins the room; exposing
+        // them here is no wider than that, and this endpoint is already gated by
+        // STORYPOKER_API_TOKEN.
+        votes: (r.votes ?? []).map(v => ({
+          name: v.name,
+          vote: v.vote,
+          cohort: isQaPlayer(shieldsByPlayer.get(v.player_id)) ? 'QA' as const : 'DEV' as const,
+        })),
       }
     })
     .filter(r => r.average !== null && (r.devAlignment !== null || r.qaAlignment !== null))
