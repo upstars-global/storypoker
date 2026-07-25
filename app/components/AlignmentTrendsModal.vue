@@ -160,32 +160,31 @@ const REF_LINES = [
 interface HoveredDot { x: number; y: number; date: Date; value: number; series: 'DEV' | 'QA' }
 const hoveredDot = ref<HoveredDot | null>(null)
 
+function indexToX(i: number): number {
+  return PAD.left + (i / (points.value.length - 1)) * INNER_W
+}
+
 const chartData = computed(() => {
   if (points.value.length < 2) return null
-  const xs = points.value.map(p => p.date.getTime())
-  const minX = Math.min(...xs)
-  const xRange = Math.max(...xs) - minX || 1
 
-  function toXY(p: ChartPoint, val: number | null) {
+  function toXY(i: number, p: ChartPoint, val: number | null) {
     if (val === null) return null
     return {
-      x: PAD.left + ((p.date.getTime() - minX) / xRange) * INNER_W,
+      x: indexToX(i),
       y: valToY(val),
       alignment: val,
       date: p.date,
     }
   }
 
-  const devDots = points.value.map(p => toXY(p, p.devAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date }[]
-  const qaDots = points.value.map(p => toXY(p, p.qaAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date }[]
+  const devDots = points.value.map((p, i) => toXY(i, p, p.devAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date }[]
+  const qaDots = points.value.map((p, i) => toXY(i, p, p.qaAlignment)).filter(Boolean) as { x: number; y: number; alignment: number; date: Date }[]
 
   return {
     devPolyline: devDots.map(d => `${d.x},${d.y}`).join(' '),
     qaPolyline: qaDots.map(d => `${d.x},${d.y}`).join(' '),
     devDots,
     qaDots,
-    minX,
-    xRange,
   }
 })
 
@@ -194,13 +193,13 @@ const tooltipDateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { da
 
 const xAxisLabels = computed(() => {
   if (!chartData.value || points.value.length < 2) return []
-  const { minX, xRange } = chartData.value
   const step = Math.max(1, Math.floor(points.value.length / 6))
   return points.value
-    .filter((_, i) => i % step === 0 || i === points.value.length - 1)
+    .map((p, i) => ({ p, i }))
+    .filter(({ i }) => i % step === 0 || i === points.value.length - 1)
     .slice(0, 7)
-    .map(p => ({
-      x: PAD.left + ((p.date.getTime() - minX) / xRange) * INNER_W,
+    .map(({ p, i }) => ({
+      x: indexToX(i),
       label: dateFmt.value.format(p.date),
     }))
 })
