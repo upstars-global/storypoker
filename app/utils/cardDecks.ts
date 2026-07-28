@@ -1,10 +1,14 @@
-export type DeckPresetId = 'scrum' | 'fibonacci' | 'tshirt' | 'hours' | 'boolean' | 'voting' | 'vote_question'
+export type DeckPresetId = 'scrum' | 'fibonacci' | 'tshirt' | 'hours' | 'boolean' | 'voting' | 'vote_question' | 'goal_clarity'
 
 export interface DeckPreset {
   id: DeckPresetId
   name: string
   cards: string[]
   defaultActive: string[]
+  // Fixed question shown above the cards for this preset (unlike voting/vote_question's
+  // poll_question, which is moderator-typed at runtime) - written to room_state.poll_question
+  // by setDeckPreset() so it reuses the same display/storage path.
+  defaultQuestion?: string
 }
 
 export const DECK_PRESETS: DeckPreset[] = [
@@ -49,6 +53,13 @@ export const DECK_PRESETS: DeckPreset[] = [
     name: 'Vote - Question?',
     cards: [],
     defaultActive: ['Option A', 'Option B', 'Option C'],
+  },
+  {
+    id: 'goal_clarity',
+    name: 'Goal Clarity Score',
+    cards: ['1', '2', '3', '4', '5'],
+    defaultActive: ['1', '2', '3', '4', '5'],
+    defaultQuestion: 'Наскільки чітко я розумію Sprint Goals?',
   },
 ]
 

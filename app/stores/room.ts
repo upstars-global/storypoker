@@ -143,7 +143,7 @@ export const useRoomStore = defineStore('room', () => {
     const preset = getDeck(presetId)
     await getSupabase()
       .from('room_state')
-      .update({ deck_preset: presetId, active_cards: preset.defaultActive, poll_question: null })
+      .update({ deck_preset: presetId, active_cards: preset.defaultActive, poll_question: preset.defaultQuestion ?? null })
       .eq('room_id', roomId.value)
   }
 

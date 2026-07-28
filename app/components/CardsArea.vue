@@ -129,7 +129,7 @@ function cancelHold(mode: CountdownMode) {
 <template>
   <div class="flex flex-col items-center w-full rounded">
     <div
-      v-if="(pollMode || voteQuestionMode) && !showLastRound"
+      v-if="(pollMode || voteQuestionMode || !!pollQuestion) && !showLastRound"
       class="w-full max-w-[640px] mx-auto mb-8"
     >
       <h3

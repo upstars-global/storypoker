@@ -159,7 +159,8 @@
   },
   "results": {
     "general": "DEV",
-    "alignment": "Узгодженість"
+    "alignment": "Узгодженість",
+    "goalClarityHint": "Мета незрозуміла команді - варто переформулювати Sprint Goal або критерії Definition of Done"
   },
   "shields": {
     "title": "Обери свої щити",

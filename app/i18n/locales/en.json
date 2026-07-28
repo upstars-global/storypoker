@@ -159,7 +159,8 @@
   },
   "results": {
     "general": "DEV",
-    "alignment": "Alignment"
+    "alignment": "Alignment",
+    "goalClarityHint": "The goal isn't clear to the team - consider reformulating the Sprint Goal or the Definition of Done criteria"
   },
   "shields": {
     "title": "Pick your shields",

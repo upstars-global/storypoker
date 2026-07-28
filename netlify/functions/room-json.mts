@@ -49,6 +49,7 @@ const DECK_NAMES: Record<string, string> = {
   scrum: 'Scrum Scale',
   fibonacci: 'Fibonacci Sequence',
   hours: 'Hours',
+  goal_clarity: 'Goal Clarity Score',
 }
 
 // A deck contributes to alignment/average only when its cards form an ordered
@@ -68,6 +69,7 @@ const DEFAULT_ACTIVE_CARDS: Record<string, string[]> = {
   scrum: ['1/2', '1', '2', '3', '5', '8', '13', '20', '?', '☕'],
   fibonacci: ['1', '2', '3', '5', '8', '13', '21', '?', '☕'],
   hours: ['1/2h', '1h', '2h', '3h', '5h', '8h', '13h', '20h', '?', '☕'],
+  goal_clarity: ['1', '2', '3', '4', '5'],
 }
 
 // Rounds recorded before deck_preset existed have no preset at all - a second,

@@ -40,7 +40,7 @@ export function isPollPreset(preset: string | null | undefined): boolean {
 
 export function isNumericPreset(preset: string | null | undefined): boolean {
   if (preset == null) return true
-  return preset === 'scrum' || preset === 'fibonacci' || preset === 'hours'
+  return preset === 'scrum' || preset === 'fibonacci' || preset === 'hours' || preset === 'goal_clarity'
 }
 
 export interface RoundSummary {

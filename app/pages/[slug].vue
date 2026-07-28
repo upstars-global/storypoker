@@ -60,6 +60,7 @@ interface LastRoundSnapshot {
   pollQuestion: string | null
   isVotingDeck: boolean
   activeCards: string[]
+  deckPreset: string | null
 }
 
 const currentPlayerId = ref<string | null>(null)
@@ -263,9 +264,10 @@ watch(() => roomState.value?.phase, (phase, prev) => {
       playerVotes: visiblePlayers.value
         .filter(p => p.vote !== null)
         .map(p => ({ id: p.id, name: p.name, vote: p.vote as string })),
-      pollQuestion: isPollDeck.value ? (roomState.value?.poll_question ?? null) : null,
+      pollQuestion: roomState.value?.poll_question ?? null,
       isVotingDeck: isPollDeck.value,
       activeCards: [...(roomState.value?.active_cards ?? [])],
+      deckPreset: roomState.value?.deck_preset ?? null,
     }
     showLastRound.value = false
   }
@@ -604,16 +606,18 @@ async function submitRenameRoom() {
           :disable-celebration="true"
           :show-alignment="!lastRound.isVotingDeck"
           :active-cards="lastRound.activeCards"
+          :goal-clarity-score="lastRound.deckPreset === 'goal_clarity'"
         />
         <ResultsArea
           v-if="roomState?.phase === 'revealed'"
           :votes="voteCounts"
           :grouped-votes="groupedVoteCounts"
           :show-new-round="isModerator"
-          :poll-question="isPollDeck ? (roomState.poll_question ?? null) : null"
+          :poll-question="roomState.poll_question ?? null"
           :disable-celebration="isPollDeck"
           :show-alignment="!isPollDeck"
           :active-cards="roomState.active_cards ?? undefined"
+          :goal-clarity-score="roomState?.deck_preset === 'goal_clarity'"
           @start-new-round="roomStore.startNewRound()"
         />
         <CardsArea

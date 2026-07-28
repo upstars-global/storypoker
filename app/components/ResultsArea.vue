@@ -15,6 +15,10 @@ const props = defineProps<{
   showAlignment?: boolean
   activeCards?: string[]
   playerVotes?: { name: string; vote: string }[]
+  // Goal Clarity Score deck (app/utils/cardDecks.ts) - replaces the usual
+  // per-card PieChart/average with a single flat 1-5 score circle, since a pie
+  // of Likert-scale slices isn't a meaningful read for "how clear is the goal".
+  goalClarityScore?: boolean
 }>()
 
 const cardLabel = useCardLabel()
@@ -40,6 +44,21 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+const goalClarityAverage = computed(() => props.goalClarityScore ? averageOf(props.votes) : null)
+
+const goalClarityScoreColor = computed(() => {
+  const n = Number(goalClarityAverage.value)
+  if (!Number.isFinite(n)) return '#546e7a'
+  if (n > 3.5) return '#43a047'
+  if (n < 2.5) return '#e64a19'
+  return '#fbc02d'
+})
+
+const showGoalClarityHint = computed(() => {
+  const n = Number(goalClarityAverage.value)
+  return Number.isFinite(n) && n <= 3.5
+})
 
 const groups = computed(() => {
   const out: { label: string; votes: Record<string, number>; average: string | null }[] = []
@@ -109,7 +128,25 @@ watch(celebrate, (next, prev) => {
       {{ pollQuestion }}
     </h3>
     <div
-      v-if="votingBubbles"
+      v-if="goalClarityScore"
+      ref="chartsEl"
+      class="flex flex-col items-center gap-3 py-4"
+    >
+      <div
+        class="rounded-full flex items-center justify-center text-white font-bold"
+        :style="{ width: '96px', height: '96px', fontSize: '2rem', backgroundColor: goalClarityScoreColor }"
+      >
+        {{ goalClarityAverage ?? '—' }}
+      </div>
+      <p
+        v-if="showGoalClarityHint"
+        class="text-mui-body text-center text-muted max-w-md"
+      >
+        {{ $t('results.goalClarityHint') }}
+      </p>
+    </div>
+    <div
+      v-else-if="votingBubbles"
       ref="chartsEl"
       class="flex items-end justify-center gap-10 flex-wrap py-4"
     >
