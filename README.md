@@ -375,6 +375,46 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
   </tbody>
 </table>
 
+### Варіант 3 - тільки стандартний markdown
+
+Категорія - псевдо-рядок; лого і назва зведені в один бейдж, бо чистий markdown не дає задати розмір `<img>`. Пакети-обгортки беруть лого технології, до якої належать; де в Simple Icons лого немає (Playwright, happy-dom, v-wave, skills, skillio) - бейдж без лого.
+
+| Технологія | Призначення | Stars |
+|---|---|---|
+| **Core** | | |
+| [![Node.js](https://img.shields.io/badge/Node.js-555?logo=nodedotjs&logoColor=fff)](https://github.com/nodejs/node) | Runtime (>=24.15.0) | ![](https://img.shields.io/github/stars/nodejs/node?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![TypeScript](https://img.shields.io/badge/TypeScript-555?logo=typescript&logoColor=fff)](https://github.com/microsoft/TypeScript) | Мова | ![](https://img.shields.io/github/stars/microsoft/TypeScript?style=flat&logo=github&logoColor=white&label=&color=555) |
+| **Frontend** | | |
+| [![Vue](https://img.shields.io/badge/Vue-555?logo=vuedotjs&logoColor=fff)](https://github.com/vuejs/core) | UI-фреймворк, Composition API | ![](https://img.shields.io/github/stars/vuejs/core?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Vite](https://img.shields.io/badge/Vite-555?logo=vite&logoColor=fff)](https://github.com/vitejs/vite) | Dev server + build (Rolldown) | ![](https://img.shields.io/github/stars/vitejs/vite?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Pinia](https://img.shields.io/badge/Pinia-555?logo=pinia&logoColor=fff)](https://github.com/vuejs/pinia) | State management | ![](https://img.shields.io/github/stars/vuejs/pinia?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Vue Router](https://img.shields.io/badge/Vue%20Router-555?logo=vuedotjs&logoColor=fff)](https://github.com/vuejs/router) | Роутинг SPA | ![](https://img.shields.io/github/stars/vuejs/router?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Vue I18n](https://img.shields.io/badge/Vue%20I18n-555?logo=vuedotjs&logoColor=fff)](https://github.com/intlify/vue-i18n) | Локалізація uk / en | ![](https://img.shields.io/github/stars/intlify/vue-i18n?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Vite PWA](https://img.shields.io/badge/Vite%20PWA-555?logo=vite&logoColor=fff)](https://github.com/vite-pwa/vite-plugin-pwa) | Manifest + Workbox | ![](https://img.shields.io/github/stars/vite-pwa/vite-plugin-pwa?style=flat&logo=github&logoColor=white&label=&color=555) |
+| **UI & Charts** | | |
+| [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-555?logo=tailwindcss&logoColor=fff)](https://github.com/tailwindlabs/tailwindcss) | Стилі, CSS-first config (v4) | ![](https://img.shields.io/github/stars/tailwindlabs/tailwindcss?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Iconify](https://img.shields.io/badge/Iconify-555?logo=iconify&logoColor=fff)](https://github.com/iconify/iconify) | Іконки, `<AppIcon>` | ![](https://img.shields.io/github/stars/iconify/iconify?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Simple Icons](https://img.shields.io/badge/Simple%20Icons-555?logo=simpleicons&logoColor=fff)](https://github.com/simple-icons/simple-icons) | Бренд-іконки | ![](https://img.shields.io/github/stars/simple-icons/simple-icons?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![DiceBear](https://img.shields.io/badge/DiceBear-555?logo=dicebear&logoColor=fff)](https://github.com/dicebear/dicebear) | Аватари гравців | ![](https://img.shields.io/github/stars/dicebear/dicebear?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![v-wave](https://img.shields.io/badge/v--wave-555)](https://github.com/justintaddei/v-wave) | Ripple-ефект | ![](https://img.shields.io/github/stars/justintaddei/v-wave?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Apache ECharts](https://img.shields.io/badge/Apache%20ECharts-555?logo=apacheecharts&logoColor=fff)](https://github.com/apache/echarts) | Графіки узгодженості | ![](https://img.shields.io/github/stars/apache/echarts?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Vue ECharts](https://img.shields.io/badge/Vue%20ECharts-555?logo=apacheecharts&logoColor=fff)](https://github.com/ecomfe/vue-echarts) | Vue-обгортка ECharts | ![](https://img.shields.io/github/stars/ecomfe/vue-echarts?style=flat&logo=github&logoColor=white&label=&color=555) |
+| **Backend & Hosting** | | |
+| [![Supabase](https://img.shields.io/badge/Supabase-555?logo=supabase&logoColor=fff)](https://github.com/supabase/supabase) | Postgres, Realtime, Presence, Auth | ![](https://img.shields.io/github/stars/supabase/supabase?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![supabase-js](https://img.shields.io/badge/supabase--js-555?logo=supabase&logoColor=fff)](https://github.com/supabase/supabase-js) | Клієнт | ![](https://img.shields.io/github/stars/supabase/supabase-js?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Netlify](https://img.shields.io/badge/Netlify-555?logo=netlify&logoColor=fff)](https://netlify.com) | Хостинг + Functions (`/api/*`) | |
+| **Testing & Quality** | | |
+| [![Vitest](https://img.shields.io/badge/Vitest-555?logo=vitest&logoColor=fff)](https://github.com/vitest-dev/vitest) | Unit / component тести | ![](https://img.shields.io/github/stars/vitest-dev/vitest?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Playwright](https://img.shields.io/badge/Playwright-555)](https://github.com/microsoft/playwright) | E2E тести | ![](https://img.shields.io/github/stars/microsoft/playwright?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![Vue Test Utils](https://img.shields.io/badge/Vue%20Test%20Utils-555?logo=vuedotjs&logoColor=fff)](https://github.com/vuejs/test-utils) | Монтування компонентів | ![](https://img.shields.io/github/stars/vuejs/test-utils?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![happy-dom](https://img.shields.io/badge/happy--dom-555)](https://github.com/capricorn86/happy-dom) | DOM-середовище для Vitest | ![](https://img.shields.io/github/stars/capricorn86/happy-dom?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![ESLint](https://img.shields.io/badge/ESLint-555?logo=eslint&logoColor=fff)](https://github.com/eslint/eslint) | Лінтинг (flat config) | ![](https://img.shields.io/github/stars/eslint/eslint?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![vue-tsc](https://img.shields.io/badge/vue--tsc-555?logo=typescript&logoColor=fff)](https://github.com/vuejs/language-tools) | Typecheck SFC | ![](https://img.shields.io/github/stars/vuejs/language-tools?style=flat&logo=github&logoColor=white&label=&color=555) |
+| **Agents & Tooling** | | |
+| [![Claude Code](https://img.shields.io/badge/Claude%20Code-555?logo=claude&logoColor=fff)](https://github.com/anthropics/claude-code) | AI-агент у терміналі | ![](https://img.shields.io/github/stars/anthropics/claude-code?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![skills](https://img.shields.io/badge/skills-555)](https://github.com/vercel-labs/skills) | Встановлення skills для агентів | ![](https://img.shields.io/github/stars/vercel-labs/skills?style=flat&logo=github&logoColor=white&label=&color=555) |
+| [![skillio](https://img.shields.io/badge/skillio-555)](https://github.com/ihororlovskyi/skillio) | Статистика використання skills | ![](https://img.shields.io/github/stars/ihororlovskyi/skillio?style=flat&logo=github&logoColor=white&label=&color=555) |
+
 ## Install
 
 ```bash
