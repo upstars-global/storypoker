@@ -4,7 +4,7 @@ Guidance for Claude Code working with this repository.
 
 ## Communication
 - **Language:** Ukrainian (українська мова)
-- **Git/GitHub - тільки англійська:** commit messages, назви й описи PR, коментарі в PR та issues. Це стосується і коду (коментарі), і CI-артефактів. Українською лишається спілкування в чаті й документація в репо (`AGENTS.md`, `DESIGN.md`, `docs/`).
+- **Тільки англійська:** `README.md`, commit messages, назви й описи PR, коментарі в PR та issues, коментарі в коді, CI-артефакти. Українською лишається спілкування в чаті й внутрішня документація (`AGENTS.md`, `DESIGN.md`, `docs/`).
 - **Constraint:** цей файл - ≤ 256 рядків. Детальна продуктова специфікація - `DESIGN.md`.
 
 ## Workflow
