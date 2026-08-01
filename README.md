@@ -6,64 +6,428 @@ _Vibe Story Poker - Every story point counts_
 
 A web-based planning poker tool that helps Scrum and Agile teams estimate tasks in a fun, collaborative, and efficient way.
 
-### Used:
-* <img src="https://cdn.simpleicons.org/nodedotjs" width="16" height="16"> [Node.js](https://nodejs.org)
-* <img src="https://cdn.simpleicons.org/typescript" width="16" height="16"> [TypeScript](https://www.typescriptlang.org)
-* <img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"> [Vue](https://vuejs.org)
-* <img src="https://cdn.simpleicons.org/vite" width="16" height="16"> [Vite](https://vitejs.dev)
-* <img src="https://cdn.simpleicons.org/pinia" width="16" height="16"> [Pinia](https://pinia.vuejs.org)
-* <img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"> [Vue Router](https://router.vuejs.org)
-* <img src="https://api.iconify.design/logos/i18next.svg" width="16" height="16"> [Vue I18n](https://vue-i18n.intlify.dev)
-* <img src="https://cdn.simpleicons.org/tailwindcss" width="16" height="16"> [Tailwind](https://tailwindcss.com)
-* <img src="https://cdn.simpleicons.org/pwa" width="16" height="16"> [Vite PWA](https://vite-pwa-org.netlify.app)
-* <img src="https://cdn.simpleicons.org/supabase" width="16" height="16"> [Supabase](https://supabase.com)
-* <img src="https://cdn.simpleicons.org/netlify" width="16" height="16"> [Netlify](https://netlify.com)
-* <img src="https://cdn.simpleicons.org/iconify" width="16" height="16"> [Iconify](https://icon-sets.iconify.design)
-* <img src="https://cdn.simpleicons.org/simpleicons" width="16" height="16"> [Simple Icons](https://simpleicons.org)
-* <img src="https://api.iconify.design/tabler/mood-smile.svg" width="16" height="16"> [DiceBear](https://www.dicebear.com/)
-* <img src="https://api.iconify.design/tabler/ripple.svg" width="16" height="16"> [v-wave](https://v-wave.graham42.com)
-* <img src="https://cdn.simpleicons.org/vitest" width="16" height="16"> [Vitest](https://vitest.dev)
-* <img src="https://api.iconify.design/logos/playwright.svg" width="16" height="16"> [Playwright](https://playwright.dev)
+## Used
 
-### Install
+### Варіант 1 - категорія окремим стовпчиком
+
+<table>
+  <thead>
+    <tr>
+      <th>Категорія</th>
+      <th></th>
+      <th>Технологія</th>
+      <th>Призначення</th>
+      <th>Stars</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="2"><b>Core</b></td>
+      <td><img src="https://cdn.simpleicons.org/nodedotjs" width="16" height="16"></td>
+      <td><a href="https://github.com/nodejs/node">Node.js</a></td>
+      <td>Runtime (&gt;=24.15.0)</td>
+      <td><img src="https://img.shields.io/github/stars/nodejs/node?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/typescript" width="16" height="16"></td>
+      <td><a href="https://github.com/microsoft/TypeScript">TypeScript</a></td>
+      <td>Мова</td>
+      <td><img src="https://img.shields.io/github/stars/microsoft/TypeScript?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td rowspan="6"><b>Frontend</b></td>
+      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"></td>
+      <td><a href="https://github.com/vuejs/core">Vue</a></td>
+      <td>UI-фреймворк, Composition API</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/core?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/vite" width="16" height="16"></td>
+      <td><a href="https://github.com/vitejs/vite">Vite</a></td>
+      <td>Dev server + build (Rolldown)</td>
+      <td><img src="https://img.shields.io/github/stars/vitejs/vite?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/pinia" width="16" height="16"></td>
+      <td><a href="https://github.com/vuejs/pinia">Pinia</a></td>
+      <td>State management</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/pinia?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"></td>
+      <td><a href="https://github.com/vuejs/router">Vue Router</a></td>
+      <td>Роутинг SPA</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/router?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/i18next" width="16" height="16"></td>
+      <td><a href="https://github.com/intlify/vue-i18n">Vue I18n</a></td>
+      <td>Локалізація uk / en</td>
+      <td><img src="https://img.shields.io/github/stars/intlify/vue-i18n?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/pwa" width="16" height="16"></td>
+      <td><a href="https://github.com/vite-pwa/vite-plugin-pwa">Vite PWA</a></td>
+      <td>Manifest + Workbox</td>
+      <td><img src="https://img.shields.io/github/stars/vite-pwa/vite-plugin-pwa?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td rowspan="7"><b>UI &amp; Charts</b></td>
+      <td><img src="https://cdn.simpleicons.org/tailwindcss" width="16" height="16"></td>
+      <td><a href="https://github.com/tailwindlabs/tailwindcss">Tailwind CSS</a></td>
+      <td>Стилі, CSS-first config (v4)</td>
+      <td><img src="https://img.shields.io/github/stars/tailwindlabs/tailwindcss?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/iconify" width="16" height="16"></td>
+      <td><a href="https://github.com/iconify/iconify">Iconify</a></td>
+      <td>Іконки, <code>&lt;AppIcon&gt;</code></td>
+      <td><img src="https://img.shields.io/github/stars/iconify/iconify?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/simpleicons" width="16" height="16"></td>
+      <td><a href="https://github.com/simple-icons/simple-icons">Simple Icons</a></td>
+      <td>Бренд-іконки</td>
+      <td><img src="https://img.shields.io/github/stars/simple-icons/simple-icons?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/dicebear" width="16" height="16"></td>
+      <td><a href="https://github.com/dicebear/dicebear">DiceBear</a></td>
+      <td>Аватари гравців</td>
+      <td><img src="https://img.shields.io/github/stars/dicebear/dicebear?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://api.iconify.design/tabler/ripple.svg" width="16" height="16"></td>
+      <td><a href="https://github.com/justintaddei/v-wave">v-wave</a></td>
+      <td>Ripple-ефект</td>
+      <td><img src="https://img.shields.io/github/stars/justintaddei/v-wave?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/apacheecharts" width="16" height="16"></td>
+      <td><a href="https://github.com/apache/echarts">Apache ECharts</a></td>
+      <td>Графіки узгодженості</td>
+      <td><img src="https://img.shields.io/github/stars/apache/echarts?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/apacheecharts" width="16" height="16"></td>
+      <td><a href="https://github.com/ecomfe/vue-echarts">Vue ECharts</a></td>
+      <td>Vue-обгортка ECharts</td>
+      <td><img src="https://img.shields.io/github/stars/ecomfe/vue-echarts?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td rowspan="3"><b>Backend &amp; Hosting</b></td>
+      <td><img src="https://cdn.simpleicons.org/supabase" width="16" height="16"></td>
+      <td><a href="https://github.com/supabase/supabase">Supabase</a></td>
+      <td>Postgres, Realtime, Presence, Auth</td>
+      <td><img src="https://img.shields.io/github/stars/supabase/supabase?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/supabase" width="16" height="16"></td>
+      <td><a href="https://github.com/supabase/supabase-js">supabase-js</a></td>
+      <td>Клієнт</td>
+      <td><img src="https://img.shields.io/github/stars/supabase/supabase-js?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/netlify" width="16" height="16"></td>
+      <td><a href="https://netlify.com">Netlify</a></td>
+      <td>Хостинг + Functions (<code>/api/*</code>)</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td rowspan="6"><b>Testing &amp; Quality</b></td>
+      <td><img src="https://cdn.simpleicons.org/vitest" width="16" height="16"></td>
+      <td><a href="https://github.com/vitest-dev/vitest">Vitest</a></td>
+      <td>Unit / component тести</td>
+      <td><img src="https://img.shields.io/github/stars/vitest-dev/vitest?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://api.iconify.design/logos/playwright.svg" width="16" height="16"></td>
+      <td><a href="https://github.com/microsoft/playwright">Playwright</a></td>
+      <td>E2E тести</td>
+      <td><img src="https://img.shields.io/github/stars/microsoft/playwright?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"></td>
+      <td><a href="https://github.com/vuejs/test-utils">Vue Test Utils</a></td>
+      <td>Монтування компонентів</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/test-utils?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://api.iconify.design/tabler/mood-happy.svg" width="16" height="16"></td>
+      <td><a href="https://github.com/capricorn86/happy-dom">happy-dom</a></td>
+      <td>DOM-середовище для Vitest</td>
+      <td><img src="https://img.shields.io/github/stars/capricorn86/happy-dom?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/eslint" width="16" height="16"></td>
+      <td><a href="https://github.com/eslint/eslint">ESLint</a></td>
+      <td>Лінтинг (flat config)</td>
+      <td><img src="https://img.shields.io/github/stars/eslint/eslint?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/typescript" width="16" height="16"></td>
+      <td><a href="https://github.com/vuejs/language-tools">vue-tsc</a></td>
+      <td>Typecheck SFC</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/language-tools?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td rowspan="3"><b>Agents &amp; Tooling</b></td>
+      <td><img src="https://cdn.simpleicons.org/claude" width="16" height="16"></td>
+      <td><a href="https://github.com/anthropics/claude-code">Claude Code</a></td>
+      <td>AI-агент у терміналі</td>
+      <td><img src="https://img.shields.io/github/stars/anthropics/claude-code?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://api.iconify.design/tabler/puzzle.svg" width="16" height="16"></td>
+      <td><a href="https://github.com/vercel-labs/skills">skills</a></td>
+      <td>Встановлення skills для агентів</td>
+      <td><img src="https://img.shields.io/github/stars/vercel-labs/skills?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://api.iconify.design/tabler/chart-bar.svg" width="16" height="16"></td>
+      <td><a href="https://github.com/ihororlovskyi/skillio">skillio</a></td>
+      <td>Статистика використання skills</td>
+      <td><img src="https://img.shields.io/github/stars/ihororlovskyi/skillio?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+  </tbody>
+</table>
+
+### Варіант 2 - категорія окремим рядком
+
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Технологія</th>
+      <th>Призначення</th>
+      <th>Stars</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td colspan="4"><b>Core</b></td></tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/nodedotjs" width="16" height="16"></td>
+      <td><a href="https://github.com/nodejs/node">Node.js</a></td>
+      <td>Runtime (&gt;=24.15.0)</td>
+      <td><img src="https://img.shields.io/github/stars/nodejs/node?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/typescript" width="16" height="16"></td>
+      <td><a href="https://github.com/microsoft/TypeScript">TypeScript</a></td>
+      <td>Мова</td>
+      <td><img src="https://img.shields.io/github/stars/microsoft/TypeScript?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr><td colspan="4"><b>Frontend</b></td></tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"></td>
+      <td><a href="https://github.com/vuejs/core">Vue</a></td>
+      <td>UI-фреймворк, Composition API</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/core?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/vite" width="16" height="16"></td>
+      <td><a href="https://github.com/vitejs/vite">Vite</a></td>
+      <td>Dev server + build (Rolldown)</td>
+      <td><img src="https://img.shields.io/github/stars/vitejs/vite?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/pinia" width="16" height="16"></td>
+      <td><a href="https://github.com/vuejs/pinia">Pinia</a></td>
+      <td>State management</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/pinia?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><a href="https://github.com/vuejs/router">Vue Router</a></td>
+      <td>Роутинг SPA</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/router?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><a href="https://github.com/intlify/vue-i18n">Vue I18n</a></td>
+      <td>Локалізація uk / en</td>
+      <td><img src="https://img.shields.io/github/stars/intlify/vue-i18n?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/vite" width="16" height="16"><img src="https://cdn.simpleicons.org/pwa" width="16" height="16"></td>
+      <td><a href="https://github.com/vite-pwa/vite-plugin-pwa">Vite PWA</a></td>
+      <td>Manifest + Workbox</td>
+      <td><img src="https://img.shields.io/github/stars/vite-pwa/vite-plugin-pwa?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr><td colspan="4"><b>UI &amp; Charts</b></td></tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/tailwindcss" width="16" height="16"></td>
+      <td><a href="https://github.com/tailwindlabs/tailwindcss">Tailwind CSS</a></td>
+      <td>Стилі, CSS-first config (v4)</td>
+      <td><img src="https://img.shields.io/github/stars/tailwindlabs/tailwindcss?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/iconify" width="16" height="16"></td>
+      <td><a href="https://github.com/iconify/iconify">Iconify</a></td>
+      <td>Іконки, <code>&lt;AppIcon&gt;</code></td>
+      <td><img src="https://img.shields.io/github/stars/iconify/iconify?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/simpleicons" width="16" height="16"></td>
+      <td><a href="https://github.com/simple-icons/simple-icons">Simple Icons</a></td>
+      <td>Бренд-іконки</td>
+      <td><img src="https://img.shields.io/github/stars/simple-icons/simple-icons?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/dicebear" width="16" height="16"></td>
+      <td><a href="https://github.com/dicebear/dicebear">DiceBear</a></td>
+      <td>Аватари гравців</td>
+      <td><img src="https://img.shields.io/github/stars/dicebear/dicebear?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><a href="https://github.com/justintaddei/v-wave">v-wave</a></td>
+      <td>Ripple-ефект</td>
+      <td><img src="https://img.shields.io/github/stars/justintaddei/v-wave?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/apacheecharts" width="16" height="16"></td>
+      <td><a href="https://github.com/apache/echarts">Apache ECharts</a></td>
+      <td>Графіки узгодженості</td>
+      <td><img src="https://img.shields.io/github/stars/apache/echarts?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"><img src="https://cdn.simpleicons.org/apacheecharts" width="16" height="16"></td>
+      <td><a href="https://github.com/ecomfe/vue-echarts">Vue ECharts</a></td>
+      <td>Vue-обгортка ECharts</td>
+      <td><img src="https://img.shields.io/github/stars/ecomfe/vue-echarts?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr><td colspan="4"><b>Backend &amp; Hosting</b></td></tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/supabase" width="16" height="16"></td>
+      <td><a href="https://github.com/supabase/supabase">Supabase</a></td>
+      <td>Postgres, Realtime, Presence, Auth</td>
+      <td><img src="https://img.shields.io/github/stars/supabase/supabase?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/supabase" width="16" height="16"><img src="https://cdn.simpleicons.org/javascript" width="16" height="16"></td>
+      <td><a href="https://github.com/supabase/supabase-js">supabase-js</a></td>
+      <td>Клієнт</td>
+      <td><img src="https://img.shields.io/github/stars/supabase/supabase-js?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/netlify" width="16" height="16"></td>
+      <td><a href="https://netlify.com">Netlify</a></td>
+      <td>Хостинг + Functions (<code>/api/*</code>)</td>
+      <td></td>
+    </tr>
+    <tr><td colspan="4"><b>Testing &amp; Quality</b></td></tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/vitest" width="16" height="16"></td>
+      <td><a href="https://github.com/vitest-dev/vitest">Vitest</a></td>
+      <td>Unit / component тести</td>
+      <td><img src="https://img.shields.io/github/stars/vitest-dev/vitest?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://api.iconify.design/logos/playwright.svg" width="16" height="16"></td>
+      <td><a href="https://github.com/microsoft/playwright">Playwright</a></td>
+      <td>E2E тести</td>
+      <td><img src="https://img.shields.io/github/stars/microsoft/playwright?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><a href="https://github.com/vuejs/test-utils">Vue Test Utils</a></td>
+      <td>Монтування компонентів</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/test-utils?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><a href="https://github.com/capricorn86/happy-dom">happy-dom</a></td>
+      <td>DOM-середовище для Vitest</td>
+      <td><img src="https://img.shields.io/github/stars/capricorn86/happy-dom?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/eslint" width="16" height="16"></td>
+      <td><a href="https://github.com/eslint/eslint">ESLint</a></td>
+      <td>Лінтинг (flat config)</td>
+      <td><img src="https://img.shields.io/github/stars/eslint/eslint?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"><img src="https://cdn.simpleicons.org/typescript" width="16" height="16"></td>
+      <td><a href="https://github.com/vuejs/language-tools">vue-tsc</a></td>
+      <td>Typecheck SFC</td>
+      <td><img src="https://img.shields.io/github/stars/vuejs/language-tools?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr><td colspan="4"><b>Agents &amp; Tooling</b></td></tr>
+    <tr>
+      <td><img src="https://cdn.simpleicons.org/claude" width="16" height="16"></td>
+      <td><a href="https://github.com/anthropics/claude-code">Claude Code</a></td>
+      <td>AI-агент у терміналі</td>
+      <td><img src="https://img.shields.io/github/stars/anthropics/claude-code?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><a href="https://github.com/vercel-labs/skills">skills</a></td>
+      <td>Встановлення skills для агентів</td>
+      <td><img src="https://img.shields.io/github/stars/vercel-labs/skills?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><a href="https://github.com/ihororlovskyi/skillio">skillio</a></td>
+      <td>Статистика використання skills</td>
+      <td><img src="https://img.shields.io/github/stars/ihororlovskyi/skillio?style=flat&amp;logo=github&amp;logoColor=white&amp;label=&amp;color=555" alt=""></td>
+    </tr>
+  </tbody>
+</table>
+
+## Install
+
 ```bash
 npm i
 ```
 
-### Run
-Створи `/.env/.env` (Supabase, спільне для команди) та `/.env/.env.local` (персональне, наприклад Jira) на основі `/.env/.env.example`.
+`preinstall` запускає [scripts/setup.sh](scripts/setup.sh): створює `.agents/`, `.claude/settings.json` і env-файли `/.env/.env` (Supabase, спільне для команди) та `/.env/.env.local` (персональне, наприклад Jira або GitHub PAT). `postinstall` запускає [scripts/skills.sh](scripts/skills.sh) - див. [Skills](#skills).
+
+Файли створюються порожніми - заповни їх за зразком `/.env/.env.example` і запусти dev-сервер:
+
 ```bash
 npm run dev
 ```
 
-### Tests (Vitest)
+## Tests
+
 ```bash
-npm test
+npm test                    # Vitest: unit + component
+npm run test:watch
+npm run test:unit:coverage
+npm run test:e2e            # Playwright, потребує /.env/.env.test
+npm run test:e2e:smoke
+npm run test:e2e:pages      # public pages smoke, без Supabase
+npm run test:e2e:ui
+npm run test:ci             # lint + typecheck + unit + build (те саме, що в CI)
 ```
 
-Coverage (для CI або локально):
-```bash
-npm run test:ci
-```
+## CI/CD (GitHub Actions + Netlify)
 
-### CI/CD (GitHub Actions + Netlify)
 - CI: `.github/workflows/ci.yml` запускає `npm ci` і `npm run test:ci` на PR та `main`; Playwright E2E запускається, якщо задані E2E secrets.
 - CD: той самий workflow деплоїть на Netlify при пуші в `main`, якщо основні checks пройшли й задані Netlify secrets; E2E блокує deploy тільки коли запускається і падає.
   - `NETLIFY_AUTH_TOKEN`
   - `NETLIFY_SITE_ID`
 
-### Run Claude Code In Bypass Mode
+## Skills
+
+Набір skills для агентів встановлює [scripts/skills.sh](scripts/skills.sh) - автоматично як `postinstall` або окремо:
+
 ```bash
-claude --dangerously-skip-permissions
+npm run skills
 ```
 
-### Skills
-* [scripts/skills.sh](scripts/skills.sh)
+Скільки і яких skills використовували агенти:
 
-### Як подивитись скільки і яких скілів використовували агенти
 ```bash
 npm i -g skillio
 skl usg -p 3h
+```
+
+## Run Claude Code In Bypass Mode
+
+```bash
+claude --dangerously-skip-permissions
 ```
 
 Have fun! ;)

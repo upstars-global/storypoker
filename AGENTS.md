@@ -4,17 +4,17 @@ Guidance for Claude Code working with this repository.
 
 ## Communication
 - **Language:** Ukrainian (українська мова)
+- **Git/GitHub - тільки англійська:** commit messages, назви й описи PR, коментарі в PR та issues. Це стосується і коду (коментарі), і CI-артефактів. Українською лишається спілкування в чаті й документація в репо (`AGENTS.md`, `DESIGN.md`, `docs/`).
 - **Constraint:** цей файл - ≤ 256 рядків. Детальна продуктова специфікація - `DESIGN.md`.
 
 ## Workflow
-- **Заборонено git worktrees.** Не створюй linked worktrees (`git worktree add`, `EnterWorktree`, `isolation: "worktree"`). Працюй у головному робочому каталозі; ізоляцію роби через гілки.
 - **Діаграми - тільки ECharts.** Перед будь-якою роботою з графіками активуй skill `echarts`. Нові діаграми пиши на Apache ECharts; `AlignmentTrendsModal.vue` уже мігрований, саморобний SVG лишився тільки в `PieChart.vue` - при дотику переписуй на ECharts.
 
 ## Project Overview
 
 **Story Poker** - Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 7 пресетів або кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
 
-Джерела контексту: `DESIGN.md` (дизайн + audit §10), `ROADMAP.md` (статус, gaps, iter-цілі), `docs/superpowers/{plans,specs}/` (iter-плани і специфікації), `docs/tasks/` (разові операційні інструкції).
+Джерела контексту: `DESIGN.md` (дизайн + audit §10), `docs/roadmap.md` (індекс ініціатив у `docs/initiatives/`) і `docs/completed.md`, `docs/superpowers/{plans,specs}/` (iter-плани і специфікації), `docs/tasks/` (разові операційні інструкції).
 
 ## Tech Stack
 
