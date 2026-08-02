@@ -379,7 +379,7 @@ const playerAvatar = computed(() => {
 
 <style scoped>
 .dice-spin {
-  animation: dice-spin 650ms linear infinite;
+  animation: dice-spin 488ms linear infinite;
 }
 @keyframes dice-spin {
   to { transform: rotate(360deg); }
