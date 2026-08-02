@@ -73,7 +73,7 @@ watch(() => props.isSpinningSlot, (spinning) => {
   if (spinning) {
     diceFaceTimer = setInterval(() => {
       diceFaceIndex.value = (diceFaceIndex.value + 1) % DICE_FACES.length
-    }, 120)
+    }, 180)
   }
 }, { immediate: true })
 onUnmounted(() => clearInterval(diceFaceTimer))

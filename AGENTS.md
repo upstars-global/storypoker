@@ -150,7 +150,7 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 - `room:<roomId>` Presence → online players
 - `countdown:<roomId>` broadcast (`self:true`) → синхронний відлік перед reveal; initiator викликає `reveal()`. Hold-to-start UI (silent/dry/wet, `useCountdown.ts`) - `DESIGN.md` §11.6
 
-Після `'reconnecting' → 'online'` виконується reconciliation refetch. Optimistic vote пишеться в `pendingVotes[playerId]`, success/realtime ACK очищає запис, error робить rollback.
+Після `'reconnecting' → 'online'` (перехід статусу Presence-каналу) виконується reconciliation refetch. Додатково `document.visibilitychange → visible` теж тригерить `fetchInitialData()` незалежно від presence-статусу - Supabase Realtime не переграє `postgres_changes`, пропущені під час розриву з'єднання (згорнута вкладка/додаток, короткий мережевий збій), і цей розрив не завжди проявляється як 'reconnecting' у presence-каналі. Optimistic vote пишеться в `pendingVotes[playerId]`, success/realtime ACK очищає запис, error робить rollback.
 
 ## Project Structure
 

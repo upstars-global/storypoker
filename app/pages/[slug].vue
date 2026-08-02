@@ -213,6 +213,7 @@ let stateChannel: RealtimeChannel | null = null
 let roomChannel: RealtimeChannel | null = null
 let profilesChannel: RealtimeChannel | null = null
 let countdownChannel: RealtimeChannel | null = null
+let visibilityHandler: (() => void) | null = null
 
 onMounted(async () => {
   origin.value = window.location.origin
@@ -258,6 +259,15 @@ onMounted(async () => {
   }
 
   subscribeRealtime()
+
+  // Supabase never replays postgres_changes missed while the socket was down
+  // (backgrounded tab/app, brief network blip), and that drop doesn't always
+  // surface as a presence 'reconnecting' transition - so refetch on every
+  // foreground regardless of what the presence channel observed.
+  visibilityHandler = () => {
+    if (document.visibilityState === 'visible') fetchInitialData()
+  }
+  document.addEventListener('visibilitychange', visibilityHandler)
 })
 
 watch(connectionStatus, async (next, prev) => {
@@ -299,6 +309,7 @@ watch(playerUserIds, async (ids) => {
 })
 
 onUnmounted(async () => {
+  if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler)
   unsubscribe()
   clearTimeout(slotWinnerTimer)
   for (const timer of slotSpinSafetyTimers.values()) clearTimeout(timer)
