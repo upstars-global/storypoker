@@ -25,15 +25,18 @@ const transitions = ref<string[]>(['none', 'none', 'none'])
 const spinning = ref(false)
 const jackpotFlash = ref(false)
 const jammed = ref(false)
+const showVoteFirstHint = ref(false)
 
 let finishTimer: ReturnType<typeof setTimeout> | undefined
 let flashTimer: ReturnType<typeof setTimeout> | undefined
 let jamTimer: ReturnType<typeof setTimeout> | undefined
+let hintTimer: ReturnType<typeof setTimeout> | undefined
 let tickRaf: number | undefined
 onUnmounted(() => {
   clearTimeout(finishTimer)
   clearTimeout(flashTimer)
   clearTimeout(jamTimer)
+  clearTimeout(hintTimer)
   if (tickRaf !== undefined) cancelAnimationFrame(tickRaf)
 })
 
@@ -112,12 +115,18 @@ function startTickLoop(totalSteps: number[]) {
 
 // Button stays clickable even when you can't spin yet (haven't voted) - jiggling
 // the reels a couple millimeters, like a jammed lever, reads better than a
-// disabled button players might mistake for "broken" or "out of spins".
+// disabled button players might mistake for "broken" or "out of spins". The
+// hint below only flashes for 2s after this click, instead of sitting there
+// permanently whenever canSpin is false.
 function triggerJam() {
   if (jammed.value) return
   jammed.value = true
   clearTimeout(jamTimer)
   jamTimer = setTimeout(() => { jammed.value = false }, 400)
+
+  showVoteFirstHint.value = true
+  clearTimeout(hintTimer)
+  hintTimer = setTimeout(() => { showVoteFirstHint.value = false }, 2000)
 }
 
 async function spin() {
@@ -230,7 +239,7 @@ async function spin() {
         class="text-mui-caption text-muted"
         data-testid="slot-spins-left"
       >
-        {{ spinsLeft <= 0 ? $t('slot.noSpinsLeft') : !canSpin ? $t('slot.voteFirst') : $t('slot.spinsLeft', { n: spinsLeft }) }}
+        {{ spinsLeft <= 0 ? $t('slot.noSpinsLeft') : showVoteFirstHint ? $t('slot.voteFirst') : $t('slot.spinsLeft', { n: spinsLeft }) }}
       </span>
     </div>
   </div>
