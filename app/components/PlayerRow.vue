@@ -123,22 +123,32 @@ const playerAvatar = computed(() => {
           {{ $t('players.moderator') }}
         </template>
       </AppTooltip>
+      <AppTooltip
+        v-if="showDice"
+        side="top"
+        :side-offset="6"
+      >
+        <template #trigger>
+          <span
+            class="inline-flex flex-none"
+            :class="{ 'win-blink': isSlotWinner }"
+          >
+            <AppIcon
+              class="mui-svg-icon"
+              :class="{ 'dice-spin': isSpinningSlot }"
+              icon="tabler:dice-5"
+              style="font-size: 1.125rem; color: var(--icon-player-color);"
+              :aria-label="$t(isSpinningSlot ? 'players.spinningSlot' : 'players.slotWinner')"
+            />
+          </span>
+        </template>
+        <template #content>
+          {{ $t(isSpinningSlot ? 'players.spinningSlot' : 'players.slotWinner') }}
+        </template>
+      </AppTooltip>
     </div>
 
-    <span
-      v-if="showDice"
-      class="inline-flex"
-      :class="{ 'win-blink': isSlotWinner }"
-    >
-      <AppIcon
-        class="mui-svg-icon"
-        :class="{ 'dice-spin': isSpinningSlot }"
-        icon="tabler:dice-5"
-        style="font-size: 1.5rem; color: var(--icon-player-color);"
-        :aria-label="$t(isSpinningSlot ? 'players.spinningSlot' : 'players.slotWinner')"
-      />
-    </span>
-    <template v-else-if="player.is_online">
+    <template v-if="player.is_online">
       <template v-if="phase === 'voting'">
         <AppTooltip
           v-if="player.vote !== null"

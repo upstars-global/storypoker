@@ -117,7 +117,7 @@ function startTickLoop(totalSteps: number[]) {
 // Button stays clickable even when you can't spin yet (haven't voted) - jiggling
 // the reels a couple millimeters, like a jammed lever, reads better than a
 // disabled button players might mistake for "broken" or "out of spins". The
-// hint below only flashes for 2s after this click, instead of sitting there
+// hint below only flashes for 1.5s after this click, instead of sitting there
 // permanently whenever canSpin is false.
 function triggerJam() {
   if (jammed.value) return
@@ -127,7 +127,7 @@ function triggerJam() {
 
   showVoteFirstHint.value = true
   clearTimeout(hintTimer)
-  hintTimer = setTimeout(() => { showVoteFirstHint.value = false }, 2000)
+  hintTimer = setTimeout(() => { showVoteFirstHint.value = false }, 1500)
 }
 
 async function spin() {
@@ -239,6 +239,7 @@ async function spin() {
       </button>
       <span
         class="text-mui-caption text-muted"
+        :class="{ 'hint-shake': showVoteFirstHint }"
         data-testid="slot-spins-left"
       >
         {{ spinsLeft <= 0 ? $t('slot.noSpinsLeft') : showVoteFirstHint ? $t('slot.voteFirst') : $t('slot.spinsLeft', { n: spinsLeft }) }}
@@ -276,6 +277,17 @@ async function spin() {
   45% { transform: translateY(-2px); }
   70% { transform: translateY(2px); }
   90% { transform: translateY(-1px); }
+}
+.hint-shake {
+  display: inline-block;
+  animation: hint-shake 400ms ease-in-out;
+}
+@keyframes hint-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
 }
 .slot-reel {
   width: 52px;
