@@ -1,10 +1,10 @@
 export const SLOT_SYMBOL_WEIGHTS: [symbol: string, weight: number][] = [
-  ['tabler:cherry', 5],
-  ['tabler:lemon-2', 5],
+  ['tabler:cherry', 7],
+  ['tabler:lemon-2', 6],
   ['tabler:apple', 4],
   ['tabler:grape', 4],
   ['tabler:bell', 3],
-  ['tabler:star', 2],
+  ['tabler:star', 10],
   ['tabler:play-card-7', 1],
 ]
 

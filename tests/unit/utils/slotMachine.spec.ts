@@ -26,7 +26,7 @@ describe('slotMachine', () => {
       counts[s] = (counts[s] ?? 0) + 1
     }
     expect(counts['tabler:cherry']!).toBeGreaterThan(counts['tabler:play-card-7']!)
-    expect(counts['tabler:lemon-2']!).toBeGreaterThan(counts['tabler:star']!)
+    expect(counts['tabler:star']!).toBeGreaterThan(counts['tabler:lemon-2']!)
   })
 
   it('spins three independent reels', () => {
