@@ -105,7 +105,7 @@
     "jackpot": "Jackpot! {name} gets +1 day off 🏖",
     "spinsLeft": "Spins left: {n}",
     "noSpinsLeft": "No spins left - wait for the next round",
-    "voteFirst": "Vote first - then spin while you wait for others",
+    "voteFirst": "You need to vote first!",
     "switchToSlot": "Show slot machine",
     "switchToTimer": "Show timer"
   },

@@ -24,13 +24,16 @@ const offsets = ref<number[]>([0, 0, 0])
 const transitions = ref<string[]>(['none', 'none', 'none'])
 const spinning = ref(false)
 const jackpotFlash = ref(false)
+const jammed = ref(false)
 
 let finishTimer: ReturnType<typeof setTimeout> | undefined
 let flashTimer: ReturnType<typeof setTimeout> | undefined
+let jamTimer: ReturnType<typeof setTimeout> | undefined
 let tickRaf: number | undefined
 onUnmounted(() => {
   clearTimeout(finishTimer)
   clearTimeout(flashTimer)
+  clearTimeout(jamTimer)
   if (tickRaf !== undefined) cancelAnimationFrame(tickRaf)
 })
 
@@ -107,8 +110,22 @@ function startTickLoop(totalSteps: number[]) {
   tickRaf = requestAnimationFrame(frame)
 }
 
+// Button stays clickable even when you can't spin yet (haven't voted) - jiggling
+// the reels a couple millimeters, like a jammed lever, reads better than a
+// disabled button players might mistake for "broken" or "out of spins".
+function triggerJam() {
+  if (jammed.value) return
+  jammed.value = true
+  clearTimeout(jamTimer)
+  jamTimer = setTimeout(() => { jammed.value = false }, 400)
+}
+
 async function spin() {
-  if (spinning.value || props.spinsLeft <= 0 || !props.canSpin) return
+  if (spinning.value || props.spinsLeft <= 0) return
+  if (!props.canSpin) {
+    triggerJam()
+    return
+  }
   emit('spin')
   spinning.value = true
   jackpotFlash.value = false
@@ -176,7 +193,7 @@ async function spin() {
     <div class="flex flex-col items-center gap-3 px-4 py-4">
       <div
         class="slot-window"
-        :class="{ 'is-jackpot': jackpotFlash }"
+        :class="{ 'is-jackpot': jackpotFlash, 'is-jammed': jammed }"
       >
         <div
           v-for="(strip, i) in strips"
@@ -203,7 +220,7 @@ async function spin() {
         v-wave
         class="mui-btn mui-btn-sm w-full"
         style="max-width: 200px;"
-        :disabled="spinning || spinsLeft <= 0 || !canSpin"
+        :disabled="spinning || spinsLeft <= 0"
         data-testid="slot-spin-button"
         @click="spin"
       >
@@ -232,6 +249,22 @@ async function spin() {
 .slot-window.is-jackpot {
   border-color: var(--success);
   box-shadow: 0 0 18px color-mix(in srgb, var(--success) 55%, transparent);
+}
+.slot-window.is-jammed .slot-strip {
+  animation: slot-jam 400ms ease-in-out;
+}
+.slot-window.is-jammed .slot-reel:nth-child(2) .slot-strip {
+  animation-delay: 40ms;
+}
+.slot-window.is-jammed .slot-reel:nth-child(3) .slot-strip {
+  animation-delay: 80ms;
+}
+@keyframes slot-jam {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(3px); }
+  45% { transform: translateY(-2px); }
+  70% { transform: translateY(2px); }
+  90% { transform: translateY(-1px); }
 }
 .slot-reel {
   width: 52px;
