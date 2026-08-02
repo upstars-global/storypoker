@@ -114,6 +114,17 @@ const playersForUi = computed(() =>
 
 const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
+// PO/SM don't estimate every round (or at all), so the slot stays open for them
+// regardless of vote state. Everyone else has to vote first - the slot is a
+// "wait for others" distraction, not an alternative to voting.
+const canSpinSlot = computed(() => {
+  const roleTag = roleTagForShields(currentPlayer.value?.shields)
+  if (roleTag === 'PO' || roleTag === 'SM') return true
+  if (roomState.value?.phase !== 'voting' || !currentPlayer.value) return false
+  if (playersStore.voteOf(currentPlayer.value.id) === null) return false
+  return visiblePlayers.value.some(p => playersStore.voteOf(p.id) === null)
+})
+
 const canReset = computed(() => {
   if (showLastRound.value) return false
   const voted = visiblePlayers.value.filter(p => playersStore.voteOf(p.id) !== null).length
@@ -590,6 +601,7 @@ async function submitRenameRoom() {
         <SlotMachine
           v-if="roomState && sideWidget === 'slot'"
           :spins-left="SPINS_PER_ROUND - spinsUsed"
+          :can-spin="canSpinSlot"
           @spin="spinsUsed++"
           @win="broadcastSlotWin"
           @switch-widget="switchSideWidget"

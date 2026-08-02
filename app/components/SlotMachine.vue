@@ -6,6 +6,7 @@ import { spinReels, isJackpot, buildReelStrip } from '~/utils/slotMachine'
 
 const props = defineProps<{
   spinsLeft: number
+  canSpin: boolean
 }>()
 
 const emit = defineEmits<{
@@ -107,7 +108,7 @@ function startTickLoop(totalSteps: number[]) {
 }
 
 async function spin() {
-  if (spinning.value || props.spinsLeft <= 0) return
+  if (spinning.value || props.spinsLeft <= 0 || !props.canSpin) return
   emit('spin')
   spinning.value = true
   jackpotFlash.value = false
@@ -202,7 +203,7 @@ async function spin() {
         v-wave
         class="mui-btn mui-btn-sm w-full"
         style="max-width: 200px;"
-        :disabled="spinning || spinsLeft <= 0"
+        :disabled="spinning || spinsLeft <= 0 || !canSpin"
         data-testid="slot-spin-button"
         @click="spin"
       >
@@ -212,7 +213,7 @@ async function spin() {
         class="text-mui-caption text-muted"
         data-testid="slot-spins-left"
       >
-        {{ spinsLeft > 0 ? $t('slot.spinsLeft', { n: spinsLeft }) : $t('slot.noSpinsLeft') }}
+        {{ spinsLeft <= 0 ? $t('slot.noSpinsLeft') : !canSpin ? $t('slot.voteFirst') : $t('slot.spinsLeft', { n: spinsLeft }) }}
       </span>
     </div>
   </div>
