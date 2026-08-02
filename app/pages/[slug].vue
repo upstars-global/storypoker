@@ -115,7 +115,10 @@ const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
 
 // PO/SM don't estimate every round (or at all), so the slot stays open for them
 // regardless of vote state. Everyone else has to vote first - the slot is a
-// "wait for others" distraction, not an alternative to voting.
+// "wait for others" distraction, not an alternative to voting. SM additionally
+// has no per-round spin cap - PO still gets the usual 3.
+const hasUnlimitedSlotSpins = computed(() => roleTagForShields(currentPlayer.value?.shields) === 'SM')
+
 const canSpinSlot = computed(() => {
   const roleTag = roleTagForShields(currentPlayer.value?.shields)
   if (roleTag === 'PO' || roleTag === 'SM') return true
@@ -451,6 +454,11 @@ function stopSpinningPlayer(id: string) {
   slotSpinSafetyTimers.delete(id)
 }
 
+function handleSlotSpin() {
+  if (!hasUnlimitedSlotSpins.value) spinsUsed.value++
+  broadcastSlotSpinStart()
+}
+
 function broadcastSlotSpinStart() {
   if (!currentPlayerId.value) return
   countdownChannel?.send({
@@ -656,9 +664,9 @@ async function submitRenameRoom() {
         />
         <SlotMachine
           v-if="roomState && sideWidget === 'slot'"
-          :spins-left="SPINS_PER_ROUND - spinsUsed"
+          :spins-left="hasUnlimitedSlotSpins ? Infinity : SPINS_PER_ROUND - spinsUsed"
           :can-spin="canSpinSlot"
-          @spin="spinsUsed++; broadcastSlotSpinStart()"
+          @spin="handleSlotSpin"
           @spin-end="broadcastSlotSpinEnd"
           @win="broadcastSlotWin"
           @switch-widget="switchSideWidget"
