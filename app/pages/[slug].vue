@@ -31,7 +31,6 @@ import AlignmentCard from '~/components/AlignmentCard.vue'
 import { alignmentScore } from '~/utils/alignment'
 import Timer from '~/components/Timer.vue'
 import SlotMachine from '~/components/SlotMachine.vue'
-import SlotWinBanner from '~/components/SlotWinBanner.vue'
 import CardsArea from '~/components/CardsArea.vue'
 import ResultsArea from '~/components/ResultsArea.vue'
 import JoinOverlay from '~/components/JoinOverlay.vue'
@@ -298,7 +297,6 @@ watch(playerUserIds, async (ids) => {
 
 onUnmounted(async () => {
   unsubscribe()
-  clearTimeout(slotWinTimer)
   clearTimeout(slotWinnerTimer)
   for (const timer of slotSpinSafetyTimers.values()) clearTimeout(timer)
   await presenceStore.stop()
@@ -360,7 +358,7 @@ function subscribeRealtime() {
         () => isConsensus.value,
       )
     })
-    .on('broadcast', { event: 'slot-win' }, ({ payload }: { payload?: { name?: string; symbol?: string; playerId?: string } }) => {
+    .on('broadcast', { event: 'slot-win' }, ({ payload }: { payload?: { playerId?: string } }) => {
       receiveSlotWin(payload)
     })
     .on('broadcast', { event: 'slot-spin-start' }, ({ payload }: { payload?: { playerId?: string } }) => {
@@ -421,28 +419,20 @@ const spinsUsed = ref(0)
 
 watch(() => roomState.value?.round_started_at, () => { spinsUsed.value = 0 })
 
-const slotWin = ref<{ name: string; symbol: string; burstKey: number } | null>(null)
-let slotWinTimer: ReturnType<typeof setTimeout> | undefined
-
-function broadcastSlotWin(symbol: string) {
+function broadcastSlotWin() {
+  if (!currentPlayerId.value) return
   countdownChannel?.send({
     type: 'broadcast',
     event: 'slot-win',
-    payload: { name: currentPlayer.value?.name ?? '', symbol, playerId: currentPlayerId.value },
+    payload: { playerId: currentPlayerId.value },
   })
 }
 
-function receiveSlotWin(payload?: { name?: string; symbol?: string; playerId?: string }) {
-  if (!payload?.name || !payload.symbol) return
-  slotWin.value = { name: payload.name, symbol: payload.symbol, burstKey: (slotWin.value?.burstKey ?? 0) + 1 }
-  clearTimeout(slotWinTimer)
-  slotWinTimer = setTimeout(() => { slotWin.value = null }, 6000)
-
-  if (payload.playerId) {
-    slotWinnerId.value = payload.playerId
-    clearTimeout(slotWinnerTimer)
-    slotWinnerTimer = setTimeout(() => { slotWinnerId.value = null }, 1600)
-  }
+function receiveSlotWin(payload?: { playerId?: string }) {
+  if (!payload?.playerId) return
+  slotWinnerId.value = payload.playerId
+  clearTimeout(slotWinnerTimer)
+  slotWinnerTimer = setTimeout(() => { slotWinnerId.value = null }, 1600)
 }
 
 // Broadcast-only (not the players table) so every client sees the dice spin
@@ -723,13 +713,6 @@ async function submitRenameRoom() {
         />
       </div>
     </div>
-
-    <SlotWinBanner
-      v-if="slotWin"
-      :name="slotWin.name"
-      :symbol="slotWin.symbol"
-      :burst-key="slotWin.burstKey"
-    />
 
     <JoinOverlay
       v-if="showJoin"

@@ -102,7 +102,6 @@
   "slot": {
     "title": "Slot 777",
     "spin": "Spin",
-    "jackpot": "Jackpot! {name} gets +1 day off 🏖",
     "spinsLeft": "Spins left: {n}",
     "noSpinsLeft": "No spins left - wait for the next round",
     "voteFirst": "You need to vote first!",

@@ -10,7 +10,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  win: [symbol: string]
+  win: []
   spin: []
   spinEnd: []
   switchWidget: []
@@ -24,18 +24,15 @@ const strips = ref<string[][]>([['tabler:play-card-7'], ['tabler:play-card-7'], 
 const offsets = ref<number[]>([0, 0, 0])
 const transitions = ref<string[]>(['none', 'none', 'none'])
 const spinning = ref(false)
-const jackpotFlash = ref(false)
 const jammed = ref(false)
 const showVoteFirstHint = ref(false)
 
 let finishTimer: ReturnType<typeof setTimeout> | undefined
-let flashTimer: ReturnType<typeof setTimeout> | undefined
 let jamTimer: ReturnType<typeof setTimeout> | undefined
 let hintTimer: ReturnType<typeof setTimeout> | undefined
 let tickRaf: number | undefined
 onUnmounted(() => {
   clearTimeout(finishTimer)
-  clearTimeout(flashTimer)
   clearTimeout(jamTimer)
   clearTimeout(hintTimer)
   if (tickRaf !== undefined) cancelAnimationFrame(tickRaf)
@@ -138,7 +135,6 @@ async function spin() {
   }
   emit('spin')
   spinning.value = true
-  jackpotFlash.value = false
   if (tickRaf !== undefined) cancelAnimationFrame(tickRaf)
   const targets = spinReels()
   strips.value = targets.map((target, i) => [reels.value[i]!, ...buildReelStrip(10 + i * 6), target])
@@ -157,11 +153,7 @@ async function spin() {
     offsets.value = [0, 0, 0]
     spinning.value = false
     emit('spinEnd')
-    if (isJackpot(targets)) {
-      jackpotFlash.value = true
-      flashTimer = setTimeout(() => { jackpotFlash.value = false }, 2500)
-      emit('win', targets[0]!)
-    }
+    if (isJackpot(targets)) emit('win')
   }, REEL_DURATIONS_MS[2] + 150)
 }
 </script>
@@ -204,7 +196,7 @@ async function spin() {
     <div class="flex flex-col items-center gap-3 px-4 py-4">
       <div
         class="slot-window"
-        :class="{ 'is-jackpot': jackpotFlash, 'is-jammed': jammed }"
+        :class="{ 'is-jammed': jammed }"
       >
         <div
           v-for="(strip, i) in strips"
@@ -256,10 +248,6 @@ async function spin() {
   border: 2px solid var(--border-input);
   background-color: var(--bg-elevated);
   transition: box-shadow 300ms, border-color 300ms;
-}
-.slot-window.is-jackpot {
-  border-color: var(--success);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--success) 55%, transparent);
 }
 .slot-window.is-jammed .slot-strip {
   animation: slot-jam 400ms ease-in-out;
