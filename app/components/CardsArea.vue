@@ -243,13 +243,13 @@ function cancelHold(mode: CountdownMode) {
 
     <div
       v-if="!showLastRound"
-      class="flex flex-wrap justify-center gap-4 max-w-[1240px] mx-auto"
+      class="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-[1240px] mx-auto"
       :class="{ 'pointer-events-none opacity-40': !canVote }"
     >
       <div
         v-for="card in activeCards"
         :key="card"
-        class="relative w-[151.66px] aspect-[2/3] flex-none"
+        class="relative w-[100px] sm:w-[151.66px] aspect-[2/3] flex-none"
       >
         <button
           v-wave
