@@ -32,7 +32,7 @@
 
 ## P2
 
-- [Realtime lifecycle](initiatives/realtime-lifecycle.md) - zombie channels і нефільтрований `user_profiles`-канал. `Planned`
+- [Realtime lifecycle](initiatives/realtime-lifecycle.md) - zombie channels, нефільтрований `user_profiles`-канал, неточний presence-стан (false offline / повільний leave). `Planned`
 - [`resolveRoom` filter injection](initiatives/resolve-room-filter.md) - валідація input перед `.or()`. `Planned`
 - [Виділений test-Supabase проєкт](initiatives/e2e-test-supabase-project.md) - головний блокер E2E. `Planned`
 - [E2E coverage поза smoke](initiatives/e2e-coverage.md) - multi-user, presence, deck, timer, history. `Planned`

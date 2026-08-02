@@ -7,6 +7,8 @@ export interface UserProfile {
   user_id: string
   avatar_style: AvatarStyle
   avatar_seed: string
+  avatar_url: string | null
+  updated_at?: string | null
 }
 
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
@@ -27,7 +29,7 @@ export const useProfilesStore = defineStore('profiles', () => {
     const promise = (async () => {
       const { data } = await getSupabase()
         .from('user_profiles')
-        .select('user_id, avatar_style, avatar_seed')
+        .select('user_id, avatar_style, avatar_seed, avatar_url, updated_at')
         .eq('user_id', userId)
         .maybeSingle()
       if (data) profiles.value[userId] = data as UserProfile
@@ -43,7 +45,7 @@ export const useProfilesStore = defineStore('profiles', () => {
     if (missing.length === 0) return
     const { data } = await getSupabase()
       .from('user_profiles')
-      .select('user_id, avatar_style, avatar_seed')
+      .select('user_id, avatar_style, avatar_seed, avatar_url, updated_at')
       .in('user_id', missing)
     for (const row of (data ?? []) as UserProfile[]) {
       profiles.value[row.user_id] = row
@@ -52,11 +54,28 @@ export const useProfilesStore = defineStore('profiles', () => {
 
   async function upsert(profile: UserProfile): Promise<void> {
     const supabase = getSupabase()
+    const row: UserProfile = { ...profile, updated_at: new Date().toISOString() }
     const { error } = await supabase
       .from('user_profiles')
-      .upsert({ ...profile, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+      .upsert(row, { onConflict: 'user_id' })
     if (error) throw error
-    profiles.value[profile.user_id] = profile
+    profiles.value[row.user_id] = row
+  }
+
+  async function uploadAvatar(userId: string, blob: Blob): Promise<string> {
+    const path = `${userId}/avatar.webp`
+    const { error } = await getSupabase().storage
+      .from('avatars')
+      .upload(path, blob, { upsert: true, contentType: 'image/webp' })
+    if (error) throw error
+    return path
+  }
+
+  async function removeAvatar(userId: string): Promise<void> {
+    const { error } = await getSupabase().storage
+      .from('avatars')
+      .remove([`${userId}/avatar.webp`])
+    if (error) throw error
   }
 
   function applyChange(payload: RealtimePostgresChangesPayload<UserProfile>) {
@@ -69,5 +88,5 @@ export const useProfilesStore = defineStore('profiles', () => {
     if (row.user_id) profiles.value[row.user_id] = row
   }
 
-  return { profiles, get, fetchOne, fetchMany, upsert, applyChange }
+  return { profiles, get, fetchOne, fetchMany, upsert, uploadAvatar, removeAvatar, applyChange }
 })

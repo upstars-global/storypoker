@@ -41,7 +41,7 @@ const emit = defineEmits<{
 
 const { user } = storeToRefs(useAuthStore())
 const profilesStore = useProfilesStore()
-const { avatarDataUri } = useDylanAvatar()
+const { avatarSrcFor } = useDylanAvatar()
 const { isLight, palette, toggle: toggleTheme, setPalette } = useTheme()
 const { locale } = useI18n()
 const countdownBarWidth = ref(0)
@@ -58,13 +58,10 @@ watch(() => props.countdownActive, async (active) => {
 
 const myAvatarUri = computed(() => {
   const userIdForProfile = props.playerUserId ?? user.value?.id ?? null
-  if (userIdForProfile) {
-    const profile = profilesStore.get(userIdForProfile)
-    if (profile) return avatarDataUri(profile.avatar_seed, false, profile.avatar_style)
-  }
-  if (props.playerName) return avatarDataUri(props.playerName, false, 'bottts')
-  if (user.value?.email) return avatarDataUri(user.value.email, false, 'bottts')
-  return ''
+  const profile = userIdForProfile ? profilesStore.get(userIdForProfile) : null
+  const fallbackSeed = props.playerName || user.value?.email || ''
+  if (!profile && !fallbackSeed) return ''
+  return avatarSrcFor(profile, fallbackSeed, false).src
 })
 
 const headerLabel = computed(() => {

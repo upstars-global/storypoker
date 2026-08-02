@@ -45,7 +45,7 @@ const emit = defineEmits<{
 }>()
 
 const profilesStore = useProfilesStore()
-const { avatarDataUri } = useDylanAvatar()
+const { avatarSrcFor } = useDylanAvatar()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
 const menuRef = ref<HTMLElement | null>(null)
@@ -80,8 +80,7 @@ onUnmounted(() => clearInterval(diceFaceTimer))
 const diceIcon = computed(() => props.isSpinningSlot ? DICE_FACES[diceFaceIndex.value]! : 'tabler:dice-5')
 const playerAvatar = computed(() => {
   const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
-  if (profile) return avatarDataUri(profile.avatar_seed, !props.player.is_online, profile.avatar_style)
-  return avatarDataUri(props.player.name, !props.player.is_online, 'bottts')
+  return avatarSrcFor(profile, props.player.name, !props.player.is_online)
 })
 </script>
 
@@ -100,10 +99,11 @@ const playerAvatar = computed(() => {
     >
       <template #trigger>
         <img
-          :src="playerAvatar"
+          :src="playerAvatar.src"
           :alt="player.name"
           class="rounded-full"
           style="width: 28px; height: 28px;"
+          :style="playerAvatar.cssGrayscale ? { filter: 'grayscale(1)' } : undefined"
         >
       </template>
       <template #content>

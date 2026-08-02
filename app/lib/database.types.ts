@@ -165,18 +165,21 @@ export type Database = {
         Row: {
           avatar_seed: string
           avatar_style: string
+          avatar_url: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           avatar_seed: string
           avatar_style?: string
+          avatar_url?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           avatar_seed?: string
           avatar_style?: string
+          avatar_url?: string | null
           updated_at?: string | null
           user_id?: string
         }

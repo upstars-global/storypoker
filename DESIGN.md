@@ -157,7 +157,7 @@
 
 ### 4.4 Player row (in Players list)
 - `<ListItem>` з:
-  - Avatar (round, 40 × 40, DiceBear bottts)
+  - Avatar (round, 40 × 40, DiceBear bottts; авторизовані можуть завантажити власне фото - непорожній `user_profiles.avatar_url` + Storage bucket `avatars`, спека `docs/specs/2026-08-02-custom-avatar-upload-design.md`)
   - Primary text (name) - `body1` 400; **bold 500** для current user
   - Trailing - статус-іконки (16px, opacity 0.54) + 3-dot IconButton (тільки своя)
 
