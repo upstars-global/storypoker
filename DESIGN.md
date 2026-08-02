@@ -450,3 +450,20 @@ round_history (
 - У режимі "з атмосферою" по завершенню грає `decision-sound`, якщо `isConsensus.value` (усі голоси співпадають, або DEV/QA групи одноголосні при QA-розщепленні), інакше - `ambience.mp3`. У режимах "без звуку"/"зі звуком" завершального звуку нема
 - Поки відлік триває, рамка `.mui-icon-group` не зникає - кнопки всередині заміняються центрованим лічильником; `revealPending`-прапорець ховає кнопки ще трохи довше, поки `phase` фактично не перейде в `'revealed'` (закриває гонку між локальним таймером і realtime round-trip)
 - Увесь блок - тільки для модератора (§11.1)
+
+### 11.7 Goal Clarity Score (`goal_clarity` пресет)
+
+Окремий пресет для health-check питання "Наскільки чітко я розумію Sprint Goals?", а не для оцінки story points.
+
+**Картки** - фіксована шкала `1,2,3,4,5` (`cards === defaultActive`, без `?`/`☕`/toggle - як `boolean`).
+
+**Фіксоване питання** - `DeckPreset.defaultQuestion` (нове опційне поле в `app/utils/cardDecks.ts`, на відміну від moderator-typed `poll_question` у `voting`/`vote_question`). `setDeckPreset()` пише `poll_question: preset.defaultQuestion ?? null` - той самий `room_state.poll_question`/UI-шлях показу питання (`CardsArea.vue`/`ResultsArea.vue`), що й у poll-колод, але автоматично заповнений і не редагується голосуванням (лишається, доки моделятор не зміне пресет). `CardsArea.vue` показує заголовок питання за самим фактом `pollQuestion` (`!!pollQuestion`), не лише для `pollMode`/`voteQuestionMode`.
+
+**Не poll-колода** - `isPollPreset()` (`roundStats.ts`) навмисно НЕ включає `goal_clarity`: голосування/reveal/celebration/consensus/alignment-badge (`AlignmentCard`) працюють як для звичайного числового пресету. `isNumericPreset()` - включає, тож раунди потрапляють у `HistoryModal`/`AlignmentTrendsModal`/`room-json.mts` API нарівні зі scrum/fibonacci/hours (той самий `alignmentScore` - 0-100 spread-consensus, шкало-агностичний).
+
+**Score circle після reveal** (`ResultsArea.vue`, prop `goalClarityScore`) - замість PieChart/per-card average (пиріг зі "1,2,3,4,5" не інформативний для Likert-шкали) - кольорове коло з "сирим" середнім (`averageOf(votes)`, той самий `(сума голосів)/(кількість)`, напр. 6 учасників `3,4,5,4,5,4` → `25/6 = 4.2`):
+- `> 3.5` - зелений `#43a047`
+- `2.5 ≤ x ≤ 3.5` - жовтий `#fbc02d`
+- `< 2.5` - червоний `#e64a19`
+
+При результаті `≤ 3.5` - підказка `results.goalClarityHint` ("переформулювати Sprint Goal або критерії DoD"). Той самий кольоровий triplet, що й `alignmentLevel`/`levelColor` у `AlignmentTrendsModal.vue`.

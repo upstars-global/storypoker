@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { averageOf, voteToNumber, summarizeRound } from '~/utils/roundStats'
+import { averageOf, voteToNumber, summarizeRound, isNumericPreset } from '~/utils/roundStats'
 import type { RoundHistory } from '~/stores/types'
 
 const FIB = ['1', '2', '3', '5', '8', '13', '21', '?', '☕']
@@ -88,5 +88,33 @@ describe('summarizeRound', () => {
       ],
     }))
     expect(s.alignment).toBe(86)
+  })
+
+  it('computes a Goal Clarity Score average/alignment on the 1-5 scale', () => {
+    const s = summarizeRound(round({
+      deck_preset: 'goal_clarity',
+      active_cards: ['1', '2', '3', '4', '5'],
+      votes: [
+        { player_id: 'p1', name: 'A', vote: '3' },
+        { player_id: 'p2', name: 'B', vote: '4' },
+        { player_id: 'p3', name: 'C', vote: '5' },
+        { player_id: 'p4', name: 'D', vote: '4' },
+        { player_id: 'p5', name: 'E', vote: '5' },
+        { player_id: 'p6', name: 'F', vote: '4' },
+      ],
+    }))
+    expect(s.average).toBe('4.2')
+    expect(s.alignment).toBe(50)
+    expect(s.isPoll).toBe(false)
+  })
+})
+
+describe('isNumericPreset', () => {
+  it('treats goal_clarity as numeric alongside scrum/fibonacci/hours', () => {
+    expect(isNumericPreset('goal_clarity')).toBe(true)
+    expect(isNumericPreset('scrum')).toBe(true)
+    expect(isNumericPreset('tshirt')).toBe(false)
+    expect(isNumericPreset('voting')).toBe(false)
+    expect(isNumericPreset(null)).toBe(true)
   })
 })

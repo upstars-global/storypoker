@@ -10,4 +10,12 @@ describe('cardDecks', () => {
     expect(scrum.defaultActive).not.toContain('🚬')
     expect(scrum.defaultActive).not.toContain('🍺')
   })
+
+  it('goal_clarity is a fixed 1-5 scale with a default question', () => {
+    const goalClarity = getDeck('goal_clarity')
+
+    expect(goalClarity.cards).toEqual(['1', '2', '3', '4', '5'])
+    expect(goalClarity.defaultActive).toEqual(goalClarity.cards)
+    expect(goalClarity.defaultQuestion).toBeTruthy()
+  })
 })

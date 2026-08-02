@@ -204,6 +204,19 @@ describe('roomStore actions', () => {
       poll_question: null,
     })
   })
+
+  it('setDeckPreset(id) writes the preset defaultQuestion into poll_question when it has one', async () => {
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
+    setSupabase({ from: () => ({ update }) } as any)
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    await store.setDeckPreset('goal_clarity')
+    expect(update).toHaveBeenCalledWith({
+      deck_preset: 'goal_clarity',
+      active_cards: ['1', '2', '3', '4', '5'],
+      poll_question: 'Наскільки чітко я розумію Sprint Goals?',
+    })
+  })
 })
 
 describe('roomStore timer actions', () => {
