@@ -43,9 +43,9 @@ npm install          # preinstall → scripts/setup.sh (створює .env/, .a
 npm run setup        # тільки setup.sh
 npm run skills       # тільки перевстановлення skills
 npm run clean        # scripts/clean.sh
-npm run dev          # Vite dev, port 3000 (host enabled)
+npm run dev          # Vite dev, дефолтний порт 5173 (без --host)
 npm run build        # vite build → dist/
-npm run preview      # vite preview, port 3000
+npm run preview      # vite preview, дефолтний порт 4173
 npm run lint         # ESLint flat config
 npm run typecheck    # vue-tsc по tsconfig.json + tsconfig.node.json
 npm test             # vitest run
