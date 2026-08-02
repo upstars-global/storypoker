@@ -111,7 +111,12 @@ const playersForUi = computed(() =>
     })
 )
 
-const hasVotes = computed(() => playersForUi.value.some(p => p.vote !== null))
+const hasVotes = computed(() => {
+  if (roomState.value?.deck_preset === 'goal_clarity') {
+    return playersForUi.value.filter(p => p.vote !== null).length >= 2
+  }
+  return playersForUi.value.some(p => p.vote !== null)
+})
 
 // PO/SM don't estimate every round (or at all), so the slot stays open for them
 // regardless of vote state. Everyone else has to vote first - the slot is a
