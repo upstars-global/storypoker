@@ -298,6 +298,9 @@ watch(playerUserIds, async (ids) => {
 
 onUnmounted(async () => {
   unsubscribe()
+  clearTimeout(slotWinTimer)
+  clearTimeout(slotWinnerTimer)
+  for (const timer of slotSpinSafetyTimers.values()) clearTimeout(timer)
   await presenceStore.stop()
 })
 
@@ -357,8 +360,14 @@ function subscribeRealtime() {
         () => isConsensus.value,
       )
     })
-    .on('broadcast', { event: 'slot-win' }, ({ payload }: { payload?: { name?: string; symbol?: string } }) => {
+    .on('broadcast', { event: 'slot-win' }, ({ payload }: { payload?: { name?: string; symbol?: string; playerId?: string } }) => {
       receiveSlotWin(payload)
+    })
+    .on('broadcast', { event: 'slot-spin-start' }, ({ payload }: { payload?: { playerId?: string } }) => {
+      receiveSlotSpinStart(payload)
+    })
+    .on('broadcast', { event: 'slot-spin-end' }, ({ payload }: { payload?: { playerId?: string } }) => {
+      receiveSlotSpinEnd(payload)
     })
     .subscribe()
 }
@@ -419,15 +428,70 @@ function broadcastSlotWin(symbol: string) {
   countdownChannel?.send({
     type: 'broadcast',
     event: 'slot-win',
-    payload: { name: currentPlayer.value?.name ?? '', symbol },
+    payload: { name: currentPlayer.value?.name ?? '', symbol, playerId: currentPlayerId.value },
   })
 }
 
-function receiveSlotWin(payload?: { name?: string; symbol?: string }) {
+function receiveSlotWin(payload?: { name?: string; symbol?: string; playerId?: string }) {
   if (!payload?.name || !payload.symbol) return
   slotWin.value = { name: payload.name, symbol: payload.symbol, burstKey: (slotWin.value?.burstKey ?? 0) + 1 }
   clearTimeout(slotWinTimer)
   slotWinTimer = setTimeout(() => { slotWin.value = null }, 6000)
+
+  if (payload.playerId) {
+    slotWinnerId.value = payload.playerId
+    clearTimeout(slotWinnerTimer)
+    slotWinnerTimer = setTimeout(() => { slotWinnerId.value = null }, 1600)
+  }
+}
+
+// Broadcast-only (not the players table) so every client sees the dice spin
+// next to the right row in real time, without writing spin state to Supabase.
+const spinningPlayerIds = ref<Set<string>>(new Set())
+const slotWinnerId = ref<string | null>(null)
+let slotWinnerTimer: ReturnType<typeof setTimeout> | undefined
+const slotSpinSafetyTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+function stopSpinningPlayer(id: string) {
+  if (!spinningPlayerIds.value.has(id)) return
+  const next = new Set(spinningPlayerIds.value)
+  next.delete(id)
+  spinningPlayerIds.value = next
+  clearTimeout(slotSpinSafetyTimers.get(id))
+  slotSpinSafetyTimers.delete(id)
+}
+
+function broadcastSlotSpinStart() {
+  if (!currentPlayerId.value) return
+  countdownChannel?.send({
+    type: 'broadcast',
+    event: 'slot-spin-start',
+    payload: { playerId: currentPlayerId.value },
+  })
+}
+
+function broadcastSlotSpinEnd() {
+  if (!currentPlayerId.value) return
+  countdownChannel?.send({
+    type: 'broadcast',
+    event: 'slot-spin-end',
+    payload: { playerId: currentPlayerId.value },
+  })
+}
+
+function receiveSlotSpinStart(payload?: { playerId?: string }) {
+  const id = payload?.playerId
+  if (!id) return
+  spinningPlayerIds.value = new Set(spinningPlayerIds.value).add(id)
+  // Safety net in case the spin-end broadcast is dropped (e.g. a flaky
+  // connection) - the reel animation itself is at most ~2.45s.
+  clearTimeout(slotSpinSafetyTimers.get(id))
+  slotSpinSafetyTimers.set(id, setTimeout(() => stopSpinningPlayer(id), 2800))
+}
+
+function receiveSlotSpinEnd(payload?: { playerId?: string }) {
+  const id = payload?.playerId
+  if (id) stopSpinningPlayer(id)
 }
 
 function handleEdit(id: string) {
@@ -576,6 +640,8 @@ async function submitRenameRoom() {
           :current-user-is-moderator="isModerator"
           :current-user-is-authorized-moderator="isAuthorizedModerator"
           :truncate-votes="roomState?.deck_preset === 'vote_question'"
+          :spinning-player-ids="spinningPlayerIds"
+          :slot-winner-id="slotWinnerId"
           @edit="handleEdit"
           @toggle-moderator="handleToggleModerator"
           @leave="handleLeave"
@@ -602,7 +668,8 @@ async function submitRenameRoom() {
           v-if="roomState && sideWidget === 'slot'"
           :spins-left="SPINS_PER_ROUND - spinsUsed"
           :can-spin="canSpinSlot"
-          @spin="spinsUsed++"
+          @spin="spinsUsed++; broadcastSlotSpinStart()"
+          @spin-end="broadcastSlotSpinEnd"
           @win="broadcastSlotWin"
           @switch-widget="switchSideWidget"
         />

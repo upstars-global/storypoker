@@ -146,6 +146,8 @@
     "playerDeciding": "Not decided on an estimate yet",
     "inactive": "Inactive",
     "noVote": "Wasted",
+    "spinningSlot": "Spinning the slot",
+    "slotWinner": "Won the slot!",
     "avatarAuthHint": "Avatar replacement is available to auth users",
     "roleNames": {
       "SM": "Scrum Master",

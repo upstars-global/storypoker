@@ -32,6 +32,8 @@ const props = defineProps<{
   currentUserIsModerator: boolean
   currentUserIsAuthorizedModerator: boolean
   truncateVotes?: boolean
+  isSpinningSlot?: boolean
+  isSlotWinner?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -54,6 +56,7 @@ function activateMenuItem(e: KeyboardEvent) {
   item?.click()
 }
 const roleTag = computed(() => roleTagForShields(props.player.shields))
+const showDice = computed(() => props.isSpinningSlot || props.isSlotWinner)
 const playerAvatar = computed(() => {
   const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
   if (profile) return avatarDataUri(profile.avatar_seed, !props.player.is_online, profile.avatar_style)
@@ -96,6 +99,7 @@ const playerAvatar = computed(() => {
       />
       <span
         class="truncate text-base"
+        :class="{ 'win-blink': isSlotWinner }"
         :style="{ color: player.is_online ? 'var(--text-primary)' : 'var(--text-muted)' }"
       >
         {{ player.name }}
@@ -121,7 +125,20 @@ const playerAvatar = computed(() => {
       </AppTooltip>
     </div>
 
-    <template v-if="player.is_online">
+    <span
+      v-if="showDice"
+      class="inline-flex"
+      :class="{ 'win-blink': isSlotWinner }"
+    >
+      <AppIcon
+        class="mui-svg-icon"
+        :class="{ 'dice-spin': isSpinningSlot }"
+        icon="tabler:dice-5"
+        style="font-size: 1.5rem; color: var(--icon-player-color);"
+        :aria-label="$t(isSpinningSlot ? 'players.spinningSlot' : 'players.slotWinner')"
+      />
+    </span>
+    <template v-else-if="player.is_online">
       <template v-if="phase === 'voting'">
         <AppTooltip
           v-if="player.vote !== null"
@@ -349,3 +366,19 @@ const playerAvatar = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.dice-spin {
+  animation: dice-spin 650ms linear infinite;
+}
+@keyframes dice-spin {
+  to { transform: rotate(360deg); }
+}
+.win-blink {
+  animation: win-blink 0.5s ease-in-out 3;
+}
+@keyframes win-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+</style>

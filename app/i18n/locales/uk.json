@@ -146,6 +146,8 @@
     "playerDeciding": "Ще не обрав оцінку",
     "inactive": "Неактивний",
     "noVote": "Потрачєно",
+    "spinningSlot": "Крутить слот",
+    "slotWinner": "Виграв у слот!",
     "avatarAuthHint": "Заміна аватар доступна авторизованим користувачам",
     "roleNames": {
       "SM": "Scrum Master",

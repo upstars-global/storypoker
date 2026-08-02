@@ -12,6 +12,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   win: [symbol: string]
   spin: []
+  spinEnd: []
   switchWidget: []
 }>()
 
@@ -155,6 +156,7 @@ async function spin() {
     transitions.value = ['none', 'none', 'none']
     offsets.value = [0, 0, 0]
     spinning.value = false
+    emit('spinEnd')
     if (isJackpot(targets)) {
       jackpotFlash.value = true
       flashTimer = setTimeout(() => { jackpotFlash.value = false }, 2500)
