@@ -3,7 +3,7 @@
 **Date:** 2026-05-16
 **Status:** Spec - pending implementation plan
 **Branch:** `vue-and-vite`
-**Related:** [`ROADMAP.md`](../../../ROADMAP.md), [`CLAUDE.md`](../../../CLAUDE.md)
+**Related:** [`docs/roadmap.md`](../../roadmap.md), [`CLAUDE.md`](../../../CLAUDE.md)
 
 ---
 

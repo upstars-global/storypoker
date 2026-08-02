@@ -8,7 +8,7 @@
 
 Додати smoke-pack Playwright тестів, який покриває 3 критичні user flows і запускається в CI на кожному PR. Smoke-pack блокує deploy job у разі падіння.
 
-**Non-goals:** повне покриття всіх features. Поза scope (винесено в [ROADMAP.md → E2E Test Coverage](../../../ROADMAP.md)): multi-user vote, presence, kick, rename, deck config, timer, history table, password reset, room slug aliases, RLS edge cases.
+**Non-goals:** повне покриття всіх features. Поза scope (винесено в [E2E coverage поза smoke](../../initiatives/e2e-coverage.md)): multi-user vote, presence, kick, rename, deck config, timer, history table, password reset, room slug aliases, RLS edge cases.
 
 ## Передумови (executable blockers до тестів)
 
@@ -381,7 +381,7 @@ deploy:
 
 ## Посилання
 
-- ROADMAP - [E2E Test Coverage beyond smoke](../../../ROADMAP.md#e2e-test-coverage--beyond-smoke--planned)
+- Roadmap - [E2E coverage поза smoke](../../initiatives/e2e-coverage.md)
 - Playwright best practices skill (для імплементації): `.agents/skills/playwright-best-practices`
 - Source files referenced у спеці:
   - `app/pages/index.vue:65-78` (home create flow)
