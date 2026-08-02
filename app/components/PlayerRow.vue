@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppIcon from '~/components/AppIcon.vue'
-import { computed, ref } from 'vue'
+import { loadIcons } from '@iconify/vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import RoleBadge from '~/components/RoleBadge.vue'
 import { useClickOutside } from '~/composables/useClickOutside'
@@ -57,6 +58,26 @@ function activateMenuItem(e: KeyboardEvent) {
 }
 const roleTag = computed(() => roleTagForShields(props.player.shields))
 const showDice = computed(() => props.isSpinningSlot || props.isSlotWinner)
+
+// Rolling is shown by cycling the die face (pips), not by rotating the icon -
+// the die itself stays put, like a physical die tumbling in a cup. tabler:dice-*
+// resolves over the Iconify API (not the offline `ic:` collection), so without
+// warming the cache up front the first roll can flash blank frames while each
+// new face is fetched mid-cycle.
+const DICE_FACES = ['tabler:dice-1', 'tabler:dice-2', 'tabler:dice-3', 'tabler:dice-4', 'tabler:dice-5', 'tabler:dice-6']
+loadIcons(DICE_FACES)
+const diceFaceIndex = ref(0)
+let diceFaceTimer: ReturnType<typeof setInterval> | undefined
+watch(() => props.isSpinningSlot, (spinning) => {
+  clearInterval(diceFaceTimer)
+  if (spinning) {
+    diceFaceTimer = setInterval(() => {
+      diceFaceIndex.value = (diceFaceIndex.value + 1) % DICE_FACES.length
+    }, 120)
+  }
+}, { immediate: true })
+onUnmounted(() => clearInterval(diceFaceTimer))
+const diceIcon = computed(() => props.isSpinningSlot ? DICE_FACES[diceFaceIndex.value]! : 'tabler:dice-5')
 const playerAvatar = computed(() => {
   const profile = props.player.user_id ? profilesStore.get(props.player.user_id) : null
   if (profile) return avatarDataUri(profile.avatar_seed, !props.player.is_online, profile.avatar_style)
@@ -135,8 +156,7 @@ const playerAvatar = computed(() => {
           >
             <AppIcon
               class="mui-svg-icon"
-              :class="{ 'dice-spin': isSpinningSlot }"
-              icon="tabler:dice-5"
+              :icon="diceIcon"
               style="font-size: 1.125rem; color: var(--icon-player-color);"
               :aria-label="$t(isSpinningSlot ? 'players.spinningSlot' : 'players.slotWinner')"
             />
@@ -378,12 +398,6 @@ const playerAvatar = computed(() => {
 </template>
 
 <style scoped>
-.dice-spin {
-  animation: dice-spin 488ms linear infinite;
-}
-@keyframes dice-spin {
-  to { transform: rotate(360deg); }
-}
 .win-blink {
   animation: win-blink 0.5s ease-in-out 3;
 }
