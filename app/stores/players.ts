@@ -49,6 +49,9 @@ export const usePlayersStore = defineStore('players', () => {
         .update({ vote: card })
         .eq('id', playerId)
       if (error) throw error
+      const current = players.value.find(p => p.id === playerId)
+      if (current) current.vote = card
+      delete pendingVotes.value[playerId]
     } catch (e) {
       delete pendingVotes.value[playerId]
       throw e

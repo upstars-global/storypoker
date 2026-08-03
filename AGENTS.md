@@ -12,7 +12,7 @@ Guidance for Claude Code working with this repository.
 
 ## Project Overview
 
-**Story Poker** - Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 7 пресетів або кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
+**Story Poker** - Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 8 пресетів або кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
 
 Джерела контексту: `DESIGN.md` (дизайн + audit §10), `docs/roadmap.md` (індекс ініціатив у `docs/initiatives/`) і `docs/completed.md`, `docs/{plans,specs}/` і legacy `docs/superpowers/{plans,specs}/` (iter-плани і специфікації), `docs/tasks/` (разові операційні інструкції).
 
@@ -32,7 +32,7 @@ Guidance for Claude Code working with this repository.
 - **i18n:** `vue-i18n@11` (runtime compilation, `legacy: false`, `globalInjection: true`), локалі `app/i18n/locales/{uk,en}.json`
 - **PWA:** `vite-plugin-pwa` (Workbox, `autoUpdate`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий файл); splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
 - **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`, єдина offline-колекція); `simple-icons:*`/`game-icons:*`/`tabler:*`/`lucide:*` резолвляться через Iconify API; custom collection `app:` (`moderator`, `deciding`, `offline`, `leave-room`, `bank`, `town-hall`, `fibonacci`, `scrum`) через `addCollection` у `app/lib/registerAppIcons.ts`. Іконки рендеряться через `<AppIcon>`, який проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts`): флаг `iconsLucide` ремапить `ic:baseline-*`→`lucide:*` (нову lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`. Також `v-wave`, DiceBear, Roboto 300–700
-- **Components:** `AppModal` (native `<dialog>`, `app/components/AppModal.vue`) - props `open: boolean, lockDismiss?: boolean`, emit `close`; `AppTooltip` (`app/components/AppTooltip.vue`) - props `side?, sideOffset?`, slots `#trigger` `#content`; `useClickOutside` (`app/composables/useClickOutside.ts`) - використовується в AppHeader та PlayerRow для закриття dropdown-меню
+- **Components:** `AppModal` (native `<dialog>`, `app/components/AppModal.vue`) - props `open: boolean, lockDismiss?: boolean`, emit `close`, контент загортається в `AppModalPaper` (`style="max-width: …"` задає ширину модалки); `AppTooltip` (`app/components/AppTooltip.vue`) - props `side?, sideOffset?`, slots `#trigger` `#content`; `useClickOutside` (`app/composables/useClickOutside.ts`) - використовується в AppHeader та PlayerRow для закриття dropdown-меню
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
 ## Common Commands
@@ -61,7 +61,7 @@ npm run test:ci      # lint + typecheck + unit + build (CI runs this)
 npm run deploy:{stage,prod}   # Netlify alias / prod deploy
 ```
 
-CI is `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit tests + build); the `page-load` job runs always (unconditional public-pages smoke via `test:e2e:pages` with dummy Supabase creds); E2E runs when E2E secrets exist; deploy runs `npm run build` on `main` when checks (incl. page-load) pass and Netlify secrets exist.
+CI - `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci` (lint + typecheck + unit + build); job `page-load` виконується завжди (smoke публічних сторінок через `test:e2e:pages` з dummy Supabase-кредами); E2E - тільки коли задані E2E-секрети; deploy - `npm run build` на `main`, якщо перевірки (включно з `page-load`) пройшли і є Netlify-секрети.
 
 ## Environment Setup
 
@@ -114,7 +114,7 @@ RLS зараз public read/write для anon key; логіка в клієнті
 
 ## Round History
 
-`reveal()` оновлює `room_state.phase='revealed'` і пише `round_history` зі snapshot `{player_id,name,vote}[]` тільки коли `votes.length >= 2`. `?` і `☕` рахуються як голоси. Snapshot містить `name`, щоб історія лишалась читабельною після rename/leave. Also зберігає `active_cards`/`deck_preset` знятого раунду. Формули `alignmentScore`/`averageOf` і pipeline графіка узгодженості (`AlignmentTrendsModal.vue`) - `DESIGN.md` §11.3–11.4. Ручного CSV-експорту немає (видалено) - `netlify/functions/room-json.mts` покриває цю потребу.
+`reveal()` оновлює `room_state.phase='revealed'` і пише `round_history` зі snapshot `{player_id,name,vote}[]` тільки коли `votes.length >= 2`. `?` і `☕` рахуються як голоси. Snapshot містить `name`, щоб історія лишалась читабельною після rename/leave. Також зберігає `active_cards`/`deck_preset` знятого раунду. Формули `alignmentScore`/`averageOf` і pipeline графіка узгодженості (`AlignmentTrendsModal.vue`) - `DESIGN.md` §11.3–11.4. Ручного CSV-експорту немає (видалено) - `netlify/functions/room-json.mts` покриває цю потребу.
 
 ## Зовнішні інтеграції
 
@@ -137,7 +137,7 @@ Pinia stores у `app/stores/`:
 - `players.ts` - players, optimistic votes, join/rejoin, rename, moderator toggle, set shields, kick/leave, link user
 - `presence.ts` - online `Set<playerId>` через Supabase Presence; на `visibilitychange → hidden` закриває канал лише через `AWAY_TIMEOUT_MS` (5 хв), повернення раніше - скасовує таймер
 - `profiles.ts` - `user_profiles` cache, fetch/upsert, Realtime applyChange
-- `types.ts` - спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `UserProfile`)
+- `types.ts` - спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `ConnectionStatus`); `UserProfile` живе в `profiles.ts`
 
 Stores беруть клієнт через `getSupabase()` з `app/lib/supabase-instance.ts`; `app/main.ts` ініціалізує клієнт через `initSupabase()`. Тести інжектять mock через `setSupabase(mock)`.
 
@@ -163,7 +163,7 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 ├── tsconfig.json, tsconfig.node.json
 ├── eslint.config.js
 ├── netlify.toml
-├── scripts/               # clean.sh, setup.sh, skills.sh (npm lifecycle hooks)
+├── scripts/               # clean.sh, setup.sh, skills.sh, migrate-test-artifacts.sh (npm lifecycle hooks)
 ├── public/
 │   ├── _redirects         # /*  /index.html  200
 │   └── favicon.svg
@@ -178,18 +178,19 @@ Stores беруть клієнт через `getSupabase()` з `app/lib/supabase
 │   ├── stores/            # auth, room, players, presence, profiles
 │   ├── lib/               # supabase-instance, registerAppIcons, database.types
 │   ├── configs/           # featureFlags (runtime toggles з localStorage)
-│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, shields, resultCelebration, relativeTime, iconMap, alignment, roundStats, slotMachine
+│   ├── utils/             # roomId, cardDecks, authValidation, recentRooms, shields, resultCelebration, relativeTime, iconMap, alignment, roundStats, slotMachine, avatarImage
 │   ├── i18n/locales/{uk,en}.json
 │   └── assets/css/main.css, assets/icons/
 ├── supabase/migrations/*.sql
-└── tests/
-    ├── unit/stores|utils|components/   # Vitest (alias ~ і @ → app/)
-    ├── fixtures/, page-objects/, support/, e2e/
+├── tests/
+│   ├── unit/stores|utils|components|composables/   # Vitest (alias ~ і @ → app/)
+│   └── fixtures/, page-objects/, support/, e2e/
+└── test-results/          # gitignored: coverage/, playwright/, playwright-report/
 ```
 
 ## Testing
 
-Unit tests: Vitest + happy-dom, конфіг - окремий `vitest.config.ts` (`include`: `tests/unit/**`, `tests/components/**`, `tests/integration/**`; `passWithNoTests`, setup - `tests/support/setup/vitest.ts`). Наявні тести - у `tests/unit/{stores,utils,components}/`. E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`. Локально зупини dev server на `:3000` або задай `E2E_BASE_URL`, бо Playwright має `reuseExistingServer: true`.
+Unit tests: Vitest + happy-dom, конфіг - окремий `vitest.config.ts` (`include`: `tests/unit/**`, `tests/components/**`, `tests/integration/**`; `passWithNoTests`, setup - `tests/support/setup/vitest.ts`). Наявні тести - у `tests/unit/{stores,utils,components,composables}/` (`tests/{a11y,visual,server,integration,components}/` поки лише `.gitkeep`). Артефакти - у `test-results/` (`coverage/`, `playwright/`, `playwright-report/`); `coverage/` і `playwright-report/` лишаються в `.gitignore` навмисно, `scripts/migrate-test-artifacts.sh` (preinstall) переносить їх зі старих кореневих шляхів. E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`, якого локально нема - job `e2e` у CI пропускається без секретів, тож реально біжить лише проєкт `page-load`. Без `E2E_BASE_URL` Playwright сам збирає і запускає `npm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується); задай `E2E_BASE_URL`, щоб тестувати вже запущений сервер.
 
 ## URL Schema
 
@@ -205,10 +206,10 @@ Unit tests: Vitest + happy-dom, конфіг - окремий `vitest.config.ts`
 
 - `storypoker_session_<roomId>` - `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms
 - `sp-theme` - `light | dark`; `sp-palette` - `classic | cyberdeck | matcha` (повноцінні теми, кожна має light/dark: cyberdeck - неоновий термінал, Geist Mono, гострі кути, неонові рамки/тіні, єдиний дозволений градієнт в appbar; matcha - м'яка округла, Nunito, великі радіуси). Теми задають змінні `--font-app/--font-display/--radius-*/--btn-text/--btn-transform/--paper-border/--card-border/--shadow-*` у `main.css` через `html[data-palette=…][data-theme=…]`; inline script у `index.html` застосовує обидва атрибути до завантаження JS; вибір - меню в AppHeader (`PALETTES` з `useTheme.ts`)
+- `sp-room-header-<urlParam>` - `{ roomName, playerName }`; сід для AppHeader у `[slug].vue`, щоб при релоаді кімнати хедер малювався одразу у фінальній геометрії (назва кімнати і гравець приходять через 2 round-trip і зсували весь правий кластер). Перезаписується щоразу, коли `currentPlayer` резолвиться
+- `sp-lang` - `uk | en`; читається в `app/i18n.ts` при створенні i18n, пишеться з меню мов у AppHeader (`persistLocale()`). Дефолт - `uk`
 - `FEATURE_FLAGS` - override flags з `app/configs/featureFlags.ts` (керується на `/ffc`): `countdownEnabled` (hold-to-start відлік перед reveal), `iconsLucide`, `iconsRounded`, `example`
-- `sp-side-widget` - `timer | slot`; лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine). Слот: 3 барабани, зважена випадковість (`utils/slotMachine.ts`; символи - tabler icon-id у `SLOT_SYMBOL_WEIGHTS`, рендеряться через `<AppIcon>`), 3 спіни на гравця за раунд (скидаються за `round_started_at`), джекпот = 3 однакові символи → broadcast `slot-win` (`{playerId}`) на `countdown:<roomId>` каналі; єдиний видимий ефект - блимання імені й кубика переможця у `PlayersList` (§ нижче), жодного банера/локального підсвічування самого слота. Спін додатково гейтиться `canSpinSlot` (`[slug].vue`, computed на основі `roleTagForShields`): для `PO`/`SM` завжди `true`; для решти ролей - лише коли `phase==='voting'`, гравець уже проголосував і є хоча б один, хто ще не проголосував (слот - заняття "поки чекаєш інших", не альтернатива голосуванню). `SlotMachine.vue` приймає `can-spin` prop поруч зі `spins-left`, показує `slot.voteFirst`, коли `spinsLeft > 0`, але `canSpin === false`. Кнопка спіну лишається клікабельною і при `canSpin === false` (`:disabled` реагує тільки на `spinning`/`spinsLeft<=0`) - клік запускає `triggerJam()` замість реального спіну: `.slot-window.is-jammed` на 400мс, `@keyframes slot-jam` сіпає `.slot-strip` на кілька px (стагер `animation-delay` по барабанах), імітуючи заклинювання важеля.
-
-Хто зараз крутить і хто виграв - видно всім у `PlayersList`/`PlayerRow.vue` через той самий broadcast-канал `countdown:<roomId>` (не через `players`-таблицю): `SlotMachine.vue` емітить `spin`/`spin-end` навколо анімації прокрутки (`REEL_DURATIONS_MS[2]+150` ≈ 2.45с), `[slug].vue` шле `slot-spin-start`/`slot-spin-end` з `{playerId}` і тримає `spinningPlayerIds: Set<string>` (safety-таймер 2.8с на випадок втраченого `spin-end`); `slot-win` payload розширено `playerId`, який на 1.6с виставляє `slotWinnerId`. `PlayerRow.vue` отримує `is-spinning-slot`/`is-slot-winner`: кубик (`font-size: 1.125rem` - трохи менший за іконку модератора поруч) сидить у рядку з іменем (той самий `AppTooltip`-патерн, що й `app:moderator`), не в колонці статусу голосу - та лишається незайманою. Кубик сам не обертається - поки триває спін, кожні 120мс перемикається грань (`tabler:dice-1`…`dice-6`, `DICE_FACES`/`diceFaceIndex`), імітуючи котіння в чашці; по завершенню повертається дефолтна грань `dice-5`. Ці іконки резолвляться через Iconify API (не офлайн `ic:`-колекція), тому `loadIcons(DICE_FACES)` прогріває кеш одразу при монтуванні `PlayerRow.vue` - інакше перше котіння блимає порожніми кадрами, поки кожна нова грань довантажується. При виграші - ім'я і кубик (грань `dice-5`) разом блимають `.win-blink` (`@keyframes win-blink`, `animation-iteration-count: 3`). Підказка `slot.voteFirst` у `SlotMachine.vue` живе 1.5с (не 2с), без власної анімації - лише `triggerJam()` сіпає барабани.
+- `sp-side-widget` - `timer | slot`; лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine). Слот: 3 барабани, зважена випадковість (`utils/slotMachine.ts`), 3 спіни на гравця за раунд (скидаються за `round_started_at`), джекпот = 3 однакові символи. Спін гейтиться `canSpinSlot` (`[slug].vue`) - `PO`/`SM` завжди, решта лише після власного голосу і поки хтось ще не проголосував. Стан спіну/виграшу транслюється broadcast-каналом `countdown:<roomId>` (`slot-spin-start`/`slot-spin-end`/`slot-win`), єдиний видимий ефект - кубик і блимання імені в `PlayerRow.vue`. Деталі механіки й анімацій - `DESIGN.md` §11.8
 
 ## Code Style
 

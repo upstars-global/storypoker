@@ -555,6 +555,11 @@ body {
     box-shadow: none;
   }
 
+  .timer-controls .mui-icon-btn {
+    border: none;
+    box-shadow: none;
+  }
+
   .mui-icon-group {
     border: 1px solid var(--border-input);
     border-radius: 999px;
@@ -594,8 +599,9 @@ body {
   }
 
   .mui-tooltip-content {
-    background-color: rgba(97, 97, 97, 0.92);
+    background-color: rgb(97, 97, 97);
     color: #fff;
+    box-shadow: var(--shadow-8);
     font-size: 0.625rem;
     font-weight: 500;
     letter-spacing: 0.04em;

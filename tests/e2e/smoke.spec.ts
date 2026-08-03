@@ -23,7 +23,8 @@ test('home → create room → joined as moderator with auto-rejoin', async ({ p
   const parsed = JSON.parse(session!)
   expect(parsed.playerId).toEqual(expect.any(String))
   expect(parsed.playerName).toBe(playerName)
-  expect(parsed.lastVisitedAt).toEqual(expect.any(Number))
+  expect(parsed.lastVisitedAt).toEqual(expect.any(String))
+  expect(Number.isNaN(Date.parse(parsed.lastVisitedAt))).toBe(false)
 
   await page.reload()
   await expect(
@@ -36,6 +37,7 @@ test('moderator votes, reveals, starts new round', async ({ page, trackedRoomIds
   const room = new RoomPage(page)
   const NAME = 'Moderator Solo'
 
+  await home.goto()
   const roomId = await home.createRoom(NAME)
   trackedRoomIds.push(roomId)
 

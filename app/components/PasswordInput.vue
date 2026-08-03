@@ -12,6 +12,8 @@ withDefaults(defineProps<{
   testid?: string
 }>(), {
   name: 'password',
+  error: '',
+  testid: undefined,
 })
 
 const model = defineModel<string>({ required: true })

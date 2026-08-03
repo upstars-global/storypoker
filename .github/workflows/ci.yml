@@ -86,9 +86,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-page-load
-          path: |
-            playwright-report/
-            test-results/playwright/
+          path: test-results/
           if-no-files-found: ignore
           retention-days: 7
 
@@ -131,9 +129,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: |
-            playwright-report/
-            test-results/playwright/
+          path: test-results/
           if-no-files-found: ignore
           retention-days: 7
 

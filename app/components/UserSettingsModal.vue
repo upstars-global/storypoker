@@ -181,7 +181,7 @@ onUnmounted(revokePendingUrl)
     @close="emit('close')"
   >
     <AppModalPaper
-      style="max-width: 420px; padding: 32px 40px 40px;"
+      style="max-width: 560px; padding: 32px 40px 40px;"
       @close="emit('close')"
     >
       <h2

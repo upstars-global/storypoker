@@ -2,6 +2,7 @@
 import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { persistLocale } from '~/i18n'
 import { storeToRefs } from 'pinia'
 import { useClickOutside } from '~/composables/useClickOutside'
 import { useAuthStore } from '~/stores/auth'
@@ -79,13 +80,11 @@ watch(() => user.value?.id, async (id) => {
   profileFetched.value = true
 }, { immediate: true })
 
-const LOCALES = [
-  { code: 'uk', label: 'Українська' },
-  { code: 'en', label: 'English' },
-] as const
+const LOCALES = ['uk', 'en'] as const
 
 function setLocale(code: string) {
   locale.value = code
+  persistLocale(code)
 }
 
 const menuRef = ref<HTMLElement | null>(null)
@@ -200,7 +199,7 @@ function activateMenuItem(e: KeyboardEvent) {
         @click="toggleTheme($event)"
       >
         <AppIcon
-          :icon="isLight ? 'ic:baseline-dark-mode' : 'ic:baseline-light-mode'"
+          :icon="isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'"
           style="font-size: 1.5rem;"
         />
       </button>
@@ -313,21 +312,21 @@ function activateMenuItem(e: KeyboardEvent) {
             class="mui-divider"
           >
           <li
-            v-for="loc in LOCALES"
-            :key="loc.code"
+            v-for="code in LOCALES"
+            :key="code"
             v-wave
             class="mui-menu-item whitespace-nowrap"
             role="menuitemradio"
-            :aria-checked="locale === loc.code"
+            :aria-checked="locale === code"
             tabindex="0"
-            :data-testid="`language-option-${loc.code}`"
-            @click="setLocale(loc.code); menuOpen = false"
+            :data-testid="`language-option-${code}`"
+            @click="setLocale(code); menuOpen = false"
           >
             <AppIcon
               class="mui-menu-icon"
-              :icon="locale === loc.code ? 'ic:baseline-check' : 'ic:baseline-language'"
+              :icon="locale === code ? 'ic:baseline-check' : 'ic:baseline-language'"
             />
-            <span class="flex-1">{{ loc.label }}</span>
+            <span class="flex-1">{{ $t(`header.languages.${code}`) }}</span>
           </li>
 
           <template v-if="user">

@@ -158,8 +158,8 @@ function cancelHold(mode: CountdownMode) {
           class="flex items-center justify-center gap-2"
         >
           <input
-            :ref="(el) => setAnswerRef(el, i)"
             :id="`poll-answer-${i}`"
+            :ref="(el) => setAnswerRef(el, i)"
             v-model="answerDrafts[i]"
             type="text"
             :name="`poll-answer-${i}`"

@@ -25,7 +25,7 @@ export default defineConfig({
   reporter: process.env.CI
     ? [
         ['github'],
-        ['html', { open: 'never', outputFolder: resolve(__cfgDir, 'playwright-report') }],
+        ['html', { open: 'never', outputFolder: resolve(__cfgDir, 'test-results/playwright-report') }],
       ]
     : 'list',
   use: {

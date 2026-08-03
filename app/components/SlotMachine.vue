@@ -167,7 +167,7 @@ async function spin() {
       <span>{{ $t('slot.title') }}</span>
       <div class="absolute right-1.5 top-1/2 -translate-y-1/2">
         <AppTooltip
-          side="left"
+          side="top"
           :side-offset="6"
         >
           <template #trigger>

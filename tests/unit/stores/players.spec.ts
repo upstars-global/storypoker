@@ -80,6 +80,8 @@ describe('playersStore.castVote (optimistic)', () => {
     expect(store.pendingVotes['p1']).toBe('5')
     await promise
     expect(update).toHaveBeenCalledWith({ vote: '5' })
+    expect(store.pendingVotes['p1']).toBeUndefined()
+    expect(store.players[0]?.vote).toBe('5')
   })
 
   it('rolls back pendingVotes on error', async () => {

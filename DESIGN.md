@@ -467,3 +467,20 @@ round_history (
 - `< 2.5` - червоний `#e64a19`
 
 При результаті `≤ 3.5` - підказка `results.goalClarityHint` ("переформулювати Sprint Goal або критерії DoD"). Той самий кольоровий triplet, що й `alignmentLevel`/`levelColor` у `AlignmentTrendsModal.vue`.
+
+### 11.8 Слот-машина (`SlotMachine.vue`)
+
+Лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine), вибір - у `sp-side-widget` (`timer | slot`).
+
+**Механіка** - 3 барабани, зважена випадковість (`utils/slotMachine.ts`; символи - tabler icon-id у `SLOT_SYMBOL_WEIGHTS`, рендеряться через `<AppIcon>`), 3 спіни на гравця за раунд (скидаються за `round_started_at`). Джекпот = 3 однакові символи.
+
+**Гейтинг спіну** - `canSpinSlot` (`[slug].vue`, computed на основі `roleTagForShields`): для `PO`/`SM` завжди `true`; для решти ролей - лише коли `phase==='voting'`, гравець уже проголосував і є хоча б один, хто ще не проголосував. Слот - заняття "поки чекаєш інших", не альтернатива голосуванню. `SlotMachine.vue` приймає `can-spin` поруч зі `spins-left` і показує `slot.voteFirst` (1.5с, без власної анімації), коли `spinsLeft > 0`, але `canSpin === false`.
+
+**Jam-анімація** - кнопка спіну лишається клікабельною при `canSpin === false` (`:disabled` реагує тільки на `spinning`/`spinsLeft<=0`): клік запускає `triggerJam()` замість спіну - `.slot-window.is-jammed` на 400мс, `@keyframes slot-jam` сіпає `.slot-strip` на кілька px (стагер `animation-delay` по барабанах), імітуючи заклинювання важеля.
+
+**Трансляція стану** - хто крутить і хто виграв, видно всім через broadcast-канал `countdown:<roomId>` (не через `players`-таблицю):
+- `SlotMachine.vue` емітить `spin`/`spin-end` навколо анімації прокрутки (`REEL_DURATIONS_MS[2]+150` ≈ 2.45с)
+- `[slug].vue` шле `slot-spin-start`/`slot-spin-end` з `{playerId}` і тримає `spinningPlayerIds: Set<string>` (safety-таймер 2.8с на випадок втраченого `spin-end`)
+- `slot-win` з `{playerId}` на 1.6с виставляє `slotWinnerId`
+
+**Індикація в `PlayerRow.vue`** (props `is-spinning-slot`/`is-slot-winner`) - єдиний видимий ефект джекпоту, без банера чи локального підсвічування самого слота. Кубик (`font-size: 1.125rem`, трохи менший за іконку модератора поруч) сидить у рядку з іменем за тим самим `AppTooltip`-патерном, що й `app:moderator` - колонка статусу голосу лишається незайманою. Кубик не обертається: поки триває спін, кожні 120мс перемикається грань (`tabler:dice-1`…`dice-6`, `DICE_FACES`/`diceFaceIndex`), імітуючи котіння в чашці; далі повертається дефолтна `dice-5`. Ці іконки резолвляться через Iconify API (не офлайн `ic:`-колекція), тому `loadIcons(DICE_FACES)` прогріває кеш при монтуванні `PlayerRow.vue` - інакше перше котіння блимає порожніми кадрами. При виграші ім'я і кубик разом блимають `.win-blink` (`@keyframes win-blink`, `animation-iteration-count: 3`).

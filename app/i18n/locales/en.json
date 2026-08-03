@@ -20,6 +20,10 @@
     "lightTheme": "Light Theme",
     "darkTheme": "Dark Theme",
     "language": "Language",
+    "languages": {
+      "uk": "Ukrainian",
+      "en": "English"
+    },
     "currentUserAccount": "account of current user",
     "accountSettings": "Account Settings",
     "history": "Round History",

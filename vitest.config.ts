@@ -12,7 +12,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      reportsDirectory: './coverage',
+      reportsDirectory: './test-results/coverage',
       exclude: ['**/*.d.ts', '**/.nuxt/**', '**/.output/**'],
     },
   },

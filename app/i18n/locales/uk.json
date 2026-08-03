@@ -20,6 +20,10 @@
     "lightTheme": "Світла тема",
     "darkTheme": "Темна тема",
     "language": "Мова",
+    "languages": {
+      "uk": "Українська",
+      "en": "Англійська"
+    },
     "currentUserAccount": "акаунт поточного користувача",
     "accountSettings": "Налаштування акаунту",
     "history": "Історія раундів",

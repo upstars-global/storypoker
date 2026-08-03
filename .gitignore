@@ -27,5 +27,7 @@ supabase/*
 skills-lock.json
 
 test-results/
+
+# legacy artifact paths, migrated by scripts/migrate-test-artifacts.sh
 playwright-report/
 coverage/

@@ -63,6 +63,10 @@ interface LastRoundSnapshot {
 }
 
 const currentPlayerId = ref<string | null>(null)
+// Cards render before the rejoin round-trip resolves the local player, so a
+// click landing in that window would otherwise be dropped without feedback.
+let markIdentitySettled: () => void
+const identitySettled = new Promise<void>(resolve => { markIdentitySettled = resolve })
 const notFound = ref(false)
 const showJoin = ref(false)
 const showAuth = ref<'signin' | 'signup' | null>(null)
@@ -77,6 +81,11 @@ const roomNameInput = ref('')
 const roomNameError = ref<string | null>(null)
 const currentSlug = ref<string | null>(null)
 const currentRoomName = ref<string | null>(null)
+// Room name and player identity both arrive a few round-trips after first paint,
+// which slid the whole header cluster once they appeared. Seed them from the
+// previous visit so the header renders at its final size right away.
+const HEADER_SEED_KEY = `sp-room-header-${urlParam}`
+const headerSeed = ref<{ roomName: string; playerName: string }>(readHeaderSeed())
 const origin = ref('')
 const kickTargetId = ref<string | null>(null)
 const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === kickTargetId.value)?.name ?? '')
@@ -226,6 +235,7 @@ onMounted(async () => {
   const resolved = await roomStore.resolveRoom(urlParam)
   if (!resolved) {
     notFound.value = true
+    markIdentitySettled()
     return
   }
   if (resolved.slug && urlParam === resolved.id) {
@@ -262,6 +272,7 @@ onMounted(async () => {
   } else {
     showJoin.value = true
   }
+  markIdentitySettled()
 
   subscribeRealtime()
 
@@ -279,6 +290,13 @@ watch(connectionStatus, async (next, prev) => {
   if (prev === 'reconnecting' && next === 'online') {
     await fetchInitialData()
   }
+})
+
+watch([currentRoomName, currentSlug, () => currentPlayer.value?.name], () => {
+  const playerName = currentPlayer.value?.name
+  if (!playerName) return
+  headerSeed.value = { roomName: currentRoomName.value ?? currentSlug.value ?? urlParam, playerName }
+  try { localStorage.setItem(HEADER_SEED_KEY, JSON.stringify(headerSeed.value)) } catch {}
 })
 
 watch(() => roomState.value?.phase, (phase, prev) => {
@@ -397,6 +415,17 @@ function unsubscribe() {
   countdownChannel?.unsubscribe()
 }
 
+function readHeaderSeed(): { roomName: string; playerName: string } {
+  try {
+    const raw = localStorage.getItem(HEADER_SEED_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (typeof parsed?.roomName === 'string' && typeof parsed?.playerName === 'string') return parsed
+    }
+  } catch {}
+  return { roomName: urlParam, playerName: '' }
+}
+
 function getStoredSession(): { playerId: string; playerName: string } | null {
   const raw = localStorage.getItem(`storypoker_session_${roomId}`)
   if (!raw) return null
@@ -412,6 +441,7 @@ async function handleJoin(payload: { name: string; shields: string[] }) {
 }
 
 async function handleVote(card: string) {
+  if (!currentPlayerId.value) await identitySettled
   if (!currentPlayerId.value) return
   if (isPollDeck.value && !roomState.value?.poll_question) return
   const next = playersStore.voteOf(currentPlayerId.value) === card ? null : card
@@ -629,9 +659,9 @@ async function submitRenameRoom() {
     <AppHeader
       :online-count="onlineCount"
       :is-moderator="isModerator"
-      :player-name="currentPlayer?.name ?? ''"
+      :player-name="currentPlayer?.name ?? headerSeed.playerName"
       :player-user-id="currentPlayer?.user_id ?? null"
-      :room-name="currentRoomName ?? currentSlug ?? roomId"
+      :room-name="currentRoomName ?? currentSlug ?? headerSeed.roomName"
       :countdown-active="countdownActive"
       :countdown-counter="countdownTimerCounter"
       :countdown-total="countdownTimerTotal"

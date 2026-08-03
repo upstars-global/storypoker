@@ -71,7 +71,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
       <span>{{ $t('timer.title') }}</span>
       <div class="absolute right-1.5 top-1/2 -translate-y-1/2">
         <AppTooltip
-          side="left"
+          side="top"
           :side-offset="6"
         >
           <template #trigger>
@@ -102,7 +102,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
     </p>
     <div
       v-if="showControls"
-      class="flex justify-between px-4 pb-3"
+      class="timer-controls flex justify-between px-4 pb-3"
     >
       <AppTooltip
         side="top"
