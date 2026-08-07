@@ -126,9 +126,12 @@ const hasVotes = computed(() => {
 
 // PO/SM don't estimate every round (or at all), so the slot stays open for them
 // regardless of vote state. Everyone else has to vote first - the slot is a
-// "wait for others" distraction, not an alternative to voting. SM additionally
-// has no per-round spin cap - PO still gets the usual 3.
-const hasUnlimitedSlotSpins = computed(() => roleTagForShields(currentPlayer.value?.shields) === 'SM')
+// "wait for others" distraction, not an alternative to voting. PO/SM also get a
+// higher per-round spin cap (they don't estimate every round anyway).
+const spinsPerRound = computed(() => {
+  const roleTag = roleTagForShields(currentPlayer.value?.shields)
+  return roleTag === 'PO' || roleTag === 'SM' ? 5 : 3
+})
 
 const canSpinSlot = computed(() => {
   const roleTag = roleTagForShields(currentPlayer.value?.shields)
@@ -460,7 +463,6 @@ function switchSideWidget() {
   try { localStorage.setItem(SIDE_WIDGET_KEY, sideWidget.value) } catch {}
 }
 
-const SPINS_PER_ROUND = 3
 const spinsUsed = ref(0)
 
 watch(() => roomState.value?.round_started_at, () => { spinsUsed.value = 0 })
@@ -498,7 +500,7 @@ function stopSpinningPlayer(id: string) {
 }
 
 function handleSlotSpin() {
-  if (!hasUnlimitedSlotSpins.value) spinsUsed.value++
+  spinsUsed.value++
   broadcastSlotSpinStart()
 }
 
@@ -707,7 +709,7 @@ async function submitRenameRoom() {
         />
         <SlotMachine
           v-if="roomState && sideWidget === 'slot'"
-          :spins-left="hasUnlimitedSlotSpins ? Infinity : SPINS_PER_ROUND - spinsUsed"
+          :spins-left="spinsPerRound - spinsUsed"
           :can-spin="canSpinSlot"
           @spin="handleSlotSpin"
           @spin-end="broadcastSlotSpinEnd"

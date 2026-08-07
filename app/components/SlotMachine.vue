@@ -233,7 +233,7 @@ async function spin() {
         class="text-mui-caption text-muted"
         data-testid="slot-spins-left"
       >
-        {{ spinsLeft <= 0 ? $t('slot.noSpinsLeft') : showVoteFirstHint ? $t('slot.voteFirst') : $t('slot.spinsLeft', { n: spinsLeft === Infinity ? '∞' : spinsLeft }) }}
+        {{ spinsLeft <= 0 ? $t('slot.noSpinsLeft') : showVoteFirstHint ? $t('slot.voteFirst') : $t('slot.spinsLeft', { n: spinsLeft }) }}
       </span>
     </div>
   </div>
