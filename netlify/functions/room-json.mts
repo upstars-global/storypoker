@@ -219,7 +219,15 @@ export default async (req: Request): Promise<Response> => {
   const supabase = createClient(url, key)
 
   if (rawSlug === 'teams') {
-    const { data: rooms, error: roomsErr } = await supabase.from('rooms').select('id, slug, name')
+    // Team rooms are the aliased ones: a room only gets a slug when someone names
+    // it (setRoomName in app/stores/room.ts), ad-hoc rooms keep slug null — and no
+    // consumer can address a slugless room anyway (agilecharts keys its bulk room
+    // map on room.slug). Filtering here also drops the ~250 ad-hoc rooms' worth of
+    // per-room round_history/players queries, the bulk of this endpoint's latency.
+    const { data: rooms, error: roomsErr } = await supabase
+      .from('rooms')
+      .select('id, slug, name')
+      .not('slug', 'is', null)
     if (roomsErr) return json({ error: 'query failed' }, 500)
     const teams = await Promise.all((rooms ?? []).map(room => buildRoomPayload(supabase, room as RoomRow)))
     return json({ teams })
