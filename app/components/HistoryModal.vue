@@ -1,37 +1,69 @@
 <script setup lang="ts">
 import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import AppModal from '~/components/AppModal.vue'
 import AppModalPaper from '~/components/AppModalPaper.vue'
+import RoundSnapshotModal from '~/components/RoundSnapshotModal.vue'
 import { useRoomStore } from '~/stores/room'
+import { usePlayersStore } from '~/stores/players'
 import { useCardLabel } from '~/composables/useCardLabel'
 import { summarizeRound, isNumericPreset, voteToNumber, type RoundSummary } from '~/utils/roundStats'
 import { DECK_PRESETS } from '~/utils/cardDecks'
+import { isQaPlayer, DEV_COHORT_LABEL } from '~/utils/shields'
+import type { RoundHistory } from '~/stores/types'
 
 const emit = defineEmits<{ close: [] }>()
 
 const roomStore = useRoomStore()
+const playersStore = usePlayersStore()
+const { visiblePlayers } = storeToRefs(playersStore)
 const cardLabel = useCardLabel()
 const { locale } = useI18n()
 
 const loading = ref(true)
-const summaries = ref<(RoundSummary & { trend: 'up' | 'down' | 'flat' | null })[]>([])
+const rounds = ref<RoundHistory[]>([])
 const selectedYear = ref<number | null>(null)
 const selectedQuarter = ref<number | null>(null)
 const deckFilter = ref<string | null>(null)
+const selectedRound = ref<RoundHistory | null>(null)
 
-onMounted(async () => {
-  const rounds = await roomStore.fetchHistory()
-  const base = rounds.map(summarizeRound)
-  summaries.value = base.map((s, i) => {
+const shieldsMap = computed(() => {
+  const m = new Map<string, string[]>()
+  for (const p of visiblePlayers.value) m.set(p.id, p.shields ?? [])
+  return m
+})
+
+type EnrichedSummary = RoundSummary & {
+  trend: 'up' | 'down' | 'flat' | null
+  round: RoundHistory
+  devCounts: Record<string, number>
+  qaCounts: Record<string, number>
+  hasQa: boolean
+}
+
+const summaries = computed<EnrichedSummary[]>(() => {
+  const base = rounds.value.map(summarizeRound)
+  return base.map((s, i) => {
     const older = base[i + 1]
     let trend: 'up' | 'down' | 'flat' | null = null
     if (s.alignment !== null && older?.alignment != null) {
       trend = s.alignment > older.alignment ? 'up' : s.alignment < older.alignment ? 'down' : 'flat'
     }
-    return { ...s, trend }
+    const round = rounds.value[i]!
+    const devCounts: Record<string, number> = {}
+    const qaCounts: Record<string, number> = {}
+    for (const v of round.votes) {
+      const target = isQaPlayer(shieldsMap.value.get(v.player_id)) ? qaCounts : devCounts
+      target[v.vote] = (target[v.vote] ?? 0) + 1
+    }
+    return { ...s, trend, round, devCounts, qaCounts, hasQa: Object.keys(qaCounts).length > 0 }
   })
+})
+
+onMounted(async () => {
+  rounds.value = await roomStore.fetchHistory()
   if (summaries.value.length) {
     selectedYear.value = new Date(summaries.value[0]!.revealedAt).getFullYear()
   }
@@ -210,13 +242,15 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
           <h3 class="text-mui-caption font-semibold uppercase tracking-wide text-muted">
             {{ g.label }}
           </h3>
-          <div
+          <button
             v-for="r in g.rounds"
             :key="r.id"
-            class="flex flex-col gap-2 rounded border p-3"
+            type="button"
+            class="flex w-full flex-col gap-2 rounded border p-3 text-left transition-colors hover:bg-elevated"
             data-testid="history-round"
+            @click="selectedRound = r.round"
           >
-            <div class="flex items-center justify-between gap-3 text-mui-body text-primary">
+            <div class="flex w-full items-center justify-between gap-3 text-mui-body text-primary">
               <div class="flex items-center gap-2">
                 <span>{{ dateFmt.format(new Date(r.revealedAt)) }}</span>
                 <span class="text-muted">·</span>
@@ -261,7 +295,10 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
                 </span>
               </div>
             </div>
-            <div class="flex flex-wrap gap-2">
+            <div
+              v-if="!r.hasQa"
+              class="flex w-full flex-wrap gap-2"
+            >
               <span
                 v-for="[card, count] in sortedCounts(r.counts)"
                 :key="card"
@@ -270,9 +307,47 @@ function sortedCounts(counts: Record<string, number>): [string, number][] {
                 {{ cardLabel(card) }} × {{ count }}
               </span>
             </div>
-          </div>
+            <div
+              v-else
+              class="flex w-full flex-col gap-1.5"
+            >
+              <div class="flex flex-wrap items-center gap-2">
+                <span
+                  class="rounded px-1.5 py-0.5 text-mui-caption font-semibold text-white"
+                  :style="{ backgroundColor: '#26a69a' }"
+                >{{ DEV_COHORT_LABEL }}</span>
+                <span
+                  v-for="[card, count] in sortedCounts(r.devCounts)"
+                  :key="card"
+                  class="rounded bg-elevated px-2 py-0.5 text-mui-caption text-body"
+                >
+                  {{ cardLabel(card) }} × {{ count }}
+                </span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span
+                  class="rounded px-1.5 py-0.5 text-mui-caption font-semibold text-white"
+                  :style="{ backgroundColor: '#ffa726' }"
+                >QA</span>
+                <span
+                  v-for="[card, count] in sortedCounts(r.qaCounts)"
+                  :key="card"
+                  class="rounded bg-elevated px-2 py-0.5 text-mui-caption text-body"
+                >
+                  {{ cardLabel(card) }} × {{ count }}
+                </span>
+              </div>
+            </div>
+          </button>
         </section>
       </div>
     </AppModalPaper>
   </AppModal>
+
+  <RoundSnapshotModal
+    v-if="selectedRound"
+    :round="selectedRound"
+    :shields-map="shieldsMap"
+    @close="selectedRound = null"
+  />
 </template>

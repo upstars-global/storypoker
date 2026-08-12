@@ -172,12 +172,45 @@ function weekLabel(date: Date): string {
   return `w${isoWeek(date)}`
 }
 
+const DAY_MS = 86400000
+function startOfDay(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
+const axisDateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short' }))
+
+// Insert a null slot between two sessions more than one calendar day apart so the
+// line breaks there - a continuous line across a multi-day gap reads as one run of
+// sessions and makes it hard to tell estimation sessions apart. indexMap maps each
+// augmented slot back to its points.value index (-1 for inserted gap slots).
+const chartData = computed(() => {
+  const categories: string[] = []
+  const dev: (number | null)[] = []
+  const qa: (number | null)[] = []
+  const indexMap: number[] = []
+  points.value.forEach((p, i) => {
+    const prev = points.value[i - 1]
+    if (prev && (startOfDay(p.date) - startOfDay(prev.date)) / DAY_MS > 1) {
+      categories.push('')
+      dev.push(null)
+      qa.push(null)
+      indexMap.push(-1)
+    }
+    categories.push(`${axisDateFmt.value.format(p.date)}\n${weekLabel(p.date)}`)
+    dev.push(p.devAlignment)
+    qa.push(p.qaAlignment)
+    indexMap.push(i)
+  })
+  return { categories, dev, qa, indexMap }
+})
+
 const tooltipDateFmt = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'short', timeStyle: 'short' }))
 
 const hasEnoughData = computed(() => points.value.length >= 2)
 
 function tooltipFormatter(params: { dataIndex: number; seriesName?: string; value?: unknown }): string {
-  const point = points.value[params.dataIndex]
+  const realIdx = chartData.value.indexMap[params.dataIndex] ?? -1
+  const point = points.value[realIdx]
   if (!point || params.value === null || params.value === undefined) return ''
   const dateStr = tooltipDateFmt.value.format(point.date)
   const cohort: 'DEV' | 'QA' = params.seriesName === 'QA' ? 'QA' : 'DEV'
@@ -187,12 +220,12 @@ function tooltipFormatter(params: { dataIndex: number; seriesName?: string; valu
     + `<span data-close-tooltip style="cursor:pointer;color:#b0bec5;font-weight:700;">×</span>`
     + `</div>`
     + `<div style="color:#b0bec5;font-size:10px;margin-top:2px;">${dateStr}</div>`
-    + `<div data-view-details data-index="${params.dataIndex}" data-cohort="${cohort}" style="color:#4fc3f7;text-decoration:underline;cursor:pointer;font-size:10px;margin-top:6px;">${t('trends.viewDetails')}</div>`
+    + `<div data-view-details data-index="${realIdx}" data-cohort="${cohort}" style="color:#4fc3f7;text-decoration:underline;cursor:pointer;font-size:10px;margin-top:6px;">${t('trends.viewDetails')}</div>`
     + `</div>`
 }
 
 const chartOption = computed(() => {
-  const categories = points.value.map(p => weekLabel(p.date))
+  const { categories, dev, qa } = chartData.value
 
   const devSeries = {
     name: DEV_COHORT_LABEL,
@@ -203,7 +236,7 @@ const chartOption = computed(() => {
     connectNulls: false,
     lineStyle: { width: 2, color: '#26a69a' },
     itemStyle: { color: '#26a69a' },
-    data: points.value.map(p => p.devAlignment),
+    data: dev,
   }
 
   const qaSeries = {
@@ -215,7 +248,7 @@ const chartOption = computed(() => {
     connectNulls: false,
     lineStyle: { width: 2, color: '#ffa726' },
     itemStyle: { color: '#ffa726' },
-    data: points.value.map(p => p.qaAlignment),
+    data: qa,
   }
 
   const refLineSeries = {
@@ -251,7 +284,7 @@ const chartOption = computed(() => {
       data: categories,
       boundaryGap: false,
       axisLine: { lineStyle: { color: '#546e7a' } },
-      axisLabel: { color: '#78909c', fontSize: 9 },
+      axisLabel: { color: '#78909c', fontSize: 9, lineHeight: 12, hideOverlap: true },
       axisTick: { show: false },
     },
     yAxis: {
