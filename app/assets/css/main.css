@@ -717,10 +717,12 @@ body {
     border-color: var(--primary);
     color: var(--text-primary);
   }
-  .mui-role-tag.is-selected {
+  .mui-role-tag.is-selected,
+  .mui-role-tag.is-interactive.is-selected:hover {
     border-color: var(--primary);
-    background-color: var(--primary-soft);
-    color: var(--text-primary);
+    background-color: var(--primary);
+    color: var(--btn-text, #fff);
+    box-shadow: var(--shadow-2);
   }
   .mui-input {
     width: 100%;

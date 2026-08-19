@@ -78,16 +78,24 @@ export function getShield(id: string): Shield | undefined {
   return SHIELD_BY_ID.get(id)
 }
 
-export const PLAYER_ROLES = [
-  { tag: 'DEV', shield: 'dev' },
-  { tag: 'BE', shield: 'be' },
-  { tag: 'FE', shield: 'fe' },
-  { tag: 'QA', shield: 'qa' },
-  { tag: 'GQA', shield: 'gqa' },
-  { tag: 'AQA', shield: 'aqa' },
-  { tag: 'PO', shield: 'po' },
-  { tag: 'SM', shield: 'sm' },
+export const PLAYER_ROLE_GROUPS = [
+  [
+    { tag: 'DEV', shield: 'dev' },
+    { tag: 'BE', shield: 'be' },
+    { tag: 'FE', shield: 'fe' },
+  ],
+  [
+    { tag: 'QA', shield: 'qa' },
+    { tag: 'GQA', shield: 'gqa' },
+    { tag: 'AQA', shield: 'aqa' },
+  ],
+  [
+    { tag: 'PO', shield: 'po' },
+    { tag: 'SM', shield: 'sm' },
+  ],
 ] as const
+
+export const PLAYER_ROLES = PLAYER_ROLE_GROUPS.flat()
 
 const ROLE_ORDER = new Map<string, number>(PLAYER_ROLES.map((r, i) => [r.tag, i]))
 
