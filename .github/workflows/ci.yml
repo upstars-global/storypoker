@@ -1,12 +1,19 @@
 name: CI
 
 on:
-  pull_request:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   detect-secrets:
+    name: Detect secrets
     runs-on: ubuntu-latest
     outputs:
       has_e2e: ${{ steps.check.outputs.has_e2e }}
@@ -33,87 +40,143 @@ jobs:
             echo "has_netlify=false" >> "$GITHUB_OUTPUT"
           fi
 
-  test:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    concurrency:
-      group: ci-test-${{ github.ref }}
-      cancel-in-progress: true
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
+      - run: npm ci
+      - run: npm run lint
 
-      - name: Install
-        run: npm ci
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
 
-      - name: CI checks
-        run: npm run test:ci
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit:coverage
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # The deploy job reuses this exact bundle instead of building a second time.
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  # Playwright's webServer builds the app before it previews, so this job also verifies
+  # that the production bundle boots with dummy Supabase credentials.
   page-load:
+    name: Public pages load
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    concurrency:
-      group: ci-page-load-${{ github.ref }}
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-
-      - name: Install
-        run: npm ci
-
+      - run: npm ci
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - name: Install Playwright browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
-
-      - name: Public pages load
+      - name: Install Playwright system deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      - run: npm run test:e2e:pages
         env:
           VITE_SUPABASE_URL: https://dummy.supabase.co
           VITE_SUPABASE_KEY: sb_publishable_dummy_key_for_page_load_smoke_only
-        run: npm run test:e2e:pages
-
-      - name: Upload Playwright report
-        if: ${{ failure() }}
+      - name: Upload test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-page-load
+          name: test-results-page-load
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
 
   e2e:
+    name: E2E
     needs: detect-secrets
     if: ${{ needs.detect-secrets.outputs.has_e2e == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    concurrency:
-      group: ci-e2e-${{ github.ref }}
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-
-      - name: Install
-        run: npm ci
-
+      - run: npm ci
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-webkit-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - name: Install Playwright browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium webkit
-
-      - name: E2E checks
+      - name: Install Playwright system deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium webkit
+      - run: npm run test:e2e
         env:
           VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           VITE_SUPABASE_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
@@ -122,46 +185,44 @@ jobs:
           SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
           E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
-        run: npm run test:e2e
-
-      - name: Upload Playwright report
-        if: ${{ failure() }}
+      - name: Upload test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: test-results-e2e
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
 
   deploy:
-    needs: [test, page-load, e2e, detect-secrets]
+    name: Deploy to Netlify
+    needs: [detect-secrets, lint, typecheck, unit, build, page-load, e2e]
     if: |
       always()
       && github.ref == 'refs/heads/main'
-      && needs.test.result == 'success'
+      && needs.lint.result == 'success'
+      && needs.typecheck.result == 'success'
+      && needs.unit.result == 'success'
+      && needs.build.result == 'success'
       && needs.page-load.result == 'success'
       && (needs.e2e.result == 'success' || needs.e2e.result == 'skipped')
       && needs.detect-secrets.outputs.has_netlify == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    concurrency:
-      group: ci-deploy-${{ github.ref }}
-      cancel-in-progress: true
+    timeout-minutes: 10
     steps:
+      # Netlify CLI bundles netlify/functions from the checkout at deploy time, so the
+      # repo and node_modules are still needed - only the SPA bundle comes from the artifact.
       - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-
-      - name: Install
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
+      - run: npm ci
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
       - name: Deploy to Netlify
         uses: netlify/actions/cli@master
         with:
