@@ -288,7 +288,7 @@ sequenceDiagram
   RT-->>App: cards flip, stats + consensus celebration
   Mod->>App: New round
   App->>DB: reset votes, phase = voting, round_started_at = now
-  Note over App,RT: tab hidden > 5 min closes Presence; visible again refetches state
+  Note over App,RT: tab hidden > 5 min closes Presence, visible again refetches state
   AC->>API: GET /api/<room>.json (Authorization: Bearer)
   API->>DB: rooms + round_history + players
   API-->>AC: rounds with average, DEV/QA alignment, per-player votes
