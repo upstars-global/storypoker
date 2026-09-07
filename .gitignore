@@ -17,6 +17,8 @@ dist/
 
 supabase/*
 !supabase/migrations
+!supabase/AGENTS.md
+!supabase/CLAUDE.md
 
 .netlify/*
 !.netlify/state.json
