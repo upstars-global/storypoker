@@ -7,6 +7,8 @@ import CardsArea from '~/components/CardsArea.vue'
 import JoinOverlay from '~/components/JoinOverlay.vue'
 import AppIcon from '~/components/AppIcon.vue'
 import { DECK_PRESETS, DEFAULT_PRESET_ID } from '~/utils/cardDecks'
+import { useAuthStore } from '~/stores/auth'
+import { useProfilesStore } from '~/stores/profiles'
 import { inputNames } from '~/utils/iconManifest'
 import {
   type HarnessRole,
@@ -26,9 +28,21 @@ const ready = ref(false)
 const countdownCounter = ref(0)
 const countdownRunning = ref(false)
 const sideWidget = ref<'timer' | 'slot'>('timer')
+const timerEvents = ref<string[]>([])
 const showJoin = ref(false)
 
+const HARNESS_USER_ID = 'icon-harness-user'
 const isModerator = computed(() => isModeratorRole(role))
+
+if (role === 'authorized-moderator') {
+  useAuthStore().user = { id: HARNESS_USER_ID, email: 'harness@example.test' } as never
+  useProfilesStore().profiles[HARNESS_USER_ID] = {
+    user_id: HARNESS_USER_ID,
+    avatar_style: 'bottts',
+    avatar_seed: 'icon-harness',
+    avatar_url: null,
+  }
+}
 const activeCards = DECK_PRESETS.find(preset => preset.id === DEFAULT_PRESET_ID)!.defaultActive
 
 const playersForUi = computed(() => players.value.map(player => ({
@@ -77,7 +91,7 @@ onMounted(async () => {
         :online-count="0"
         :is-moderator="isModerator"
         :player-name="role === 'guest' ? '' : 'Player 01'"
-        :player-user-id="null"
+        :player-user-id="role === 'authorized-moderator' ? HARNESS_USER_ID : null"
         :room-name="ROOM_NAME"
         :countdown-active="false"
         :countdown-counter="0"
@@ -89,7 +103,10 @@ onMounted(async () => {
         tabindex="-1"
         class="flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto outline-none"
       >
-        <div class="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-6">
+        <div
+          data-testid="side-column"
+          class="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-6"
+        >
           <PlayersList
             :players="playersForUi"
             phase="voting"
@@ -107,10 +124,17 @@ onMounted(async () => {
             :paused-elapsed-ms="0"
             :can-control="isModerator"
             @switch-widget="sideWidget = 'slot'"
+            @reset="timerEvents.push('reset')"
+            @pause="timerEvents.push('pause')"
+            @resume="timerEvents.push('resume')"
+            @adjust="(ms: number) => timerEvents.push(`adjust:${ms}`)"
           />
         </div>
 
-        <div class="flex-1 flex flex-col items-center justify-start">
+        <div
+          data-testid="cards-column"
+          class="flex-1 flex flex-col items-center justify-start"
+        >
           <CardsArea
             :active-cards="activeCards"
             :selected-vote="null"
