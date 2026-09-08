@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
@@ -101,9 +101,11 @@ const showLastRound = ref(false)
 const actionNotice = ref<string | null>(null)
 let actionNoticeTimer: ReturnType<typeof setTimeout> | undefined
 
-function showActionNotice(message: string) {
-  actionNotice.value = message
+async function showActionNotice(message: string) {
   clearTimeout(actionNoticeTimer)
+  actionNotice.value = null
+  await nextTick()
+  actionNotice.value = message
   actionNoticeTimer = setTimeout(() => { actionNotice.value = null }, 5000)
 }
 
