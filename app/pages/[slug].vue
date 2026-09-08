@@ -202,7 +202,7 @@ const isConsensus = computed(() => {
   return shouldCelebrate(voteCounts.value, groupedVoteCounts.value)
 })
 
-const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown } = useCountdown()
+const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown, playDecision } = useCountdown()
 
 function broadcastCountdownStart(mode: CountdownMode) {
   countdownChannel?.send({ type: 'broadcast', event: 'start', payload: { initiatorId: currentPlayerId.value, mode } })
@@ -328,6 +328,7 @@ watch(() => roomState.value?.phase, (phase, prev) => {
       deckPreset: roomState.value?.deck_preset ?? null,
     }
     showLastRound.value = false
+    if (prev === 'voting' && isConsensus.value) playDecision()
   }
   if (phase === 'voting' && prev === 'revealed') {
     lastRound.value = pendingSnapshot.value

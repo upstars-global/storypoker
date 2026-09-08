@@ -18,7 +18,7 @@ export function useCountdown() {
     let countdownTimeout: number | undefined = undefined
     let currentMode: CountdownMode = 'dry'
     let onCountdownComplete: (() => void) | undefined = undefined
-    let shouldPlayDecision: (() => boolean) | undefined = undefined
+    let hasConsensus: (() => boolean) | undefined = undefined
     const countdownTimerCounter = ref(0)
     const countdownTimerTotal = ref(0)
     const countdownActive = ref(false)
@@ -41,7 +41,7 @@ export function useCountdown() {
         countdownActive.value = false
         countdownRunning.value = false
         onCountdownComplete = undefined
-        shouldPlayDecision = undefined
+        hasConsensus = undefined
         resetAudio()
     }
 
@@ -73,19 +73,22 @@ export function useCountdown() {
         countdownTimerCounter.value = 0
         countdownActive.value = false
         countdownRunning.value = false
-        if (currentMode === 'wet') {
-            const endAudio = shouldPlayDecision?.() ? decisionAudio : ambienceAudio
-            if (endAudio) {
-                endAudio.currentTime = 0
-                endAudio.play()
-            }
+        if (currentMode === 'wet' && !hasConsensus?.() && ambienceAudio) {
+            ambienceAudio.currentTime = 0
+            ambienceAudio.play().catch(() => {})
         }
         onCountdownComplete?.()
         onCountdownComplete = undefined
-        shouldPlayDecision = undefined
+        hasConsensus = undefined
     }
 
-    function startCountdown(mode: CountdownMode, onComplete?: () => void, withDecision?: () => boolean) {
+    function playDecision() {
+        if (!decisionAudio) return
+        decisionAudio.currentTime = 0
+        decisionAudio.play().catch(() => {})
+    }
+
+    function startCountdown(mode: CountdownMode, onComplete?: () => void, withConsensus?: () => boolean) {
         if (countdownRunning.value) return
         const dry = countdownDryAudio
         const votePrompt = pleaseVoteAudio
@@ -95,7 +98,7 @@ export function useCountdown() {
         countdownRunning.value = true
         currentMode = mode
         onCountdownComplete = onComplete
-        shouldPlayDecision = withDecision
+        hasConsensus = withConsensus
         if (mode === 'silent') {
             beginTimer(COUNTDOWN_FALLBACK_SECONDS)
         } else if (mode === 'dry' && dry) {
@@ -128,5 +131,6 @@ export function useCountdown() {
         countdownRunning,
         startCountdown,
         stopCountdown,
+        playDecision,
     }
 }
