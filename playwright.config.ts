@@ -41,14 +41,19 @@ export default defineConfig({
       testMatch: ['**/page-load.spec.ts'],
     },
     {
+      name: 'icon-delivery',
+      use: devices['Desktop Chrome'],
+      testMatch: ['**/icon-delivery.spec.ts'],
+    },
+    {
       name: 'chromium',
       use: devices['Desktop Chrome'],
-      testIgnore: ['**/page-load.spec.ts'],
+      testIgnore: ['**/page-load.spec.ts', '**/icon-delivery.spec.ts'],
     },
     {
       name: 'webkit',
       use: devices['Desktop Safari'],
-      testIgnore: ['**/critical-flows.spec.ts', '**/page-load.spec.ts'],
+      testIgnore: ['**/critical-flows.spec.ts', '**/page-load.spec.ts', '**/icon-delivery.spec.ts'],
     },
   ],
   webServer: process.env.E2E_BASE_URL

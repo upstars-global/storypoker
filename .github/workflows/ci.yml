@@ -138,7 +138,7 @@ jobs:
       - name: Install Playwright system deps
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
-      - run: npm run test:e2e:pages
+      - run: npx playwright test --project page-load --project icon-delivery
         env:
           VITE_SUPABASE_URL: https://dummy.supabase.co
           VITE_SUPABASE_KEY: sb_publishable_dummy_key_for_page_load_smoke_only
