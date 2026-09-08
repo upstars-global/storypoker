@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import ConnectionBanner from '~/components/ConnectionBanner.vue'
+import { useSoundVolume } from '~/composables/useSoundVolume'
 import { useTheme } from '~/composables/useTheme'
 
 const { init } = useTheme()
+useSoundVolume().initVolume()
 onMounted(() => init())
 </script>
 
