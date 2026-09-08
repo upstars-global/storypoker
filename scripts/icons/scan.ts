@@ -18,7 +18,7 @@ export interface DeclaredBinding {
   names: readonly string[]
 }
 
-const ICON_NAME = /^[a-z][a-z0-9-]*:[a-z0-9][a-z0-9-]*$/
+const ICON_NAME = /^(?:ic|lucide|tabler|app|simple-icons|game-icons):[a-z0-9][a-z0-9-]*$/
 
 function normalizeExpression(expression: string): string {
   return expression.replace(/\s+/g, ' ').trim()
@@ -67,12 +67,6 @@ function collectFromTemplate(node: TemplateChildNode, file: string, usage: IconU
     }
     for (const child of node.children) collectFromTemplate(child, file, usage)
     return
-  }
-  if (node.type === 11 || node.type === 9) {
-    const branches = node.type === 9 ? node.branches : [node]
-    for (const branch of branches) {
-      for (const child of branch.children) collectFromTemplate(child as TemplateChildNode, file, usage)
-    }
   }
 }
 

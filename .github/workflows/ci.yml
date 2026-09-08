@@ -102,6 +102,13 @@ jobs:
       - run: npm run build
       - name: Audit the icon delivery graph
         run: npm run icons:audit-build
+      - name: Upload icon audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-bundle-audit
+          path: test-results/icon-rendering/
+          retention-days: 7
       # The deploy job reuses this exact bundle instead of building a second time.
       - name: Upload dist
         uses: actions/upload-artifact@v4

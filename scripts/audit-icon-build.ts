@@ -40,7 +40,6 @@ for (const file of artifacts) {
   if (!file.endsWith('.js')) continue
   const mapPath = `${file}.map`
   if (!existsSync(mapPath)) {
-    // registerSW.js is a vite-plugin-pwa shim emitted outside the bundled app graph.
     if (relative(distDir, file) === 'registerSW.js') continue
     console.error(`missing sourcemap for ${relative(distDir, file)}`)
     process.exit(1)
@@ -52,11 +51,13 @@ for (const file of artifacts) {
   }
 }
 
-const entryFile = files.find(file => /(^|\/)assets\/index-[^/]+\.js$/.test(file.path))
-if (!entryFile) {
-  console.error('could not identify the entry chunk')
+const entryCandidates = files.filter(file => /(^|\/)assets\/index-[^/]+\.js$/.test(file.path))
+if (entryCandidates.length !== 1) {
+  console.error(`expected exactly one entry chunk, found ${entryCandidates.length}: `
+    + entryCandidates.map(file => file.path).join(', '))
   process.exit(1)
 }
+const entryFile = entryCandidates[0]!
 
 const baselineGzipBytes: number = JSON.parse(readFileSync(baselinePath, 'utf8')).entryChunk.gzipBytes
 const deltaGzipBytes = entryFile.gzipBytes - baselineGzipBytes
