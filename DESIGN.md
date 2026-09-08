@@ -466,6 +466,9 @@ round_history (
 - `2.5 ≤ x ≤ 3.5` - жовтий `#fbc02d`
 - `< 2.5` - червоний `#e64a19`
 
+Пороги `3.5` / `2.5` - продуктове рішення власника, а не похідна з даних; у коді вони живуть як
+`GOAL_CLARITY_THRESHOLDS` (`app/utils/cardDecks.ts`) поруч із пресетом, і зсув межі означає зміну саме там.
+
 При результаті `≤ 3.5` - підказка `results.goalClarityHint` ("переформулювати Sprint Goal або критерії DoD"). Той самий кольоровий triplet, що й `alignmentLevel`/`levelColor` у `AlignmentTrendsModal.vue`.
 
 ### 11.8 Слот-машина (`SlotMachine.vue`)

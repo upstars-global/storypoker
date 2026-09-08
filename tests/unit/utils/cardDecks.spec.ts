@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { getDeck } from '~/utils/cardDecks'
+import { getDeck, GOAL_CLARITY_THRESHOLDS } from '~/utils/cardDecks'
 
 describe('cardDecks', () => {
+  it('exposes the goal clarity thresholds as named constants', () => {
+    expect(GOAL_CLARITY_THRESHOLDS).toEqual({ clear: 3.5, unclear: 2.5 })
+  })
+
   it('includes optional joint and beer cards in scrum scale', () => {
     const scrum = getDeck('scrum')
 

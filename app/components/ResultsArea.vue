@@ -5,6 +5,7 @@ import { createCelebrationParticles, shouldCelebrateGroupedVotes } from '~/utils
 import { useI18n } from 'vue-i18n'
 import { useCardLabel } from '~/composables/useCardLabel'
 import { averageOf } from '~/utils/roundStats'
+import { GOAL_CLARITY_THRESHOLDS } from '~/utils/cardDecks'
 
 const props = defineProps<{
   votes: Record<string, number>
@@ -50,14 +51,14 @@ const goalClarityAverage = computed(() => props.goalClarityScore ? averageOf(pro
 const goalClarityScoreColor = computed(() => {
   const n = Number(goalClarityAverage.value)
   if (!Number.isFinite(n)) return '#546e7a'
-  if (n > 3.5) return '#43a047'
-  if (n < 2.5) return '#e64a19'
+  if (n > GOAL_CLARITY_THRESHOLDS.clear) return '#43a047'
+  if (n < GOAL_CLARITY_THRESHOLDS.unclear) return '#e64a19'
   return '#fbc02d'
 })
 
 const showGoalClarityHint = computed(() => {
   const n = Number(goalClarityAverage.value)
-  return Number.isFinite(n) && n <= 3.5
+  return Number.isFinite(n) && n <= GOAL_CLARITY_THRESHOLDS.clear
 })
 
 const groups = computed(() => {
