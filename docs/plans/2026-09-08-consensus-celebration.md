@@ -38,6 +38,7 @@
 - Modify: `app/components/ResultsArea.vue:4,75`
 - Modify: `app/pages/[slug].vue:21,200-206`
 - Test: `tests/unit/utils/resultCelebration.spec.ts:1-61`
+- Test: `tests/unit/components/ResultsArea.spec.ts` (новий)
 
 **Interfaces:**
 - Consumes: нічого з попередніх задач
@@ -119,6 +120,68 @@ describe('resultCelebration', () => {
 Run: `npx vitest run tests/unit/utils/resultCelebration.spec.ts`
 Expected: FAIL - `shouldCelebrate` не експортується з `~/utils/resultCelebration`.
 
+- [ ] **Step 1.2a: Write the failing component test**
+
+Регресійний тест на дефект зі спеки: живий `<ResultsArea>` отримує `:grouped-votes="groupedVoteCounts"`, а той
+`null` без QA-гравців, тож старий предикат ніколи не показував конфеті в кімнаті без ролей. Фікстура монтування
+повторює `tests/unit/components/CardsArea.spec.ts`; `PieChart` - чистий SVG, але стаб прибирає зайвий рендер.
+
+`tests/unit/components/ResultsArea.spec.ts`:
+
+```ts
+import { describe, it, expect } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
+import ResultsArea from '~/components/ResultsArea.vue'
+
+const i18n = createI18n({
+  legacy: false,
+  locale: 'en',
+  missingWarn: false,
+  fallbackWarn: false,
+  messages: { en: {} },
+})
+
+function mountResults(props: Record<string, unknown>) {
+  return mount(ResultsArea, {
+    props: { showNewRound: false, ...props },
+    global: {
+      plugins: [i18n],
+      directives: { wave: {} },
+      stubs: { AppIcon: true, PieChart: true, AppTooltip: true },
+    },
+  })
+}
+
+describe('ResultsArea celebration without a qa split', () => {
+  it('celebrates when every vote matches and grouped votes are absent', () => {
+    const wrapper = mountResults({ votes: { '5': 3 }, groupedVotes: null })
+    expect(wrapper.find('.celebration-layer').exists()).toBe(true)
+  })
+
+  it('does not celebrate a single voter', () => {
+    const wrapper = mountResults({ votes: { '5': 1 }, groupedVotes: null })
+    expect(wrapper.find('.celebration-layer').exists()).toBe(false)
+  })
+
+  it('does not celebrate mixed votes', () => {
+    const wrapper = mountResults({ votes: { '5': 2, '8': 1 }, groupedVotes: null })
+    expect(wrapper.find('.celebration-layer').exists()).toBe(false)
+  })
+
+  it('respects disableCelebration for the last round view', () => {
+    const wrapper = mountResults({ votes: { '5': 3 }, groupedVotes: null, disableCelebration: true })
+    expect(wrapper.find('.celebration-layer').exists()).toBe(false)
+  })
+})
+```
+
+- [ ] **Step 1.2b: Run the component test to verify it fails**
+
+Run: `npx vitest run tests/unit/components/ResultsArea.spec.ts`
+Expected: FAIL - перший тест (`celebrates when every vote matches and grouped votes are absent`): на HEAD
+`celebrate` ігнорує `votes`, тож `.celebration-layer` відсутній.
+
 - [ ] **Step 1.3: Implement the predicate**
 
 У `app/utils/resultCelebration.ts` заміни `getUnanimousVote`, `hasVotes` і `shouldCelebrateGroupedVotes`
@@ -141,7 +204,7 @@ export function shouldCelebrate(votes: VoteCounts, grouped: {
 
 `type VoteCounts`, `interface CelebrationParticle` і `createCelebrationParticles` не змінюються.
 
-- [ ] **Step 1.4: Run tests to verify they pass**
+- [ ] **Step 1.4: Run the predicate tests to verify they pass**
 
 Run: `npx vitest run tests/unit/utils/resultCelebration.spec.ts`
 Expected: PASS (15 тестів).
@@ -159,6 +222,11 @@ import { createCelebrationParticles, shouldCelebrate } from '~/utils/resultCeleb
 ```ts
 const celebrate = computed(() => !props.disableCelebration && shouldCelebrate(props.votes, props.groupedVotes))
 ```
+
+- [ ] **Step 1.5a: Run the component test to verify it passes**
+
+Run: `npx vitest run tests/unit/components/ResultsArea.spec.ts`
+Expected: PASS (4 тести).
 
 - [ ] **Step 1.6: Switch [slug].vue to the new predicate**
 
@@ -180,6 +248,11 @@ const isConsensus = computed(() => {
 `voteCounts` і `groupedVoteCounts` оголошені нижче (`:215`, `:223`), але це `computed` - hoisting через
 `const` у setup-скоупі працює, бо звернення відкладене до першого читання `isConsensus`.
 
+Джерело голосів для `isConsensus` свідомо змінюється: замість `playersForUi` (містить `pendingVotes` через
+`voteOf` і підміну `showLastRound`, `[slug].vue:123-130`) береться `voteCounts` з `visiblePlayers` - те саме, що
+бачить `celebrate` у `ResultsArea`. Watcher фази очищує `pendingVotes` до рядка зі звуком (Task 2), тож звук і
+салют читають однакові дані.
+
 - [ ] **Step 1.7: Verify no stale references remain**
 
 Run: `rg 'shouldCelebrateGroupedVotes' app tests`
@@ -194,7 +267,7 @@ Expected: PASS обидва.
 
 ```bash
 git add app/utils/resultCelebration.ts app/components/ResultsArea.vue app/pages/\[slug\].vue \
-  tests/unit/utils/resultCelebration.spec.ts
+  tests/unit/utils/resultCelebration.spec.ts tests/unit/components/ResultsArea.spec.ts
 git commit -m "feat: require at least two matching votes for a consensus celebration"
 ```
 
@@ -212,11 +285,17 @@ git commit -m "feat: require at least two matching votes for a consensus celebra
 
 - [ ] **Step 2.1: Move the decision sound out of finishCountdown**
 
-`app/composables/useCountdown.ts` - у `finishCountdown` заміни блок `if (currentMode === 'wet') { … }`
-(рядки 74-81) на:
+`app/composables/useCountdown.ts` має 4-пробільний відступ (виняток з Global Constraints, файл не
+переформатовується); сніпети нижче повторюють його.
+
+Спершу перейменування, бо після цього кроку колбек більше не вмикає decision-звук, а лише глушить `ambience`:
+`shouldPlayDecision` → `hasConsensus` (рядки 21, 44, 85, 98) і параметр `withDecision` → `hasConsensus` у
+сигнатурі `startCountdown` (рядок 88). Виклик у `[slug].vue:411` передає колбек позиційно і не змінюється.
+
+Далі у `finishCountdown` заміни блок `if (currentMode === 'wet') { … }` (рядки 76-82) на:
 
 ```ts
-        if (currentMode === 'wet' && !shouldPlayDecision?.() && ambienceAudio) {
+        if (currentMode === 'wet' && !hasConsensus?.() && ambienceAudio) {
             ambienceAudio.currentTime = 0
             ambienceAudio.play().catch(() => {})
         }
@@ -273,8 +352,8 @@ const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRu
 
 - [ ] **Step 2.5: Verify no test asserts the old wet-mode behavior**
 
-Run: `rg 'decisionAudio|the-decision-has-been-made|shouldPlayDecision' tests`
-Expected: без збігів (тестів на `useCountdown` наразі немає).
+Run: `rg 'decisionAudio|the-decision-has-been-made|shouldPlayDecision|withDecision' app tests`
+Expected: збіги лише в `app/composables/useCountdown.ts` (`decisionAudio`); тестів на `useCountdown` наразі немає.
 
 - [ ] **Step 2.6: Run typecheck and the unit suite**
 
@@ -290,7 +369,11 @@ Expected: PASS обидва.
 2. Голоси різні → Reveal → тиша.
 3. Countdown «з атмосферою» при консенсусі → в кінці звучить рішення (один раз, не двічі).
 4. Countdown «з атмосферою» без консенсусу → `ambience`.
-5. Перезавантаж вкладку в уже розкритій кімнаті → тиші (гард `prev === 'voting'`).
+5. Перезавантаж вкладку в уже розкритій кімнаті → тиша (гард `prev === 'voting'`).
+6. Розірви з'єднання під час голосування (offline у DevTools), reveal з іншої вкладки, віднови з'єднання → звук
+   грає один раз після реконекту: `fetchInitialData` у watcher-і `connectionStatus` (`[slug].vue:304-308`) дає
+   пізній перехід `voting → revealed`. Прийнято як очікувана поведінка. Прихована вкладка з живим сокетом
+   отримує reveal одразу, тож на `visibilitychange` перехід уже `revealed → revealed` і звук не повторюється.
 
 - [ ] **Step 2.8: Commit**
 
@@ -305,12 +388,14 @@ git commit -m "feat: play the decision sound on every consensus reveal"
 
 **Files:**
 - Create: `app/composables/useSoundVolume.ts`
+- Modify: `app/App.vue:2-7`
 - Test: `tests/unit/composables/useSoundVolume.spec.ts` (новий)
 
 **Interfaces:**
 - Consumes: нічого з попередніх задач
-- Produces: `useSoundVolume(): { volume: Ref<number>, setVolume: (value: number) => void }` - `volume` у діапазоні
-  `0`–`1`; використовується Task 4 (`useCountdown`, `SlotMachine`) і Task 5 (слайдер)
+- Produces: `useSoundVolume(): { volume: Ref<number>, initVolume: () => void, setVolume: (value: number) => void }`
+  - `volume` у діапазоні `0`–`1`; `initVolume` викликається один раз в `App.vue`; `volume`/`setVolume`
+  використовуються Task 4 (`useCountdown`, `SlotMachine`) і Task 5 (слайдер)
 
 - [ ] **Step 3.1: Write the failing test**
 
@@ -413,15 +498,33 @@ export function useSoundVolume() {
 Run: `npx vitest run tests/unit/composables/useSoundVolume.spec.ts`
 Expected: PASS (6 тестів).
 
-- [ ] **Step 3.5: Run typecheck and the unit suite**
+- [ ] **Step 3.5: Initialise the stored volume at startup**
+
+`app/App.vue` - виклик синхронно в setup кореневого компонента: `initVolume` лише читає `localStorage` у
+`try/catch`, DOM йому не потрібен, а setup `App` виконується раніше за setup і `onMounted` будь-якої сторінки
+(`onMounted` дочірнього компонента спрацьовує раніше за батьківський, тому туди `initVolume` не кладемо). Заміни
+рядки 2-7 на:
+
+```ts
+import { onMounted } from 'vue'
+import ConnectionBanner from '~/components/ConnectionBanner.vue'
+import { useSoundVolume } from '~/composables/useSoundVolume'
+import { useTheme } from '~/composables/useTheme'
+
+const { init } = useTheme()
+useSoundVolume().initVolume()
+onMounted(() => init())
+```
+
+- [ ] **Step 3.6: Run typecheck and the unit suite**
 
 Run: `npm run typecheck && npm run test:unit`
 Expected: PASS обидва.
 
-- [ ] **Step 3.6: Commit**
+- [ ] **Step 3.7: Commit**
 
 ```bash
-git add app/composables/useSoundVolume.ts tests/unit/composables/useSoundVolume.spec.ts
+git add app/composables/useSoundVolume.ts app/App.vue tests/unit/composables/useSoundVolume.spec.ts
 git commit -m "feat: add a persisted sound volume composable"
 ```
 
@@ -435,7 +538,7 @@ git commit -m "feat: add a persisted sound volume composable"
 - Test: `tests/unit/composables/useCountdown.spec.ts` (новий)
 
 **Interfaces:**
-- Consumes: `useSoundVolume()` з Task 3, `playDecision` з Task 2
+- Consumes: `useSoundVolume()` з Task 3
 - Produces: нічого для інших задач
 
 - [ ] **Step 4.1: Write the failing test**
@@ -444,7 +547,7 @@ git commit -m "feat: add a persisted sound volume composable"
 `Audio` в `onMounted`:
 
 ```ts
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { defineComponent, nextTick } from 'vue'
 import { useCountdown } from '~/composables/useCountdown'
@@ -475,6 +578,10 @@ describe('useCountdown volume', () => {
     localStorage.clear()
     vi.stubGlobal('Audio', FakeAudio)
     useSoundVolume().setVolume(1)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('applies the stored volume to every audio element on mount', () => {
@@ -546,13 +653,23 @@ import { useSoundVolume } from '~/composables/useSoundVolume'
 const { volume: soundVolume } = useSoundVolume()
 ```
 
-У `playTick` (рядок 49) заміни рядок `gain.gain.setValueAtTime(0.045, audioCtx.currentTime)` на:
+У `playTick` (рядки 43-49) додай ранній вихід першим рядком функції і заміни рядок
+`gain.gain.setValueAtTime(0.045, audioCtx.currentTime)`:
 
 ```ts
+function playTick() {
+  if (soundVolume.value === 0) return
+  audioCtx ??= new AudioContext()
+  const osc = audioCtx.createOscillator()
+  const gain = audioCtx.createGain()
+  osc.type = 'triangle'
+  osc.frequency.value = 1400
   gain.gain.setValueAtTime(0.045 * soundVolume.value, audioCtx.currentTime)
 ```
 
-Множник зберігає відносну тихість тіку: на повній гучності поведінка не змінюється.
+Решта функції (`exponentialRampToValueAtTime`, `connect`, `start`, `stop`) без змін. Множник зберігає відносну
+тихість тіку: на повній гучності поведінка не змінюється. Ранній вихід при `0` не створює `AudioContext` заради
+тиші.
 
 - [ ] **Step 4.6: Run typecheck and the unit suite**
 
@@ -573,6 +690,7 @@ git commit -m "feat: apply the volume setting to countdown and slot sounds"
 
 **Files:**
 - Modify: `app/components/AppHeader.vue:1-12,88-108,140-150`
+- Modify: `app/utils/iconMap.ts:31`
 - Modify: `app/i18n/locales/uk.json` (секція `header`)
 - Modify: `app/i18n/locales/en.json` (секція `header`)
 - Test: `tests/e2e/page-load.spec.ts` (додати тест)
@@ -586,16 +704,23 @@ git commit -m "feat: apply the volume setting to countdown and slot sounds"
 
 - [ ] **Step 5.1: Add i18n keys**
 
-`app/i18n/locales/uk.json`, у секцію `"header"` (поруч з `"themePalette"`):
+`"themePalette"` - останній ключ секції `"header"` в обох файлах (`uk.json:32`, `en.json:32`) і стоїть без
+коми. Додай кому після нього і встав `"volume"` новим останнім ключем без коми в кінці.
+
+`app/i18n/locales/uk.json`:
 
 ```json
-    "volume": "Гучність звуку",
+    "themePalette": "Кольорова тема",
+    "volume": "Гучність звуку"
+  },
 ```
 
-`app/i18n/locales/en.json`, у секцію `"header"`:
+`app/i18n/locales/en.json`:
 
 ```json
-    "volume": "Sound volume",
+    "themePalette": "Color theme",
+    "volume": "Sound volume"
+  },
 ```
 
 Перевір валідність обох файлів:
@@ -647,10 +772,25 @@ import { useClickOutside } from '~/composables/useClickOutside'
 ```ts
 const { volume, setVolume } = useSoundVolume()
 const volumeRef = ref<HTMLElement | null>(null)
+const volumeButtonRef = ref<HTMLButtonElement | null>(null)
+const volumeSliderRef = ref<HTMLInputElement | null>(null)
 const volumeOpen = ref(false)
 useClickOutside(volumeRef, () => { volumeOpen.value = false })
 
 const volumePercent = computed(() => Math.round(volume.value * 100))
+
+async function toggleVolume() {
+  volumeOpen.value = !volumeOpen.value
+  if (!volumeOpen.value) return
+  await nextTick()
+  volumeSliderRef.value?.focus()
+}
+
+function closeVolume() {
+  if (!volumeOpen.value) return
+  volumeOpen.value = false
+  volumeButtonRef.value?.focus()
+}
 
 function onVolumeInput(event: Event) {
   const target = event.target as HTMLInputElement
@@ -658,7 +798,9 @@ function onVolumeInput(event: Event) {
 }
 ```
 
-`ref` і `computed` уже імпортовані з `vue` (рядок 3).
+`ref` і `computed` уже імпортовані з `vue` (рядок 3); додай до того самого імпорту `nextTick`. Контракт фокуса:
+відкриття переносить фокус на слайдер, Escape повертає його на кнопку (без цього `v-if` зняв би поповер разом із
+фокусованим елементом і фокус упав би на `<body>`), клік поза поповером закриває без зміни фокуса.
 
 - [ ] **Step 5.5: Add the trigger and popover to the template**
 
@@ -669,16 +811,17 @@ function onVolumeInput(event: Event) {
       <div
         ref="volumeRef"
         style="position: relative;"
-        @keydown.escape.stop="volumeOpen = false"
+        @keydown.escape.stop="closeVolume"
       >
         <button
+          ref="volumeButtonRef"
           v-wave
           class="mui-icon-btn text-appbar-emphasis"
           style="--hover-bg: rgba(255,255,255,0.08);"
           :aria-label="$t('header.volume')"
           :aria-expanded="volumeOpen"
           data-testid="volume-button"
-          @click="volumeOpen = !volumeOpen"
+          @click="toggleVolume"
         >
           <AppIcon
             :icon="volume === 0 ? 'ic:baseline-volume-off' : 'ic:baseline-volume-up'"
@@ -691,6 +834,7 @@ function onVolumeInput(event: Event) {
           style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 180px;"
         >
           <input
+            ref="volumeSliderRef"
             type="range"
             class="w-full"
             min="0"
@@ -705,16 +849,14 @@ function onVolumeInput(event: Event) {
       </div>
 ```
 
-- [ ] **Step 5.6: Initialise the stored volume at startup**
+- [ ] **Step 5.6: Map the new icon for the Lucide flag**
 
-`app/components/AppHeader.vue` - у Step 5.4 деструктуризацію заміни на:
+`app/components/AGENTS.md` вимагає для кожної нової `ic:baseline-*` іконки запис у `MDI_TO_LUCIDE`.
+`ic:baseline-volume-off` уже є (`app/utils/iconMap.ts:31`); одразу після нього додай:
 
 ```ts
-const { volume, setVolume, initVolume } = useSoundVolume()
-initVolume()
+  'ic:baseline-volume-up': 'lucide:volume-2',
 ```
-
-Виклик у setup безпечний: `initVolume` лише читає `localStorage` у `try/catch`.
 
 - [ ] **Step 5.7: Run the e2e test to verify it passes**
 
@@ -731,114 +873,29 @@ Expected: PASS; `vue/attributes-order` може дати нові warnings че�
 - [ ] **Step 5.9: Commit**
 
 ```bash
-git add app/components/AppHeader.vue app/i18n/locales/uk.json app/i18n/locales/en.json \
+git add app/components/AppHeader.vue app/utils/iconMap.ts app/i18n/locales/uk.json app/i18n/locales/en.json \
   tests/e2e/page-load.spec.ts
 git commit -m "feat: add a volume slider to the app header"
 ```
 
 ---
 
-### Task 6: Салют без QA-розщеплення
-
-**Files:**
-- Test: `tests/unit/components/ResultsArea.spec.ts` (новий)
-
-**Interfaces:**
-- Consumes: `shouldCelebrate` з Task 1
-- Produces: нічого для інших задач
-
-Це регресійний тест на дефект, який Task 1 виправив як побічний ефект: живий `<ResultsArea>` отримує
-`:grouped-votes="groupedVoteCounts"`, а той `null` без QA-гравців, тож старий предикат ніколи не показував
-конфеті в кімнаті без ролей. Окремої правки коду тут немає - лише шов, що фіксує поведінку.
-
-- [ ] **Step 6.1: Write the test**
-
-`tests/unit/components/ResultsArea.spec.ts`:
-
-```ts
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createI18n } from 'vue-i18n'
-import ResultsArea from '~/components/ResultsArea.vue'
-
-const i18n = createI18n({
-  legacy: false,
-  locale: 'en',
-  missingWarn: false,
-  fallbackWarn: false,
-  messages: { en: {} },
-})
-
-function mountResults(props: Record<string, unknown>) {
-  return mount(ResultsArea, {
-    props: { showNewRound: false, ...props },
-    global: {
-      plugins: [i18n],
-      directives: { wave: {} },
-      stubs: { AppIcon: true, PieChart: true, AppTooltip: true },
-    },
-  })
-}
-
-describe('ResultsArea celebration without a qa split', () => {
-  it('celebrates when every vote matches and grouped votes are absent', () => {
-    const wrapper = mountResults({ votes: { '5': 3 }, groupedVotes: null })
-    expect(wrapper.find('.celebration-layer').exists()).toBe(true)
-  })
-
-  it('does not celebrate a single voter', () => {
-    const wrapper = mountResults({ votes: { '5': 1 }, groupedVotes: null })
-    expect(wrapper.find('.celebration-layer').exists()).toBe(false)
-  })
-
-  it('does not celebrate mixed votes', () => {
-    const wrapper = mountResults({ votes: { '5': 2, '8': 1 }, groupedVotes: null })
-    expect(wrapper.find('.celebration-layer').exists()).toBe(false)
-  })
-
-  it('respects disableCelebration for the last round view', () => {
-    const wrapper = mountResults({ votes: { '5': 3 }, groupedVotes: null, disableCelebration: true })
-    expect(wrapper.find('.celebration-layer').exists()).toBe(false)
-  })
-})
-```
-
-- [ ] **Step 6.2: Run the test**
-
-Run: `npx vitest run tests/unit/components/ResultsArea.spec.ts`
-Expected: PASS (4 тести). Якщо перший тест падає - Task 1 застосований неповно; перевір
-`ResultsArea.vue:75`.
-
-- [ ] **Step 6.3: Run typecheck and the unit suite**
-
-Run: `npm run typecheck && npm run test:unit`
-Expected: PASS обидва.
-
-- [ ] **Step 6.4: Commit**
-
-```bash
-git add tests/unit/components/ResultsArea.spec.ts
-git commit -m "test: cover the consensus celebration without a qa split"
-```
-
----
-
-### Task 7: Документація
+### Task 6: Документація
 
 **Files:**
 - Modify: `AGENTS.md:120-122,137-139`
 - Modify: `app/utils/AGENTS.md`
 - Modify: `DESIGN.md:450`
-- Modify: `docs/specs/2026-09-08-consensus-celebration-design.md:4`
+- Modify: `docs/specs/2026-09-08-consensus-celebration-design.md:4,58`
 
 **Interfaces:**
-- Consumes: фінальну поведінку з Task 1-6
+- Consumes: фінальну поведінку з Task 1-5
 - Produces: нічого
 
 Кореневий `AGENTS.md` - рівно 150 рядків при ліміті 150. Нова строка в таблиці LocalStorage компенсується
 скороченням буллета Consensus, деталь якого переїжджає в `app/utils/AGENTS.md` (36 рядків, ліміт 200).
 
-- [ ] **Step 7.1: Move the consensus detail to app/utils/AGENTS.md**
+- [ ] **Step 6.1: Move the consensus detail to app/utils/AGENTS.md**
 
 `app/utils/AGENTS.md` - додай наприкінці файлу:
 
@@ -851,7 +908,7 @@ git commit -m "test: cover the consensus celebration without a qa split"
 Поріг ≥ 2 узгоджений з `DESIGN.md` §11: рядок `round_history` теж пишеться лише при `votes.length >= 2`.
 ```
 
-- [ ] **Step 7.2: Shorten the root Consensus bullet**
+- [ ] **Step 6.2: Shorten the root Consensus bullet**
 
 `AGENTS.md:137-139` - заміни три рядки буллета Consensus на два:
 
@@ -860,7 +917,7 @@ git commit -m "test: cover the consensus celebration without a qa split"
   групі (DEV/QA), без нього - серед усіх голосів. Деталі - `app/utils/AGENTS.md`
 ```
 
-- [ ] **Step 7.3: Add the sp-volume row**
+- [ ] **Step 6.3: Add the sp-volume row**
 
 `AGENTS.md`, таблиця LocalStorage (після рядка `sp-side-widget`):
 
@@ -868,25 +925,26 @@ git commit -m "test: cover the consensus celebration without a qa split"
 | `sp-volume` | `0`–`1`, гучність усіх звуків; дефолт `1`. Читається/пишеться `useSoundVolume()` |
 ```
 
-- [ ] **Step 7.4: Verify the line budget**
+- [ ] **Step 6.4: Verify the line budget**
 
 Run: `wc -l AGENTS.md app/utils/AGENTS.md`
 Expected: `AGENTS.md` ≤ 150, `app/utils/AGENTS.md` ≤ 200.
 
-Run: `awk 'length > 120 { print FILENAME ":" NR }' AGENTS.md app/utils/AGENTS.md`
-Expected: без виводу.
+Run: `perl -CSD -lne 'print "$ARGV:$." if length > 120' AGENTS.md app/utils/AGENTS.md`
+Expected: без виводу. Саме `perl -CSD -l`: BSD `awk` на macOS рахує байти, а не символи, і на HEAD хибно
+позначає 49 рядків кореневого файлу; без `-l` рядки рівно у 120 символів рахуються як 121.
 
-- [ ] **Step 7.5: Update DESIGN.md**
+- [ ] **Step 6.5: Update DESIGN.md**
 
 `DESIGN.md:450` - заміни рядок про decision-sound на:
 
 ```markdown
-- Звук `decision-sound` грає при кожному reveal з консенсусом (перехід `voting → revealed`), незалежно від режиму
-  countdown; у режимі "з атмосферою" по завершенню грає `ambience.mp3`, якщо консенсусу немає. Гучність усіх звуків
-  керується слайдером у шапці (`sp-volume`)
+- Звук `decision-sound` грає при кожному reveal з консенсусом (перехід `voting → revealed`), незалежно від режиму countdown; у режимі "з атмосферою" по завершенню грає `ambience.mp3`, якщо консенсусу немає. Гучність усіх звуків керується слайдером у шапці (`sp-volume`)
 ```
 
-- [ ] **Step 7.6: Mark the spec as implemented**
+Один довгий рядок, як у сусідніх пунктах списку `DESIGN.md`; ліміт 120 символів на нього не поширюється.
+
+- [ ] **Step 6.6: Mark the spec as implemented**
 
 `docs/specs/2026-09-08-consensus-celebration-design.md:4`:
 
@@ -894,7 +952,11 @@ Expected: без виводу.
 **Статус:** реалізовано (план - `docs/plans/2026-09-08-consensus-celebration.md`)
 ```
 
-- [ ] **Step 7.7: Commit**
+`docs/specs/2026-09-08-consensus-celebration-design.md:58` - у рядку «Доступність слайдера» заміни
+`settings.volume` на `header.volume`: простору імен `settings` у локалях немає, ключ живе поруч з іншими
+рядками шапки.
+
+- [ ] **Step 6.7: Commit**
 
 ```bash
 git add AGENTS.md app/utils/AGENTS.md DESIGN.md docs/specs/2026-09-08-consensus-celebration-design.md
@@ -903,21 +965,21 @@ git commit -m "docs: describe the consensus rule, reveal sound and volume settin
 
 ---
 
-### Task 8: Фінальна перевірка
+### Task 7: Фінальна перевірка
 
 **Files:** немає змін
 
-- [ ] **Step 8.1: Run the CI check**
+- [ ] **Step 7.1: Run the CI check**
 
 Run: `npm run test:ci`
 Expected: exit 0; lint - 0 errors (warnings на рівні 72), typecheck чистий, unit усі зелені, build успішний.
 
-- [ ] **Step 8.2: Run the page-load e2e suite**
+- [ ] **Step 7.2: Run the page-load e2e suite**
 
 Run: `VITE_SUPABASE_URL=https://dummy.supabase.co VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only npm run test:e2e:pages`
 Expected: PASS усі тести.
 
-- [ ] **Step 8.3: Confirm the tree is clean**
+- [ ] **Step 7.3: Confirm the tree is clean**
 
 Run: `git status --porcelain`
 Expected: без виводу.
