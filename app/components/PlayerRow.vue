@@ -292,6 +292,7 @@ const playerAvatar = computed(() => {
         v-wave
         class="mui-icon-btn"
         style="padding: 4px; border: none; box-shadow: none;"
+        :aria-label="$t('players.menuFor', { name: player.name })"
         :aria-expanded="menuOpen"
         @click="menuOpen = !menuOpen"
       >

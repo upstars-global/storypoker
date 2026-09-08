@@ -143,6 +143,7 @@
     "nameLabel": "Імʼя",
     "leaveRoom": "Покинути кімнату",
     "kickPlayer": "Вилучити гравця",
+    "menuFor": "Меню гравця: {name}",
     "moderatorLabel": "модератор",
     "moderatorOf": "{name} є модератором цієї кімнати",
     "moderator": "Модератор",

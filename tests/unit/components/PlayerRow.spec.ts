@@ -10,7 +10,7 @@ const i18n = createI18n({
   fallbackLocale: 'en',
   missingWarn: false,
   fallbackWarn: false,
-  messages: { en: {} },
+  messages: { en: { players: { menuFor: 'Player menu: {name}' } } },
 })
 
 function mountRow() {
@@ -71,5 +71,12 @@ describe('PlayerRow menu keyboard support', () => {
     await openMenu(wrapper)
     await wrapper.get('[role="menu"]').trigger('keydown', { key: 'Escape' })
     expect(wrapper.find('[role="menu"]').exists()).toBe(false)
+  })
+})
+
+describe('PlayerRow menu button name', () => {
+  it('names the menu button after the player', () => {
+    const wrapper = mountRow()
+    expect(wrapper.get('button[aria-expanded]').attributes('aria-label')).toBe('Player menu: Alice')
   })
 })

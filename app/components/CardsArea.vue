@@ -285,6 +285,9 @@ function cancelHold(mode: CountdownMode) {
               class="mui-icon-btn"
               :disabled="(!hasLastRound && !showLastRound) || countdownRunning"
               :style="{ color: ((!hasLastRound && !showLastRound) || countdownRunning) ? 'var(--text-disabled)' : undefined }"
+              :aria-label="$t('cards.lastRound')"
+              :aria-pressed="showLastRound ? 'true' : 'false'"
+              data-testid="last-round-button"
               @click="emit('toggleLastRound')"
             >
               <AppIcon
@@ -307,6 +310,7 @@ function cancelHold(mode: CountdownMode) {
               class="mui-icon-btn"
               :disabled="!canReset || countdownRunning"
               :style="{ color: (!canReset || countdownRunning) ? 'var(--text-disabled)' : undefined }"
+              :aria-label="$t('cards.reset')"
               data-testid="reset-button"
               @click="emit('reset')"
             >

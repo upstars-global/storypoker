@@ -143,6 +143,7 @@
     "nameLabel": "Name",
     "leaveRoom": "Leave Room",
     "kickPlayer": "Kick Player",
+    "menuFor": "Player menu: {name}",
     "moderatorLabel": "moderator",
     "moderatorOf": "{name} is moderator of this room",
     "moderator": "Moderator",
