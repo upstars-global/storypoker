@@ -8,15 +8,16 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 - **Language:** Ukrainian (українська мова)
 - **Тільки англійська:** `README.md`, commit messages, назви й описи PR, коментарі в PR та issues, коментарі в коді,
   CI-артефакти. Українською лишається спілкування в чаті й внутрішня документація (`AGENTS.md`, `DESIGN.md`, `docs/`).
-- **Constraint:** кореневий `AGENTS.md` - ≤ 150 рядків, рядок - ≤ 120 символів. Деталь, що стосується лише одного
+- **Constraint:** кореневий `AGENTS.md` - ≤ 155 рядків, рядок - ≤ 120 символів. Деталь, що стосується лише одного
   каталогу, живе у файлі того каталогу (див. Repository map), а не тут. Перед додаванням нової секції - винести
   наявну. Вкладені `AGENTS.md` - ≤ 200 рядків. Codex обриває збір інструкцій на `project_doc_max_bytes`
   (default 32 KiB), а `CLAUDE.md` інлайнить цей файл цілком, тож кожен корінний байт - always-loaded.
   Детальна продуктова специфікація - `DESIGN.md`.
 
 ## Workflow
-- **`main` захищений:** тільки PR зі squash-merge; required checks `test` / `page-load` + strict-режим
-  і розв'язані коментарі, approve не потрібен. `e2e` не required - скіпається без E2E-секретів.
+- **`main` захищений:** тільки PR зі squash-merge; required checks - `Detect secrets` / `Lint` / `Typecheck` /
+  `Unit tests` / `Build` / `Public pages load`, strict-режим, розв'язані коментарі; approve не потрібен, `E2E`
+  не required (скіпається без E2E-секретів).
 - **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
 - **Git worktrees:** ізольована робота - через `using-git-worktrees`; незакомічені зміни основного каталогу не чіпати
 
