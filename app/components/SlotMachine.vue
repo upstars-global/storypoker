@@ -127,6 +127,20 @@ function triggerJam() {
   hintTimer = setTimeout(() => { showVoteFirstHint.value = false }, 1500)
 }
 
+function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+function finishSpin(targets: string[]) {
+  reels.value = [...targets]
+  strips.value = targets.map(t => [t])
+  transitions.value = ['none', 'none', 'none']
+  offsets.value = [0, 0, 0]
+  spinning.value = false
+  emit('spinEnd')
+  if (isJackpot(targets)) emit('win')
+}
+
 async function spin() {
   if (spinning.value || props.spinsLeft <= 0) return
   if (!props.canSpin) {
@@ -137,6 +151,12 @@ async function spin() {
   spinning.value = true
   if (tickRaf !== undefined) cancelAnimationFrame(tickRaf)
   const targets = spinReels()
+  if (prefersReducedMotion()) {
+    reels.value = [...targets]
+    strips.value = targets.map(t => [t])
+    finishTimer = setTimeout(() => finishSpin(targets), 300)
+    return
+  }
   strips.value = targets.map((target, i) => [reels.value[i]!, ...buildReelStrip(10 + i * 6), target])
   transitions.value = ['none', 'none', 'none']
   offsets.value = [0, 0, 0]
@@ -146,15 +166,7 @@ async function spin() {
     offsets.value = strips.value.map(strip => -(strip.length - 1) * CELL_PX)
     startTickLoop(strips.value.map(s => s.length - 1))
   }))
-  finishTimer = setTimeout(() => {
-    reels.value = [...targets]
-    strips.value = targets.map(t => [t])
-    transitions.value = ['none', 'none', 'none']
-    offsets.value = [0, 0, 0]
-    spinning.value = false
-    emit('spinEnd')
-    if (isJackpot(targets)) emit('win')
-  }, REEL_DURATIONS_MS[2] + 150)
+  finishTimer = setTimeout(() => finishSpin(targets), REEL_DURATIONS_MS[2] + 150)
 }
 </script>
 
