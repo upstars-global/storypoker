@@ -20,3 +20,18 @@ test('skip link moves focus to main content', async ({ page }) => {
   await page.keyboard.press('Enter')
   await expect(page.locator('main#main')).toBeFocused()
 })
+
+test('feature flag switch toggles from the keyboard', async ({ page }) => {
+  await page.goto('/ffc', { waitUntil: 'domcontentloaded' })
+  const checkbox = page.locator('#ffc-example')
+  await expect(checkbox).not.toBeChecked()
+  await page.locator('#ffc-iconsRounded').focus()
+  await page.keyboard.press('Tab')
+  await expect(checkbox).toBeFocused()
+  await expect(checkbox).not.toHaveAccessibleName('')
+  await page.keyboard.press('Space')
+  await expect(checkbox).toBeChecked()
+  await expect(page.locator('#ffc-example ~ .track')).toHaveCSS('outline-style', 'solid')
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('FEATURE_FLAGS') ?? '{}'))
+  expect(stored.example).toBe(true)
+})

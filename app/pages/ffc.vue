@@ -80,19 +80,21 @@ function resetFeatureFlags() {
           <div class="mui-paper-header">
             <div class="flex items-center justify-between w-full">
               <div>{{ $t(`ffc.flags.${featureFlagKey}.name`) }}</div>
-              <span
+              <label
                 class="mui-switch"
-                @click="toggleFeatureFlag(featureFlagKey)"
+                :for="`ffc-${featureFlagKey}`"
               >
                 <input
                   :id="`ffc-${featureFlagKey}`"
                   type="checkbox"
                   :name="`ffc-${featureFlagKey}`"
                   :checked="featureFlagValue.enabled"
+                  @change="toggleFeatureFlag(featureFlagKey)"
                 >
                 <span class="track" />
                 <span class="thumb" />
-              </span>
+                <span class="sr-only">{{ $t(`ffc.flags.${featureFlagKey}.name`) }}</span>
+              </label>
             </div>
           </div>
           <div class="pl-4 pr-2 py-2 gap-2 flex flex-col">
