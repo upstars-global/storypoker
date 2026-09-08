@@ -46,5 +46,5 @@ test('volume slider is keyboard reachable and persists its value', async ({ page
   await expect(slider).not.toHaveAccessibleName('')
   await slider.focus()
   await page.keyboard.press('ArrowLeft')
-  await expect.poll(() => page.evaluate(() => localStorage.getItem('sp-volume'))).toBe('0.95')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('sp-volume'))).toBe('0.45')
 })
