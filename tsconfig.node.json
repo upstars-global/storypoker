@@ -18,6 +18,7 @@
     "eslint.config.js",
     "scripts/icons/**/*.ts",
     "scripts/generate-icons.ts",
-    "scripts/audit-icon-build.ts"
+    "scripts/audit-icon-build.ts",
+    "scripts/estimate-icon-ab.ts"
   ]
 }
