@@ -11,6 +11,4 @@ Pinia stores у `app/stores/`:
 - `types.ts` - спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `ConnectionStatus`);
   `UserProfile` живе в `profiles.ts`
 
-Stores беруть клієнт через `getSupabase()` з `app/lib/supabase-instance.ts`; `app/main.ts` ініціалізує клієнт через
-`initSupabase()`. Тести інжектять mock через `setSupabase(mock)`.
-
+Інваріант доступу до Supabase-клієнта (`getSupabase()`/`initSupabase()`/`setSupabase(mock)`) - `app/AGENTS.md`.

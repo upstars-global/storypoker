@@ -4,13 +4,14 @@ import { useSoundVolume } from '~/composables/useSoundVolume'
 describe('useSoundVolume', () => {
   beforeEach(() => {
     localStorage.clear()
-    useSoundVolume().setVolume(1)
+    useSoundVolume().setVolume(0.5)
     localStorage.clear()
   })
 
-  it('defaults to full volume', () => {
-    const { volume } = useSoundVolume()
-    expect(volume.value).toBe(1)
+  it('defaults to half volume', () => {
+    const { volume, initVolume } = useSoundVolume()
+    initVolume()
+    expect(volume.value).toBe(0.5)
   })
 
   it('persists a new value', () => {
@@ -42,10 +43,10 @@ describe('useSoundVolume', () => {
     expect(volume.value).toBe(0.6)
   })
 
-  it('falls back to full volume for a corrupted stored value', () => {
+  it('falls back to half volume for a corrupted stored value', () => {
     localStorage.setItem('sp-volume', 'loud')
     const { volume, initVolume } = useSoundVolume()
     initVolume()
-    expect(volume.value).toBe(1)
+    expect(volume.value).toBe(0.5)
   })
 })

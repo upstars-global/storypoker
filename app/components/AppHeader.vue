@@ -117,6 +117,11 @@ useClickOutside(volumeRef, () => { volumeOpen.value = false })
 
 const volumePercent = computed(() => Math.round(volume.value * 100))
 
+const volumeIcon = computed(() => {
+  if (volumePercent.value === 0) return 'ic:baseline-volume-off'
+  return volumePercent.value <= 50 ? 'ic:baseline-volume-down' : 'ic:baseline-volume-up'
+})
+
 async function toggleVolume() {
   volumeOpen.value = !volumeOpen.value
   if (!volumeOpen.value) return
@@ -182,7 +187,7 @@ function onVolumeInput(event: Event) {
           @click="toggleVolume"
         >
           <AppIcon
-            :icon="volume === 0 ? 'ic:baseline-volume-off' : 'ic:baseline-volume-up'"
+            :icon="volumeIcon"
             style="font-size: 1.5rem;"
           />
         </button>
