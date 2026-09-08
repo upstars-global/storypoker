@@ -3,6 +3,7 @@ import { icons as ic } from '@iconify-json/ic'
 import { icons as lucide } from '@iconify-json/lucide'
 import { getIconData } from '@iconify/utils'
 import { buildCollections, serializeCollections } from '../../../scripts/icons/subset'
+import generated from '~/generated/iconCollections.json'
 
 it('includes only requested records and rejects unknown names', () => {
   const sets = buildCollections({ ic }, ['ic:baseline-close', 'ic:round-close'])
@@ -30,4 +31,12 @@ it('serializes stably regardless of input order', () => {
   const reversed = serializeCollections(buildCollections({ ic }, [...names].reverse()))
   expect(forward).toBe(reversed)
   expect(forward.endsWith('\n')).toBe(true)
+})
+
+it('detects a dropped record in a committed copy of the subset', () => {
+  const committed = JSON.parse(JSON.stringify(generated)) as { prefix: string; icons: Record<string, unknown> }[]
+  const expected = serializeCollections(committed as never)
+  const firstPrefix = committed[0]!
+  delete firstPrefix.icons[Object.keys(firstPrefix.icons).sort()[0]!]
+  expect(serializeCollections(committed as never)).not.toBe(expected)
 })

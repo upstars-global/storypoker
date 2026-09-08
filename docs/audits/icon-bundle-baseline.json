@@ -1,0 +1,9 @@
+{
+  "note": "gzip entry chunk on main before the local icon delivery work; the icons:audit-build budget is measured against this",
+  "commit": "32248f289910173bd56e752522c54eebc4d0375a",
+  "generatedAt": "2026-09-08T23:32:02.951Z",
+  "entryChunk": {
+    "path": "assets/index-DdASUngv.js",
+    "gzipBytes": 423703
+  }
+}

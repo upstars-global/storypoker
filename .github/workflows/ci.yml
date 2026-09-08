@@ -64,6 +64,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run icons:check
       - run: npm run typecheck
 
   unit:
@@ -99,6 +100,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: Audit the icon delivery graph
+        run: npm run icons:audit-build
       # The deploy job reuses this exact bundle instead of building a second time.
       - name: Upload dist
         uses: actions/upload-artifact@v4

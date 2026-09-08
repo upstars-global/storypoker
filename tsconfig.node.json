@@ -17,6 +17,7 @@
     "playwright.config.ts",
     "eslint.config.js",
     "scripts/icons/**/*.ts",
-    "scripts/generate-icons.ts"
+    "scripts/generate-icons.ts",
+    "scripts/audit-icon-build.ts"
   ]
 }
