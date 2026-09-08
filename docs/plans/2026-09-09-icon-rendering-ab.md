@@ -13,8 +13,20 @@
 ## Global Constraints
 
 - Специфікація: [icon-rendering-migration-design](../specs/2026-09-09-icon-rendering-migration-design.md).
-- Передумова Tasks 1-2: Tasks 1-5 [локальної доставки](2026-09-09-icon-local-delivery.md).
-- Tasks 1-2 завершують перевірку кроку 1. Tasks 3-4 є наступним експериментом; міграція не наперед визначена.
+- Передумова: повністю завершений план [локальної доставки](2026-09-09-icon-local-delivery.md) (Tasks 1-6).
+  Цей план не закриває крок 1; він є окремим експериментом, міграція не визначена наперед.
+- Task 0 (аналітична оцінка) виконується першим. Tasks 1-4 виконуються лише якщо B проходить пороги.
+- Пороги рішення (з спеки, не переглядаються під результати):
+
+| Метрика | Поріг для B |
+| --- | --- |
+| gzip JS+CSS повного production graph | B ≤ A + 10 KB |
+| icon DOM elements на fixture кімнати (стан знімка `/core-platform`) | зменшення ≥ 25 (57 → ≤ 32) |
+| неприйняті візуальні розбіжності після ручного перегляду | 0 |
+| медіана ready proxy | регресія ≤ 1 мс |
+| запити до Iconify провайдерів | 0 в обох варіантах |
+
+  Часові розбіжності ≤ 1 мс не є аргументом ні за, ні проти. Для mixed режиму діють ті самі пороги.
 - «Основні метрики: кількість DOM-елементів, розмітка сторінки, повні production JS/CSS (raw/gzip і transfer)
   та запити даних іконок.»
 - «Без trace висновків про paint не робити.»
@@ -38,6 +50,26 @@
 | `tests/icon-rendering/measure.spec.ts` | збір DOM/network/timing метрик |
 | `scripts/report-icon-ab.ts` | таблиці й статистика з JSON results |
 | `docs/audits/2026-09-09-icon-rendering-ab.md` | фактичний висновок після вимірів, не створювати наперед |
+
+## Task 0: Аналітична оцінка B без harness
+
+**Files:** Create `scripts/estimate-icon-ab.ts`, `test-results/icon-rendering/estimate.json`;
+modify `package.json`, `tsconfig.node.json`.
+
+**Interfaces:** CLI `node scripts/estimate-icon-ab.ts` пише JSON
+`{ domElements: { a: number; b: number }; markupBytes: { a: number; b: number }; cssBytes: number;
+jsGzipBytes: { a: number; b: number }; verdict: 'proceed' | 'stop' }`.
+
+- [ ] DOM і markup: для кожного inputName з manifest узяти кількість інстансів на знімку `/core-platform`
+  (27 svg / 10 унікальних / 57 елементів / 17 430 B) як A; для B рахувати 1 елемент і ≈ 60 B на інстанс.
+- [ ] CSS: у Node згенерувати правила `getIconsCSS(iconSet, names)` з `@iconify/utils` для всіх resolvedNames
+  дефолтної flagCase і зважити raw/gzip; це повна вага B-CSS без harness.
+- [ ] JS: узяти gzip entry chunk з `icons:audit-build` як A; для B відняти вагу `iconCollections.json` і
+  оцінити `@iconify/vue`, що лишається через інші імпорти. Оцінку записати з припущеннями.
+- [ ] Порівняти з таблицею порогів у Global Constraints. Якщо B не проходить бюджет JS+CSS або DOM,
+  verdict=stop: записати оцінку в `docs/audits/2026-09-09-icon-rendering-ab.md`, оновити статус спеки і
+  завершити план без harness. Інакше verdict=proceed і перейти до Task 1.
+- [ ] Commit `docs: estimate the icon mask candidate before the harness`.
 
 ## Task 1: Fixture і production harness для A
 
@@ -89,21 +121,26 @@ test('renders the room fixture without a backend', async ({ page }) => {
   currentPlayerId=null для guest, ID першого гравця для player, ID SM для moderator.
   Auth store лишається порожнім, крім authorized-moderator: задати синтетичного user й заповнений profiles cache
   до mount, щоб watch AppHeader не викликав fetchOne. Усі event handlers змінюють тільки refs harness.
-- [ ] CardsArea props: activeCards `['1/2','1','2','3','5','8','13','21','?','☕']`, selectedVote=null,
+- [ ] CardsArea props: activeCards з `DECK_PRESETS` (`app/utils/cardDecks.ts`) для `DEFAULT_PRESET_ID`
+  (scrum `defaultActive`), не власний літерал; selectedVote=null,
   isModerator за role, hasVotes=false, canReset=false, countdownCounter=0, countdownRunning=false,
   pollMode=false, voteQuestionMode=false, pollQuestion=null; last-round стан перевірити окремим локальним сценарієм.
   Timer: roundStartedAt фіксований, phase=voting, pausedAt=null, pausedElapsedMs=0, canControl за role.
   AppHeader: onlineCount=0, roomName='Core Platform', playerName за role; решта чинних defaults.
 - [ ] Transport до Supabase не ініціалізувати; будь-який неочікуваний getSupabase має впасти.
-  Для авторизованого сценарію cache містить user profile до mount. Browser route блокує зовнішні запити;
-  локально доставити потрібні font files як test assets, щоб Google Fonts не створювали шум.
+  Для авторизованого сценарію cache містить user profile до mount. Browser route блокує зовнішні запити.
+  Шрифти: `main.css` імпортує Geist через `@import url(https://fonts.googleapis.com/...)`, `index.html`
+  має окремий link на Google Fonts. Harness Vite plugin вирізає `@import url(...)` з `main.css` під час
+  transform, а harness `index.html` не містить font link; рендер іде системним fallback-шрифтом.
+  Відхилення шрифту від production зафіксувати в звіті; воно однакове для A і B і не впливає на іконки.
 - [ ] Vite config: root tests/icon-rendering, Vue plugin, ті самі Tailwind settings/alias app;
   envDir на порожній тестовий каталог, без персональних env. Скопіювати PWA manifest/workbox налаштування
   з чинного vite.config, scope тільки тестового origin; outDir `test-results/icon-rendering/dist-a`.
   Для browser alias використовувати абсолютний app шлях. Node scripts включити в tsconfig.node.
 - [ ] Додати `icons:harness:build` (Vite build із config), `icons:harness:preview` (порт 4181),
   `test:icons:harness` (окремий Playwright config). Config використовує Chromium, viewport 1440×900,
-  webServer build+preview, `reuseExistingServer:false`, testDir тільки tests/icon-rendering.
+  webServer build+preview, `reuseExistingServer:false`, testDir тільки tests/icon-rendering,
+  явний `use: { serviceWorkers: 'allow' }` (offline test Task 2 залежить від реального SW).
   Після тесту закривати саме свій server; чужі dev-порти не чіпати.
 - [ ] `npm run test:icons:harness -- delivery.spec.ts`; paired regression:
   `npm run test:unit -- tests/unit/components/PlayerRow.spec.ts tests/unit/components/CardsArea.spec.ts`.
@@ -154,8 +191,8 @@ test('keeps the icon catalog after an offline reload', async ({ page, context })
 Marker готовності перевіряє вміст кожної іконки, а не лише кількість контейнерів. Окремий cold-context тест
 блокування API виключає приховану залежність від кешу Iconify.
 - [ ] `npm run test:icons:harness -- delivery.spec.ts visual.spec.ts`; artifacts мають містити повні
-  screenshots і перелік перевірених комбінацій. Зберегти visual baseline A; commit `test: verify local icon visuals and offline reload`.
-  Передати результат Task 6 плану локальної доставки; цей реліз тепер можна завершити.
+  screenshots і перелік перевірених комбінацій. Зберегти visual baseline A;
+  commit `test: verify local icon visuals and offline reload`.
 
 ## Task 3: Статичний CSS-кандидат B без дубльованого JSON
 
@@ -170,8 +207,9 @@ generated `tests/icon-rendering/iconClasses.json`, sorted full name → `sp-icon
 - [ ] Unit test генерує CSS із реального subset і перевіряє один клас на resolvedName, відсутність повторів,
   dimensions для кожного viewBox, відсутність unknown names. Test невідомого імені має впасти явно.
   Run `npm run test:unit -- tests/unit/utils/iconCss.spec.ts tests/unit/utils/iconSubset.spec.ts`.
-- [ ] Генератор у Node читає committed subset і дев’ять raw app SVG, використовує Iconify utils getIconCSS
-  для правил mask. Парсинг app SVG повторно використовує чинні parseSvg semantics через чистий test-side adapter,
+- [ ] Генератор у Node читає committed subset і дев’ять raw app SVG, використовує `getIconsCSS(iconSet, names)`
+  з `@iconify/utils` для правил mask (один виклик на колекцію, спільні common rules, без дублювання).
+  Парсинг app SVG повторно використовує чинні parseSvg semantics через чистий test-side adapter,
   не імпортує Vite `?raw` у Node. Перевірити всі 9 імен та viewBox, не втратити stroke/opacity.
 - [ ] Створити IconMask зі span, aria-hidden=true, класом із iconClasses. Пропорції 1em висоти й width/viewBox
   генеруються в CSS; поточні class/style/події передаються на корінь. Невідомий resolvedName дає явну помилку.
@@ -209,7 +247,8 @@ const metrics = await page.evaluate(() => {
     icons: icons.length,
     iconElements: icons.reduce((n, e) => n + 1 + e.querySelectorAll('*').length, 0),
     markupBytes: icons.reduce((n, e) => n + bytes(e.outerHTML), 0),
-    transferBytes: performance.getEntriesByType('resource').reduce((n, e) => n + (e as PerformanceResourceTiming).transferSize, 0),
+    transferBytes: performance.getEntriesByType('resource')
+      .reduce((n, e) => n + (e as PerformanceResourceTiming).transferSize, 0),
   }
 })
 ```
@@ -223,8 +262,8 @@ resource timing сам по собі не є повною вагою navigation.
   Контрольні player/moderator та всі flagCases мають функціональні/visual перевірки, не обов’язково 5 пар timing.
   Browser/device/CPU/network settings фіксувати; live clocks не заморожувати в timing runs.
 - [ ] Час ready міряти до marker + двох requestAnimationFrame після локальних даних/CSS; це app-ready proxy,
-  не доказ завершеної растеризації. Порахувати медіану й min/max. Часові розбіжності до 1 мс у proxy не
-  вважати самостійним обґрунтуванням міграції; практичний поріг і допустиму регресію записати до прогонів.
+  не доказ завершеної растеризації. Порахувати медіану й min/max. Пороги фіксовані в Global Constraints:
+  регресія медіани ≤ 1 мс допустима, різниця ≤ 1 мс не є аргументом; нових порогів після прогонів не вводити.
 - [ ] Якщо є регресія або потрібно заявити прискорення, виконати ≥20 пар з Chrome trace:
   категорії devtools.timeline, blink, cc, disabled-by-default-devtools.timeline; окремо scripting/style/layout,
   paint і raster tasks. Подати медіану/p95/розкид, сирі traces. Без trace лишити висновок про paint невизначеним.
@@ -239,6 +278,6 @@ resource timing сам по собі не є повною вагою navigation.
 
 ## Самоперевірка плану
 
-- Fixture й локальна доставка всіх станів: Tasks 1-2. Статичний B і повна вага: Task 3.
-- Порівняння DOM/network/bundle і пропорційний timing: Task 4. Offline і visual: Task 2 повторюється на B.
+- Аналітична оцінка й stop-умова: Task 0. Fixture й усі стани: Tasks 1-2. Статичний B і повна вага: Task 3.
+- Порівняння DOM/network/bundle проти фіксованих порогів: Task 4. Offline і visual: Task 2 повторюється на B.
 - A/B має один backend-free стан, повні правила manifest і незалежні кеші; висновок не заданий наперед.
