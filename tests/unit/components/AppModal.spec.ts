@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import AppModal from '~/components/AppModal.vue'
 
 describe('AppModal', () => {
@@ -27,5 +28,35 @@ describe('AppModal', () => {
     const locked = mount(AppModal, { props: { open: false, lockDismiss: true } })
     await locked.get('dialog').trigger('cancel')
     expect(locked.emitted('close')).toBeUndefined()
+  })
+})
+
+describe('AppModal focus return', () => {
+  function focusedTrigger() {
+    const trigger = document.createElement('button')
+    document.body.appendChild(trigger)
+    trigger.focus()
+    return trigger
+  }
+
+  it('returns focus to the trigger when open becomes false', async () => {
+    const trigger = focusedTrigger()
+    const wrapper = mount(AppModal, { props: { open: true }, attachTo: document.body })
+    await nextTick()
+    expect(document.activeElement).not.toBe(trigger)
+    await wrapper.setProps({ open: false })
+    await nextTick()
+    expect(document.activeElement).toBe(trigger)
+    wrapper.unmount()
+    trigger.remove()
+  })
+
+  it('returns focus to the trigger when unmounted while open', async () => {
+    const trigger = focusedTrigger()
+    const wrapper = mount(AppModal, { props: { open: true }, attachTo: document.body })
+    await nextTick()
+    wrapper.unmount()
+    expect(document.activeElement).toBe(trigger)
+    trigger.remove()
   })
 })
