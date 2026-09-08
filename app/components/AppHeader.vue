@@ -4,6 +4,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { persistLocale } from '~/i18n'
 import { storeToRefs } from 'pinia'
+import { useMenuKeyboard } from '~/composables/useMenuKeyboard'
 import { useClickOutside } from '~/composables/useClickOutside'
 import { useAuthStore } from '~/stores/auth'
 import { useProfilesStore } from '~/stores/profiles'
@@ -88,21 +89,22 @@ function setLocale(code: string) {
 }
 
 const menuRef = ref<HTMLElement | null>(null)
+const menuButtonRef = ref<HTMLElement | null>(null)
+const menuListRef = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
 useClickOutside(menuRef, () => { menuOpen.value = false })
+const { onKeydown: onMenuKeydown } = useMenuKeyboard(menuOpen, menuButtonRef, menuListRef)
 
 const paletteMenuRef = ref<HTMLElement | null>(null)
+const paletteButtonRef = ref<HTMLElement | null>(null)
+const paletteListRef = ref<HTMLElement | null>(null)
 const paletteMenuOpen = ref(false)
 useClickOutside(paletteMenuRef, () => { paletteMenuOpen.value = false })
+const { onKeydown: onPaletteKeydown } = useMenuKeyboard(paletteMenuOpen, paletteButtonRef, paletteListRef)
 
 function pickPalette(id: PaletteId) {
   setPalette(id)
   paletteMenuOpen.value = false
-}
-
-function activateMenuItem(e: KeyboardEvent) {
-  const item = (e.target as HTMLElement).closest<HTMLElement>('[role="menuitem"]')
-  item?.click()
 }
 </script>
 
@@ -147,6 +149,7 @@ function activateMenuItem(e: KeyboardEvent) {
           style="--hover-bg: rgba(255,255,255,0.08);"
           :aria-label="$t('header.themePalette')"
           :aria-expanded="paletteMenuOpen"
+          ref="paletteButtonRef"
           data-testid="palette-menu-button"
           @click="paletteMenuOpen = !paletteMenuOpen"
         >
@@ -157,12 +160,11 @@ function activateMenuItem(e: KeyboardEvent) {
         </button>
         <ul
           v-if="paletteMenuOpen"
+          ref="paletteListRef"
           class="mui-menu z-50"
           role="menu"
           style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 200px;"
-          @keydown.escape="paletteMenuOpen = false"
-          @keydown.enter.prevent="activateMenuItem"
-          @keydown.space.prevent="activateMenuItem"
+          @keydown="onPaletteKeydown"
         >
           <li
             v-for="p in PALETTES"
@@ -171,7 +173,7 @@ function activateMenuItem(e: KeyboardEvent) {
             class="mui-menu-item whitespace-nowrap"
             role="menuitemradio"
             :aria-checked="palette === p.id"
-            tabindex="0"
+            tabindex="-1"
             :data-testid="`palette-option-${p.id}`"
             @click="pickPalette(p.id)"
           >
@@ -223,6 +225,7 @@ function activateMenuItem(e: KeyboardEvent) {
           style="--hover-bg: rgba(255,255,255,0.08);"
           :aria-label="$t('header.currentUserAccount')"
           :aria-expanded="menuOpen"
+          ref="menuButtonRef"
           data-testid="account-menu-button"
           @click="menuOpen = !menuOpen"
         >
@@ -243,19 +246,18 @@ function activateMenuItem(e: KeyboardEvent) {
 
         <ul
           v-if="menuOpen"
+          ref="menuListRef"
           class="mui-menu z-50"
           role="menu"
           style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 240px;"
-          @keydown.escape="menuOpen = false"
-          @keydown.enter.prevent="activateMenuItem"
-          @keydown.space.prevent="activateMenuItem"
+          @keydown="onMenuKeydown"
         >
           <template v-if="roomName">
             <li
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openHistory'); menuOpen = false"
             >
               <AppIcon
@@ -268,7 +270,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openAlignmentTrends'); menuOpen = false"
             >
               <AppIcon
@@ -286,7 +288,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openRenameRoom'); menuOpen = false"
             >
               <AppIcon
@@ -299,7 +301,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openCardDeck'); menuOpen = false"
             >
               <AppIcon
@@ -321,7 +323,7 @@ function activateMenuItem(e: KeyboardEvent) {
             class="mui-menu-item whitespace-nowrap"
             role="menuitemradio"
             :aria-checked="locale === code"
-            tabindex="0"
+            tabindex="-1"
             :data-testid="`language-option-${code}`"
             @click="setLocale(code); menuOpen = false"
           >
@@ -338,7 +340,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openAccountSettings'); menuOpen = false"
             >
               <AppIcon
@@ -351,7 +353,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               data-testid="auth-sign-out-menu-item"
               @click="emit('signOut'); menuOpen = false"
             >
@@ -368,7 +370,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               data-testid="auth-sign-in-menu-item"
               @click="emit('openSignIn'); menuOpen = false"
             >
@@ -382,7 +384,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openSignUp'); menuOpen = false"
             >
               <AppIcon

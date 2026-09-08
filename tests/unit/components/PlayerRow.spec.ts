@@ -66,6 +66,15 @@ describe('PlayerRow menu keyboard support', () => {
     expect(wrapper.emitted('toggleModerator')).toEqual([['p1', true]])
   })
 
+  it('moves focus between items with ArrowDown', async () => {
+    const wrapper = mountRow()
+    const menu = await openMenu(wrapper)
+    const items = wrapper.findAll('[role="menuitem"]')
+    expect(document.activeElement).toBe(items[0]!.element)
+    await menu.trigger('keydown', { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(items[1]!.element)
+  })
+
   it('closes the menu with Escape', async () => {
     const wrapper = mountRow()
     await openMenu(wrapper)
