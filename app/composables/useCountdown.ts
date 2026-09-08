@@ -3,7 +3,8 @@ import countdownDrySound from '~/assets/sounds/countdown-dry.mp3'
 import countdownWetSound from '~/assets/sounds/countdown-wet.mp3'
 import ambienceSound from '~/assets/sounds/ambience.mp3'
 import decisionSound from '~/assets/sounds/the-decision-has-been-made.mp3'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useSoundVolume } from '~/composables/useSoundVolume'
 
 const COUNTDOWN_FALLBACK_SECONDS = 10
 
@@ -23,6 +24,16 @@ export function useCountdown() {
     const countdownTimerTotal = ref(0)
     const countdownActive = ref(false)
     const countdownRunning = ref(false)
+
+    const { volume } = useSoundVolume()
+
+    function applyVolume() {
+        for (const audio of [pleaseVoteAudio, countdownDryAudio, countdownWetAudio, ambienceAudio, decisionAudio]) {
+            if (audio) audio.volume = volume.value
+        }
+    }
+
+    watch(volume, applyVolume)
 
     function resetAudio() {
         const all = [pleaseVoteAudio, countdownDryAudio, countdownWetAudio, ambienceAudio, decisionAudio]
@@ -119,6 +130,7 @@ export function useCountdown() {
         countdownWetAudio = new Audio(countdownWetSound)
         ambienceAudio = new Audio(ambienceSound)
         decisionAudio = new Audio(decisionSound)
+        applyVolume()
     })
     onBeforeUnmount(() => {
         stopCountdown()

@@ -3,6 +3,7 @@ import { ref, nextTick, onUnmounted } from 'vue'
 import AppIcon from '~/components/AppIcon.vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import { spinReels, isJackpot, buildReelStrip } from '~/utils/slotMachine'
+import { useSoundVolume } from '~/composables/useSoundVolume'
 
 const props = defineProps<{
   spinsLeft: number
@@ -26,6 +27,7 @@ const transitions = ref<string[]>(['none', 'none', 'none'])
 const spinning = ref(false)
 const jammed = ref(false)
 const showVoteFirstHint = ref(false)
+const { volume: soundVolume } = useSoundVolume()
 
 let finishTimer: ReturnType<typeof setTimeout> | undefined
 let jamTimer: ReturnType<typeof setTimeout> | undefined
@@ -41,12 +43,13 @@ onUnmounted(() => {
 // synthesized via Web Audio (no asset) so it stays lightweight and easy to keep quiet
 let audioCtx: AudioContext | undefined
 function playTick() {
+  if (soundVolume.value === 0) return
   audioCtx ??= new AudioContext()
   const osc = audioCtx.createOscillator()
   const gain = audioCtx.createGain()
   osc.type = 'triangle'
   osc.frequency.value = 1400
-  gain.gain.setValueAtTime(0.045, audioCtx.currentTime)
+  gain.gain.setValueAtTime(0.045 * soundVolume.value, audioCtx.currentTime)
   gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.025)
   osc.connect(gain).connect(audioCtx.destination)
   osc.start()
