@@ -119,6 +119,7 @@ top-level routes перетинаються з `[slug].vue`; додавай яв
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
 | `sp-lang` | `uk \| en`; читається в `app/i18n.ts`, пишеться `persistLocale()`. Дефолт - `uk` |
 | `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
+| `sp-volume` | `0`–`1`, гучність усіх звуків; дефолт `1`. Читається/пишеться `useSoundVolume()` |
 | `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` (`featureFlags.ts`) |
 
 ## Roles
@@ -134,9 +135,8 @@ top-level routes перетинаються з `[slug].vue`; додавай яв
   `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи
   role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` виводить QA-гравців в
   окрему пилу
-- **Consensus:** при QA-розщепленні салют + decision-sound тригерять, якщо **хоча б одна** група (DEV/QA) одноголосна;
-  без QA - всі голоси однакові (≥ 2). Логіка в `utils/resultCelebration.ts → shouldCelebrateGroupedVotes`; sound через
-  `isConsensus` у `pages/[slug].vue`
+- **Consensus:** салют + decision-sound при одноголосності з ≥ 2 голосами: з QA-розщепленням - хоча б в одній
+  групі (DEV/QA), без нього - серед усіх голосів. Деталі - `app/utils/AGENTS.md`
 
 ## Code Style
 - Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline

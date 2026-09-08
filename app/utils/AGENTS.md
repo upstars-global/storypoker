@@ -34,3 +34,10 @@ PieChart, а кольорове коло з середнім балом (`goalCl
 
 `isNumericPreset` вирішує, які колоди потрапляють в узгодженість: `scrum`/`fibonacci`/`hours`/`goal_clarity` +
 legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і нечислові (`tshirt`/`boolean`) виключені.
+
+## Consensus
+
+`resultCelebration.ts → shouldCelebrate(votes, grouped)` - єдиний предикат для салюту (`ResultsArea.vue`) і звуку
+(`isConsensus` у `pages/[slug].vue`). Одноголосною вважається група з рівно однією унікальною оцінкою **і** ≥ 2
+голосами. Без QA-розщеплення (`groupedVoteCounts === null`) те саме правило застосовується до всіх голосів.
+Поріг ≥ 2 узгоджений з `DESIGN.md` §11: рядок `round_history` теж пишеться лише при `votes.length >= 2`.
