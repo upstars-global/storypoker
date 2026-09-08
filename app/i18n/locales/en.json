@@ -246,7 +246,9 @@
     "kickButton": "Kick",
     "notFoundTitle": "Room not found",
     "notFoundDescription": "No room exists at “{id}”. It may have been deleted, or the link is incorrect.",
-    "notFoundBackHome": "Back to home"
+    "notFoundBackHome": "Back to home",
+    "voteFailed": "Your vote was not saved. Check the connection and try again.",
+    "saveFailed": "Changes were not saved. Check the connection and try again."
   },
   "connection": {
     "reconnecting": "Reconnecting…"

@@ -98,6 +98,14 @@ const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === ki
 const pendingSnapshot = ref<LastRoundSnapshot | null>(null)
 const lastRound = ref<LastRoundSnapshot | null>(null)
 const showLastRound = ref(false)
+const actionNotice = ref<string | null>(null)
+let actionNoticeTimer: ReturnType<typeof setTimeout> | undefined
+
+function showActionNotice(message: string) {
+  actionNotice.value = message
+  clearTimeout(actionNoticeTimer)
+  actionNoticeTimer = setTimeout(() => { actionNotice.value = null }, 5000)
+}
 
 const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
@@ -340,6 +348,7 @@ onUnmounted(async () => {
   if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler)
   unsubscribe()
   clearTimeout(slotWinnerTimer)
+  clearTimeout(actionNoticeTimer)
   for (const timer of slotSpinSafetyTimers.values()) clearTimeout(timer)
   await presenceStore.stop()
 })
@@ -453,6 +462,7 @@ async function handleVote(card: string) {
   try {
     await playersStore.castVote(currentPlayerId.value, next)
   } catch {
+    showActionNotice(t('room.voteFailed'))
   }
 }
 
@@ -555,6 +565,7 @@ async function handleSaveEdit(payload: { name: string; shields: string[] }) {
     }
     await playersStore.setShields(target.id, payload.shields)
   } catch {
+    showActionNotice(t('room.saveFailed'))
   }
   editTargetId.value = null
 }
@@ -775,6 +786,14 @@ async function submitRenameRoom() {
           @start-vote-question="handleStartVoteQuestion"
           @toggle-last-round="showLastRound = !showLastRound"
         />
+        <p
+          role="status"
+          aria-live="polite"
+          class="text-mui-body text-danger text-center min-h-6 mt-4"
+          data-testid="action-notice"
+        >
+          {{ actionNotice }}
+        </p>
       </div>
     </main>
 
