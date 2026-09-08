@@ -147,7 +147,11 @@ async function createRoom() {
       @close="showAccountSettings = false"
     />
 
-    <main class="flex flex-1 flex-col items-center px-4 pt-[26px] pb-[40px]">
+    <main
+      id="main"
+      tabindex="-1"
+      class="flex flex-1 flex-col items-center px-4 pt-[26px] pb-[40px] outline-none"
+    >
       <section class="w-full max-w-[460px] text-center">
         <h2 class="m-0 text-mui-h2 font-bold text-primary">
           {{ $t('home.title') }}

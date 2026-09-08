@@ -11,7 +11,8 @@
     "password": "Password",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "confirmPassword": "Confirm Password"
+    "confirmPassword": "Confirm Password",
+    "skipToContent": "Skip to main content"
   },
   "header": {
     "renameRoom": "Rename Room",

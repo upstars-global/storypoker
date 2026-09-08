@@ -66,7 +66,11 @@ function resetFeatureFlags() {
       v-if="showAccountSettings && user"
       @close="showAccountSettings = false"
     />
-    <main class="flex flex-col gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto">
+    <main
+      id="main"
+      tabindex="-1"
+      class="flex flex-col gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto outline-none"
+    >
       <div class="w-full grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-6">
         <div
           v-for="(featureFlagValue, featureFlagKey) in featureFlags"

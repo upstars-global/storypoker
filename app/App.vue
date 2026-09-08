@@ -9,6 +9,12 @@ onMounted(() => init())
 
 <template>
   <div class="min-h-screen bg-app text-body">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[2000] mui-btn mui-btn-md"
+    >
+      {{ $t('common.skipToContent') }}
+    </a>
     <ConnectionBanner />
     <RouterView />
   </div>

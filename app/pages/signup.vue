@@ -59,7 +59,11 @@ async function onSubmit() {
       @sign-out="authStore.signOut()"
     />
 
-    <main class="flex flex-1 items-center justify-center px-4 py-10">
+    <main
+      id="main"
+      tabindex="-1"
+      class="flex flex-1 items-center justify-center px-4 py-10 outline-none"
+    >
       <section class="mui-modal-paper max-w-md">
         <h1 class="mui-h5 text-center">
           {{ $t('common.signUp') }}

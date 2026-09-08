@@ -11,7 +11,8 @@
     "password": "Пароль",
     "showPassword": "Показати пароль",
     "hidePassword": "Приховати пароль",
-    "confirmPassword": "Підтвердження паролю"
+    "confirmPassword": "Підтвердження паролю",
+    "skipToContent": "Перейти до основного вмісту"
   },
   "header": {
     "renameRoom": "Перейменувати кімнату",
