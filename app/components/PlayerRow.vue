@@ -54,7 +54,7 @@ const menuButtonRef = ref<HTMLElement | null>(null)
 const menuListRef = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
 useClickOutside(menuRef, () => { menuOpen.value = false })
-const { onKeydown: onMenuKeydown } = useMenuKeyboard(menuOpen, menuButtonRef, menuListRef)
+const { onKeydown: onMenuKeydown, onFocusout: onMenuFocusout } = useMenuKeyboard(menuOpen, menuButtonRef, menuListRef)
 const roleTag = computed(() => roleTagForShields(props.player.shields))
 const showDice = computed(() => props.isSpinningSlot || props.isSlotWinner)
 
@@ -309,6 +309,7 @@ const playerAvatar = computed(() => {
         class="mui-menu z-50"
         role="menu"
         style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 200px;"
+        @focusout="onMenuFocusout"
         @keydown="onMenuKeydown"
       >
         <template v-if="isOwn">

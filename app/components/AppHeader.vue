@@ -93,14 +93,14 @@ const menuButtonRef = ref<HTMLElement | null>(null)
 const menuListRef = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
 useClickOutside(menuRef, () => { menuOpen.value = false })
-const { onKeydown: onMenuKeydown } = useMenuKeyboard(menuOpen, menuButtonRef, menuListRef)
+const { onKeydown: onMenuKeydown, onFocusout: onMenuFocusout } = useMenuKeyboard(menuOpen, menuButtonRef, menuListRef)
 
 const paletteMenuRef = ref<HTMLElement | null>(null)
 const paletteButtonRef = ref<HTMLElement | null>(null)
 const paletteListRef = ref<HTMLElement | null>(null)
 const paletteMenuOpen = ref(false)
 useClickOutside(paletteMenuRef, () => { paletteMenuOpen.value = false })
-const { onKeydown: onPaletteKeydown } = useMenuKeyboard(paletteMenuOpen, paletteButtonRef, paletteListRef)
+const { onKeydown: onPaletteKeydown, onFocusout: onPaletteFocusout } = useMenuKeyboard(paletteMenuOpen, paletteButtonRef, paletteListRef)
 
 function pickPalette(id: PaletteId) {
   setPalette(id)
@@ -164,6 +164,7 @@ function pickPalette(id: PaletteId) {
           class="mui-menu z-50"
           role="menu"
           style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 200px;"
+          @focusout="onPaletteFocusout"
           @keydown="onPaletteKeydown"
         >
           <li
@@ -250,6 +251,7 @@ function pickPalette(id: PaletteId) {
           class="mui-menu z-50"
           role="menu"
           style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 240px;"
+          @focusout="onMenuFocusout"
           @keydown="onMenuKeydown"
         >
           <template v-if="roomName">

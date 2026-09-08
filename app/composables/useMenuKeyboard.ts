@@ -58,5 +58,10 @@ export function useMenuKeyboard(
     if (!isOpen && menuEl.value?.contains(document.activeElement)) trigger.value?.focus()
   })
 
-  return { onKeydown }
+  function onFocusout(e: FocusEvent) {
+    const next = e.relatedTarget
+    if (!(next instanceof Node) || !menuEl.value?.contains(next)) open.value = false
+  }
+
+  return { onKeydown, onFocusout }
 }

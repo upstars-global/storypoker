@@ -9,13 +9,13 @@ const Host = defineComponent({
     const trigger = ref<HTMLElement | null>(null)
     const picked = ref<string | null>(null)
     const menuEl = ref<HTMLElement | null>(null)
-    const { onKeydown } = useMenuKeyboard(open, trigger, menuEl)
-    return { open, trigger, picked, menuEl, onKeydown }
+    const { onKeydown, onFocusout } = useMenuKeyboard(open, trigger, menuEl)
+    return { open, trigger, picked, menuEl, onKeydown, onFocusout }
   },
   template: `
     <div>
       <button ref="trigger" :aria-expanded="open" @click="open = !open">menu</button>
-      <ul v-if="open" ref="menuEl" role="menu" @keydown="onKeydown">
+      <ul v-if="open" ref="menuEl" role="menu" @keydown="onKeydown" @focusout="onFocusout">
         <li role="menuitem" tabindex="-1" @click="picked = 'a'">A</li>
         <li role="menuitemradio" tabindex="-1" aria-checked="false" @click="picked = 'b'">B</li>
         <li role="menuitem" tabindex="-1" @click="picked = 'c'">C</li>
@@ -82,6 +82,27 @@ describe('useMenuKeyboard', () => {
     await nextTick()
     expect(wrapper.find('[role="menu"]').exists()).toBe(false)
     expect(document.activeElement).toBe(wrapper.get('button').element)
+    wrapper.unmount()
+  })
+
+  it('closes when focus leaves the menu with Tab', async () => {
+    const outside = document.createElement('input')
+    document.body.appendChild(outside)
+    const wrapper = mountHost()
+    const items = await openMenu(wrapper)
+    await items[0]!.trigger('focusout', { relatedTarget: outside })
+    await nextTick()
+    expect(wrapper.find('[role="menu"]').exists()).toBe(false)
+    wrapper.unmount()
+    outside.remove()
+  })
+
+  it('stays open while focus moves between its own items', async () => {
+    const wrapper = mountHost()
+    const items = await openMenu(wrapper)
+    await items[0]!.trigger('focusout', { relatedTarget: items[1]!.element })
+    await nextTick()
+    expect(wrapper.find('[role="menu"]').exists()).toBe(true)
     wrapper.unmount()
   })
 
