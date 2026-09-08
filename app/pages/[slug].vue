@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
@@ -18,7 +18,7 @@ import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
 import { isQaPlayer, roleTagForShields, roleTagOrder } from '~/utils/shields'
-import { shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
+import { shouldCelebrate } from '~/utils/resultCelebration'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
@@ -86,6 +86,11 @@ const currentRoomName = ref<string | null>(null)
 // previous visit so the header renders at its final size right away.
 const HEADER_SEED_KEY = `sp-room-header-${urlParam}`
 const headerSeed = ref<{ roomName: string; playerName: string }>(readHeaderSeed())
+const roomTitle = computed(() => currentRoomName.value ?? currentSlug.value ?? headerSeed.value.roomName)
+
+watch([() => route.path, roomTitle, notFound], ([, name, missing]) => {
+  document.title = !missing && name ? `${name} | Story Poker` : 'Story Poker'
+}, { immediate: true, flush: 'post' })
 const origin = ref('')
 const kickTargetId = ref<string | null>(null)
 const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === kickTargetId.value)?.name ?? '')
@@ -93,6 +98,16 @@ const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === ki
 const pendingSnapshot = ref<LastRoundSnapshot | null>(null)
 const lastRound = ref<LastRoundSnapshot | null>(null)
 const showLastRound = ref(false)
+const actionNotice = ref<string | null>(null)
+let actionNoticeTimer: ReturnType<typeof setTimeout> | undefined
+
+async function showActionNotice(message: string) {
+  clearTimeout(actionNoticeTimer)
+  actionNotice.value = null
+  await nextTick()
+  actionNotice.value = message
+  actionNoticeTimer = setTimeout(() => { actionNotice.value = null }, 5000)
+}
 
 const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
@@ -184,13 +199,10 @@ const alignmentBlocks = computed(() => {
 
 const isConsensus = computed(() => {
   if (isPollDeck.value) return false
-  const grouped = groupedVoteCounts.value
-  if (grouped) return shouldCelebrateGroupedVotes(grouped)
-  const votes = playersForUi.value.map(p => p.vote).filter((v): v is string => v !== null)
-  return votes.length >= 2 && votes.every(v => v === votes[0])
+  return shouldCelebrate(voteCounts.value, groupedVoteCounts.value)
 })
 
-const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown } = useCountdown()
+const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown, playDecision } = useCountdown()
 
 function broadcastCountdownStart(mode: CountdownMode) {
   countdownChannel?.send({ type: 'broadcast', event: 'start', payload: { initiatorId: currentPlayerId.value, mode } })
@@ -316,6 +328,7 @@ watch(() => roomState.value?.phase, (phase, prev) => {
       deckPreset: roomState.value?.deck_preset ?? null,
     }
     showLastRound.value = false
+    if (prev === 'voting' && isConsensus.value) playDecision()
   }
   if (phase === 'voting' && prev === 'revealed') {
     lastRound.value = pendingSnapshot.value
@@ -335,6 +348,7 @@ onUnmounted(async () => {
   if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler)
   unsubscribe()
   clearTimeout(slotWinnerTimer)
+  clearTimeout(actionNoticeTimer)
   for (const timer of slotSpinSafetyTimers.values()) clearTimeout(timer)
   await presenceStore.stop()
 })
@@ -448,6 +462,7 @@ async function handleVote(card: string) {
   try {
     await playersStore.castVote(currentPlayerId.value, next)
   } catch {
+    showActionNotice(t('room.voteFailed'))
   }
 }
 
@@ -550,6 +565,7 @@ async function handleSaveEdit(payload: { name: string; shields: string[] }) {
     }
     await playersStore.setShields(target.id, payload.shields)
   } catch {
+    showActionNotice(t('room.saveFailed'))
   }
   editTargetId.value = null
 }
@@ -630,9 +646,11 @@ async function submitRenameRoom() {
 </script>
 
 <template>
-  <div
+  <main
     v-if="notFound"
-    class="min-h-screen flex items-center justify-center p-4 bg-app"
+    id="main"
+    tabindex="-1"
+    class="min-h-screen flex items-center justify-center p-4 bg-app outline-none"
   >
     <div class="mui-modal-paper text-center max-w-md w-full">
       <h2 class="text-mui-h2 font-bold text-primary">
@@ -650,7 +668,7 @@ async function submitRenameRoom() {
         </RouterLink>
       </div>
     </div>
-  </div>
+  </main>
   <div
     v-else
     class="min-h-screen flex flex-col"
@@ -674,7 +692,11 @@ async function submitRenameRoom() {
       @sign-out="authStore.signOut()"
     />
 
-    <div class="flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto">
+    <main
+      id="main"
+      tabindex="-1"
+      class="flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto outline-none"
+    >
       <div class="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-6">
         <PlayersList
           :players="playersForUi"
@@ -764,8 +786,16 @@ async function submitRenameRoom() {
           @start-vote-question="handleStartVoteQuestion"
           @toggle-last-round="showLastRound = !showLastRound"
         />
+        <p
+          role="status"
+          aria-live="polite"
+          class="text-mui-body text-danger text-center min-h-6 mt-4"
+          data-testid="action-notice"
+        >
+          {{ actionNotice }}
+        </p>
       </div>
-    </div>
+    </main>
 
     <JoinOverlay
       v-if="showJoin"

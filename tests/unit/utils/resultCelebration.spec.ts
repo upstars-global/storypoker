@@ -1,63 +1,61 @@
 import { describe, expect, it } from 'vitest'
-import { createCelebrationParticles, shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
+import { createCelebrationParticles, shouldCelebrate } from '~/utils/resultCelebration'
 
 describe('resultCelebration', () => {
   it('celebrates when general and qa are both unanimous and match', () => {
-    expect(
-      shouldCelebrateGroupedVotes({
-        general: { '5': 3 },
-        qa: { '5': 2 },
-      })
-    ).toBe(true)
+    expect(shouldCelebrate({}, { general: { '5': 3 }, qa: { '5': 2 } })).toBe(true)
   })
 
   it('celebrates when general and qa are unanimous but different', () => {
-    expect(
-      shouldCelebrateGroupedVotes({
-        general: { '5': 3 },
-        qa: { '8': 2 },
-      })
-    ).toBe(true)
+    expect(shouldCelebrate({}, { general: { '5': 3 }, qa: { '8': 2 } })).toBe(true)
   })
 
   it('celebrates when only one group is unanimous and the other is mixed', () => {
-    expect(
-      shouldCelebrateGroupedVotes({
-        general: { '5': 2, '8': 1 },
-        qa: { '5': 2 },
-      })
-    ).toBe(true)
+    expect(shouldCelebrate({}, { general: { '5': 2, '8': 1 }, qa: { '5': 2 } })).toBe(true)
   })
 
   it('does not celebrate when both groups have mixed estimates', () => {
-    expect(
-      shouldCelebrateGroupedVotes({
-        general: { '5': 2, '8': 1 },
-        qa: { '5': 1, '8': 1 },
-      })
-    ).toBe(false)
+    expect(shouldCelebrate({}, { general: { '5': 2, '8': 1 }, qa: { '5': 1, '8': 1 } })).toBe(false)
   })
 
   it('celebrates when only general group is unanimous', () => {
-    expect(
-      shouldCelebrateGroupedVotes({ general: { '5': 3 }, qa: {} })
-    ).toBe(true)
+    expect(shouldCelebrate({}, { general: { '5': 3 }, qa: {} })).toBe(true)
   })
 
   it('celebrates when only qa group is unanimous', () => {
-    expect(
-      shouldCelebrateGroupedVotes({ general: {}, qa: { '8': 2 } })
-    ).toBe(true)
+    expect(shouldCelebrate({}, { general: {}, qa: { '8': 2 } })).toBe(true)
   })
 
   it('does not celebrate when only general group is not unanimous', () => {
-    expect(
-      shouldCelebrateGroupedVotes({ general: { '5': 2, '8': 1 }, qa: {} })
-    ).toBe(false)
+    expect(shouldCelebrate({}, { general: { '5': 2, '8': 1 }, qa: {} })).toBe(false)
   })
 
-  it('does not celebrate when grouped votes are missing', () => {
-    expect(shouldCelebrateGroupedVotes(null)).toBe(false)
+  it('does not celebrate when a lone qa voter agrees with nobody', () => {
+    expect(shouldCelebrate({}, { general: { '5': 2, '8': 1 }, qa: { '8': 1 } })).toBe(false)
+  })
+
+  it('does not celebrate when the only unanimous group has a single voter', () => {
+    expect(shouldCelebrate({}, { general: {}, qa: { '8': 1 } })).toBe(false)
+  })
+
+  it('celebrates without qa split when every vote matches', () => {
+    expect(shouldCelebrate({ '5': 3 }, null)).toBe(true)
+  })
+
+  it('celebrates without qa split at exactly two matching votes', () => {
+    expect(shouldCelebrate({ '5': 2 }, null)).toBe(true)
+  })
+
+  it('does not celebrate a single voter without qa split', () => {
+    expect(shouldCelebrate({ '5': 1 }, null)).toBe(false)
+  })
+
+  it('does not celebrate mixed votes without qa split', () => {
+    expect(shouldCelebrate({ '5': 2, '8': 1 }, null)).toBe(false)
+  })
+
+  it('does not celebrate when there are no votes at all', () => {
+    expect(shouldCelebrate({}, null)).toBe(false)
   })
 
   it('creates particles with correct confetti properties', () => {

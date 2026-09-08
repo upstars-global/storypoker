@@ -29,6 +29,8 @@ const MDI_TO_LUCIDE: Record<string, string> = {
   'ic:baseline-cloud': 'lucide:cloud',
   'ic:baseline-logout': 'lucide:log-out',
   'ic:baseline-volume-off': 'lucide:volume-x',
+  'ic:baseline-volume-down': 'lucide:volume-1',
+  'ic:baseline-volume-up': 'lucide:volume-2',
   'ic:baseline-person-remove': 'lucide:user-minus',
   'ic:baseline-search': 'lucide:search',
   'ic:baseline-checklist': 'lucide:list-checks',

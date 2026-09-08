@@ -63,6 +63,8 @@ export const DECK_PRESETS: DeckPreset[] = [
   },
 ]
 
+export const GOAL_CLARITY_THRESHOLDS = { clear: 3.5, unclear: 2.5 } as const
+
 export const VOTING_BASE_CARDS = ['yes', 'no']
 export const VOTING_THIRD_CARDS = ['☕', '🍺', '🚬']
 

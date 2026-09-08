@@ -17,8 +17,9 @@
 
 ## Палітри
 
-`sp-palette` - `classic | cyberdeck | matcha`; кожна має light/dark (cyberdeck - неоновий термінал, Geist Mono,
-гострі кути, неонові рамки/тіні, єдиний дозволений градієнт в appbar; matcha - м'яка округла, Nunito, великі
-радіуси). Теми задають `--font-app/--font-display/--radius-*/--btn-text/--btn-transform/--paper-border/--card-border/
---shadow-*` через `html[data-palette=…][data-theme=…]`. Inline script у `index.html` застосовує обидва атрибути до
+`sp-theme` (`light | dark`) і `sp-palette` (`classic | cyberdeck | matcha`) - незалежні осі; кожна палітра має
+обидві теми (cyberdeck - неоновий термінал, Geist Mono, гострі кути, неонові рамки/тіні, єдиний дозволений
+градієнт в appbar; matcha - м'яка округла, Nunito, великі радіуси). Теми задають
+`--font-app/--font-display/--radius-*/--btn-text/--btn-transform/--paper-border/--card-border/--shadow-*` через
+`html[data-palette=…][data-theme=…]`. Inline script у `index.html` застосовує обидва атрибути до
 завантаження JS; вибір - меню в AppHeader (`PALETTES` з `useTheme.ts`).

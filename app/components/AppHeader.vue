@@ -4,10 +4,12 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { persistLocale } from '~/i18n'
 import { storeToRefs } from 'pinia'
+import { useMenuKeyboard } from '~/composables/useMenuKeyboard'
 import { useClickOutside } from '~/composables/useClickOutside'
 import { useAuthStore } from '~/stores/auth'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
+import { useSoundVolume } from '~/composables/useSoundVolume'
 import { useTheme, PALETTES, type PaletteId } from '~/composables/useTheme'
 
 const props = withDefaults(defineProps<{
@@ -88,21 +90,54 @@ function setLocale(code: string) {
 }
 
 const menuRef = ref<HTMLElement | null>(null)
+const menuButtonRef = ref<HTMLElement | null>(null)
+const menuListRef = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
 useClickOutside(menuRef, () => { menuOpen.value = false })
+const { onKeydown: onMenuKeydown, onFocusout: onMenuFocusout } = useMenuKeyboard(menuOpen, menuButtonRef, menuListRef)
 
 const paletteMenuRef = ref<HTMLElement | null>(null)
+const paletteButtonRef = ref<HTMLElement | null>(null)
+const paletteListRef = ref<HTMLElement | null>(null)
 const paletteMenuOpen = ref(false)
 useClickOutside(paletteMenuRef, () => { paletteMenuOpen.value = false })
+const { onKeydown: onPaletteKeydown, onFocusout: onPaletteFocusout } = useMenuKeyboard(paletteMenuOpen, paletteButtonRef, paletteListRef)
 
 function pickPalette(id: PaletteId) {
   setPalette(id)
   paletteMenuOpen.value = false
 }
 
-function activateMenuItem(e: KeyboardEvent) {
-  const item = (e.target as HTMLElement).closest<HTMLElement>('[role="menuitem"]')
-  item?.click()
+const { volume, setVolume } = useSoundVolume()
+const volumeRef = ref<HTMLElement | null>(null)
+const volumeButtonRef = ref<HTMLButtonElement | null>(null)
+const volumeSliderRef = ref<HTMLInputElement | null>(null)
+const volumeOpen = ref(false)
+useClickOutside(volumeRef, () => { volumeOpen.value = false })
+
+const volumePercent = computed(() => Math.round(volume.value * 100))
+
+const volumeIcon = computed(() => {
+  if (volumePercent.value === 0) return 'ic:baseline-volume-off'
+  return volumePercent.value <= 50 ? 'ic:baseline-volume-down' : 'ic:baseline-volume-up'
+})
+
+async function toggleVolume() {
+  volumeOpen.value = !volumeOpen.value
+  if (!volumeOpen.value) return
+  await nextTick()
+  volumeSliderRef.value?.focus()
+}
+
+function closeVolume() {
+  if (!volumeOpen.value) return
+  volumeOpen.value = false
+  volumeButtonRef.value?.focus()
+}
+
+function onVolumeInput(event: Event) {
+  const target = event.target as HTMLInputElement
+  setVolume(Number(target.value) / 100)
 }
 </script>
 
@@ -127,18 +162,61 @@ function activateMenuItem(e: KeyboardEvent) {
       v-if="!roomName"
       class="mui-h6 text-lg px-2 text-white"
     >{{ title }}</span>
-    <template v-if="roomName">
-      <span class="mui-h6 text-lg text-appbar-emphasis">{{ roomName }}</span>
-    </template>
+    <h1
+      v-if="roomName"
+      class="mui-h6 text-lg text-appbar-emphasis"
+    >
+      {{ roomName }}
+    </h1>
     <div class="flex-1" />
 
     <div class="flex items-center gap-2">
+      <div
+        ref="volumeRef"
+        style="position: relative;"
+        @keydown.escape.stop="closeVolume"
+      >
+        <button
+          ref="volumeButtonRef"
+          v-wave
+          class="mui-icon-btn text-appbar-emphasis"
+          style="--hover-bg: rgba(255,255,255,0.08);"
+          :aria-label="$t('header.volume')"
+          :aria-expanded="volumeOpen"
+          data-testid="volume-button"
+          @click="toggleVolume"
+        >
+          <AppIcon
+            :icon="volumeIcon"
+            style="font-size: 1.5rem;"
+          />
+        </button>
+        <div
+          v-if="volumeOpen"
+          class="mui-menu z-50 flex items-center px-3 py-2"
+          style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 180px;"
+        >
+          <input
+            ref="volumeSliderRef"
+            type="range"
+            class="w-full"
+            min="0"
+            max="100"
+            step="5"
+            :value="volumePercent"
+            :aria-label="$t('header.volume')"
+            data-testid="volume-slider"
+            @input="onVolumeInput"
+          >
+        </div>
+      </div>
       <div
         ref="paletteMenuRef"
         style="position: relative;"
         @keydown.escape.stop="paletteMenuOpen = false"
       >
         <button
+          ref="paletteButtonRef"
           v-wave
           class="mui-icon-btn text-appbar-emphasis"
           style="--hover-bg: rgba(255,255,255,0.08);"
@@ -154,12 +232,12 @@ function activateMenuItem(e: KeyboardEvent) {
         </button>
         <ul
           v-if="paletteMenuOpen"
+          ref="paletteListRef"
           class="mui-menu z-50"
           role="menu"
           style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 200px;"
-          @keydown.escape="paletteMenuOpen = false"
-          @keydown.enter.prevent="activateMenuItem"
-          @keydown.space.prevent="activateMenuItem"
+          @focusout="onPaletteFocusout"
+          @keydown="onPaletteKeydown"
         >
           <li
             v-for="p in PALETTES"
@@ -168,7 +246,7 @@ function activateMenuItem(e: KeyboardEvent) {
             class="mui-menu-item whitespace-nowrap"
             role="menuitemradio"
             :aria-checked="palette === p.id"
-            tabindex="0"
+            tabindex="-1"
             :data-testid="`palette-option-${p.id}`"
             @click="pickPalette(p.id)"
           >
@@ -215,6 +293,7 @@ function activateMenuItem(e: KeyboardEvent) {
         @keydown.escape.stop="menuOpen = false"
       >
         <button
+          ref="menuButtonRef"
           v-wave
           class="mui-icon-btn text-white"
           style="--hover-bg: rgba(255,255,255,0.08);"
@@ -240,19 +319,19 @@ function activateMenuItem(e: KeyboardEvent) {
 
         <ul
           v-if="menuOpen"
+          ref="menuListRef"
           class="mui-menu z-50"
           role="menu"
           style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 240px;"
-          @keydown.escape="menuOpen = false"
-          @keydown.enter.prevent="activateMenuItem"
-          @keydown.space.prevent="activateMenuItem"
+          @focusout="onMenuFocusout"
+          @keydown="onMenuKeydown"
         >
           <template v-if="roomName">
             <li
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openHistory'); menuOpen = false"
             >
               <AppIcon
@@ -265,7 +344,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openAlignmentTrends'); menuOpen = false"
             >
               <AppIcon
@@ -283,7 +362,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openRenameRoom'); menuOpen = false"
             >
               <AppIcon
@@ -296,7 +375,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openCardDeck'); menuOpen = false"
             >
               <AppIcon
@@ -318,7 +397,7 @@ function activateMenuItem(e: KeyboardEvent) {
             class="mui-menu-item whitespace-nowrap"
             role="menuitemradio"
             :aria-checked="locale === code"
-            tabindex="0"
+            tabindex="-1"
             :data-testid="`language-option-${code}`"
             @click="setLocale(code); menuOpen = false"
           >
@@ -335,7 +414,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openAccountSettings'); menuOpen = false"
             >
               <AppIcon
@@ -348,7 +427,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               data-testid="auth-sign-out-menu-item"
               @click="emit('signOut'); menuOpen = false"
             >
@@ -365,7 +444,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               data-testid="auth-sign-in-menu-item"
               @click="emit('openSignIn'); menuOpen = false"
             >
@@ -379,7 +458,7 @@ function activateMenuItem(e: KeyboardEvent) {
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
-              tabindex="0"
+              tabindex="-1"
               @click="emit('openSignUp'); menuOpen = false"
             >
               <AppIcon

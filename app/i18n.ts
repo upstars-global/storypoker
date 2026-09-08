@@ -13,14 +13,22 @@ function storedLocale(): string {
   return 'uk'
 }
 
+function applyDocumentLang(code: string) {
+  document.documentElement.lang = code
+}
+
 export function persistLocale(code: string) {
   try { localStorage.setItem(STORAGE_KEY, code) } catch {}
+  applyDocumentLang(code)
 }
+
+const initialLocale = storedLocale()
+applyDocumentLang(initialLocale)
 
 export const i18n = createI18n({
   legacy: false,
   globalInjection: true,
-  locale: storedLocale(),
+  locale: initialLocale,
   fallbackLocale: 'en',
   messages: { uk, en },
 })

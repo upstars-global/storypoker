@@ -945,6 +945,18 @@ body {
     width: 0;
     height: 0;
   }
+  label.mui-switch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+  label.mui-switch:has(input:focus-visible) .track {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+  }
   .mui-switch .track {
     position: absolute;
     inset: 4px 0;
@@ -1072,4 +1084,18 @@ dialog.app-modal::backdrop {
    result bubbles) stay part of the root snapshot instead of drifting above it. */
 :root[data-theme-transition] * {
   transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .celebration-layer {
+    display: none !important;
+  }
 }

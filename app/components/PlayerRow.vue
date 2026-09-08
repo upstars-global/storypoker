@@ -4,6 +4,7 @@ import { loadIcons } from '@iconify/vue'
 import { computed, ref, watch, onUnmounted } from 'vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import RoleBadge from '~/components/RoleBadge.vue'
+import { useMenuKeyboard } from '~/composables/useMenuKeyboard'
 import { useClickOutside } from '~/composables/useClickOutside'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
@@ -49,13 +50,11 @@ const { avatarSrcFor } = useDylanAvatar()
 
 const isOwn = computed(() => props.player.id === props.currentPlayerId)
 const menuRef = ref<HTMLElement | null>(null)
+const menuButtonRef = ref<HTMLElement | null>(null)
+const menuListRef = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
 useClickOutside(menuRef, () => { menuOpen.value = false })
-
-function activateMenuItem(e: KeyboardEvent) {
-  const item = (e.target as HTMLElement).closest<HTMLElement>('[role="menuitem"]')
-  item?.click()
-}
+const { onKeydown: onMenuKeydown, onFocusout: onMenuFocusout } = useMenuKeyboard(menuOpen, menuButtonRef, menuListRef)
 const roleTag = computed(() => roleTagForShields(props.player.shields))
 const showDice = computed(() => props.isSpinningSlot || props.isSlotWinner)
 
@@ -289,9 +288,11 @@ const playerAvatar = computed(() => {
     >
       <button
         v-if="isOwn || currentUserIsModerator"
+        ref="menuButtonRef"
         v-wave
         class="mui-icon-btn"
         style="padding: 4px; border: none; box-shadow: none;"
+        :aria-label="$t('players.menuFor', { name: player.name })"
         :aria-expanded="menuOpen"
         @click="menuOpen = !menuOpen"
       >
@@ -304,19 +305,19 @@ const playerAvatar = computed(() => {
 
       <ul
         v-if="menuOpen"
+        ref="menuListRef"
         class="mui-menu z-50"
         role="menu"
         style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 200px;"
-        @keydown.escape="menuOpen = false"
-        @keydown.enter.prevent="activateMenuItem"
-        @keydown.space.prevent="activateMenuItem"
+        @focusout="onMenuFocusout"
+        @keydown="onMenuKeydown"
       >
         <template v-if="isOwn">
           <li
             v-wave
             class="mui-menu-item"
             role="menuitem"
-            tabindex="0"
+            tabindex="-1"
             @click.stop="emit('toggleModerator', player.id, !player.is_moderator); menuOpen = false"
           >
             <AppIcon
@@ -340,7 +341,7 @@ const playerAvatar = computed(() => {
             v-wave
             class="mui-menu-item"
             role="menuitem"
-            tabindex="0"
+            tabindex="-1"
             @click="emit('edit', player.id); menuOpen = false"
           >
             <AppIcon
@@ -353,7 +354,7 @@ const playerAvatar = computed(() => {
             v-wave
             class="mui-menu-item"
             role="menuitem"
-            tabindex="0"
+            tabindex="-1"
             @click="emit('leave', player.id); menuOpen = false"
           >
             <AppIcon
@@ -369,7 +370,7 @@ const playerAvatar = computed(() => {
             v-wave
             class="mui-menu-item"
             role="menuitem"
-            tabindex="0"
+            tabindex="-1"
             @click="emit('edit', player.id); menuOpen = false"
           >
             <AppIcon
@@ -382,7 +383,7 @@ const playerAvatar = computed(() => {
             v-wave
             class="mui-menu-item"
             role="menuitem"
-            tabindex="0"
+            tabindex="-1"
             @click="emit('kick', player.id); menuOpen = false"
           >
             <AppIcon

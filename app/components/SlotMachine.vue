@@ -3,6 +3,7 @@ import { ref, nextTick, onUnmounted } from 'vue'
 import AppIcon from '~/components/AppIcon.vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import { spinReels, isJackpot, buildReelStrip } from '~/utils/slotMachine'
+import { useSoundVolume } from '~/composables/useSoundVolume'
 
 const props = defineProps<{
   spinsLeft: number
@@ -26,6 +27,7 @@ const transitions = ref<string[]>(['none', 'none', 'none'])
 const spinning = ref(false)
 const jammed = ref(false)
 const showVoteFirstHint = ref(false)
+const { volume: soundVolume } = useSoundVolume()
 
 let finishTimer: ReturnType<typeof setTimeout> | undefined
 let jamTimer: ReturnType<typeof setTimeout> | undefined
@@ -41,12 +43,13 @@ onUnmounted(() => {
 // synthesized via Web Audio (no asset) so it stays lightweight and easy to keep quiet
 let audioCtx: AudioContext | undefined
 function playTick() {
+  if (soundVolume.value === 0) return
   audioCtx ??= new AudioContext()
   const osc = audioCtx.createOscillator()
   const gain = audioCtx.createGain()
   osc.type = 'triangle'
   osc.frequency.value = 1400
-  gain.gain.setValueAtTime(0.045, audioCtx.currentTime)
+  gain.gain.setValueAtTime(0.045 * soundVolume.value, audioCtx.currentTime)
   gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.025)
   osc.connect(gain).connect(audioCtx.destination)
   osc.start()
@@ -127,6 +130,20 @@ function triggerJam() {
   hintTimer = setTimeout(() => { showVoteFirstHint.value = false }, 1500)
 }
 
+function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+function finishSpin(targets: string[]) {
+  reels.value = [...targets]
+  strips.value = targets.map(t => [t])
+  transitions.value = ['none', 'none', 'none']
+  offsets.value = [0, 0, 0]
+  spinning.value = false
+  emit('spinEnd')
+  if (isJackpot(targets)) emit('win')
+}
+
 async function spin() {
   if (spinning.value || props.spinsLeft <= 0) return
   if (!props.canSpin) {
@@ -137,6 +154,12 @@ async function spin() {
   spinning.value = true
   if (tickRaf !== undefined) cancelAnimationFrame(tickRaf)
   const targets = spinReels()
+  if (prefersReducedMotion()) {
+    reels.value = [...targets]
+    strips.value = targets.map(t => [t])
+    finishTimer = setTimeout(() => finishSpin(targets), 300)
+    return
+  }
   strips.value = targets.map((target, i) => [reels.value[i]!, ...buildReelStrip(10 + i * 6), target])
   transitions.value = ['none', 'none', 'none']
   offsets.value = [0, 0, 0]
@@ -146,15 +169,7 @@ async function spin() {
     offsets.value = strips.value.map(strip => -(strip.length - 1) * CELL_PX)
     startTickLoop(strips.value.map(s => s.length - 1))
   }))
-  finishTimer = setTimeout(() => {
-    reels.value = [...targets]
-    strips.value = targets.map(t => [t])
-    transitions.value = ['none', 'none', 'none']
-    offsets.value = [0, 0, 0]
-    spinning.value = false
-    emit('spinEnd')
-    if (isJackpot(targets)) emit('win')
-  }, REEL_DURATIONS_MS[2] + 150)
+  finishTimer = setTimeout(() => finishSpin(targets), REEL_DURATIONS_MS[2] + 150)
 }
 </script>
 
