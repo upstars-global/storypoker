@@ -144,12 +144,12 @@ function pickPalette(id: PaletteId) {
         @keydown.escape.stop="paletteMenuOpen = false"
       >
         <button
+          ref="paletteButtonRef"
           v-wave
           class="mui-icon-btn text-appbar-emphasis"
           style="--hover-bg: rgba(255,255,255,0.08);"
           :aria-label="$t('header.themePalette')"
           :aria-expanded="paletteMenuOpen"
-          ref="paletteButtonRef"
           data-testid="palette-menu-button"
           @click="paletteMenuOpen = !paletteMenuOpen"
         >
@@ -220,12 +220,12 @@ function pickPalette(id: PaletteId) {
         @keydown.escape.stop="menuOpen = false"
       >
         <button
+          ref="menuButtonRef"
           v-wave
           class="mui-icon-btn text-white"
           style="--hover-bg: rgba(255,255,255,0.08);"
           :aria-label="$t('header.currentUserAccount')"
           :aria-expanded="menuOpen"
-          ref="menuButtonRef"
           data-testid="account-menu-button"
           @click="menuOpen = !menuOpen"
         >

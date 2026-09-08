@@ -288,10 +288,10 @@ const playerAvatar = computed(() => {
     >
       <button
         v-if="isOwn || currentUserIsModerator"
+        ref="menuButtonRef"
         v-wave
         class="mui-icon-btn"
         style="padding: 4px; border: none; box-shadow: none;"
-        ref="menuButtonRef"
         :aria-label="$t('players.menuFor', { name: player.name })"
         :aria-expanded="menuOpen"
         @click="menuOpen = !menuOpen"
@@ -305,8 +305,8 @@ const playerAvatar = computed(() => {
 
       <ul
         v-if="menuOpen"
-        class="mui-menu z-50"
         ref="menuListRef"
+        class="mui-menu z-50"
         role="menu"
         style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 200px;"
         @keydown="onMenuKeydown"
