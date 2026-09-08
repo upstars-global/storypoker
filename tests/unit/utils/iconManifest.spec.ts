@@ -57,3 +57,25 @@ it('registers every app icon that the manifest can request', () => {
     expect(appIconNames).toContain(name)
   }
 })
+
+it('has local data for every manifest icon in every flag combination', async () => {
+  const { iconLoaded } = await import('@iconify/vue')
+  const { registerLocalIcons } = await import('~/lib/registerLocalIcons')
+  const { resolveIconName } = await import('~/utils/iconResolver')
+  registerLocalIcons()
+  const missing: string[] = []
+  for (const name of inputNames) {
+    for (const flags of flagCases) {
+      const resolved = resolveIconName(name, flags)
+      if (!iconLoaded(resolved)) missing.push(`${name} -> ${resolved}`)
+    }
+  }
+  expect(missing).toEqual([])
+})
+
+it('registers every declared app icon', async () => {
+  const { iconLoaded } = await import('@iconify/vue')
+  const { registerLocalIcons } = await import('~/lib/registerLocalIcons')
+  registerLocalIcons()
+  for (const name of appIconNames) expect(iconLoaded(name)).toBe(true)
+})

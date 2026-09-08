@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppIcon from '~/components/AppIcon.vue'
-import { loadIcons } from '@iconify/vue'
 import { computed, ref, watch, onUnmounted } from 'vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import RoleBadge from '~/components/RoleBadge.vue'
@@ -59,12 +58,8 @@ const roleTag = computed(() => roleTagForShields(props.player.shields))
 const showDice = computed(() => props.isSpinningSlot || props.isSlotWinner)
 
 // Rolling is shown by cycling the die face (pips), not by rotating the icon -
-// the die itself stays put, like a physical die tumbling in a cup. tabler:dice-*
-// resolves over the Iconify API (not the offline `ic:` collection), so without
-// warming the cache up front the first roll can flash blank frames while each
-// new face is fetched mid-cycle.
+// the die itself stays put, like a physical die tumbling in a cup.
 const DICE_FACES = ['tabler:dice-1', 'tabler:dice-2', 'tabler:dice-3', 'tabler:dice-4', 'tabler:dice-5', 'tabler:dice-6']
-loadIcons(DICE_FACES)
 const diceFaceIndex = ref(0)
 let diceFaceTimer: ReturnType<typeof setInterval> | undefined
 watch(() => props.isSpinningSlot, (spinning) => {
