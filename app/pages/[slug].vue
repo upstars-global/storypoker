@@ -86,6 +86,11 @@ const currentRoomName = ref<string | null>(null)
 // previous visit so the header renders at its final size right away.
 const HEADER_SEED_KEY = `sp-room-header-${urlParam}`
 const headerSeed = ref<{ roomName: string; playerName: string }>(readHeaderSeed())
+const roomTitle = computed(() => currentRoomName.value ?? currentSlug.value ?? headerSeed.value.roomName)
+
+watch([() => route.path, roomTitle, notFound], ([, name, missing]) => {
+  document.title = !missing && name ? `${name} | Story Poker` : 'Story Poker'
+}, { immediate: true, flush: 'post' })
 const origin = ref('')
 const kickTargetId = ref<string | null>(null)
 const kickTargetName = computed(() => visiblePlayers.value.find(p => p.id === kickTargetId.value)?.name ?? '')
@@ -630,9 +635,11 @@ async function submitRenameRoom() {
 </script>
 
 <template>
-  <div
+  <main
     v-if="notFound"
-    class="min-h-screen flex items-center justify-center p-4 bg-app"
+    id="main"
+    tabindex="-1"
+    class="min-h-screen flex items-center justify-center p-4 bg-app outline-none"
   >
     <div class="mui-modal-paper text-center max-w-md w-full">
       <h2 class="text-mui-h2 font-bold text-primary">
@@ -650,7 +657,7 @@ async function submitRenameRoom() {
         </RouterLink>
       </div>
     </div>
-  </div>
+  </main>
   <div
     v-else
     class="min-h-screen flex flex-col"
@@ -674,7 +681,11 @@ async function submitRenameRoom() {
       @sign-out="authStore.signOut()"
     />
 
-    <div class="flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto">
+    <main
+      id="main"
+      tabindex="-1"
+      class="flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto outline-none"
+    >
       <div class="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-6">
         <PlayersList
           :players="playersForUi"
@@ -765,7 +776,7 @@ async function submitRenameRoom() {
           @toggle-last-round="showLastRound = !showLastRound"
         />
       </div>
-    </div>
+    </main>
 
     <JoinOverlay
       v-if="showJoin"

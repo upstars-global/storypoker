@@ -127,9 +127,12 @@ function activateMenuItem(e: KeyboardEvent) {
       v-if="!roomName"
       class="mui-h6 text-lg px-2 text-white"
     >{{ title }}</span>
-    <template v-if="roomName">
-      <span class="mui-h6 text-lg text-appbar-emphasis">{{ roomName }}</span>
-    </template>
+    <h1
+      v-if="roomName"
+      class="mui-h6 text-lg text-appbar-emphasis"
+    >
+      {{ roomName }}
+    </h1>
     <div class="flex-1" />
 
     <div class="flex items-center gap-2">
