@@ -1,7 +1,8 @@
 # AGENTS.md
 
 Guidance for coding agents (Claude Code, Codex) working with this repository.
-`CLAUDE.md` - це import-shim (`@AGENTS.md`); єдине джерело правди - цей файл.
+`CLAUDE.md` - це import-shim (`@AGENTS.md`); єдине джерело правди - цей файл. `CLAUDE.md` чіпати лише при зміні
+схеми імпорту, symlink-ів між ними не робити.
 
 ## Communication
 - **Language:** Ukrainian (українська мова)
@@ -17,17 +18,32 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 - **`main` захищений:** тільки PR зі squash-merge; required checks `test` / `page-load` + strict-режим
   і розв'язані коментарі, approve не потрібен. `e2e` не required - скіпається без E2E-секретів.
 - **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
+- **Git worktrees:** ізольована робота - через `using-git-worktrees`; незакомічені зміни основного каталогу не чіпати
+
+## Workflow sequences
+Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
+CI check = `npm run test:ci` - обов'язково перед завершенням будь-якої задачі.
+- **New feature:** `scope-triage` → `plan-crafting` → `executing-plans` (незалежні задачі -
+  `dispatching-parallel-agents` / `subagent-driven-development`); за потреби `typescript` · `echarts` · `web-debug`;
+  тести - `test-driven-development` + `vitest` і/або `web-debug`; фініш - `requesting-code-review` →
+  `verification-before-completion` → CI check
+- **Bug / regression:** `systematic-debugging` → `test-driven-development` → `verification-before-completion` → CI check
+- **Supabase (DB / Auth / RLS / Storage):** `test-driven-development` → `/security-review` → CI check
+- **Refactoring:** `scope-triage` → `test-driven-development` → CI check
+- **Received code review:** `receiving-code-review` → (fixes) → `verification-before-completion` → CI check
+- **Prose (docs, README, UI copy, commits):** `dashfix` · `negafix`
+- **Закриття гілки:** `finishing-a-development-branch`
 
 ## Project Overview
 **Story Poker** - Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 8 пресетів або
 кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
 
-Джерела контексту: `DESIGN.md` (дизайн + audit §10), `docs/roadmap.md` (індекс ініціатив у `docs/initiatives/`) і
-`docs/completed.md`, `docs/{plans,specs}/` і legacy `docs/superpowers/{plans,specs}/` (iter-плани і специфікації),
-`docs/tasks/` (разові операційні інструкції), `docs/audits/` (датовані знімки аудитів; індекс - `README.md` там само).
+Джерела контексту: `DESIGN.md` (дизайн + audit §10, механіки §11), `docs/roadmap.md` (індекс ініціатив у
+`docs/initiatives/`) і `docs/completed.md`, `docs/{plans,specs}/` і legacy `docs/superpowers/{plans,specs}/` (iter-плани
+і специфікації), `docs/tasks/` (разові операційні інструкції), `docs/audits/` (датовані знімки аудитів; індекс -
+`README.md` там само).
 
 ## Repository map
-
 Вкладені `AGENTS.md` завантажуються за розташуванням файлу, який редагуєш (Claude Code - on-demand, Codex - лише
 якщо cwd усередині). Стартуючи з кореня, відкривай потрібний файл явно.
 
@@ -47,7 +63,6 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
 
 ## Tech Stack
-
 - **Framework:** Vue 3.5 + Vite 8 (Rolldown bundler) SPA, Composition API `<script setup>`; код у `app/`
 - **Routing:** `vue-router@5`; **State:** Pinia 4; **i18n:** `vue-i18n@11`, локалі `app/i18n/locales/{uk,en}.json`
 - **Styling:** Tailwind v4 через `@tailwindcss/vite`, CSS-first config - `app/assets/css/main.css`
@@ -58,7 +73,6 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
 ## Common Commands
-
 `package.json` - джерело правди для повного списку скриптів. Тут лише неочевидне:
 
 ```bash
@@ -70,12 +84,12 @@ npm run test:ci      # lint + typecheck + test:unit + build - саме це бі
 npm run deploy:{stage,prod}   # Netlify alias / prod deploy
 ```
 
-CI - `.github/workflows/ci.yml`: `npm ci`, `npm run test:ci`; job `page-load` виконується завжди (smoke публічних
-сторінок з dummy Supabase-кредами); E2E - тільки коли задані E2E-секрети; deploy - `npm run build` на `main`, якщо
-перевірки пройшли і є Netlify-секрети.
+CI - `.github/workflows/ci.yml`: паралельні jobs `detect-secrets`/`lint`/`typecheck`/`unit` (`test:unit:coverage`)/
+`build`/`page-load` (`test:e2e:pages` з dummy Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
+`deploy` на `main` бере `dist` з артефакту `build` (checkout + `npm ci` лишаються - Netlify CLI бандлить
+`netlify/functions` з репо), якщо всі перевірки пройшли (`e2e` може бути skipped) і є Netlify-секрети.
 
 ## Environment Setup
-
 `package-lock.json` - committed (required for `npm ci`). Do NOT add it back to `.gitignore`.
 
 Усі env-файли - у `/.env/` (gitignored, окрім `*.example`). Vite читає через `envDir: '.env'` у `vite.config.ts`:
@@ -91,7 +105,6 @@ VITE_SUPABASE_KEY=...        # publishable client key
 Клієнтський код читає через `import.meta.env.VITE_*` (тільки `VITE_*` потрапляють у browser bundle).
 
 ## URL Schema
-
 - `/` - home + Recent Rooms; `/<roomId>` - кімната за 8-символьним id; `/<slug>` - alias (URL з id редиректиться)
 - `/login`, `/signup`, `/forgot-password`, `/reset-password` - auth routes; `/ffc` - Feature Flags console
 
@@ -99,7 +112,6 @@ VITE_SUPABASE_KEY=...        # publishable client key
 top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або вводь префікс.
 
 ## LocalStorage
-
 | Ключ | Значення |
 | --- | --- |
 | `storypoker_session_<roomId>` | `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms |
@@ -107,10 +119,9 @@ top-level routes перетинаються з `[slug].vue`; додавай яв
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
 | `sp-lang` | `uk \| en`; читається в `app/i18n.ts`, пишеться `persistLocale()`. Дефолт - `uk` |
 | `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
-| `FEATURE_FLAGS` | `/ffc` override з `app/configs/featureFlags.ts`: `countdownEnabled`, `iconsLucide`, `iconsRounded` |
+| `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` (`featureFlags.ts`) |
 
 ## Roles
-
 - **Player:** vote, rename self, set own shields, leave room, **toggle own moderator flag** (self-promote/demote -
   доступно будь-кому, не лише поточному модератору); history/trends/theme/language/widget/slot - без ролевих обмежень
 - **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
@@ -128,16 +139,12 @@ top-level routes перетинаються з `[slug].vue`; додавай яв
   `isConsensus` у `pages/[slug].vue`
 
 ## Code Style
-
-- Без коментарів у коді; імена мають пояснювати поведінку
-- 2 пробіли, без табів, один trailing newline
+- Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline
 - TypeScript у composables/utils/stores; `<script setup lang="ts">` у Vue SFC
 - Без wrapper-абстракцій, які тільки перейменовують функції
 - UI-тексти мають проходити через i18n, якщо компонент вже локалізований
 
 ## Security
-
-- Не друкувати секрети або повні env values
-- У прикладах використовувати placeholders
+- Не друкувати секрети або повні env values; у прикладах - placeholders
 - `SUPABASE_SECRET_KEY` / `sb_secret_...` і `STORYPOKER_API_TOKEN` - тільки server-side, ніколи в client bundle
   (без `VITE_` префіксу; `STORYPOKER_API_TOKEN` ставиться в Netlify site env, не в `/.env/`)
