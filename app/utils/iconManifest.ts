@@ -1,0 +1,145 @@
+import type { IconFlags } from './iconResolver'
+
+export const flagCases: readonly IconFlags[] = [
+  { iconsLucide: false, iconsRounded: false },
+  { iconsLucide: false, iconsRounded: true },
+  { iconsLucide: true, iconsRounded: false },
+  { iconsLucide: true, iconsRounded: true },
+]
+
+export const dynamicBindings: readonly { file: string; expression: string; names: readonly string[] }[] = [
+  {
+    file: 'app/components/AlignmentTrendsModal.vue',
+    expression: "trend.dir === 'up' ? 'ic:baseline-trending-up' : trend.dir === 'down'"
+      + " ? 'ic:baseline-trending-down' : 'ic:baseline-trending-flat'",
+    names: ['ic:baseline-trending-up', 'ic:baseline-trending-down', 'ic:baseline-trending-flat'],
+  },
+  {
+    file: 'app/components/AppHeader.vue',
+    expression: 'volumeIcon',
+    names: ['ic:baseline-volume-off', 'ic:baseline-volume-down', 'ic:baseline-volume-up'],
+  },
+  {
+    file: 'app/components/AppHeader.vue',
+    expression: "isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'",
+    names: ['ic:baseline-light-mode', 'ic:baseline-dark-mode'],
+  },
+  {
+    file: 'app/components/AppHeader.vue',
+    expression: "locale === code ? 'ic:baseline-check' : 'ic:baseline-language'",
+    names: ['ic:baseline-check', 'ic:baseline-language'],
+  },
+  {
+    file: 'app/components/AppIcon.vue',
+    expression: 'resolved',
+    names: [],
+  },
+  {
+    file: 'app/components/CardsArea.vue',
+    expression: 'option.icon',
+    names: ['ic:baseline-volume-off', 'app:timer', 'app:town-hall'],
+  },
+  {
+    file: 'app/components/PasswordInput.vue',
+    expression: "visible ? 'ic:baseline-visibility-off' : 'ic:baseline-visibility'",
+    names: ['ic:baseline-visibility-off', 'ic:baseline-visibility'],
+  },
+  {
+    file: 'app/components/PlayerRow.vue',
+    expression: 'diceIcon',
+    names: [
+      'tabler:dice-1',
+      'tabler:dice-2',
+      'tabler:dice-3',
+      'tabler:dice-4',
+      'tabler:dice-5',
+      'tabler:dice-6',
+    ],
+  },
+  {
+    file: 'app/components/SlotMachine.vue',
+    expression: 'symbol',
+    names: [
+      'tabler:apple',
+      'tabler:bell',
+      'tabler:cherry',
+      'tabler:grape',
+      'tabler:lemon-2',
+      'tabler:play-card-7',
+      'tabler:star',
+    ],
+  },
+]
+
+const literalNames: readonly string[] = [
+  'app:deciding',
+  'app:fibonacci',
+  'app:leave-room',
+  'app:moderator',
+  'app:offline',
+  'app:timer',
+  'app:town-hall',
+  'ic:baseline-account-circle',
+  'ic:baseline-add',
+  'ic:baseline-add-a-photo',
+  'ic:baseline-arrow-drop-down',
+  'ic:baseline-arrow-drop-up',
+  'ic:baseline-cancel',
+  'ic:baseline-casino',
+  'ic:baseline-check',
+  'ic:baseline-check-circle',
+  'ic:baseline-close',
+  'ic:baseline-edit',
+  'ic:baseline-fast-forward',
+  'ic:baseline-fast-rewind',
+  'ic:baseline-history',
+  'ic:baseline-login',
+  'ic:baseline-logout',
+  'ic:baseline-more-vert',
+  'ic:baseline-navigate-before',
+  'ic:baseline-navigate-next',
+  'ic:baseline-palette',
+  'ic:baseline-pause',
+  'ic:baseline-person-add',
+  'ic:baseline-person-remove',
+  'ic:baseline-play-arrow',
+  'ic:baseline-restart-alt',
+  'ic:baseline-settings',
+  'ic:baseline-stop',
+  'ic:baseline-timer',
+  'ic:baseline-trending-up',
+  'ic:baseline-volume-down',
+  'ic:baseline-volume-off',
+  'ic:baseline-volume-up',
+  'lucide:id-card',
+  'lucide:undo',
+  'tabler:apple',
+  'tabler:bell',
+  'tabler:cherry',
+  'tabler:dice-1',
+  'tabler:dice-2',
+  'tabler:dice-3',
+  'tabler:dice-4',
+  'tabler:dice-5',
+  'tabler:dice-6',
+  'tabler:grape',
+  'tabler:lemon-2',
+  'tabler:play-card-7',
+  'tabler:star',
+]
+
+export const inputNames: readonly string[] = [
+  ...new Set([...literalNames, ...dynamicBindings.flatMap(binding => binding.names)]),
+].sort()
+
+export const appIconNames: readonly string[] = [
+  'app:bank',
+  'app:deciding',
+  'app:fibonacci',
+  'app:leave-room',
+  'app:moderator',
+  'app:offline',
+  'app:scrum',
+  'app:timer',
+  'app:town-hall',
+]
