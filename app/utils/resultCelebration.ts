@@ -13,29 +13,17 @@ export interface CelebrationParticle {
   hue: number
 }
 
-function getUnanimousVote(votes: VoteCounts): string | null {
+function isUnanimous(votes: VoteCounts): boolean {
   const entries = Object.entries(votes).filter(([, count]) => count > 0)
-  return entries.length === 1 ? entries[0]![0] : null
+  return entries.length === 1 && entries[0]![1] >= 2
 }
 
-function hasVotes(votes: VoteCounts): boolean {
-  return Object.values(votes).some(c => c > 0)
-}
-
-export function shouldCelebrateGroupedVotes(groupedVotes: {
+export function shouldCelebrate(votes: VoteCounts, grouped: {
   general: VoteCounts
   qa: VoteCounts
 } | null | undefined): boolean {
-  if (!groupedVotes) return false
-
-  const generalVote = getUnanimousVote(groupedVotes.general)
-  const qaVote = getUnanimousVote(groupedVotes.qa)
-  const hasGeneralVotes = hasVotes(groupedVotes.general)
-  const hasQaVotes = hasVotes(groupedVotes.qa)
-
-  if (hasGeneralVotes && !!generalVote) return true
-  if (hasQaVotes && !!qaVote) return true
-  return false
+  if (grouped) return isUnanimous(grouped.general) || isUnanimous(grouped.qa)
+  return isUnanimous(votes)
 }
 
 export function createCelebrationParticles(count = 180, random = Math.random, centerX = 50, centerY = 50): CelebrationParticle[] {

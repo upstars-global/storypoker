@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import PieChart from '~/components/PieChart.vue'
-import { createCelebrationParticles, shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
+import { createCelebrationParticles, shouldCelebrate } from '~/utils/resultCelebration'
 import { useI18n } from 'vue-i18n'
 import { useCardLabel } from '~/composables/useCardLabel'
 import { averageOf } from '~/utils/roundStats'
@@ -72,7 +72,7 @@ const groups = computed(() => {
   return out
 })
 
-const celebrate = computed(() => !props.disableCelebration && shouldCelebrateGroupedVotes(props.groupedVotes))
+const celebrate = computed(() => !props.disableCelebration && shouldCelebrate(props.votes, props.groupedVotes))
 
 const celebrationParticles = ref(createCelebrationParticles(0))
 const chartsEl = ref<HTMLElement | null>(null)

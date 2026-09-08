@@ -18,7 +18,7 @@ import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
 import { isQaPlayer, roleTagForShields, roleTagOrder } from '~/utils/shields'
-import { shouldCelebrateGroupedVotes } from '~/utils/resultCelebration'
+import { shouldCelebrate } from '~/utils/resultCelebration'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
@@ -199,10 +199,7 @@ const alignmentBlocks = computed(() => {
 
 const isConsensus = computed(() => {
   if (isPollDeck.value) return false
-  const grouped = groupedVoteCounts.value
-  if (grouped) return shouldCelebrateGroupedVotes(grouped)
-  const votes = playersForUi.value.map(p => p.vote).filter((v): v is string => v !== null)
-  return votes.length >= 2 && votes.every(v => v === votes[0])
+  return shouldCelebrate(voteCounts.value, groupedVoteCounts.value)
 })
 
 const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown } = useCountdown()
