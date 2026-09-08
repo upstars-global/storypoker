@@ -9,6 +9,7 @@ import { useClickOutside } from '~/composables/useClickOutside'
 import { useAuthStore } from '~/stores/auth'
 import { useProfilesStore } from '~/stores/profiles'
 import { useDylanAvatar } from '~/composables/useDylanAvatar'
+import { useSoundVolume } from '~/composables/useSoundVolume'
 import { useTheme, PALETTES, type PaletteId } from '~/composables/useTheme'
 
 const props = withDefaults(defineProps<{
@@ -106,6 +107,33 @@ function pickPalette(id: PaletteId) {
   setPalette(id)
   paletteMenuOpen.value = false
 }
+
+const { volume, setVolume } = useSoundVolume()
+const volumeRef = ref<HTMLElement | null>(null)
+const volumeButtonRef = ref<HTMLButtonElement | null>(null)
+const volumeSliderRef = ref<HTMLInputElement | null>(null)
+const volumeOpen = ref(false)
+useClickOutside(volumeRef, () => { volumeOpen.value = false })
+
+const volumePercent = computed(() => Math.round(volume.value * 100))
+
+async function toggleVolume() {
+  volumeOpen.value = !volumeOpen.value
+  if (!volumeOpen.value) return
+  await nextTick()
+  volumeSliderRef.value?.focus()
+}
+
+function closeVolume() {
+  if (!volumeOpen.value) return
+  volumeOpen.value = false
+  volumeButtonRef.value?.focus()
+}
+
+function onVolumeInput(event: Event) {
+  const target = event.target as HTMLInputElement
+  setVolume(Number(target.value) / 100)
+}
 </script>
 
 <template>
@@ -138,6 +166,45 @@ function pickPalette(id: PaletteId) {
     <div class="flex-1" />
 
     <div class="flex items-center gap-2">
+      <div
+        ref="volumeRef"
+        style="position: relative;"
+        @keydown.escape.stop="closeVolume"
+      >
+        <button
+          ref="volumeButtonRef"
+          v-wave
+          class="mui-icon-btn text-appbar-emphasis"
+          style="--hover-bg: rgba(255,255,255,0.08);"
+          :aria-label="$t('header.volume')"
+          :aria-expanded="volumeOpen"
+          data-testid="volume-button"
+          @click="toggleVolume"
+        >
+          <AppIcon
+            :icon="volume === 0 ? 'ic:baseline-volume-off' : 'ic:baseline-volume-up'"
+            style="font-size: 1.5rem;"
+          />
+        </button>
+        <div
+          v-if="volumeOpen"
+          class="mui-menu z-50 flex items-center px-3 py-2"
+          style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 180px;"
+        >
+          <input
+            ref="volumeSliderRef"
+            type="range"
+            class="w-full"
+            min="0"
+            max="100"
+            step="5"
+            :value="volumePercent"
+            :aria-label="$t('header.volume')"
+            data-testid="volume-slider"
+            @input="onVolumeInput"
+          >
+        </div>
+      </div>
       <div
         ref="paletteMenuRef"
         style="position: relative;"

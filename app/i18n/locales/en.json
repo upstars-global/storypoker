@@ -29,7 +29,8 @@
     "accountSettings": "Account Settings",
     "history": "Round History",
     "alignmentTrends": "Alignment Trends",
-    "themePalette": "Color theme"
+    "themePalette": "Color theme",
+    "volume": "Sound volume"
   },
   "theme": {
     "classic": "Classic",

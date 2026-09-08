@@ -35,3 +35,16 @@ test('feature flag switch toggles from the keyboard', async ({ page }) => {
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('FEATURE_FLAGS') ?? '{}'))
   expect(stored.example).toBe(true)
 })
+
+test('volume slider is keyboard reachable and persists its value', async ({ page }) => {
+  await page.goto('/')
+  const trigger = page.getByTestId('volume-button')
+  await expect(trigger).not.toHaveAccessibleName('')
+  await trigger.click()
+  const slider = page.getByTestId('volume-slider')
+  await expect(slider).toBeVisible()
+  await expect(slider).not.toHaveAccessibleName('')
+  await slider.focus()
+  await page.keyboard.press('ArrowLeft')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('sp-volume'))).toBe('0.95')
+})

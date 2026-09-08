@@ -29,7 +29,8 @@
     "accountSettings": "Налаштування акаунту",
     "history": "Історія раундів",
     "alignmentTrends": "Тренди узгодженості",
-    "themePalette": "Кольорова тема"
+    "themePalette": "Кольорова тема",
+    "volume": "Гучність звуку"
   },
   "theme": {
     "classic": "Classic",
