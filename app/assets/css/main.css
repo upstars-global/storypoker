@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
 
 @import 'tailwindcss';
+@import '~/generated/icons.css' layer(components);
 
 @source './../../**/*.{vue,ts}';
 
@@ -813,6 +814,10 @@ body {
     color: var(--text-body);
     font-size: 0.9375rem;
   }
+  .mui-slider {
+    accent-color: var(--primary);
+    cursor: pointer;
+  }
   .mui-radio input {
     accent-color: var(--primary);
     width: 16px;
@@ -917,7 +922,6 @@ body {
   .mui-menu-item .mui-menu-icon {
     color: var(--text-body);
     flex-shrink: 0;
-    font-size: 24px;
     width: 24px;
     height: 24px;
   }

@@ -118,8 +118,8 @@ useClickOutside(volumeRef, () => { volumeOpen.value = false })
 const volumePercent = computed(() => Math.round(volume.value * 100))
 
 const volumeIcon = computed(() => {
-  if (volumePercent.value === 0) return 'lucide:volume-x'
-  return volumePercent.value <= 50 ? 'lucide:volume-1' : 'lucide:volume-2'
+  if (volumePercent.value === 0) return 'ic:baseline-volume-off'
+  return volumePercent.value <= 50 ? 'ic:baseline-volume-down' : 'ic:baseline-volume-up'
 })
 
 async function toggleVolume() {
@@ -199,7 +199,7 @@ function onVolumeInput(event: Event) {
           <input
             ref="volumeSliderRef"
             type="range"
-            class="w-full"
+            class="mui-slider w-full"
             min="0"
             max="100"
             step="5"

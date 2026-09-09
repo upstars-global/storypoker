@@ -21,7 +21,8 @@ countdown «wet») змішує `currentColor` з `#0057B7`/`#FFD700`, і mask-�
 Список винятків - `COLORED_ICONS` у `scripts/icons/coloredIcons.ts`; генератор сам детектує фіксовані заливки і
 падає, якщо детекція розходиться зі списком у будь-який бік.
 
-Рендер проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts` читає флаги і делегує чистому
+Набір іконок - Material (`ic:*`); Lucide вмикається лише прапором `iconsLucide`, хардкодити `lucide:*` в
+компонентах не можна. Рендер проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts` читає флаги і делегує чистому
 `resolveIconName()` в `app/utils/iconResolver.ts`): `iconsLucide` ремапить `ic:baseline-*`→`lucide:*` (нову
 lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`.
 
@@ -34,8 +35,8 @@ lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fal
 `npm run icons:check` (у job `Typecheck` і на початку `test:ci`) падає на дрейфі будь-якого з них,
 `npm run icons:audit-build` стежить за browser graph і бюджетом JS+CSS. У dev/test пропущена іконка кидає
 `Missing local icon: <name>`. Legacy `simple-icons:*`/`game-icons:*` лишилися тільки в `SHIELD_CATALOG` для
-лукапу і в UI не рендеряться. З чотирьох артефактів рантайм читає три: `iconCollections.json` - fixture для
-unit-тестів, і `icons:audit-build` падає, якщо він потрапляє в production graph.
+лукапу і в UI не рендеряться. Рантайм читає три артефакти з чотирьох; `iconCollections.json` у бандл не йде -
+це fixture для unit-тестів, і `icons:audit-build` падає, якщо він потрапляє в production graph.
 
 ## Діаграми
 

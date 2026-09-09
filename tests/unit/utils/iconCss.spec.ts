@@ -20,9 +20,17 @@ it('emits exactly one class per icon with no duplicates', () => {
 it('carries dimensions for every icon and shares the common rules once', () => {
   const { css } = generateIconCss(collections)
   expect(css).toContain('.sp-icon')
-  expect(css.split('.sp-icon {')).toHaveLength(2)
+  expect(css.split(/^\.sp-icon \{/m)).toHaveLength(2)
   expect(css).toMatch(/width:\s*1em/)
   expect(css).toMatch(/height:\s*1em/)
+})
+
+it('repaints mask icons with a system color under forced colors', () => {
+  const { css } = generateIconCss(collections)
+  const block = css.match(/@media \(forced-colors: active\) \{[^@]*?\n\}/)?.[0]
+  expect(block).toBeDefined()
+  expect(block).toContain('background-color: CanvasText')
+  expect(block).toContain('forced-color-adjust: none')
 })
 
 it('produces no icon rules for an empty collection and rejects unknown names', () => {

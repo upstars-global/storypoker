@@ -139,3 +139,27 @@ for (const state of ROOM_STATES) {
     await context.close()
   })
 }
+
+test.describe('forced colors', () => {
+  test.use({ forcedColors: 'active' })
+
+  test('keeps mask icons visible against the forced background', async ({ page }) => {
+    await page.goto('/?role=moderator&view=room')
+    await expect(page.getByTestId('icon-harness-ready')).toBeAttached()
+    const icon = page.locator(`${iconSelector}.sp-icon`).first()
+    await expect(icon).toBeVisible()
+    const paint = await icon.evaluate(node => {
+      const probe = document.createElement('div')
+      probe.style.color = 'CanvasText'
+      probe.style.backgroundColor = 'Canvas'
+      document.body.append(probe)
+      const system = getComputedStyle(probe)
+      const canvas = system.backgroundColor
+      const canvasText = system.color
+      probe.remove()
+      return { fill: getComputedStyle(node).backgroundColor, canvas, canvasText }
+    })
+    expect(paint.fill).toBe(paint.canvasText)
+    expect(paint.fill).not.toBe(paint.canvas)
+  })
+})

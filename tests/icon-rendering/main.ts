@@ -6,7 +6,6 @@ import { i18n } from '~/i18n'
 import { useTheme } from '~/composables/useTheme'
 import { useSoundVolume } from '~/composables/useSoundVolume'
 import RoomHarness from './RoomHarness.vue'
-import '~/generated/icons.css'
 import '~/assets/css/main.css'
 
 const router = createRouter({

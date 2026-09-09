@@ -27,5 +27,7 @@ export function generateIconCss(collections: IconifyJSON[]): { css: string; clas
   }
   const inline = '.sp-icon-inline {\n  display: inline-block;\n  width: 1em;\n  height: 1em;\n'
     + '  line-height: 1;\n}\n.sp-icon-inline > svg {\n  display: block;\n  width: 100%;\n  height: 100%;\n}\n'
-  return { css: common + inline + blocks.join(''), classes }
+  const forcedColors = '@media (forced-colors: active) {\n  .sp-icon {\n    background-color: CanvasText;\n'
+    + '    forced-color-adjust: none;\n  }\n}\n'
+  return { css: common + inline + forcedColors + blocks.join(''), classes }
 }

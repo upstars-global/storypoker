@@ -82,7 +82,7 @@ npm install          # preinstall → scripts/setup.sh (створює .env/, .a
                      # postinstall → scripts/skills.sh (мережеві npx skills add; skills-lock.json)
 npm run test:unit    # канонічний unit-run; `npm test` і `test:unit` - обидва `vitest run`
 npm run test:e2e:pages   # public pages load smoke (project page-load, без Supabase)
-npm run test:ci      # lint + typecheck + test:unit + build - саме це біжить CI
+npm run test:ci      # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
 npm run deploy:{stage,prod}   # Netlify alias / prod deploy
 ```
 

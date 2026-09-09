@@ -17,7 +17,7 @@ export const dynamicBindings: readonly { file: string; expression: string; names
   {
     file: 'app/components/AppHeader.vue',
     expression: 'volumeIcon',
-    names: ['lucide:volume-x', 'lucide:volume-1', 'lucide:volume-2'],
+    names: ['ic:baseline-volume-off', 'ic:baseline-volume-down', 'ic:baseline-volume-up'],
   },
   {
     file: 'app/components/AppHeader.vue',
@@ -103,12 +103,11 @@ const literalNames: readonly string[] = [
   'ic:baseline-stop',
   'ic:baseline-timer',
   'ic:baseline-trending-up',
+  'ic:baseline-volume-down',
   'ic:baseline-volume-off',
+  'ic:baseline-volume-up',
   'lucide:id-card',
   'lucide:undo',
-  'lucide:volume-1',
-  'lucide:volume-2',
-  'lucide:volume-x',
   'tabler:apple',
   'tabler:bell',
   'tabler:cherry',
