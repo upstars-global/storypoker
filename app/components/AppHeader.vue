@@ -118,8 +118,8 @@ useClickOutside(volumeRef, () => { volumeOpen.value = false })
 const volumePercent = computed(() => Math.round(volume.value * 100))
 
 const volumeIcon = computed(() => {
-  if (volumePercent.value === 0) return 'ic:baseline-volume-off'
-  return volumePercent.value <= 50 ? 'ic:baseline-volume-down' : 'ic:baseline-volume-up'
+  if (volumePercent.value === 0) return 'lucide:volume-x'
+  return volumePercent.value <= 50 ? 'lucide:volume-1' : 'lucide:volume-2'
 })
 
 async function toggleVolume() {
