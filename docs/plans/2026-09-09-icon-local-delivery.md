@@ -280,6 +280,21 @@ it('renders a direct Lucide icon from the registered subset', async () => {
   У тимчасовій копії generated JSON прибрати один запис і виконати check проти цієї копії через unit-тест
   serializer/check; очікувати mismatch. Не псувати committed файл для ручної перевірки.
 - [ ] Переглянути залежності й lockfile: тільки потрібні пакети; commit `ci: enforce the local icon contract`.
+- [x] Типізувати harness: `tests/icon-rendering/tsconfig.json` розширює кореневий конфіг, додає `node` до `types`
+  і перенацілює aliases `~`/`@` на `app/`. Прогін третім кроком `npm run typecheck`, тож job `Typecheck` бере його
+  без змін у `ci.yml`. Єдина знахідка - `countdownTimeout` в `useCountdown.ts` був типізований як `number`, а під
+  `types: ["node"]` `setTimeout` повертає `Timeout`; замінено на `ReturnType<typeof setTimeout>`, зміна суто типова.
+- [x] `deploy:prod` / `deploy:stage`: перевірено джерела CLI 26.2.0 і 27.5.2 - `--build` лишився прихованою
+  deprecated-опцією з `.default(true)`, тобто збірка йде завжди, а вимикає її лише `--no-build`; явний `--build`
+  в обох версіях друкує warning. Контекст env резолвиться на двох рівнях: CLI дефолтить `dev`
+  (`getDefaultContext()` віддає `production` лише для `serve`), а крок збірки перерезолвлює через
+  `@netlify/config` з дефолтом `production` - крім сайтів із feature flag `use_cached_site_info`, де
+  переюзається `siteInfo` з CLI-резолву разом із site-level env контексту `dev` (`api/site_info.js` кладе
+  Envelope-змінні в `build_settings.env`, звідки їх бере `getUiEnv`), хоча сам контекст збірки лишається
+  `production`. Є й третій рівень: `deploy.js` оновлює `cachedConfig.env` лише за явного не-`dev` контексту, а
+  functions-scoped env тягне `getEnvelopeEnv` з дефолтом параметра `dev`, тож без прапорця цей шлях резолвиться
+  на `dev`. `deploy:prod` несе явний `--context production`, що фіксує контекст на всіх рівнях; `CONTEXT` в env
+  шанується там само. Guard `options.context && !options.build` не спрацьовує, бо `build` має `.default(true)`.
 
 ## Task 6: Браузерна й візуальна перевірка кроку 1
 

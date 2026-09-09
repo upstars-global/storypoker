@@ -16,7 +16,7 @@ export function useCountdown() {
     let countdownWetAudio: HTMLAudioElement | undefined = undefined
     let ambienceAudio: HTMLAudioElement | undefined = undefined
     let decisionAudio: HTMLAudioElement | undefined = undefined
-    let countdownTimeout: number | undefined = undefined
+    let countdownTimeout: ReturnType<typeof setTimeout> | undefined = undefined
     let currentMode: CountdownMode = 'dry'
     let onCountdownComplete: (() => void) | undefined = undefined
     let hasConsensus: (() => boolean) | undefined = undefined

@@ -12,7 +12,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "typecheck": "vue-tsc --noEmit -p tsconfig.json && vue-tsc --noEmit -p tsconfig.node.json",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json && vue-tsc --noEmit -p tsconfig.node.json && vue-tsc --noEmit -p tests/icon-rendering/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run",
@@ -31,7 +31,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:ci": "npm run icons:check && npm run lint && npm run typecheck && npm run test:unit && npm run build",
     "deploy:stage": "npx -y netlify-cli@latest deploy --alias stage",
-    "deploy:prod": "npx -y netlify-cli@latest deploy --prod"
+    "deploy:prod": "npx -y netlify-cli@latest deploy --prod --context production"
   },
   "devDependencies": {
     "@iconify-json/ic": "^1.2.4",
