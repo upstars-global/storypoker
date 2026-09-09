@@ -17,7 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       has_e2e: ${{ steps.check.outputs.has_e2e }}
-      has_netlify: ${{ steps.check.outputs.has_netlify }}
     steps:
       - id: check
         env:
@@ -26,18 +25,11 @@ jobs:
           E2E_SR: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           E2E_USER: ${{ secrets.E2E_TEST_USER_EMAIL }}
           E2E_PASS: ${{ secrets.E2E_TEST_USER_PASSWORD }}
-          NETLIFY_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE: ${{ secrets.NETLIFY_SITE_ID }}
         run: |
           if [[ -n "$E2E_URL" && -n "$E2E_ANON" && -n "$E2E_SR" && -n "$E2E_USER" && -n "$E2E_PASS" ]]; then
             echo "has_e2e=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_e2e=false" >> "$GITHUB_OUTPUT"
-          fi
-          if [[ -n "$NETLIFY_TOKEN" && -n "$NETLIFY_SITE" ]]; then
-            echo "has_netlify=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_netlify=false" >> "$GITHUB_OUTPUT"
           fi
 
   lint:
@@ -64,6 +56,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run icons:check
       - run: npm run typecheck
 
   unit:
@@ -98,14 +91,22 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # Placeholders keep the Supabase client in the graph so the icon budget measures a
+      # production-shaped bundle; see docs/audits/README.md. This dist is for auditing only -
+      # production is built by Netlify from the repo, not shipped from here.
       - run: npm run build
-      # The deploy job reuses this exact bundle instead of building a second time.
-      - name: Upload dist
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_KEY: placeholder
+      - name: Audit the icon delivery graph
+        run: npm run icons:audit-build
+      - name: Upload icon audit report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist/
-          retention-days: 1
+          name: icon-bundle-audit
+          path: test-results/icon-rendering/
+          retention-days: 7
 
   # Playwright's webServer builds the app before it previews, so this job also verifies
   # that the production bundle boots with dummy Supabase credentials.
@@ -135,7 +136,7 @@ jobs:
       - name: Install Playwright system deps
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
-      - run: npm run test:e2e:pages
+      - run: npx playwright test --project page-load --project icon-delivery
         env:
           VITE_SUPABASE_URL: https://dummy.supabase.co
           VITE_SUPABASE_KEY: sb_publishable_dummy_key_for_page_load_smoke_only
@@ -193,40 +194,3 @@ jobs:
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
-
-  deploy:
-    name: Deploy to Netlify
-    needs: [detect-secrets, lint, typecheck, unit, build, page-load, e2e]
-    if: |
-      always()
-      && github.ref == 'refs/heads/main'
-      && needs.lint.result == 'success'
-      && needs.typecheck.result == 'success'
-      && needs.unit.result == 'success'
-      && needs.build.result == 'success'
-      && needs.page-load.result == 'success'
-      && (needs.e2e.result == 'success' || needs.e2e.result == 'skipped')
-      && needs.detect-secrets.outputs.has_netlify == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      # Netlify CLI bundles netlify/functions from the checkout at deploy time, so the
-      # repo and node_modules are still needed - only the SPA bundle comes from the artifact.
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - name: Download dist
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
-      - name: Deploy to Netlify
-        uses: netlify/actions/cli@master
-        with:
-          args: deploy --dir=dist --prod
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

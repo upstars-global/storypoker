@@ -10,3 +10,20 @@ CI пропускається без секретів, тож реально б�
 запускає `npm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується);
 задай `E2E_BASE_URL`, щоб тестувати вже запущений сервер.
 
+## Icon rendering harness (`tests/icon-rendering/`)
+
+Ізольований стенд рендеру іконок; у production-збірку не потрапляє, власного роуту не додає. Має власні
+`vite.config.ts` і Playwright-конфіг, збирає той самий `AppIcon`, що й production (CSS mask + inline-виняток).
+
+`RoomHarness.vue` монтує реальні компоненти на fixture з 15 гравців; стани задаються query-параметрами:
+`role`, `view=catalog|room`, `widget=slot`, `paused=1`, `countdown=N`. Всі гравці `is_online: false` за планом.
+
+```bash
+npm run test:icons:harness    # сам збирає harness і піднімає preview на :4181
+```
+
+`tests/icon-rendering/tsconfig.json` прогонить третім кроком `npm run typecheck`, тому job `Typecheck` бере
+harness без змін у `ci.yml`. Новий tsconfig-проєкт треба явно дописати в цей скрипт, інакше CI його не побачить.
+
+Історія A/B (варіант B з окремим `ICON_RENDERER=mask` і переплетені заміри) закрита разом із міграцією;
+результат - `docs/audits/2026-09-09-icon-rendering-ab.md`.

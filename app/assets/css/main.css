@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
 
 @import 'tailwindcss';
+@import '~/generated/icons.css' layer(components);
 
 @source './../../**/*.{vue,ts}';
 
@@ -812,6 +813,47 @@ body {
     user-select: none;
     color: var(--text-body);
     font-size: 0.9375rem;
+  }
+  .mui-slider {
+    cursor: pointer;
+    appearance: none;
+    background-color: transparent;
+    height: 20px;
+  }
+  .mui-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background-image: linear-gradient(
+      to right,
+      var(--primary) var(--fill, 0%),
+      var(--border-input) var(--fill, 0%)
+    );
+  }
+  .mui-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background-color: var(--border-input);
+  }
+  .mui-slider::-moz-range-progress {
+    height: 4px;
+    border-radius: 2px;
+    background-color: var(--primary);
+  }
+  .mui-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -5px;
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--primary);
+  }
+  .mui-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--primary);
   }
   .mui-radio input {
     accent-color: var(--primary);

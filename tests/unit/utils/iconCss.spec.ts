@@ -1,0 +1,68 @@
+import { expect, it } from 'vitest'
+import type { IconifyJSON } from '@iconify/types'
+import generated from '~/generated/iconCollections.json'
+import { generateIconCss, iconClassName } from '../../../scripts/icons/generateCss'
+import { appIconNames, flagCases, inputNames } from '~/utils/iconManifest'
+import { resolveIconName } from '~/utils/iconResolver'
+import { COLORED_ICONS } from '../../../scripts/icons/coloredIcons'
+
+const collections = generated as unknown as IconifyJSON[]
+
+it('emits exactly one class per icon with no duplicates', () => {
+  const { css, classes } = generateIconCss(collections)
+  const names = collections.flatMap(set => Object.keys(set.icons).map(name => `${set.prefix}:${name}`))
+  expect(Object.keys(classes).sort()).toEqual([...names].sort())
+  for (const name of names) {
+    expect(css.split(`.${iconClassName(name)} {`)).toHaveLength(2)
+  }
+})
+
+it('carries dimensions for every icon and shares the common rules once', () => {
+  const { css } = generateIconCss(collections)
+  expect(css).toContain('.sp-icon')
+  expect(css.split(/^\.sp-icon \{/m)).toHaveLength(2)
+  expect(css).toMatch(/width:\s*1em/)
+  expect(css).toMatch(/height:\s*1em/)
+})
+
+it('repaints mask icons with a system color under forced colors', () => {
+  const { css } = generateIconCss(collections)
+  const block = css.match(/@media \(forced-colors: active\) \{[^@]*?\n\}/)?.[0]
+  expect(block).toBeDefined()
+  expect(block).toContain('background-color: CanvasText')
+  expect(block).toContain('forced-color-adjust: none')
+})
+
+it('produces no icon rules for an empty collection and rejects unknown names', () => {
+  const { css, classes } = generateIconCss([{ prefix: 'empty', icons: {} }])
+  expect(css).not.toMatch(/\.sp-icon-(?!inline)/)
+  expect(classes).toEqual({})
+  expect(iconClassName('ic:round-close')).toBe('sp-icon-ic-round-close')
+})
+
+it('emits the inline exception rules exactly once', () => {
+  const { css } = generateIconCss(collections)
+  expect(css.split('.sp-icon-inline {')).toHaveLength(2)
+  expect(css).toContain('.sp-icon-inline > svg')
+})
+
+it('covers every manifest icon in every flag combination', () => {
+  const { classes } = generateIconCss([
+    ...collections,
+    { prefix: 'app', icons: Object.fromEntries(appIconNames.map(n => [n.slice(4), { body: '<path/>' }])) },
+  ])
+  const missing: string[] = []
+  for (const name of inputNames) {
+    for (const flags of flagCases) {
+      const resolved = resolveIconName(name, flags)
+      if (!classes[resolved] && !COLORED_ICONS.has(resolved)) missing.push(resolved)
+    }
+  }
+  expect(missing).toEqual([])
+})
+
+it('excludes the colored exceptions from the mask classes', () => {
+  const { classes } = generateIconCss(collections)
+  for (const name of COLORED_ICONS) expect(classes[name]).toBeUndefined()
+  expect(COLORED_ICONS.size).toBeGreaterThan(0)
+})

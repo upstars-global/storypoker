@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Icon Rendering Harness</title>
+    <script>
+      (function(){try{var s=localStorage.getItem('sp-theme');var t=(s==='light'||s==='dark')?s:'dark';document.documentElement.setAttribute('data-theme',t);var p=localStorage.getItem('sp-palette');var ok=['classic','cyberdeck','matcha'];document.documentElement.setAttribute('data-palette',ok.indexOf(p)>=0?p:'classic');}catch(e){document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-palette','classic');}})();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

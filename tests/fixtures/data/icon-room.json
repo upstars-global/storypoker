@@ -1,0 +1,197 @@
+[
+  {
+    "id": "icon-player-01",
+    "room_id": "iconroom",
+    "name": "Player 01",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "be"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-02",
+    "room_id": "iconroom",
+    "name": "Player 02",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "be"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-03",
+    "room_id": "iconroom",
+    "name": "Player 03",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "be"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-04",
+    "room_id": "iconroom",
+    "name": "Player 04",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "be"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-05",
+    "room_id": "iconroom",
+    "name": "Player 05",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "be"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-06",
+    "room_id": "iconroom",
+    "name": "Player 06",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "be"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-07",
+    "room_id": "iconroom",
+    "name": "Player 07",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "be"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-08",
+    "room_id": "iconroom",
+    "name": "Player 08",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "qa"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-09",
+    "room_id": "iconroom",
+    "name": "Player 09",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "qa"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-10",
+    "room_id": "iconroom",
+    "name": "Player 10",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "qa"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-11",
+    "room_id": "iconroom",
+    "name": "Player 11",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "qa"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-12",
+    "room_id": "iconroom",
+    "name": "Player 12",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "qa"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-13",
+    "room_id": "iconroom",
+    "name": "Player 13",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "qa"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-14",
+    "room_id": "iconroom",
+    "name": "Player 14",
+    "is_moderator": false,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "po"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  },
+  {
+    "id": "icon-player-15",
+    "room_id": "iconroom",
+    "name": "Player 15",
+    "is_moderator": true,
+    "vote": null,
+    "user_id": null,
+    "shields": [
+      "sm"
+    ],
+    "created_at": "2026-09-09T09:00:00.000Z",
+    "left_at": null
+  }
+]

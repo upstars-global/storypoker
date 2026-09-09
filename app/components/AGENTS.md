@@ -11,12 +11,33 @@
 
 ## Іконки
 
-`@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`, єдина offline-колекція);
-`simple-icons:*`/`game-icons:*`/`tabler:*`/`lucide:*` резолвляться через Iconify API; custom collection `app:`
-(`moderator`, `deciding`, `offline`, `leave-room`, `bank`, `town-hall`, `fibonacci`, `scrum`) через `addCollection`
-у `app/lib/registerAppIcons.ts`. Рендер - через `<AppIcon>`, який проганяє назву крізь `mapIconName()`
-(`app/utils/iconMap.ts`): флаг `iconsLucide` ремапить `ic:baseline-*`→`lucide:*` (нову lucide-іконку треба додати
-в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`.
+Усі іконки - offline, мережевих запитів до Iconify немає, `@iconify/vue` у бандлі відсутній. Рендер - CSS mask:
+`<AppIcon>` віддає `<span class="sp-icon-root sp-icon sp-icon-<prefix>-<name>">`, а стилі приходять зі
+згенерованого `app/generated/icons.css` (`app/main.ts` імпортує його першим).
+
+Виняток - кольорові іконки. `app/generated/coloredIcons.json` тримає їх готову розмітку, `<AppIcon>` вставляє її
+через `v-html` у `<span class="sp-icon-root sp-icon-inline">`. Зараз виняток один: `app:town-hall` (кнопка
+countdown «wet») змішує `currentColor` з `#0057B7`/`#FFD700`, і mask-режим зводить усі заливки до `currentColor`.
+Список винятків - `COLORED_ICONS` у `scripts/icons/coloredIcons.ts`; генератор сам детектує фіксовані заливки і
+падає, якщо детекція розходиться зі списком у будь-який бік.
+
+Набір іконок - Material (`ic:*`); Lucide вмикається лише прапором `iconsLucide`, нові `lucide:*` хардкодити в
+компонентах не можна. Наявні винятки - два: `lucide:id-card` (AppHeader) і `lucide:undo` (CardsArea).
+Рендер проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts` читає флаги і делегує чистому
+`resolveIconName()` в `app/utils/iconResolver.ts`): `iconsLucide` ремапить `ic:baseline-*`→`lucide:*` (нову
+lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`.
+
+Джерело істини для subset - `app/utils/iconManifest.ts` (`inputNames` + `dynamicBindings` + чотири `flagCases`).
+Додав нову іконку - додай ім'я туди й перегенеруй: `npm run icons:generate` пише чотири артефакти в
+`app/generated/` (`iconCollections.json`, `icons.css`, `iconClasses.json`, `coloredIcons.json`).
+Сканер звіряє `names` кожного binding-а з літералами, знайденими в джерелах, тож застарілий запис падає. Зворотний
+напрямок не покривається: літерал невідомої колекції, схований у змінній поза icon-контекстом, статично
+нерозрізненний з Tailwind-варіантом (`sm:hidden`), тож його ловить `throw` у dev/test, а не сканер.
+`npm run icons:check` (у job `Typecheck` і на початку `test:ci`) падає на дрейфі будь-якого з них,
+`npm run icons:audit-build` стежить за browser graph і бюджетом JS+CSS. У dev/test пропущена іконка кидає
+`Missing local icon: <name>`. Legacy `simple-icons:*`/`game-icons:*` лишилися тільки в `SHIELD_CATALOG` для
+лукапу і в UI не рендеряться. Рантайм читає три артефакти з чотирьох; `iconCollections.json` у бандл не йде -
+це fixture для unit-тестів, і `icons:audit-build` падає, якщо він потрапляє в production graph.
 
 ## Діаграми
 

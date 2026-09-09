@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"],
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "~/*": ["../../app/*"],
+      "@/*": ["../../app/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.vue"]
+}

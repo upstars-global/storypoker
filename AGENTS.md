@@ -8,11 +8,11 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 - **Language:** Ukrainian (українська мова)
 - **Тільки англійська:** `README.md`, commit messages, назви й описи PR, коментарі в PR та issues, коментарі в коді,
   CI-артефакти. Українською лишається спілкування в чаті й внутрішня документація (`AGENTS.md`, `DESIGN.md`, `docs/`).
-- **Constraint:** кореневий `AGENTS.md` - ≤ 155 рядків, рядок - ≤ 120 символів. Деталь, що стосується лише одного
-  каталогу, живе у файлі того каталогу (див. Repository map), а не тут. Перед додаванням нової секції - винести
-  наявну. Вкладені `AGENTS.md` - ≤ 200 рядків. Codex обриває збір інструкцій на `project_doc_max_bytes`
-  (default 32 KiB), а `CLAUDE.md` інлайнить цей файл цілком, тож кожен корінний байт - always-loaded.
-  Детальна продуктова специфікація - `DESIGN.md`.
+- **Constraint:** бюджет інструкцій Codex - `project_doc_max_bytes`, дефолт 32 KiB на весь ланцюг: файл із
+  домівки Codex, цей корінь і всі вкладені `AGENTS.md` від кореня до робочого каталогу. Орієнтир - 28 KiB на
+  ланцюг; понад межу збір обривається мовчки. `CLAUDE.md` інлайнить цей файл цілком, тож кожен корінний байт -
+  always-loaded. Деталь, що стосується лише одного каталогу, живе у файлі того каталогу (див. Repository map),
+  а не тут. Перед додаванням нової секції - винести наявну. Детальна продуктова специфікація - `DESIGN.md`.
 
 ## Workflow
 - **`main` захищений:** тільки PR зі squash-merge; strict-режим, розв'язані коментарі, approve не потрібен.
@@ -70,7 +70,8 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **PWA:** `vite-plugin-pwa` (Workbox, `autoUpdate`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
   файл); splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
-- **UI:** `@iconify/vue`, `v-wave`, DiceBear, Roboto 300–700; **Charts:** `echarts` + `vue-echarts`
+- **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300–700;
+  **Charts:** `echarts` + `vue-echarts`
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
 ## Common Commands
@@ -81,14 +82,16 @@ npm install          # preinstall → scripts/setup.sh (створює .env/, .a
                      # postinstall → scripts/skills.sh (мережеві npx skills add; skills-lock.json)
 npm run test:unit    # канонічний unit-run; `npm test` і `test:unit` - обидва `vitest run`
 npm run test:e2e:pages   # public pages load smoke (project page-load, без Supabase)
-npm run test:ci      # lint + typecheck + test:unit + build - саме це біжить CI
-npm run deploy:{stage,prod}   # Netlify alias / prod deploy
+npm run test:ci      # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
+npm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
+                     # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
 ```
 
-CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`lint`/`typecheck`/`unit` (`test:unit:coverage`)/
-`build`/`page-load` (`test:e2e:pages` з dummy Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
-`deploy` на `main` бере `dist` з артефакту `build` (checkout + `npm ci` лишаються - Netlify CLI бандлить
-`netlify/functions` з репо), якщо всі перевірки пройшли (`e2e` може бути skipped) і є Netlify-секрети.
+CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`lint`/`typecheck` (`icons:check` + `typecheck`)/
+`unit` (`test:unit:coverage`)/`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
+Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
+деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "npm run build"`) зі своїм site env;
+job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 
 ## Environment Setup
 `package-lock.json` - committed (required for `npm ci`). Do NOT add it back to `.gitignore`.

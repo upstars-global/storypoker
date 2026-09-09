@@ -7,7 +7,17 @@
     "types": ["node"],
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "noEmit": true
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "eslint.config.js"]
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "eslint.config.js",
+    "scripts/icons/**/*.ts",
+    "scripts/generate-icons.ts",
+    "scripts/audit-icon-build.ts"
+  ]
 }
