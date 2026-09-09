@@ -52,6 +52,10 @@ for (const collection of collections) {
 const cssRawBytes = Buffer.byteLength(css)
 const cssGzipBytes = gzipSync(Buffer.from(css)).length
 
+// Task 0 gate only, superseded by the harness measurements in
+// docs/audits/2026-09-09-icon-rendering-ab.md. Taken from a throwaway build with AppIcon, both register
+// modules and the icon policy stubbed out; that build is not committed, so this number cannot be
+// regenerated from the repository. The gate is judged on jsGzipBWorst, which needs no stub build.
 const MEASURED_STUB_BUILD_GZIP = 414970
 
 const jsGzipA = entryGzipBytes
@@ -92,8 +96,10 @@ const estimate = {
     `variant A DOM taken from the design snapshot of /core-platform: ${SNAPSHOT.instances} instances, `
       + `${SNAPSHOT.domElements} elements, ${SNAPSHOT.markupBytes} B markup`,
     `variant B assumed to render one span per instance at ${MASK_BYTES_PER_INSTANCE} B of markup`,
-    'variant B JS is the measured gzip of a build with AppIcon, both register modules and the icon policy '
-      + 'stubbed out (414 970 B): the best case where the whole Iconify runtime and the subset JSON are gone',
+    'variant B JS is the measured gzip of a throwaway build with AppIcon, both register modules and the icon '
+      + 'policy stubbed out (414 970 B): the best case where the whole Iconify runtime and the subset JSON are '
+      + 'gone. That build is not committed, so this figure is not reproducible from the repository; it informs '
+      + 'only the optimistic bound and never the gate, which is judged on bWorst',
     'the shared application CSS is counted in both variants because it is unchanged by the renderer choice',
     'CSS weight is generated for the default flag case only (iconsLucide=false, iconsRounded=true)',
     'bWorst assumes the mask renderer removes no Iconify runtime at all; the budget gate is judged on it',

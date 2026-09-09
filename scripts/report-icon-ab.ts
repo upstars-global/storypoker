@@ -43,17 +43,45 @@ const FORBIDDEN = [
   /scripts\/icons\//,
 ]
 
-function forbidden(variant: string): string[] {
+const RENDERER_MODULES = {
+  iconifyRuntime: /@iconify[/\\]vue/,
+  iconCollections: /generated[/\\]iconCollections\.json/,
+  appIcon: /components[/\\]AppIcon\.vue/,
+  iconMask: /icon-rendering[/\\]IconMask\.vue/,
+}
+
+const EXPECTED_MODULES: Record<string, Record<keyof typeof RENDERER_MODULES, boolean>> = {
+  a: { iconifyRuntime: true, iconCollections: true, appIcon: true, iconMask: false },
+  b: { iconifyRuntime: false, iconCollections: false, appIcon: false, iconMask: true },
+}
+
+function sourcesOf(variant: string): string[] {
   const dir = join(reportDir, `dist-${variant}/assets`)
-  const found: string[] = []
+  const all: string[] = []
   for (const file of readdirSync(dir)) {
     if (!file.endsWith('.js.map')) continue
-    const sources: string[] = JSON.parse(readFileSync(join(dir, file), 'utf8')).sources ?? []
-    for (const source of sources) {
-      if (FORBIDDEN.some(pattern => pattern.test(source))) found.push(source)
+    all.push(...(JSON.parse(readFileSync(join(dir, file), 'utf8')).sources ?? []) as string[])
+  }
+  return all
+}
+
+function forbidden(variant: string): string[] {
+  return [...new Set(sourcesOf(variant).filter(source => FORBIDDEN.some(p => p.test(source))))]
+}
+
+function moduleGraph(variant: string): { present: Record<string, boolean>; violations: string[] } {
+  const sources = sourcesOf(variant)
+  const present: Record<string, boolean> = {}
+  const violations: string[] = []
+  for (const [name, pattern] of Object.entries(RENDERER_MODULES)) {
+    const found = sources.some(source => pattern.test(source))
+    present[name] = found
+    const expected = EXPECTED_MODULES[variant]![name as keyof typeof RENDERER_MODULES]
+    if (found !== expected) {
+      violations.push(`${variant}: expected ${name} to be ${expected ? 'present' : 'absent'}`)
     }
   }
-  return [...new Set(found)]
+  return { present, violations }
 }
 
 const interleavedPath = join(runsDir, 'interleaved.json')
@@ -76,6 +104,7 @@ for (const variant of ['a', 'b']) {
     markupBytes: cold[0]!.markupBytes,
     bundle: { ...weights, totalGzip: weights.jsGzip + weights.cssGzip },
     forbiddenSources: forbidden(variant),
+    moduleGraph: moduleGraph(variant),
     remoteRequests: [...new Set(runs.flatMap(run => run.requests))],
     readyMs: {
       coldMedian: median(cold.map(run => run.readyMs)),
@@ -122,3 +151,13 @@ summary.comparison = {
 }
 
 console.log(JSON.stringify(summary, null, 2))
+
+const violations = ['a', 'b'].flatMap(variant => [
+  ...(summary[variant] as { moduleGraph: { violations: string[] } }).moduleGraph.violations,
+  ...(summary[variant] as { forbiddenSources: string[] }).forbiddenSources
+    .map(source => `${variant}: forbidden source ${source}`),
+])
+if (violations.length) {
+  console.error(violations.join('\n'))
+  process.exit(1)
+}
