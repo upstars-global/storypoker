@@ -31,6 +31,23 @@ it('rejects a collection that local delivery cannot produce', () => {
   expect(validateIconUsage(usage, [], []).join('\n')).toContain('not available locally: mdi:account')
 })
 
+it('ignores prefixed strings that are not icon names', () => {
+  const usage = scanIconUsage({
+    'app/components/Probe.vue': '<script setup lang="ts">\nconst cls = on ? \'sm:hidden\' : \'md:block\'\n'
+      + '</script>\n<template><div :class="cls" /></template>',
+  })
+  expect(usage.literals).toEqual([])
+  expect(validateIconUsage(usage, [], [])).toEqual([])
+})
+
+it('rejects a non-deliverable collection inside an icon binding', () => {
+  const usage = scanIconUsage({
+    'app/components/Probe.vue': '<template><AppIcon :icon="on ? \'mdi:account\' : \'ic:baseline-add\'" /></template>',
+  })
+  expect(usage.literals).toContain('mdi:account')
+  expect(validateIconUsage(usage, [], []).join('\n')).toContain('not available locally: mdi:account')
+})
+
 it('rejects a non-deliverable collection listed in the manifest or a binding', () => {
   const manifest = validateIconUsage({ literals: [], bindings: [] }, ['mdi:account'], [])
   expect(manifest.join('\n')).toContain('not available locally: mdi:account')

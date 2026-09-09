@@ -20,13 +20,18 @@ export interface DeclaredBinding {
 
 const ICON_NAME_SHAPE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*:[a-z0-9][a-z0-9-]*$/
 const DELIVERABLE_PREFIXES = new Set(['ic', 'lucide', 'tabler', 'app'])
+const ICONIFY_PREFIXES = new Set([...DELIVERABLE_PREFIXES, 'simple-icons', 'game-icons', 'mdi'])
 
 function isIconName(value: string): boolean {
   return ICON_NAME_SHAPE.test(value)
 }
 
+function iconPrefix(value: string): string {
+  return value.slice(0, value.indexOf(':'))
+}
+
 function isDeliverable(value: string): boolean {
-  return DELIVERABLE_PREFIXES.has(value.slice(0, value.indexOf(':')))
+  return DELIVERABLE_PREFIXES.has(iconPrefix(value))
 }
 
 function normalizeExpression(expression: string): string {
@@ -41,11 +46,14 @@ function isExcludedDeclaration(node: ts.Node): boolean {
     && EXCLUDED_DECLARATIONS.has(node.name.text)
 }
 
-function collectFromScript(code: string, file: string, usage: IconUsage): void {
+function collectFromScript(code: string, file: string, usage: IconUsage, iconContext = false): void {
   const source = ts.createSourceFile(file, code, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS)
   const visit = (node: ts.Node): void => {
     if (isExcludedDeclaration(node)) return
-    if (ts.isStringLiteralLike(node) && isIconName(node.text)) usage.literals.push(node.text)
+    if (ts.isStringLiteralLike(node) && isIconName(node.text)
+      && (iconContext || ICONIFY_PREFIXES.has(iconPrefix(node.text)))) {
+      usage.literals.push(node.text)
+    }
     ts.forEachChild(node, visit)
   }
   visit(source)
@@ -72,7 +80,7 @@ function collectFromTemplate(node: TemplateChildNode, file: string, usage: IconU
       const exp = dir.exp
       if (!exp || exp.type !== 4) continue
       usage.bindings.push({ file, expression: normalizeExpression(exp.content) })
-      collectFromScript(`(${exp.content})`, file, usage)
+      collectFromScript(`(${exp.content})`, file, usage, true)
     }
     for (const child of node.children) collectFromTemplate(child, file, usage)
     return
