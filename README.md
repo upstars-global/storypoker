@@ -227,7 +227,7 @@ npm run test:e2e         # full Playwright suite, requires .env/.env.test
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on PRs and pushes to `main`:
 
-- `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
+- `detect-secrets`, `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
 - `e2e` (Chromium + WebKit against the test Supabase project) runs only when the `E2E_*` secrets are set.
 - There is no deploy job: Netlify builds `main` itself from the repo (`netlify.toml`), and the CI `dist` is built with placeholder credentials for the icon audit only.
 

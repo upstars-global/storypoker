@@ -10,8 +10,10 @@ export interface IconBinding {
 export interface IconUsage {
   literals: string[]
   bindings: IconBinding[]
-  allLiterals?: string[]
+  allLiterals: string[]
 }
+
+export type ScannedUsage = Partial<IconUsage> & Pick<IconUsage, 'literals' | 'bindings'>
 
 export interface DeclaredBinding {
   file: string
@@ -53,7 +55,7 @@ function collectFromScript(code: string, file: string, usage: IconUsage, iconCon
     if (isExcludedDeclaration(node)) return
     if (ts.isStringLiteralLike(node) && isIconName(node.text)) {
       if (iconContext || ICONIFY_PREFIXES.has(iconPrefix(node.text))) usage.literals.push(node.text)
-      usage.allLiterals?.push(node.text)
+      usage.allLiterals.push(node.text)
     }
     ts.forEachChild(node, visit)
   }
@@ -71,7 +73,7 @@ function collectFromTemplate(node: TemplateChildNode, file: string, usage: IconU
         const attr = prop as AttributeNode
         if (attr.name === 'icon' && attr.value && isIconName(attr.value.content)) {
           usage.literals.push(attr.value.content)
-          usage.allLiterals?.push(attr.value.content)
+          usage.allLiterals.push(attr.value.content)
         }
         continue
       }
@@ -111,12 +113,12 @@ export function scanIconUsage(sources: Record<string, string>): IconUsage {
     collectFromScript(code, file, usage)
   }
   usage.literals = [...new Set(usage.literals)].sort()
-  usage.allLiterals = [...new Set(usage.allLiterals ?? [])].sort()
+  usage.allLiterals = [...new Set(usage.allLiterals)].sort()
   return usage
 }
 
 export function validateIconUsage(
-  usage: IconUsage,
+  usage: ScannedUsage,
   names: readonly string[],
   bindings: readonly DeclaredBinding[],
 ): string[] {
