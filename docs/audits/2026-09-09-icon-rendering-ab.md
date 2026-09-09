@@ -22,7 +22,7 @@ inline-розмітка для єдиного кольорового винят�
 у production-графі немає ні `@iconify/vue`, ні `iconCollections.json`, ні `registerAppIcons`, ні `iconPolicy`.
 Пакет прибрано з `dependencies`.
 
-Виміряно на реальному production-графі, не проєкція: **−5 437 B gzip** (JS+CSS) проти останньої inline-SVG
+Виміряно на реальному production-графі, не проєкція: **−5 423 B gzip** (JS+CSS) проти останньої inline-SVG
 збірки при бюджеті +10 240 B. Кольори прапора збережені в обох темах, будівля слідує `currentColor`.
 
 ## Пороги і результат
@@ -31,7 +31,7 @@ inline-розмітка для єдиного кольорового винят�
 
 | Метрика | Поріг | Виміряно (mixed) | Результат |
 | --- | --- | --- | --- |
-| gzip JS+CSS production graph | ≤ A + 10 240 B | −5 437 B | pass |
+| gzip JS+CSS production graph | ≤ A + 10 240 B | −5 423 B | pass |
 | icon DOM elements (harness) | зменшення ≥ 25 | 49 → 23, зменшення 26 | pass |
 | неприйняті візуальні розбіжності | 0 | 0 | pass |
 | медіана ready proxy | регресія ≤ 1 мс | не роздільний на 20 парах | регресії не виявлено |
@@ -53,8 +53,9 @@ Harness-збірки, не production graph. Обидва варіанти не�
 CSS-колонка — це весь бандл стилів harness разом із Tailwind, а не лише іконковий CSS; сам згенерований
 `icons.css` важить 56 038 B raw.
 
-Це harness-числа для A і B. Для mixed вимірювання зроблено на справжній production-збірці: A = 443 247 B
-(JS 432 390 + CSS 10 857), mixed = 437 810 B (JS 416 984 + CSS 20 826), дельта **−5 437 B**. Тобто mixed
+Це harness-числа для A і B. Для mixed вимірювання зроблено на справжній production-збірці з чистого
+`npm ci` і placeholder-кредами Supabase: A = 443 202 B (JS 432 345 + CSS 10 857), mixed = 437 779 B
+(JS 416 953 + CSS 20 826), дельта **−5 423 B**. Тобто mixed
 лишається близько до B, а не повертається до A+CSS: inline-виняток важить 418 B raw і не тягне runtime.
 
 Module graph B перевірений по sourcemap: немає `@iconify/vue`, `iconCollections.json`, `AppIcon.vue`,
@@ -156,6 +157,7 @@ mixed-рендер, а скрипти A/B-експерименту (`report-icon
   які теж перелічені в плані, окремими станами не покриті: каталог уже доводить доставку для кожного
   `inputNames`, а при `is_online: false` reveal не додає жодної нової іконки в PlayerRow.
 - Усі 15 гравців у fixture мають `is_online: false` — це вимога плану (Task 1), а не недорендер.
-- Harness збирається в production-режимі, тож guard `iconPolicy` у ньому вимкнений (він активний лише під
-  `import.meta.env.DEV` і в тестовому режимі). Нуль запитів до Iconify в прогонах доводиться перехопленням
-  на рівні Playwright, а не цим guard-ом.
+- Harness збирається в production-режимі, тож guard пропущеної іконки в ньому вимкнений (після міграції це
+  `throw` в `AppIcon.vue`, активний лише під `import.meta.env.DEV` і в тестовому режимі; окремого
+  `iconPolicy` більше немає). Нуль запитів до Iconify в прогонах доводиться перехопленням на рівні
+  Playwright, а не цим guard-ом.

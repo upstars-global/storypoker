@@ -56,6 +56,17 @@ it('catches an unlisted collection that reaches an icon binding', () => {
   expect(validateIconUsage(usage, [], []).join('\n')).toContain('undeclared dynamic icon binding: icon')
 })
 
+it('rejects a binding declared with no names, so an unlisted literal cannot slip through', () => {
+  const usage = scanIconUsage({
+    'app/components/Probe.vue': '<script setup lang="ts">\nconst icon = \'ph:house\'\n'
+      + '</script>\n<template><AppIcon :icon="icon" /></template>',
+  })
+  const issues = validateIconUsage(usage, [], [
+    { file: 'app/components/Probe.vue', expression: 'icon', names: [] },
+  ])
+  expect(issues.join('\n')).toContain('dynamic icon binding declares no names: icon')
+})
+
 it('rejects a third-party collection declared in a binding', () => {
   const issues = validateIconUsage({ literals: [], bindings: [] }, [], [
     { file: 'app/components/Probe.vue', expression: 'icon', names: ['material-symbols:home'] },

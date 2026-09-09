@@ -36,7 +36,10 @@ const files = artifacts.map(file => {
   return { path: relative(distDir, file), rawBytes: raw.length, gzipBytes: gzipSync(raw).length }
 }).sort((a, b) => a.path.localeCompare(b.path))
 
+const REQUIRED_SOURCE = /@supabase[/\\]auth-js/
+
 const forbiddenSources: string[] = []
+let sawRequiredSource = false
 let checkedMaps = 0
 for (const file of artifacts) {
   if (!file.endsWith('.js')) continue
@@ -50,6 +53,7 @@ for (const file of artifacts) {
   const sources: string[] = JSON.parse(readFileSync(mapPath, 'utf8')).sources ?? []
   for (const source of sources) {
     if (FORBIDDEN_SOURCES.some(pattern => pattern.test(source))) forbiddenSources.push(source)
+    if (REQUIRED_SOURCE.test(source)) sawRequiredSource = true
   }
 }
 
@@ -75,6 +79,7 @@ const report = {
   checkedSourcemaps: checkedMaps,
   files,
   forbiddenSources: [...new Set(forbiddenSources)].sort(),
+  sawRequiredSource,
   entryChunk: {
     path: entryFile.path,
     gzipBytes: entryFile.gzipBytes,
@@ -89,6 +94,13 @@ const report = {
 
 mkdirSync(reportDir, { recursive: true })
 writeFileSync(join(reportDir, 'bundle.json'), JSON.stringify(report, null, 2) + '\n')
+
+if (!sawRequiredSource) {
+  console.error('the Supabase client is missing from the browser graph: the build ran without'
+    + ' VITE_SUPABASE_URL/VITE_SUPABASE_KEY, so the client was tree-shaken and the weights'
+    + ' are not comparable to the baseline')
+  process.exit(1)
+}
 
 if (report.forbiddenSources.length) {
   console.error(`forbidden modules in the browser graph:\n${report.forbiddenSources.join('\n')}`)

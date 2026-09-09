@@ -13,7 +13,7 @@ Alias `~` і `@` → `app/` (`vite.config.ts` + `vitest.config.ts`).
 | `app/stores/` | Pinia: auth/room/players/presence/profiles | `app/stores/AGENTS.md` |
 | `app/utils/` | колоди карт, shields, формули узгодженості | `app/utils/AGENTS.md` |
 
-Без окремих файлів: `app/composables/`, `app/lib/` (`supabase-instance`, `registerAppIcons`, `database.types`),
+Без окремих файлів: `app/composables/`, `app/lib/` (`supabase-instance`, `database.types`),
 `app/configs/` (`featureFlags`), `app/i18n/locales/`.
 
 ## Інваріанти

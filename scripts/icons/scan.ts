@@ -130,6 +130,9 @@ export function validateIconUsage(
     if (!isDeliverable(name)) issues.push(`icon collection not available locally: ${name} (manifest)`)
   }
   for (const binding of bindings) {
+    if (!binding.names.length) {
+      issues.push(`dynamic icon binding declares no names: ${binding.expression} (${binding.file})`)
+    }
     for (const name of binding.names) {
       if (!isDeliverable(name)) {
         issues.push(`icon collection not available locally: ${name} (${binding.file})`)

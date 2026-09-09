@@ -99,7 +99,11 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # Placeholders keep the Supabase client in the graph; see docs/audits/README.md.
       - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_KEY: placeholder
       - name: Audit the icon delivery graph
         run: npm run icons:audit-build
       - name: Upload icon audit report

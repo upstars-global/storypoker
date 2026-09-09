@@ -1,10 +1,10 @@
 {
-  "note": "gzip entry chunk + CSS on the last inline-SVG commit, taken before the mask migration; the icons:audit-build budget is measured against this. Re-cut from the entry-chunk-only baseline because the mask renderer moves bytes from JS into CSS, so an entry-only budget would no longer see the CSS growth.",
+  "note": "gzip entry chunk + CSS on the last inline-SVG commit, taken before the mask migration; the icons:audit-build budget is measured against this. Re-cut from the entry-chunk-only baseline because the mask renderer moves bytes from JS into CSS, so an entry-only budget would no longer see the CSS growth. Measured on a clean npm ci with placeholder VITE_SUPABASE_URL/VITE_SUPABASE_KEY: an env-less build throws at module scope, tree-shakes the Supabase client, and lands ~55 KB lighter than production.",
   "commit": "0bf1540f3d285d27117a4b370a4508b991fc3c41",
   "generatedAt": "2026-09-09T00:00:00.000Z",
   "jsCss": {
-    "entryGzipBytes": 432390,
+    "entryGzipBytes": 432345,
     "cssGzipBytes": 10857,
-    "gzipBytes": 443247
+    "gzipBytes": 443202
   }
 }
