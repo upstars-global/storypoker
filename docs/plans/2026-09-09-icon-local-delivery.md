@@ -335,6 +335,27 @@ for (const iconsLucide of [false, true]) {
 - [ ] Запросити code review, усунути підтверджені зауваження; commit `test: verify offline icon delivery`.
   Інтеграцію гілки виконувати через finishing-a-development-branch; прямий push у main заборонений.
 
+## Task 7: Слайдер гучності на кольорах теми без ховер-підсвітки
+
+**Files:** modify `app/assets/css/main.css`, `app/components/AppHeader.vue`.
+
+**Interfaces:** `.mui-slider` рендериться з `appearance: none`, тож доріжку і повзунок малюють явні правила
+для обох рушіїв. Заповнення їде у CSS-змінній `--fill` з компонента: `:style="{ '--fill': volumePercent + '%' }"`.
+
+- [x] Прибрати покладання на `accent-color`: сам по собі він фарбує лише заливку й повзунок, а Chromium
+  усе одно малює власну ховер-підсвітку нативного повзунка, і змінна на неї не впливає.
+- [x] WebKit: `::-webkit-slider-runnable-track` отримує `linear-gradient` з двох стопів на `--fill`
+  (нативної заповненої частини в WebKit немає), `::-webkit-slider-thumb` - `appearance: none` і `--primary`.
+- [x] Gecko: `::-moz-range-track` на `--border-input`, `::-moz-range-progress` і `::-moz-range-thumb`
+  на `--primary`. Жодне правило не має ховер-стану, тож колір при наведенні незмінний.
+- [x] Перевірка Chromium: попіксельний diff контрола до і під час ховера на production preview - 0 змінених
+  пікселів з 12 400; контрольний diff двох idle-знімків теж 0, тобто риг роздільний. Заміряно після входу
+  в кімнату через JoinOverlay, без обходу оверлея. На dev-сервері diff показує ~1620 пікселів, але це
+  анімація відкриття попапу гучності, а не ховер: вимірювати треба на preview після `document.getAnimations()`.
+- [x] Перевірка Gecko: Firefox на `/core-platform` вручну, 2026-09-09 - доріжка, заповнення і повзунок
+  беруть кольори теми, ховер їх не змінює.
+- [x] Кольори перевірені у всіх шести комбінаціях палітри й теми: кожна дає власний відтінок `--primary`.
+
 ## Самоперевірка плану
 
 - Resolver/flags: Task 1. Reachable manifest і дрейф: Task 2. Alias-safe subset: Task 3.

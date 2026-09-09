@@ -21,8 +21,9 @@ countdown «wet») змішує `currentColor` з `#0057B7`/`#FFD700`, і mask-�
 Список винятків - `COLORED_ICONS` у `scripts/icons/coloredIcons.ts`; генератор сам детектує фіксовані заливки і
 падає, якщо детекція розходиться зі списком у будь-який бік.
 
-Набір іконок - Material (`ic:*`); Lucide вмикається лише прапором `iconsLucide`, хардкодити `lucide:*` в
-компонентах не можна. Рендер проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts` читає флаги і делегує чистому
+Набір іконок - Material (`ic:*`); Lucide вмикається лише прапором `iconsLucide`, нові `lucide:*` хардкодити в
+компонентах не можна. Наявні винятки - два: `lucide:id-card` (AppHeader) і `lucide:undo` (CardsArea).
+Рендер проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts` читає флаги і делегує чистому
 `resolveIconName()` в `app/utils/iconResolver.ts`): `iconsLucide` ремапить `ic:baseline-*`→`lucide:*` (нову
 lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`.
 

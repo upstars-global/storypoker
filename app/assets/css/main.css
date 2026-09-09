@@ -815,7 +815,6 @@ body {
     font-size: 0.9375rem;
   }
   .mui-slider {
-    accent-color: var(--primary);
     cursor: pointer;
     appearance: none;
     background-color: transparent;

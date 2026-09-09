@@ -22,7 +22,7 @@ inline-розмітка для єдиного кольорового винят�
 у production-графі немає ні `@iconify/vue`, ні `iconCollections.json`, ні `registerAppIcons`, ні `iconPolicy`.
 Пакет прибрано з `dependencies`.
 
-Виміряно на реальному production-графі, не проєкція: **−5 423 B gzip** (JS+CSS) проти останньої inline-SVG
+Виміряно на реальному production-графі, не проєкція: **−4 904 B gzip** (JS+CSS) проти останньої inline-SVG
 збірки при бюджеті +10 240 B - це критерій приймання цього A/B, суворіший за постійний бюджет регресії
 25 KB у `icons:audit-build`. Кольори прапора збережені в обох темах, будівля слідує `currentColor`.
 
@@ -32,7 +32,7 @@ inline-розмітка для єдиного кольорового винят�
 
 | Метрика | Поріг | Виміряно (mixed) | Результат |
 | --- | --- | --- | --- |
-| gzip JS+CSS production graph | ≤ A + 10 240 B | −5 423 B | pass |
+| gzip JS+CSS production graph | ≤ A + 10 240 B | −4 904 B | pass |
 | icon DOM elements (harness) | зменшення ≥ 25 | 49 → 23, зменшення 26 | pass |
 | неприйняті візуальні розбіжності | 0 | 0 | pass |
 | медіана ready proxy | регресія ≤ 1 мс | не роздільний на 20 парах | регресії не виявлено |
@@ -55,8 +55,9 @@ CSS-колонка — це весь бандл стилів harness разом 
 `icons.css` важить 56 038 B raw.
 
 Це harness-числа для A і B. Для mixed вимірювання зроблено на справжній production-збірці з чистого
-`npm ci` і placeholder-кредами Supabase: A = 443 202 B (JS 432 345 + CSS 10 857), mixed = 437 779 B
-(JS 416 953 + CSS 20 826), дельта **−5 423 B**. Тобто mixed
+`npm ci` і placeholder-кредами Supabase: A = 443 202 B (JS 432 345 + CSS 10 857), mixed = 438 298 B
+(JS 416 969 + CSS 21 329), дельта **−4 904 B**. Заміряно на коміті, що несе цей рядок; кожен наступний коміт CSS зсуває
+число, тому при зміні стилів переміряй `npm run icons:audit-build` і онови разом із цим рядком. Тобто mixed
 лишається близько до B, а не повертається до A+CSS: inline-виняток важить 418 B raw і не тягне runtime.
 
 Module graph B перевірений по sourcemap: немає `@iconify/vue`, `iconCollections.json`, `AppIcon.vue`,
