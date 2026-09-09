@@ -917,6 +917,7 @@ body {
   .mui-menu-item .mui-menu-icon {
     color: var(--text-body);
     flex-shrink: 0;
+    font-size: 24px;
     width: 24px;
     height: 24px;
   }
