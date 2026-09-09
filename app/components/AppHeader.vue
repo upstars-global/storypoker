@@ -200,6 +200,7 @@ function onVolumeInput(event: Event) {
             ref="volumeSliderRef"
             type="range"
             class="mui-slider w-full"
+            :style="{ '--fill': `${volumePercent}%` }"
             min="0"
             max="100"
             step="5"
