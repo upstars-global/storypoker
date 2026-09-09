@@ -24,6 +24,22 @@ it('reports new literal and undeclared dynamic binding', () => {
   expect(issues.join('\n')).toContain('nextIcon')
 })
 
+it('rejects a collection that local delivery cannot produce', () => {
+  const usage = scanIconUsage({
+    'app/components/Probe.vue': '<template><AppIcon icon="mdi:account" /></template>',
+  })
+  expect(validateIconUsage(usage, [], []).join('\n')).toContain('not available locally: mdi:account')
+})
+
+it('rejects a non-deliverable collection listed in the manifest or a binding', () => {
+  const manifest = validateIconUsage({ literals: [], bindings: [] }, ['mdi:account'], [])
+  expect(manifest.join('\n')).toContain('not available locally: mdi:account')
+  const binding = validateIconUsage({ literals: [], bindings: [] }, [], [
+    { file: 'app/components/Probe.vue', expression: 'icon', names: ['mdi:account'] },
+  ])
+  expect(binding.join('\n')).toContain('not available locally: mdi:account')
+})
+
 it('matches the icons actually used in the application sources', () => {
   const issues = validateIconUsage(scanIconUsage(projectSources()), inputNames, dynamicBindings)
   expect(issues).toEqual([])

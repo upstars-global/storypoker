@@ -18,7 +18,16 @@ export interface DeclaredBinding {
   names: readonly string[]
 }
 
-const ICON_NAME = /^(?:ic|lucide|tabler|app|simple-icons|game-icons):[a-z0-9][a-z0-9-]*$/
+const ICON_NAME_SHAPE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*:[a-z0-9][a-z0-9-]*$/
+const DELIVERABLE_PREFIXES = new Set(['ic', 'lucide', 'tabler', 'app'])
+
+function isIconName(value: string): boolean {
+  return ICON_NAME_SHAPE.test(value)
+}
+
+function isDeliverable(value: string): boolean {
+  return DELIVERABLE_PREFIXES.has(value.slice(0, value.indexOf(':')))
+}
 
 function normalizeExpression(expression: string): string {
   return expression.replace(/\s+/g, ' ').trim()
@@ -36,7 +45,7 @@ function collectFromScript(code: string, file: string, usage: IconUsage): void {
   const source = ts.createSourceFile(file, code, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS)
   const visit = (node: ts.Node): void => {
     if (isExcludedDeclaration(node)) return
-    if (ts.isStringLiteralLike(node) && ICON_NAME.test(node.text)) usage.literals.push(node.text)
+    if (ts.isStringLiteralLike(node) && isIconName(node.text)) usage.literals.push(node.text)
     ts.forEachChild(node, visit)
   }
   visit(source)
@@ -51,7 +60,7 @@ function collectFromTemplate(node: TemplateChildNode, file: string, usage: IconU
     for (const prop of node.props) {
       if (prop.type === 6) {
         const attr = prop as AttributeNode
-        if (attr.name === 'icon' && attr.value && ICON_NAME.test(attr.value.content)) {
+        if (attr.name === 'icon' && attr.value && isIconName(attr.value.content)) {
           usage.literals.push(attr.value.content)
         }
         continue
@@ -103,7 +112,21 @@ export function validateIconUsage(
   const issues: string[] = []
   const known = new Set(names)
   for (const literal of usage.literals) {
+    if (!isDeliverable(literal)) {
+      issues.push(`icon collection not available locally: ${literal}`)
+      continue
+    }
     if (!known.has(literal)) issues.push(`unlisted icon literal: ${literal}`)
+  }
+  for (const name of names) {
+    if (!isDeliverable(name)) issues.push(`icon collection not available locally: ${name} (manifest)`)
+  }
+  for (const binding of bindings) {
+    for (const name of binding.names) {
+      if (!isDeliverable(name)) {
+        issues.push(`icon collection not available locally: ${name} (${binding.file})`)
+      }
+    }
   }
   const declared = new Set(bindings.map(binding => `${binding.file}::${binding.expression}`))
   const seen = new Set<string>()
