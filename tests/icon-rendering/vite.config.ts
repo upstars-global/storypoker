@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'node:path'
 
 const projectRoot = resolve(import.meta.dirname, '../..')
+const isMask = process.env.ICON_RENDERER === 'mask'
 
 function stripRemoteFonts(): Plugin {
   return {
@@ -43,14 +44,23 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: {
-      '~': resolve(projectRoot, 'app'),
-      '@': resolve(projectRoot, 'app'),
-    },
+    alias: [
+      ...(isMask
+        ? [
+            { find: /^.*[/\\]AppIcon\.vue$/, replacement: resolve(import.meta.dirname, 'IconMask.vue') },
+            {
+              find: /^.*[/\\]registerLocalIcons(\.ts)?$/,
+              replacement: resolve(import.meta.dirname, 'registerMaskIcons.ts'),
+            },
+          ]
+        : []),
+      { find: '~', replacement: resolve(projectRoot, 'app') },
+      { find: '@', replacement: resolve(projectRoot, 'app') },
+    ],
   },
   build: {
     sourcemap: true,
-    outDir: resolve(projectRoot, 'test-results/icon-rendering/dist-a'),
+    outDir: resolve(projectRoot, `test-results/icon-rendering/dist-${isMask ? 'b' : 'a'}`),
     emptyOutDir: true,
   },
 })

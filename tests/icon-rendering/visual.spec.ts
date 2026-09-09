@@ -2,7 +2,9 @@ import { mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { expect, test } from '@playwright/test'
 
-const shotDir = resolve(import.meta.dirname, '../../test-results/icon-rendering/a')
+import { iconSelector, isMaskVariant, variant } from './selectors'
+
+const shotDir = resolve(import.meta.dirname, `../../test-results/icon-rendering/${variant}`)
 const THEMES = ['light', 'dark'] as const
 const PALETTES = ['classic', 'cyberdeck', 'matcha'] as const
 const FLAG_CASES = [
@@ -48,21 +50,23 @@ for (const theme of THEMES) {
 test('icons carry real geometry and stay decorative', async ({ page }) => {
   await page.goto('/?view=catalog')
   await expect(page.getByTestId('icon-harness-ready')).toBeAttached()
-  const sizes = await page.locator('[data-icon-name] svg').evaluateAll(nodes => nodes.map(node => {
+  const sizes = await page.locator(`[data-icon-name] ${iconSelector}`).evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect()
     return {
       width: rect.width,
       height: rect.height,
       children: node.childElementCount,
       ariaHidden: node.getAttribute('aria-hidden'),
-      color: getComputedStyle(node).color,
+      masked: getComputedStyle(node).maskImage !== 'none'
+        || getComputedStyle(node).backgroundImage !== 'none',
     }
   }))
   expect(sizes.length).toBeGreaterThan(0)
   for (const size of sizes) {
     expect(size.width).toBeGreaterThan(0)
     expect(size.height).toBeGreaterThan(0)
-    expect(size.children).toBeGreaterThan(0)
+    if (isMaskVariant) expect(size.masked).toBe(true)
+    else expect(size.children).toBeGreaterThan(0)
     expect(size.ariaHidden).toBe('true')
   }
 })
@@ -77,8 +81,8 @@ for (const role of ['player', 'moderator', 'authorized-moderator'] as const) {
     await page.goto(`/?role=${role}&view=room`)
     await expect(page.getByTestId('icon-harness-ready')).toBeAttached()
 
-    const timerIcons = await page.locator('[data-testid=side-column] svg.iconify').count()
-    const cardsIcons = await page.locator('[data-testid=cards-column] svg.iconify').count()
+    const timerIcons = await page.locator(`[data-testid=side-column] ${iconSelector}`).count()
+    const cardsIcons = await page.locator(`[data-testid=cards-column] ${iconSelector}`).count()
     if (role === 'player') {
       expect(timerIcons).toBe(18)
       expect(cardsIcons).toBe(0)
@@ -87,8 +91,15 @@ for (const role of ['player', 'moderator', 'authorized-moderator'] as const) {
       expect(cardsIcons).toBe(5)
     }
 
-    const broken = await page.locator('svg.iconify').evaluateAll(nodes => nodes
-      .filter(node => node.childElementCount === 0 || node.getBoundingClientRect().width === 0).length)
+    const broken = await page.locator(iconSelector).evaluateAll((nodes, mask) => nodes
+      .filter(node => {
+        if (node.getBoundingClientRect().width === 0) return true
+        if (mask) {
+          const style = getComputedStyle(node)
+          return style.maskImage === 'none' && style.backgroundImage === 'none'
+        }
+        return node.childElementCount === 0
+      }).length, isMaskVariant)
     expect(broken).toBe(0)
     expect(attempts).toEqual([])
 

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { iconSelector, isMaskVariant } from './selectors'
 
 test('renders the room fixture without a backend', async ({ page }) => {
   const remote: string[] = []
@@ -45,12 +46,17 @@ for (const flags of FLAG_CASES) {
     const containers = page.locator('[data-icon-name]')
     const total = await containers.count()
     expect(total).toBeGreaterThan(0)
-    const empty = await page.locator('[data-icon-name]').evaluateAll(nodes => nodes
+    const empty = await page.locator('[data-icon-name]').evaluateAll((nodes, args) => nodes
       .filter(node => {
-        const svg = node.querySelector('svg')
-        return !svg || svg.childElementCount === 0
+        const el = node.querySelector(args.selector)
+        if (!el) return true
+        if (args.mask) {
+          const style = getComputedStyle(el)
+          return style.maskImage === 'none' && style.backgroundImage === 'none'
+        }
+        return el.childElementCount === 0
       })
-      .map(node => node.getAttribute('data-icon-name')))
+      .map(node => node.getAttribute('data-icon-name')), { selector: iconSelector, mask: isMaskVariant })
     expect(empty).toEqual([])
     expect(attempts).toEqual([])
     await context.close()
@@ -63,10 +69,10 @@ test('keeps the icon catalog after an offline reload', async ({ page, context })
   await page.evaluate(async () => { await navigator.serviceWorker.ready })
   await page.reload()
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null)
-  const count = await page.locator('[data-icon-name] svg').count()
+  const count = await page.locator(`[data-icon-name] ${iconSelector}`).count()
   expect(count).toBeGreaterThan(0)
   await context.setOffline(true)
   await page.reload()
   await expect(page.getByTestId('icon-harness-ready')).toBeAttached()
-  await expect(page.locator('[data-icon-name] svg')).toHaveCount(count)
+  await expect(page.locator(`[data-icon-name] ${iconSelector}`)).toHaveCount(count)
 })
