@@ -24,6 +24,7 @@
     "icons:harness:preview:b": "ICON_RENDERER=mask vite preview --config tests/icon-rendering/vite.config.ts --port 4182 --strictPort",
     "icons:harness:preview": "vite preview --config tests/icon-rendering/vite.config.ts --port 4181 --strictPort",
     "test:icons:harness": "playwright test --config tests/icon-rendering/playwright.config.ts",
+    "icons:report-ab": "node scripts/report-icon-ab.ts",
     "icons:estimate-ab": "node scripts/estimate-icon-ab.ts",
     "icons:audit-build": "node scripts/audit-icon-build.ts dist",
     "icons:generate": "node scripts/generate-icons.ts",

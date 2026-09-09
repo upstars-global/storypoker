@@ -22,6 +22,12 @@
   Runtime-перевірок немає: контраст шести комбінацій `palette × theme`, touch-таргети й
   горизонтальний overflow лишаються відкритими до аудиту `web-debug`.
 
+- [2026-09-09 — A/B рендеру іконок](2026-09-09-icon-rendering-ab.md): виконання плану A/B, Tasks 0–4 на
+  ізольованому harness з fixture на 15 гравців. Варіант B (статичний CSS mask) проходить усі кількісні пороги
+  (gzip JS+CSS −6 096 B, icon DOM elements 49 → 23, нуль запитів до Iconify, без регресії часу), але провалює
+  візуальний: `app:town-hall` єдиний змішує `currentColor` з явними кольорами і в mask-режимі втрачає прапор.
+  Висновок — mixed: mask для монохромних, inline SVG для кольорових винятків. Production-міграція не авторизована.
+
 ## Дані
 
 - [`icon-bundle-baseline.json`](icon-bundle-baseline.json) - gzip entry chunk на `main` до переходу іконок на
