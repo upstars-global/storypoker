@@ -7,6 +7,7 @@ import { icons as ic } from '@iconify-json/ic'
 import { icons as lucide } from '@iconify-json/lucide'
 import { icons as tabler } from '@iconify-json/tabler'
 import { buildCollections } from './icons/subset.ts'
+import { parseSvg } from './icons/parseSvg.ts'
 import { appIconNames, inputNames } from '../app/utils/iconManifest.ts'
 import { resolveIconName } from '../app/utils/iconResolver.ts'
 
@@ -28,21 +29,6 @@ if (!existsSync(bundlePath)) {
 const bundle = JSON.parse(readFileSync(bundlePath, 'utf8'))
 const entryGzipBytes: number = bundle.entryChunk.gzipBytes
 const cssArtifact = bundle.files.find((file: { path: string }) => file.path.endsWith('.css'))
-
-function parseSvg(svg: string): { body: string; width: number; height: number } {
-  let width = 24
-  let height = 24
-  const viewBox = svg.match(/\bviewBox=["']([^"']+)["']/)
-  if (viewBox?.[1]) {
-    const parts = viewBox[1].trim().split(/\s+/).map(Number)
-    if (parts.length === 4 && !Number.isNaN(parts[2]) && !Number.isNaN(parts[3])) {
-      width = parts[2]!
-      height = parts[3]!
-    }
-  }
-  const body = svg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '').trim()
-  return { body, width, height }
-}
 
 function appCollection(): IconifyJSON {
   const icons: IconifyJSON['icons'] = {}

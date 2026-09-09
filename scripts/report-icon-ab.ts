@@ -35,6 +35,12 @@ function bundle(variant: string): { jsGzip: number; cssGzip: number; jsRaw: numb
   return { jsGzip, cssGzip, jsRaw, cssRaw }
 }
 
+const FORBIDDEN = [
+  /@iconify-json\/[^/]+\/icons\.json/,
+  /scripts\/generate-icons\.ts/,
+  /scripts\/icons\//,
+]
+
 function forbidden(variant: string): string[] {
   const dir = join(reportDir, `dist-${variant}/assets`)
   const found: string[] = []
@@ -42,7 +48,7 @@ function forbidden(variant: string): string[] {
     if (!file.endsWith('.js.map')) continue
     const sources: string[] = JSON.parse(readFileSync(join(dir, file), 'utf8')).sources ?? []
     for (const source of sources) {
-      if (/@iconify-json\/[^/]+\/icons\.json/.test(source)) found.push(source)
+      if (FORBIDDEN.some(pattern => pattern.test(source))) found.push(source)
     }
   }
   return [...new Set(found)]
@@ -79,8 +85,14 @@ for (const variant of ['a', 'b']) {
   }
 }
 
-const a = summary.a as never as { bundle: { totalGzip: number }; iconElements: number; readyMs: { coldMedian: number } }
-const b = summary.b as never as { bundle: { totalGzip: number }; iconElements: number; readyMs: { coldMedian: number } }
+interface VariantSummary {
+  bundle: { totalGzip: number }
+  iconElements: number
+  readyMs: { coldMedian: number }
+}
+
+const a = summary.a as VariantSummary
+const b = summary.b as VariantSummary
 
 summary.comparison = {
   bundleGzipDelta: b.bundle.totalGzip - a.bundle.totalGzip,

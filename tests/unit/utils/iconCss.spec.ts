@@ -19,7 +19,7 @@ it('emits exactly one class per icon with no duplicates', () => {
 it('carries dimensions for every icon and shares the common rules once', () => {
   const { css } = generateIconCss(collections)
   expect(css).toContain('.sp-icon')
-  expect(css.split('.sp-icon {')).toHaveLength(collections.length + 1)
+  expect(css.split('.sp-icon {')).toHaveLength(2)
   expect(css).toMatch(/width:\s*1em/)
   expect(css).toMatch(/height:\s*1em/)
 })

@@ -7,15 +7,23 @@ export function iconClassName(fullName: string): string {
 
 export function generateIconCss(collections: IconifyJSON[]): { css: string; classes: Record<string, string> } {
   const classes: Record<string, string> = {}
-  let css = ''
+  const blocks: string[] = []
+  let common = ''
   for (const collection of [...collections].sort((a, b) => a.prefix.localeCompare(b.prefix))) {
     const names = Object.keys(collection.icons).sort()
     if (!names.length) continue
     for (const name of names) classes[`${collection.prefix}:${name}`] = iconClassName(`${collection.prefix}:${name}`)
-    css += getIconsCSS(collection, names, {
+    const generated = getIconsCSS(collection, names, {
       iconSelector: '.sp-icon-{prefix}-{name}',
       commonSelector: '.sp-icon',
     })
+    const match = generated.match(/^\.sp-icon \{[^}]*\}\n*/)
+    if (match) {
+      common ||= match[0]
+      blocks.push(generated.slice(match[0].length))
+      continue
+    }
+    blocks.push(generated)
   }
-  return { css, classes }
+  return { css: common + blocks.join(''), classes }
 }
