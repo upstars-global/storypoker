@@ -10,7 +10,7 @@ export interface IconBinding {
 export interface IconUsage {
   literals: string[]
   bindings: IconBinding[]
-  literalsByFile?: Record<string, string[]>
+  allLiterals?: string[]
 }
 
 export interface DeclaredBinding {
@@ -51,12 +51,9 @@ function collectFromScript(code: string, file: string, usage: IconUsage, iconCon
   const source = ts.createSourceFile(file, code, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS)
   const visit = (node: ts.Node): void => {
     if (isExcludedDeclaration(node)) return
-    if (ts.isStringLiteralLike(node) && isIconName(node.text)
-      && (iconContext || ICONIFY_PREFIXES.has(iconPrefix(node.text)))) {
-      usage.literals.push(node.text)
-    }
     if (ts.isStringLiteralLike(node) && isIconName(node.text)) {
-      ((usage.literalsByFile ??= {})[file] ??= []).push(node.text)
+      if (iconContext || ICONIFY_PREFIXES.has(iconPrefix(node.text))) usage.literals.push(node.text)
+      usage.allLiterals?.push(node.text)
     }
     ts.forEachChild(node, visit)
   }
@@ -74,7 +71,7 @@ function collectFromTemplate(node: TemplateChildNode, file: string, usage: IconU
         const attr = prop as AttributeNode
         if (attr.name === 'icon' && attr.value && isIconName(attr.value.content)) {
           usage.literals.push(attr.value.content)
-          ;((usage.literalsByFile ??= {})[file] ??= []).push(attr.value.content)
+          usage.allLiterals?.push(attr.value.content)
         }
         continue
       }
@@ -99,7 +96,7 @@ export function isIconUsageSource(file: string): boolean {
 }
 
 export function scanIconUsage(sources: Record<string, string>): IconUsage {
-  const usage: IconUsage = { literals: [], bindings: [], literalsByFile: {} }
+  const usage: IconUsage = { literals: [], bindings: [], allLiterals: [] }
   for (const [file, code] of Object.entries(sources)) {
     if (file.endsWith('.vue')) {
       const { descriptor } = parse(code, { filename: file })
@@ -114,9 +111,7 @@ export function scanIconUsage(sources: Record<string, string>): IconUsage {
     collectFromScript(code, file, usage)
   }
   usage.literals = [...new Set(usage.literals)].sort()
-  for (const [file, literals] of Object.entries(usage.literalsByFile ?? {})) {
-    usage.literalsByFile![file] = [...new Set(literals)].sort()
-  }
+  usage.allLiterals = [...new Set(usage.allLiterals ?? [])].sort()
   return usage
 }
 
@@ -127,7 +122,7 @@ export function validateIconUsage(
 ): string[] {
   const issues: string[] = []
   const known = new Set(names)
-  const scannedLiterals = new Set(Object.values(usage.literalsByFile ?? {}).flat())
+  const scannedLiterals = new Set(usage.allLiterals ?? [])
   for (const literal of usage.literals) {
     if (!isDeliverable(literal)) {
       issues.push(`icon collection not available locally: ${literal}`)

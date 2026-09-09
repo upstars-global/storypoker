@@ -42,9 +42,16 @@
   `VITE_SUPABASE_KEY=placeholder`. Значення важать байти, тож змінювати їх окремо від baseline не можна.
   Сам аудит падає, якщо не бачить auth-клієнта Supabase у графі.
   Це не аудит, а вимір. Entry chunk у проєкті один і не сплітиться, тож будь-який неіконковий приріст теж їсть
-  цей бюджет. Коли він вичерпається не через іконки - перезняти baseline з поточного `main` на чистому
-  `npm ci` з тими самими placeholder-кредами (`npm run build`, далі сумувати gzip entry chunk і всіх `.css`
-  у `dist/assets`), записати новий `commit` і `gzipBytes`, і в тому ж коміті пояснити причину. Мовчки піднімати поріг у скрипті не можна.
+  цей бюджет. Коли він вичерпається не через іконки - перезняти baseline з поточного `main` на чистому `npm ci`:
+
+  ```bash
+  npm ci
+  VITE_SUPABASE_URL=https://placeholder.supabase.co VITE_SUPABASE_KEY=placeholder npm run build
+  npm run icons:audit-build   # entryChunk.jsCssGzipBytes у test-results/icon-rendering/bundle.json
+  ```
+
+  Записати `entryChunk.jsCssGzipBytes` як новий `gzipBytes`, оновити `commit`, і в тому ж коміті пояснити
+  причину. Мовчки піднімати поріг у скрипті не можна.
 
 ## Конвенції
 

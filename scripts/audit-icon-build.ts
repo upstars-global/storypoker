@@ -96,8 +96,8 @@ mkdirSync(reportDir, { recursive: true })
 writeFileSync(join(reportDir, 'bundle.json'), JSON.stringify(report, null, 2) + '\n')
 
 if (!sawRequiredSource) {
-  console.error('the Supabase auth client (@supabase/auth-js) is missing from the browser graph:'
-    + ' the build ran without'
+  console.error('the Supabase auth client (@supabase/auth-js or its @supabase/gotrue-js predecessor)'
+    + ' is missing from the browser graph: the build ran without'
     + ' VITE_SUPABASE_URL/VITE_SUPABASE_KEY, so the client was tree-shaken and the weights'
     + ' are not comparable to the baseline')
   process.exit(1)

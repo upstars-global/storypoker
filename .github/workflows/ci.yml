@@ -107,6 +107,7 @@ jobs:
           name: icon-bundle-audit
           path: test-results/icon-rendering/
           retention-days: 7
+
   # Playwright's webServer builds the app before it previews, so this job also verifies
   # that the production bundle boots with dummy Supabase credentials.
   page-load:
