@@ -35,14 +35,16 @@
   коміті. Проти нього `npm run icons:audit-build` рахує дельту з бюджетом 25 KB gzip. Baseline перезнято під
   час міграції на mask: рендер переносить байти з JS у CSS, тож бюджет лише по entry chunk перестав би бачити
   приріст стилів.
-  Вимір env-залежний: без `VITE_SUPABASE_URL`/`VITE_SUPABASE_KEY` клієнт Supabase кидає на рівні модуля,
-  tree-shaking викидає його з графа і збірка виходить на ~55 KB легшою за production. Тому і baseline, і
-  `icons:audit-build` міряються з placeholder-кредами (job `Build` у CI задає їх явно), а сам аудит падає,
-  якщо не бачить `@supabase/auth-js` у графі.
+  Вимір env-залежний: без `VITE_SUPABASE_URL`/`VITE_SUPABASE_KEY` Vite підставляє `undefined`, умова згортається
+  в безумовний `throw`, `createClient` стає недосяжним і tree-shake-иться разом з `@supabase/auth-js` - збірка
+  виходить на ~55 KB легшою за production. Тому і baseline, і `icons:audit-build` міряються з тими самими
+  placeholder-ами, що задає job `Build`: `VITE_SUPABASE_URL=https://placeholder.supabase.co` і
+  `VITE_SUPABASE_KEY=placeholder`. Значення важать байти, тож змінювати їх окремо від baseline не можна.
+  Сам аудит падає, якщо не бачить auth-клієнта Supabase у графі.
   Це не аудит, а вимір. Entry chunk у проєкті один і не сплітиться, тож будь-який неіконковий приріст теж їсть
   цей бюджет. Коли він вичерпається не через іконки - перезняти baseline з поточного `main` на чистому
-  `npm ci` з тими самими placeholder-кредами, записати новий `commit` і `gzipBytes`, і в тому ж коміті
-  пояснити причину. Мовчки піднімати поріг у скрипті не можна.
+  `npm ci` з тими самими placeholder-кредами (`npm run build`, далі сумувати gzip entry chunk і всіх `.css`
+  у `dist/assets`), записати новий `commit` і `gzipBytes`, і в тому ж коміті пояснити причину. Мовчки піднімати поріг у скрипті не можна.
 
 ## Конвенції
 

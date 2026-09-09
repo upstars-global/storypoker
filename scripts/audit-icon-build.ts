@@ -36,7 +36,7 @@ const files = artifacts.map(file => {
   return { path: relative(distDir, file), rawBytes: raw.length, gzipBytes: gzipSync(raw).length }
 }).sort((a, b) => a.path.localeCompare(b.path))
 
-const REQUIRED_SOURCE = /@supabase[/\\]auth-js/
+const REQUIRED_SOURCE = /@supabase[/\\](?:auth-js|gotrue-js)/
 
 const forbiddenSources: string[] = []
 let sawRequiredSource = false
@@ -96,7 +96,8 @@ mkdirSync(reportDir, { recursive: true })
 writeFileSync(join(reportDir, 'bundle.json'), JSON.stringify(report, null, 2) + '\n')
 
 if (!sawRequiredSource) {
-  console.error('the Supabase client is missing from the browser graph: the build ran without'
+  console.error('the Supabase auth client (@supabase/auth-js) is missing from the browser graph:'
+    + ' the build ran without'
     + ' VITE_SUPABASE_URL/VITE_SUPABASE_KEY, so the client was tree-shaken and the weights'
     + ' are not comparable to the baseline')
   process.exit(1)

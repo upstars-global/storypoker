@@ -10,6 +10,7 @@ export interface IconBinding {
 export interface IconUsage {
   literals: string[]
   bindings: IconBinding[]
+  literalsByFile?: Record<string, string[]>
 }
 
 export interface DeclaredBinding {
@@ -54,6 +55,9 @@ function collectFromScript(code: string, file: string, usage: IconUsage, iconCon
       && (iconContext || ICONIFY_PREFIXES.has(iconPrefix(node.text)))) {
       usage.literals.push(node.text)
     }
+    if (ts.isStringLiteralLike(node) && isIconName(node.text)) {
+      ((usage.literalsByFile ??= {})[file] ??= []).push(node.text)
+    }
     ts.forEachChild(node, visit)
   }
   visit(source)
@@ -70,6 +74,7 @@ function collectFromTemplate(node: TemplateChildNode, file: string, usage: IconU
         const attr = prop as AttributeNode
         if (attr.name === 'icon' && attr.value && isIconName(attr.value.content)) {
           usage.literals.push(attr.value.content)
+          ;((usage.literalsByFile ??= {})[file] ??= []).push(attr.value.content)
         }
         continue
       }
@@ -94,7 +99,7 @@ export function isIconUsageSource(file: string): boolean {
 }
 
 export function scanIconUsage(sources: Record<string, string>): IconUsage {
-  const usage: IconUsage = { literals: [], bindings: [] }
+  const usage: IconUsage = { literals: [], bindings: [], literalsByFile: {} }
   for (const [file, code] of Object.entries(sources)) {
     if (file.endsWith('.vue')) {
       const { descriptor } = parse(code, { filename: file })
@@ -109,6 +114,9 @@ export function scanIconUsage(sources: Record<string, string>): IconUsage {
     collectFromScript(code, file, usage)
   }
   usage.literals = [...new Set(usage.literals)].sort()
+  for (const [file, literals] of Object.entries(usage.literalsByFile ?? {})) {
+    usage.literalsByFile![file] = [...new Set(literals)].sort()
+  }
   return usage
 }
 
@@ -119,6 +127,7 @@ export function validateIconUsage(
 ): string[] {
   const issues: string[] = []
   const known = new Set(names)
+  const scannedLiterals = new Set(Object.values(usage.literalsByFile ?? {}).flat())
   for (const literal of usage.literals) {
     if (!isDeliverable(literal)) {
       issues.push(`icon collection not available locally: ${literal}`)
@@ -136,6 +145,10 @@ export function validateIconUsage(
     for (const name of binding.names) {
       if (!isDeliverable(name)) {
         issues.push(`icon collection not available locally: ${name} (${binding.file})`)
+        continue
+      }
+      if (!scannedLiterals.has(name)) {
+        issues.push(`declared icon name is absent from the sources: ${name} (${binding.file})`)
       }
     }
   }

@@ -67,6 +67,27 @@ it('rejects a binding declared with no names, so an unlisted literal cannot slip
   expect(issues.join('\n')).toContain('dynamic icon binding declares no names: icon')
 })
 
+it('rejects a stale name that no source literal produces', () => {
+  const usage = scanIconUsage({
+    'app/components/Probe.vue': '<template><AppIcon :icon="icon" /></template>',
+  })
+  const issues = validateIconUsage(usage, [], [
+    { file: 'app/components/Probe.vue', expression: 'icon', names: ['ic:baseline-add'] },
+  ])
+  expect(issues.join('\n')).toContain('declared icon name is absent from the sources: ic:baseline-add')
+})
+
+it('accepts a name whose literal lives in another scanned file', () => {
+  const usage = scanIconUsage({
+    'app/utils/symbols.ts': "export const SYMBOLS = ['ic:baseline-add']\n",
+    'app/components/Probe.vue': '<template><AppIcon :icon="icon" /></template>',
+  })
+  const issues = validateIconUsage(usage, ['ic:baseline-add'], [
+    { file: 'app/components/Probe.vue', expression: 'icon', names: ['ic:baseline-add'] },
+  ])
+  expect(issues).toEqual([])
+})
+
 it('rejects a third-party collection declared in a binding', () => {
   const issues = validateIconUsage({ literals: [], bindings: [] }, [], [
     { file: 'app/components/Probe.vue', expression: 'icon', names: ['material-symbols:home'] },

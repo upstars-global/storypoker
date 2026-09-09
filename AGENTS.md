@@ -87,8 +87,8 @@ npm run deploy:{stage,prod}   # Netlify alias / prod deploy
 
 CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`lint`/`typecheck`/`unit` (`test:unit:coverage`)/
 `build`/`page-load` (`test:e2e:pages` з dummy Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
-`deploy` на `main` бере `dist` з артефакту `build` (checkout + `npm ci` лишаються - Netlify CLI бандлить
-`netlify/functions` з репо), якщо всі перевірки пройшли (`e2e` може бути skipped) і є Netlify-секрети.
+деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "npm run build"`) зі своїм site env;
+job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 
 ## Environment Setup
 `package-lock.json` - committed (required for `npm ci`). Do NOT add it back to `.gitignore`.
