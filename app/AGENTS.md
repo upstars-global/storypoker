@@ -23,3 +23,5 @@ Alias `~` і `@` → `app/` (`vite.config.ts` + `vitest.config.ts`).
 - Stores беруть клієнт через `getSupabase()` (`app/lib/supabase-instance.ts`); `app/main.ts` кличе `initSupabase()`;
   тести інжектять mock через `setSupabase(mock)`
 - UI-тексти проходять через i18n (`vue-i18n@11`, `legacy: false`), якщо компонент уже локалізований
+- Harness типізується з `types: ["node"]`, тож у спільному коді таймери мають бути `ReturnType<typeof setTimeout>`,
+  а не `number` - інакше третій проєкт `typecheck` падає

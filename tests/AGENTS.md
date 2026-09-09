@@ -19,8 +19,11 @@ CI пропускається без секретів, тож реально б�
 `role`, `view=catalog|room`, `widget=slot`, `paused=1`, `countdown=N`. Всі гравці `is_online: false` за планом.
 
 ```bash
-npm run test:icons:harness    # 62 тести; сам збирає harness і піднімає preview на :4181
+npm run test:icons:harness    # сам збирає harness і піднімає preview на :4181
 ```
+
+`tests/icon-rendering/tsconfig.json` прогонить третім кроком `npm run typecheck`, тому job `Typecheck` бере
+harness без змін у `ci.yml`. Новий tsconfig-проєкт треба явно дописати в цей скрипт, інакше CI його не побачить.
 
 Історія A/B (варіант B з окремим `ICON_RENDERER=mask` і переплетені заміри) закрита разом із міграцією;
 результат - `docs/audits/2026-09-09-icon-rendering-ab.md`.
