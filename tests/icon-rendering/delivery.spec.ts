@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { iconSelector, isMaskVariant } from './selectors'
+import { VIEWPORT, iconLocator, iconSelector, isMaskVariant } from './selectors'
 
 test('renders the room fixture without a backend', async ({ page }) => {
   const remote: string[] = []
@@ -31,7 +31,7 @@ for (const flags of FLAG_CASES) {
   const label = `${flags.iconsLucide}/${flags.iconsRounded}`
 
   test(`every catalog icon has local data: ${label}`, async ({ browser }) => {
-    const context = await browser.newContext()
+    const context = await browser.newContext({ viewport: VIEWPORT })
     const page = await context.newPage()
     const attempts: string[] = []
     await page.route(ICONIFY_HOSTS, async route => {
@@ -76,3 +76,70 @@ test('keeps the icon catalog after an offline reload', async ({ page, context })
   await expect(page.getByTestId('icon-harness-ready')).toBeAttached()
   await expect(page.locator(`[data-icon-name] ${iconSelector}`)).toHaveCount(count)
 })
+
+const ROOM_STATES = [
+  {
+    label: 'timer running',
+    query: '?role=moderator&view=room',
+    present: ['widget-toggle-slot'],
+    absent: ['slot-machine', 'countdown-ticker'],
+    icons: { present: ['ic:baseline-pause'], absent: ['ic:baseline-play-arrow'] },
+  },
+  {
+    label: 'timer paused',
+    query: '?role=moderator&view=room&paused=1',
+    present: ['widget-toggle-slot'],
+    absent: ['slot-machine', 'countdown-ticker'],
+    icons: { present: ['ic:baseline-play-arrow'], absent: ['ic:baseline-pause'] },
+  },
+  {
+    label: 'slot widget',
+    query: '?role=moderator&view=room&widget=slot',
+    present: ['slot-machine', 'widget-toggle-timer', 'slot-spin-button'],
+    absent: ['widget-toggle-slot', 'countdown-ticker'],
+    icons: { present: ['ic:baseline-timer'], absent: ['ic:baseline-pause'] },
+  },
+  {
+    label: 'countdown running',
+    query: '?role=moderator&view=room&countdown=3',
+    present: ['countdown-ticker'],
+    absent: ['slot-machine'],
+    icons: { present: [], absent: [] },
+  },
+]
+
+for (const state of ROOM_STATES) {
+  test(`renders local icons in room state: ${state.label}`, async ({ browser }) => {
+    const context = await browser.newContext({ viewport: VIEWPORT })
+    const page = await context.newPage()
+    const attempts: string[] = []
+    await page.route(ICONIFY_HOSTS, async route => {
+      attempts.push(route.request().url())
+      await route.abort()
+    })
+    await page.goto(state.query)
+    await expect(page.getByTestId('icon-harness-ready')).toBeAttached()
+
+    for (const testId of state.present) await expect(page.getByTestId(testId)).toBeVisible()
+    for (const testId of state.absent) await expect(page.getByTestId(testId)).toHaveCount(0)
+    for (const name of state.icons.present) {
+      await expect(page.locator(iconLocator(name))).not.toHaveCount(0)
+    }
+    for (const name of state.icons.absent) {
+      await expect(page.locator(iconLocator(name))).toHaveCount(0)
+    }
+
+    const empty = await page.locator(iconSelector).evaluateAll((nodes, args) => nodes
+      .filter(node => {
+        if (args.mask) {
+          const style = getComputedStyle(node)
+          return style.maskImage === 'none' && style.backgroundImage === 'none'
+        }
+        return node.childElementCount === 0
+      })
+      .length, { mask: isMaskVariant })
+    expect(empty).toBe(0)
+    expect(attempts).toEqual([])
+    await context.close()
+  })
+}

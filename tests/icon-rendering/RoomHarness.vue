@@ -4,6 +4,7 @@ import AppHeader from '~/components/AppHeader.vue'
 import PlayersList from '~/components/PlayersList.vue'
 import Timer from '~/components/Timer.vue'
 import CardsArea from '~/components/CardsArea.vue'
+import SlotMachine from '~/components/SlotMachine.vue'
 import JoinOverlay from '~/components/JoinOverlay.vue'
 import AppIcon from '~/components/AppIcon.vue'
 import { DECK_PRESETS, DEFAULT_PRESET_ID } from '~/utils/cardDecks'
@@ -12,7 +13,9 @@ import { useProfilesStore } from '~/stores/profiles'
 import { inputNames } from '~/utils/iconManifest'
 import {
   type HarnessRole,
+  PAUSED_ELAPSED_MS,
   ROOM_NAME,
+  ROOM_PAUSED_AT,
   ROOM_STARTED_AT,
   currentPlayerId,
   isModeratorRole,
@@ -22,12 +25,14 @@ import {
 const params = new URLSearchParams(window.location.search)
 const role = (params.get('role') ?? 'guest') as HarnessRole
 const view = params.get('view') === 'catalog' ? 'catalog' : 'room'
+const paused = params.get('paused') === '1'
 
 const players = ref(makePlayers())
 const ready = ref(false)
-const countdownCounter = ref(0)
-const countdownRunning = ref(false)
-const sideWidget = ref<'timer' | 'slot'>('timer')
+const countdownCounter = ref(Number(params.get('countdown') ?? 0))
+const countdownRunning = ref(params.get('countdown') !== null)
+const sideWidget = ref<'timer' | 'slot'>(params.get('widget') === 'slot' ? 'slot' : 'timer')
+const pausedAt = ref<string | null>(paused ? ROOM_PAUSED_AT : null)
 const timerEvents = ref<string[]>([])
 const showJoin = ref(false)
 
@@ -120,14 +125,20 @@ onMounted(async () => {
             v-if="sideWidget === 'timer'"
             :round-started-at="ROOM_STARTED_AT"
             phase="voting"
-            :paused-at="null"
-            :paused-elapsed-ms="0"
+            :paused-at="pausedAt"
+            :paused-elapsed-ms="pausedAt ? PAUSED_ELAPSED_MS : 0"
             :can-control="isModerator"
             @switch-widget="sideWidget = 'slot'"
             @reset="timerEvents.push('reset')"
-            @pause="timerEvents.push('pause')"
-            @resume="timerEvents.push('resume')"
+            @pause="pausedAt = ROOM_PAUSED_AT; timerEvents.push('pause')"
+            @resume="pausedAt = null; timerEvents.push('resume')"
             @adjust="(ms: number) => timerEvents.push(`adjust:${ms}`)"
+          />
+          <SlotMachine
+            v-else
+            :spins-left="3"
+            :can-spin="true"
+            @switch-widget="sideWidget = 'timer'"
           />
         </div>
 

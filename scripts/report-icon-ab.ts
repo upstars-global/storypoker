@@ -9,6 +9,8 @@ const runsDir = join(reportDir, 'runs')
 interface Run {
   variant: string
   cache: 'cold' | 'warm'
+  pair: number
+  serviceWorkerControlled: boolean
   icons: number
   iconElements: number
   markupBytes: number
@@ -54,14 +56,16 @@ function forbidden(variant: string): string[] {
   return [...new Set(found)]
 }
 
+const interleavedPath = join(runsDir, 'interleaved.json')
+if (!existsSync(interleavedPath)) {
+  console.error('missing test-results/icon-rendering/runs/interleaved.json: run npm run test:icons:measure')
+  process.exit(1)
+}
+const interleaved: Run[] = JSON.parse(readFileSync(interleavedPath, 'utf8'))
+
 const summary: Record<string, unknown> = {}
 for (const variant of ['a', 'b']) {
-  const runsPath = join(runsDir, `${variant}.json`)
-  if (!existsSync(runsPath)) {
-    console.error(`missing measurement runs for variant ${variant}: run the harness measure spec`)
-    process.exit(1)
-  }
-  const runs: Run[] = JSON.parse(readFileSync(runsPath, 'utf8'))
+  const runs = interleaved.filter(run => run.variant === variant)
   const cold = runs.filter(run => run.cache === 'cold')
   const warm = runs.filter(run => run.cache === 'warm')
   const weights = bundle(variant)
@@ -82,7 +86,21 @@ for (const variant of ['a', 'b']) {
       warmMax: Math.max(...warm.map(run => run.readyMs)),
     },
     transferBytes: { coldMedian: median(cold.map(run => run.transferBytes)) },
+    serviceWorkerControlled: {
+      cold: `${cold.filter(run => run.serviceWorkerControlled).length}/${cold.length}`,
+      warm: `${warm.filter(run => run.serviceWorkerControlled).length}/${warm.length}`,
+    },
   }
+}
+
+function pairedDeltas(cache: 'cold' | 'warm'): { median: number; min: number; max: number; pairs: number } {
+  const deltas: number[] = []
+  for (const pair of new Set(interleaved.map(run => run.pair))) {
+    const a = interleaved.find(run => run.pair === pair && run.cache === cache && run.variant === 'a')
+    const b = interleaved.find(run => run.pair === pair && run.cache === cache && run.variant === 'b')
+    if (a && b) deltas.push(b.readyMs - a.readyMs)
+  }
+  return { median: median(deltas), min: Math.min(...deltas), max: Math.max(...deltas), pairs: deltas.length }
 }
 
 interface VariantSummary {
@@ -100,6 +118,7 @@ summary.comparison = {
   domElementsReduction: a.iconElements - b.iconElements,
   domReductionTarget: 25,
   readyMsDeltaCold: b.readyMs.coldMedian - a.readyMs.coldMedian,
+  pairedReadyMsDelta: { cold: pairedDeltas('cold'), warm: pairedDeltas('warm') },
 }
 
 console.log(JSON.stringify(summary, null, 2))

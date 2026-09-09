@@ -5,6 +5,8 @@ export type HarnessRole = 'guest' | 'player' | 'moderator' | 'authorized-moderat
 
 export const ROOM_NAME = 'Core Platform'
 export const ROOM_STARTED_AT = '2026-09-09T09:00:00.000Z'
+export const ROOM_PAUSED_AT = '2026-09-09T09:03:00.000Z'
+export const PAUSED_ELAPSED_MS = 180_000
 
 export function makePlayers(): Player[] {
   return structuredClone(players) as Player[]
