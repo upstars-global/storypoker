@@ -13,7 +13,7 @@ export interface IconUsage {
   allLiterals: string[]
 }
 
-export type ScannedUsage = Partial<IconUsage> & Pick<IconUsage, 'literals' | 'bindings'>
+export type ScannedUsage = Omit<IconUsage, 'allLiterals'> & Partial<Pick<IconUsage, 'allLiterals'>>
 
 export interface DeclaredBinding {
   file: string
