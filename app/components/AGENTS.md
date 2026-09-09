@@ -34,7 +34,8 @@ lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fal
 `npm run icons:check` (у job `Typecheck` і на початку `test:ci`) падає на дрейфі будь-якого з них,
 `npm run icons:audit-build` стежить за browser graph і бюджетом JS+CSS. У dev/test пропущена іконка кидає
 `Missing local icon: <name>`. Legacy `simple-icons:*`/`game-icons:*` лишилися тільки в `SHIELD_CATALOG` для
-лукапу і в UI не рендеряться.
+лукапу і в UI не рендеряться. З чотирьох артефактів рантайм читає три: `iconCollections.json` - fixture для
+unit-тестів, і `icons:audit-build` падає, якщо він потрапляє в production graph.
 
 ## Діаграми
 

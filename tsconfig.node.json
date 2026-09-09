@@ -18,9 +18,6 @@
     "eslint.config.js",
     "scripts/icons/**/*.ts",
     "scripts/generate-icons.ts",
-    "scripts/audit-icon-build.ts",
-    "scripts/estimate-icon-ab.ts",
-    "scripts/generate-harness-css.ts",
-    "scripts/report-icon-ab.ts"
+    "scripts/audit-icon-build.ts"
   ]
 }

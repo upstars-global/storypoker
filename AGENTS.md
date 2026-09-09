@@ -70,7 +70,8 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **PWA:** `vite-plugin-pwa` (Workbox, `autoUpdate`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
   файл); splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
-- **UI:** `@iconify/vue`, `v-wave`, DiceBear, Roboto 300–700; **Charts:** `echarts` + `vue-echarts`
+- **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300–700;
+  **Charts:** `echarts` + `vue-echarts`
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
 ## Common Commands
@@ -85,8 +86,9 @@ npm run test:ci      # lint + typecheck + test:unit + build - саме це бі
 npm run deploy:{stage,prod}   # Netlify alias / prod deploy
 ```
 
-CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`lint`/`typecheck`/`unit` (`test:unit:coverage`)/
-`build`/`page-load` (`test:e2e:pages` з dummy Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
+CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`lint`/`typecheck` (`icons:check` + `typecheck`)/
+`unit` (`test:unit:coverage`)/`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
+Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "npm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 
