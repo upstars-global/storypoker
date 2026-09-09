@@ -1,9 +1,10 @@
 import { expect, it } from 'vitest'
 import type { IconifyJSON } from '@iconify/types'
 import generated from '~/generated/iconCollections.json'
-import { generateIconCss, iconClassName } from '../../icon-rendering/generate-css'
+import { generateIconCss, iconClassName } from '../../../scripts/icons/generateCss'
 import { appIconNames, flagCases, inputNames } from '~/utils/iconManifest'
 import { resolveIconName } from '~/utils/iconResolver'
+import { COLORED_ICONS } from '../../../scripts/icons/coloredIcons'
 
 const collections = generated as unknown as IconifyJSON[]
 
@@ -24,11 +25,17 @@ it('carries dimensions for every icon and shares the common rules once', () => {
   expect(css).toMatch(/height:\s*1em/)
 })
 
-it('produces no rules for an empty collection and rejects unknown names', () => {
+it('produces no icon rules for an empty collection and rejects unknown names', () => {
   const { css, classes } = generateIconCss([{ prefix: 'empty', icons: {} }])
-  expect(css).toBe('')
+  expect(css).not.toMatch(/\.sp-icon-(?!inline)/)
   expect(classes).toEqual({})
   expect(iconClassName('ic:round-close')).toBe('sp-icon-ic-round-close')
+})
+
+it('emits the inline exception rules exactly once', () => {
+  const { css } = generateIconCss(collections)
+  expect(css.split('.sp-icon-inline {')).toHaveLength(2)
+  expect(css).toContain('.sp-icon-inline > svg')
 })
 
 it('covers every manifest icon in every flag combination', () => {
@@ -40,8 +47,14 @@ it('covers every manifest icon in every flag combination', () => {
   for (const name of inputNames) {
     for (const flags of flagCases) {
       const resolved = resolveIconName(name, flags)
-      if (!classes[resolved]) missing.push(resolved)
+      if (!classes[resolved] && !COLORED_ICONS.has(resolved)) missing.push(resolved)
     }
   }
   expect(missing).toEqual([])
+})
+
+it('excludes the colored exceptions from the mask classes', () => {
+  const { classes } = generateIconCss(collections)
+  for (const name of COLORED_ICONS) expect(classes[name]).toBeUndefined()
+  expect(COLORED_ICONS.size).toBeGreaterThan(0)
 })

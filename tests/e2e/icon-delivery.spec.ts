@@ -18,8 +18,12 @@ for (const iconsLucide of [false, true]) {
       })
       await page.goto('/')
       const volume = page.getByTestId('volume-button')
-      await expect(volume.locator('svg')).toBeVisible()
-      expect(await volume.locator('svg').evaluate(e => e.childElementCount)).toBeGreaterThan(0)
+      const icon = volume.locator('span.sp-icon-root')
+      await expect(icon).toBeVisible()
+      expect(await icon.evaluate(node => {
+        const style = getComputedStyle(node)
+        return style.maskImage !== 'none' || style.webkitMaskImage !== 'none'
+      })).toBe(true)
       await volume.click()
       await expect(page.getByTestId('volume-slider')).toBeVisible()
       expect(attempts).toEqual([])
@@ -36,9 +40,13 @@ for (const iconsLucide of [false, true]) {
       })
       for (const path of ['/', '/login', '/ffc']) {
         await page.goto(path)
-        const icons = page.locator('svg.iconify')
+        const icons = page.locator('span.sp-icon-root')
         await expect(icons.first()).toBeVisible()
-        const empty = await icons.evaluateAll(nodes => nodes.filter(n => n.childElementCount === 0).length)
+        const empty = await icons.evaluateAll(nodes => nodes.filter(node => {
+          if (node.classList.contains('sp-icon-inline')) return node.childElementCount === 0
+          const style = getComputedStyle(node)
+          return style.maskImage === 'none' && style.webkitMaskImage === 'none'
+        }).length)
         expect(empty).toBe(0)
       }
       expect(attempts).toEqual([])

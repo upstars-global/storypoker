@@ -9,6 +9,8 @@ const budgetGzipBytes = 25 * 1024
 
 const FORBIDDEN_SOURCES = [
   /@iconify-json\/[^/]+\/icons\.json/,
+  /@iconify[/\\]vue/,
+  /generated[/\\]iconCollections\.json/,
   /scripts\/generate-icons\.ts/,
   /scripts\/icons\//,
 ]
@@ -59,8 +61,13 @@ if (entryCandidates.length !== 1) {
 }
 const entryFile = entryCandidates[0]!
 
-const baselineGzipBytes: number = JSON.parse(readFileSync(baselinePath, 'utf8')).entryChunk.gzipBytes
-const deltaGzipBytes = entryFile.gzipBytes - baselineGzipBytes
+const cssGzipBytes = files
+  .filter(file => file.path.endsWith('.css'))
+  .reduce((total, file) => total + file.gzipBytes, 0)
+const jsCssGzipBytes = entryFile.gzipBytes + cssGzipBytes
+
+const baselineGzipBytes: number = JSON.parse(readFileSync(baselinePath, 'utf8')).jsCss.gzipBytes
+const deltaGzipBytes = jsCssGzipBytes - baselineGzipBytes
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -71,10 +78,12 @@ const report = {
   entryChunk: {
     path: entryFile.path,
     gzipBytes: entryFile.gzipBytes,
+    cssGzipBytes,
+    jsCssGzipBytes,
     baselineGzipBytes,
     deltaGzipBytes,
     budgetGzipBytes,
-    chunking: 'single entry chunk; the lucide collection stays inline because the delta fits the budget',
+    chunking: 'single entry chunk; the budget covers JS+CSS because the mask renderer moves bytes into CSS',
   },
 }
 

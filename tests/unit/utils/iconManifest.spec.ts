@@ -48,6 +48,21 @@ it('rejects a non-deliverable collection inside an icon binding', () => {
   expect(validateIconUsage(usage, [], []).join('\n')).toContain('not available locally: mdi:account')
 })
 
+it('catches an unlisted collection that reaches an icon binding', () => {
+  const usage = scanIconUsage({
+    'app/components/Probe.vue': '<script setup lang="ts">\nconst icon = \'ph:house\'\n'
+      + '</script>\n<template><AppIcon :icon="icon" /></template>',
+  })
+  expect(validateIconUsage(usage, [], []).join('\n')).toContain('undeclared dynamic icon binding: icon')
+})
+
+it('rejects a third-party collection declared in a binding', () => {
+  const issues = validateIconUsage({ literals: [], bindings: [] }, [], [
+    { file: 'app/components/Probe.vue', expression: 'icon', names: ['material-symbols:home'] },
+  ])
+  expect(issues.join('\n')).toContain('not available locally: material-symbols:home')
+})
+
 it('rejects a non-deliverable collection listed in the manifest or a binding', () => {
   const manifest = validateIconUsage({ literals: [], bindings: [] }, ['mdi:account'], [])
   expect(manifest.join('\n')).toContain('not available locally: mdi:account')
@@ -92,23 +107,27 @@ it('registers every app icon that the manifest can request', () => {
 })
 
 it('has local data for every manifest icon in every flag combination', async () => {
-  const { iconLoaded } = await import('@iconify/vue')
-  const { registerLocalIcons } = await import('~/lib/registerLocalIcons')
+  const { default: classes } = await import('~/generated/iconClasses.json')
+  const { default: colored } = await import('~/generated/coloredIcons.json')
   const { resolveIconName } = await import('~/utils/iconResolver')
-  registerLocalIcons()
+  const known = { ...(classes as Record<string, string>), ...(colored as Record<string, string>) }
   const missing: string[] = []
   for (const name of inputNames) {
     for (const flags of flagCases) {
       const resolved = resolveIconName(name, flags)
-      if (!iconLoaded(resolved)) missing.push(`${name} -> ${resolved}`)
+      if (!(resolved in known)) missing.push(`${name} -> ${resolved}`)
     }
   }
   expect(missing).toEqual([])
 })
 
-it('registers every declared app icon', async () => {
-  const { iconLoaded } = await import('@iconify/vue')
-  const { registerLocalIcons } = await import('~/lib/registerLocalIcons')
-  registerLocalIcons()
-  for (const name of appIconNames) expect(iconLoaded(name)).toBe(true)
+it('covers every declared app icon as a mask class or a colored exception', async () => {
+  const { default: classes } = await import('~/generated/iconClasses.json')
+  const { default: colored } = await import('~/generated/coloredIcons.json')
+  for (const name of appIconNames) {
+    const inMask = name in (classes as Record<string, string>)
+    const inColored = name in (colored as Record<string, string>)
+    expect(inMask || inColored).toBe(true)
+    expect(inMask && inColored).toBe(false)
+  }
 })

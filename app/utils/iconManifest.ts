@@ -30,11 +30,6 @@ export const dynamicBindings: readonly { file: string; expression: string; names
     names: ['ic:baseline-check', 'ic:baseline-language'],
   },
   {
-    file: 'app/components/AppIcon.vue',
-    expression: 'resolved',
-    names: [],
-  },
-  {
     file: 'app/components/CardsArea.vue',
     expression: 'option.icon',
     names: ['ic:baseline-volume-off', 'app:timer', 'app:town-hall'],

@@ -23,16 +23,18 @@
   горизонтальний overflow лишаються відкритими до аудиту `web-debug`.
 
 - [2026-09-09 — A/B рендеру іконок](2026-09-09-icon-rendering-ab.md): виконання плану A/B, Tasks 0–4 на
-  ізольованому harness з fixture на 15 гравців. Варіант B (статичний CSS mask) проходить пороги ваги, DOM і
-  мережі (gzip JS+CSS −6 018 B, icon DOM elements 49 → 23, нуль запитів до Iconify), часовий поріг на 20
-  переплетених парах не роздільний, але візуальний провалено: `app:town-hall` єдиний змішує `currentColor` з
-  явними кольорами і в mask-режимі втрачає прапор. Рішення — залишено A (inline SVG); mixed (mask для
-  монохромних, inline SVG для винятків) не збирався і не вимірювався. Production-міграція не авторизована.
+  ізольованому harness з fixture на 15 гравців, і подальша міграція. Чистий mask проходив пороги ваги, DOM і
+  мережі, але провалював візуальний: `app:town-hall` єдиний змішує `currentColor` з явними кольорами і в
+  mask-режимі втрачає прапор. Рішення — **mixed**: CSS mask для монохромних, inline SVG для кольорових
+  винятків. Виконано в production і виміряно на реальному графі: −5 437 B gzip (JS+CSS), `@iconify/vue`
+  прибрано з бандла й з `dependencies`, візуальних розбіжностей нуль.
 
 ## Дані
 
-- [`icon-bundle-baseline.json`](icon-bundle-baseline.json) - gzip entry chunk на `main` до переходу іконок на
-  локальну доставку. Проти нього `npm run icons:audit-build` рахує дельту з бюджетом 25 KB gzip.
+- [`icon-bundle-baseline.json`](icon-bundle-baseline.json) - gzip entry chunk + CSS на останньому inline-SVG
+  коміті. Проти нього `npm run icons:audit-build` рахує дельту з бюджетом 25 KB gzip. Baseline перезнято під
+  час міграції на mask: рендер переносить байти з JS у CSS, тож бюджет лише по entry chunk перестав би бачити
+  приріст стилів.
   Це не аудит, а вимір. Entry chunk у проєкті один і не сплітиться, тож будь-який неіконковий приріст теж їсть
   цей бюджет. Коли він вичерпається не через іконки - перезняти baseline з поточного `main`
   (`npm run build && node -e ...` як при першому знятті), записати новий `commit` і `gzipBytes`, і в тому ж

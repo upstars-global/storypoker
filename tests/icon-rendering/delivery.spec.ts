@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { VIEWPORT, iconLocator, iconSelector, isMaskVariant } from './selectors'
+import { VIEWPORT, iconLocator, iconSelector } from './selectors'
 
 test('renders the room fixture without a backend', async ({ page }) => {
   const remote: string[] = []
@@ -46,17 +46,15 @@ for (const flags of FLAG_CASES) {
     const containers = page.locator('[data-icon-name]')
     const total = await containers.count()
     expect(total).toBeGreaterThan(0)
-    const empty = await page.locator('[data-icon-name]').evaluateAll((nodes, args) => nodes
+    const empty = await page.locator('[data-icon-name]').evaluateAll((nodes, selector) => nodes
       .filter(node => {
-        const el = node.querySelector(args.selector)
+        const el = node.querySelector(selector)
         if (!el) return true
-        if (args.mask) {
-          const style = getComputedStyle(el)
-          return style.maskImage === 'none' && style.backgroundImage === 'none'
-        }
-        return el.childElementCount === 0
+        if (el.classList.contains('sp-icon-inline')) return el.childElementCount === 0
+        const style = getComputedStyle(el)
+        return style.maskImage === 'none' && style.webkitMaskImage === 'none'
       })
-      .map(node => node.getAttribute('data-icon-name')), { selector: iconSelector, mask: isMaskVariant })
+      .map(node => node.getAttribute('data-icon-name')), iconSelector)
     expect(empty).toEqual([])
     expect(attempts).toEqual([])
     await context.close()
@@ -129,15 +127,13 @@ for (const state of ROOM_STATES) {
       await expect(page.locator(iconLocator(name))).toHaveCount(0)
     }
 
-    const empty = await page.locator(iconSelector).evaluateAll((nodes, args) => nodes
+    const empty = await page.locator(iconSelector).evaluateAll(nodes => nodes
       .filter(node => {
-        if (args.mask) {
-          const style = getComputedStyle(node)
-          return style.maskImage === 'none' && style.backgroundImage === 'none'
-        }
-        return node.childElementCount === 0
+        if (node.classList.contains('sp-icon-inline')) return node.childElementCount === 0
+        const style = getComputedStyle(node)
+        return style.maskImage === 'none' && style.webkitMaskImage === 'none'
       })
-      .length, { mask: isMaskVariant })
+      .length)
     expect(empty).toBe(0)
     expect(attempts).toEqual([])
     await context.close()

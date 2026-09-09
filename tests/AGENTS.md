@@ -12,20 +12,15 @@ CI пропускається без секретів, тож реально б�
 
 ## Icon rendering harness (`tests/icon-rendering/`)
 
-Ізольований A/B-стенд рендеру іконок; у production-збірку не потрапляє, власного роуту не додає. Має власні
-`vite.config.ts` і два Playwright-конфіги. Змінна `ICON_RENDERER=mask` перемикає варіант B: аліаси підміняють
-`AppIcon.vue` на `IconMask.vue` і `registerLocalIcons` на `registerMaskIcons.ts`, порт `4182` замість `4181`,
-артефакти в `dist-b` замість `dist-a`. Без неї збирається варіант A (inline SVG).
+Ізольований стенд рендеру іконок; у production-збірку не потрапляє, власного роуту не додає. Має власні
+`vite.config.ts` і Playwright-конфіг, збирає той самий `AppIcon`, що й production (CSS mask + inline-виняток).
 
 `RoomHarness.vue` монтує реальні компоненти на fixture з 15 гравців; стани задаються query-параметрами:
 `role`, `view=catalog|room`, `widget=slot`, `paused=1`, `countdown=N`. Всі гравці `is_online: false` за планом.
 
 ```bash
-npm run icons:harness:css                       # генерує icons.css + iconClasses.json для B
-npm run test:icons:harness                      # варіант A, 62 тести (сам збирає і піднімає preview)
-ICON_RENDERER=mask npm run test:icons:harness   # варіант B, 62 тести
-npm run test:icons:measure                      # 20 переплетених пар A/B, пише runs/interleaved.json
-npm run icons:report-ab                         # зводить заміри + вагу; падає на порушенні module graph
+npm run test:icons:harness    # 62 тести; сам збирає harness і піднімає preview на :4181
 ```
 
-Результат експерименту - `docs/audits/2026-09-09-icon-rendering-ab.md` (рішення: залишено A).
+Історія A/B (варіант B з окремим `ICON_RENDERER=mask` і переплетені заміри) закрита разом із міграцією;
+результат - `docs/audits/2026-09-09-icon-rendering-ab.md`.

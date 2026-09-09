@@ -5,13 +5,10 @@ import App from './App.vue'
 import { router } from './router'
 import { i18n } from './i18n'
 import { initSupabase } from './lib/supabase-instance'
-import { registerLocalIcons } from './lib/registerLocalIcons'
-import { installIconPolicy } from './lib/iconPolicy'
+import '~/generated/icons.css'
 import '~/assets/css/main.css'
 
 initSupabase()
-registerLocalIcons()
-installIconPolicy()
 
 createApp(App)
   .use(createPinia())

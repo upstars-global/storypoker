@@ -1,9 +1,10 @@
 {
-  "note": "gzip entry chunk on main before the local icon delivery work; the icons:audit-build budget is measured against this",
-  "commit": "32248f289910173bd56e752522c54eebc4d0375a",
-  "generatedAt": "2026-09-08T23:32:02.951Z",
-  "entryChunk": {
-    "path": "assets/index-DdASUngv.js",
-    "gzipBytes": 423703
+  "note": "gzip entry chunk + CSS on the last inline-SVG commit, taken before the mask migration; the icons:audit-build budget is measured against this. Re-cut from the entry-chunk-only baseline because the mask renderer moves bytes from JS into CSS, so an entry-only budget would no longer see the CSS growth.",
+  "commit": "0bf1540f3d285d27117a4b370a4508b991fc3c41",
+  "generatedAt": "2026-09-09T00:00:00.000Z",
+  "jsCss": {
+    "entryGzipBytes": 432390,
+    "cssGzipBytes": 10857,
+    "gzipBytes": 443247
   }
 }

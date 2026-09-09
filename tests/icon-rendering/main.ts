@@ -3,13 +3,11 @@ import { createPinia } from 'pinia'
 import VWave from 'v-wave'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { i18n } from '~/i18n'
-import { registerLocalIcons } from '~/lib/registerLocalIcons'
 import { useTheme } from '~/composables/useTheme'
 import { useSoundVolume } from '~/composables/useSoundVolume'
 import RoomHarness from './RoomHarness.vue'
+import '~/generated/icons.css'
 import '~/assets/css/main.css'
-
-registerLocalIcons()
 
 const router = createRouter({
   history: createMemoryHistory(),

@@ -1,37 +1,38 @@
-import { afterEach, expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
-import { _api } from '@iconify/vue'
 import AppIcon from '~/components/AppIcon.vue'
-import { registerLocalIcons } from '~/lib/registerLocalIcons'
-import { installIconPolicy } from '~/lib/iconPolicy'
+import classes from '~/generated/iconClasses.json'
 
-const originalFetch = globalThis.fetch
-
-afterEach(() => {
-  _api.setFetch(originalFetch)
-  globalThis.fetch = originalFetch
-})
-
-it('renders a direct Lucide icon from the registered subset', async () => {
-  registerLocalIcons()
+it('renders a monochrome icon as a mask span', () => {
   const wrapper = mount(AppIcon, { props: { icon: 'lucide:id-card' } })
-  await nextTick()
-  expect(wrapper.find('svg').exists()).toBe(true)
-  expect(wrapper.find('svg').element.childElementCount).toBeGreaterThan(0)
+  const root = wrapper.find('span')
+  expect(root.classes()).toContain('sp-icon')
+  expect(root.classes()).toContain((classes as Record<string, string>)['lucide:id-card'])
+  expect(root.element.innerHTML).toBe('')
   wrapper.unmount()
 })
 
-it('throws for an unknown icon without touching the network transport', () => {
-  registerLocalIcons()
-  const transport = vi.fn(() => Promise.reject(new Error('blocked')))
-  _api.setFetch(transport as unknown as typeof fetch)
-  expect(() => mount(AppIcon, { props: { icon: 'ic:missing-review-fixture' } }))
-    .toThrow('Missing local icon: ic:missing-review-fixture')
-  expect(transport).not.toHaveBeenCalled()
+it('renders the colored exception as inline markup that keeps its fills', () => {
+  const wrapper = mount(AppIcon, { props: { icon: 'app:town-hall' } })
+  const root = wrapper.find('span')
+  expect(root.classes()).toContain('sp-icon-inline')
+  expect(root.classes()).not.toContain('sp-icon')
+  const svg = wrapper.find('svg')
+  expect(svg.exists()).toBe(true)
+  expect(svg.html()).toContain('#0057B7')
+  expect(svg.html()).toContain('currentColor')
+  wrapper.unmount()
 })
 
-it('leaves the global fetch untouched', () => {
-  installIconPolicy()
-  expect(globalThis.fetch).toBe(originalFetch)
+it('throws for an icon without local data', () => {
+  expect(() => mount(AppIcon, { props: { icon: 'ic:missing-review-fixture' } }))
+    .toThrow('Missing local icon: ic:missing-review-fixture')
+})
+
+it('marks every icon root as decorative', () => {
+  for (const icon of ['lucide:id-card', 'app:town-hall']) {
+    const wrapper = mount(AppIcon, { props: { icon } })
+    expect(wrapper.find('span').attributes('aria-hidden')).toBe('true')
+    wrapper.unmount()
+  }
 })

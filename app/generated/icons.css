@@ -11,6 +11,17 @@
   mask-size: 100% 100%;
 }
 
+.sp-icon-inline {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+}
+.sp-icon-inline > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .sp-icon-app-bank {
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M11.5 1L2 6v2h19V6m-5 4v7h3v-7M2 22h19v-3H2m8-9v7h3v-7m-9 0v7h3v-7z'/%3E%3C/svg%3E");
 }
@@ -41,10 +52,6 @@
 
 .sp-icon-app-timer {
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' fill-rule='evenodd' d='M9 1h6v2H9zm10.03 6.39l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.96 8.96 0 0 0 12 4a9 9 0 0 0-9 9c0 4.97 4.02 9 9 9a8.994 8.994 0 0 0 7.03-14.61M12.5 8H11v6l5.25 3.15l.75-1.23l-4.5-2.67z'/%3E%3C/svg%3E");
-}
-
-.sp-icon-app-town-hall {
-  --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M3 10c-.55 0-1 .45-1 1v11h8v-5h4v5h8V11c0-.55-.45-1-1-1H15.5l-.3-1.2L7 8.2V10z M8 20H4v-3h4zm0-5H4v-3h4zm4-7c.55 0 1 .45 1 1s-.45 1-1 1s-1-.45-1-1s.45-1 1-1m2 7h-4v-3h4zm6 5h-4v-3h4zm0-5h-4v-3h4z'/%3E%3Crect x='11.6' y='0' width='0.8' height='8' fill='black'/%3E%3Cpath d='M12.4 0.5H19V3H12.4Z' fill='%230057B7'/%3E%3Cpath d='M12.4 3H19V5.5H12.4Z' fill='%23FFD700'/%3E%3C/svg%3E");
 }
 .sp-icon-ic-baseline-account-circle {
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6m0 14c-2.03 0-4.43-.82-6.14-2.88a9.95 9.95 0 0 1 12.28 0C16.43 19.18 14.03 20 12 20'/%3E%3C/svg%3E");
