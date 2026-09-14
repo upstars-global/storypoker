@@ -30,7 +30,8 @@
     "history": "Історія раундів",
     "alignmentTrends": "Тренди узгодженості",
     "themePalette": "Кольорова тема",
-    "volume": "Гучність звуку"
+    "volume": "Гучність звуку",
+    "decisionSound": "Звук \"Рішення прийнято\""
   },
   "theme": {
     "classic": "Classic",
