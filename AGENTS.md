@@ -19,21 +19,21 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
   Required checks - це `name:` job-ів, а не job ids: `Detect secrets` / `Lint` / `Typecheck` / `Unit tests` /
   `Build` / `Public pages load`. `E2E` не required (скіпається без E2E-секретів).
 - **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
-- **Git worktrees:** ізольована робота - через `using-git-worktrees`; незакомічені зміни основного каталогу не чіпати
+- **Git worktrees:** ізольована робота - через `git-worktree-isolation`; незакомічені зміни основного каталогу не чіпати
 
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
 CI check = `npm run test:ci` - обов'язково перед завершенням будь-якої задачі.
-- **New feature:** `scope-triage` → `plan-crafting` → `executing-plans` (незалежні задачі -
-  `dispatching-parallel-agents` / `subagent-driven-development`); за потреби `typescript` · `echarts` · `web-debug`;
-  тести - `test-driven-development` + `vitest` і/або `web-debug`; фініш - `requesting-code-review` →
-  `verification-before-completion` → CI check
-- **Bug / regression:** `systematic-debugging` → `test-driven-development` → `verification-before-completion` → CI check
-- **Supabase (DB / Auth / RLS / Storage):** `test-driven-development` → `/security-review` → CI check
-- **Refactoring:** `scope-triage` → `test-driven-development` → CI check
-- **Received code review:** `receiving-code-review` → (fixes) → `verification-before-completion` → CI check
+- **New feature:** `scope-triage` → `plan-crafting` → `inline-plan-dev` (незалежні задачі -
+  `parallel-agents` / `subagent-plan-dev`); за потреби `typescript` · `echarts` · `web-debug`;
+  тести - `tdd` + `vitest` і/або `web-debug`; фініш - `review-request` →
+  `verification-gate` → CI check
+- **Bug / regression:** `debugging` → `tdd` → `verification-gate` → CI check
+- **Supabase (DB / Auth / RLS / Storage):** `tdd` → `/security-review` → CI check
+- **Refactoring:** `scope-triage` → `tdd` → CI check
+- **Received code review:** `review-resolution` → (fixes) → `verification-gate` → CI check
 - **Prose (docs, README, UI copy, commits):** `dashfix` · `negafix`
-- **Закриття гілки:** `finishing-a-development-branch`
+- **Закриття гілки:** `branch-finish`
 
 ## Project Overview
 **Story Poker** - Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 8 пресетів або
@@ -81,7 +81,7 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 npm install          # preinstall → scripts/setup.sh (створює .env/, .agents/, .claude/settings.json)
                      # postinstall → scripts/skills.sh (мережеві npx skills add; skills-lock.json)
 npm run test:unit    # канонічний unit-run; `npm test` і `test:unit` - обидва `vitest run`
-npm run test:e2e:pages   # public pages load smoke (project page-load, без Supabase)
+npm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery)
 npm run test:ci      # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
 npm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
                      # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
@@ -112,8 +112,9 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - `/` - home + Recent Rooms; `/<roomId>` - кімната за 8-символьним id; `/<slug>` - alias (URL з id редиректиться)
 - `/login`, `/signup`, `/forgot-password`, `/reset-password` - auth routes; `/ffc` - Feature Flags console
 
-`normalizeRoomSlug()` / `isValidRoomSlug()` приймають 2–32 символи `[a-z0-9-]`, без дефісу на початку/кінці. Нові
-top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або вводь префікс.
+`isValidRoomSlug()` приймає 1–32 символи `[a-z0-9-]`, без дефісу на початку/кінці; `normalizeRoomSlug()` чистить
+рядок, але довжину не перевіряє. Нові top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або
+вводь префікс.
 
 ## LocalStorage
 | Ключ | Значення |
@@ -123,8 +124,8 @@ top-level routes перетинаються з `[slug].vue`; додавай яв
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
 | `sp-lang` | `uk \| en`; читається в `app/i18n.ts`, пишеться `persistLocale()`. Дефолт - `uk` |
 | `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
-| `sp-volume` | `0`–`1`, гучність усіх звуків; дефолт `0.5`. Читається/пишеться `useSoundVolume()` |
-| `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` (`featureFlags.ts`) |
+| `sp-volume` | `0`–`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
+| `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
 
 ## Roles
 - **Player:** vote, rename self, set own shields, leave room, **toggle own moderator flag** (self-promote/demote -

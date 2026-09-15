@@ -841,19 +841,41 @@ body {
   }
   .mui-slider::-webkit-slider-thumb {
     appearance: none;
-    width: 14px;
-    height: 14px;
-    margin-top: -5px;
+    width: 24px;
+    height: 24px;
+    margin-top: -10px;
     border: 0;
     border-radius: 50%;
-    background-color: var(--primary);
+    background-color: transparent;
   }
   .mui-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 24px;
+    height: 24px;
     border: 0;
     border-radius: 50%;
-    background-color: var(--primary);
+    background-color: transparent;
+  }
+  .mui-slider-knob {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    display: block;
+    line-height: 0;
+    font-size: 1.5rem;
+    color: var(--color-appbar-emphasis);
+  }
+  .mui-slider-knob > :first-child {
+    position: relative;
+    display: block;
+  }
+  .mui-slider-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    color: var(--bg-appbar);
   }
   .mui-radio input {
     accent-color: var(--primary);
