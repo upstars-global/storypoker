@@ -25,7 +25,7 @@ export function useCountdown() {
     const countdownActive = ref(false)
     const countdownRunning = ref(false)
 
-    const { volume } = useSoundVolume()
+    const { volume, decisionSoundEnabled } = useSoundVolume()
 
     function applyVolume() {
         for (const audio of [pleaseVoteAudio, countdownDryAudio, countdownWetAudio, ambienceAudio, decisionAudio]) {
@@ -94,7 +94,7 @@ export function useCountdown() {
     }
 
     function playDecision() {
-        if (!decisionAudio) return
+        if (!decisionAudio || !decisionSoundEnabled.value) return
         decisionAudio.currentTime = 0
         decisionAudio.play().catch(() => {})
     }
