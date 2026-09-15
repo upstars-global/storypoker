@@ -108,32 +108,22 @@ function pickPalette(id: PaletteId) {
   paletteMenuOpen.value = false
 }
 
-const { volume, setVolume } = useSoundVolume()
-const volumeRef = ref<HTMLElement | null>(null)
-const volumeButtonRef = ref<HTMLButtonElement | null>(null)
-const volumeSliderRef = ref<HTMLInputElement | null>(null)
-const volumeOpen = ref(false)
-useClickOutside(volumeRef, () => { volumeOpen.value = false })
+const { volume, setVolume, toggleMute } = useSoundVolume()
+
+const VOLUME_LEVEL_ICONS = [
+  'tabler:number-0-small', 'tabler:number-1-small', 'tabler:number-2-small', 'tabler:number-3-small',
+  'tabler:number-4-small', 'tabler:number-5-small', 'tabler:number-6-small', 'tabler:number-7-small',
+  'tabler:number-8-small', 'tabler:number-9-small', 'tabler:number-10-small',
+]
 
 const volumePercent = computed(() => Math.round(volume.value * 100))
+const volumeLevel = computed(() => Math.round(volume.value * 10))
+const volumeLevelIcon = computed(() => VOLUME_LEVEL_ICONS[volumeLevel.value]!)
 
 const volumeIcon = computed(() => {
-  if (volumePercent.value === 0) return 'ic:baseline-volume-off'
-  return volumePercent.value <= 50 ? 'ic:baseline-volume-down' : 'ic:baseline-volume-up'
+  if (volumePercent.value === 0) return 'lucide:volume-x'
+  return volumePercent.value <= 50 ? 'lucide:volume-1' : 'lucide:volume-2'
 })
-
-async function toggleVolume() {
-  volumeOpen.value = !volumeOpen.value
-  if (!volumeOpen.value) return
-  await nextTick()
-  volumeSliderRef.value?.focus()
-}
-
-function closeVolume() {
-  if (!volumeOpen.value) return
-  volumeOpen.value = false
-  volumeButtonRef.value?.focus()
-}
 
 function onVolumeInput(event: Event) {
   const target = event.target as HTMLInputElement
@@ -171,20 +161,15 @@ function onVolumeInput(event: Event) {
     <div class="flex-1" />
 
     <div class="flex items-center gap-2">
-      <div
-        ref="volumeRef"
-        style="position: relative;"
-        @keydown.escape.stop="closeVolume"
-      >
+      <div class="flex items-center gap-2">
         <button
-          ref="volumeButtonRef"
           v-wave
           class="mui-icon-btn text-appbar-emphasis"
           style="--hover-bg: rgba(255,255,255,0.08);"
           :aria-label="$t('header.volume')"
-          :aria-expanded="volumeOpen"
+          :aria-pressed="volumePercent === 0"
           data-testid="volume-button"
-          @click="toggleVolume"
+          @click="toggleMute"
         >
           <AppIcon
             :icon="volumeIcon"
@@ -192,23 +177,33 @@ function onVolumeInput(event: Event) {
           />
         </button>
         <div
-          v-if="volumeOpen"
-          class="mui-menu z-50 flex items-center px-3 py-2"
-          style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 180px;"
+          class="relative inline-flex items-center"
+          style="width: 96px;"
         >
           <input
-            ref="volumeSliderRef"
             type="range"
             class="mui-slider w-full"
             :style="{ '--fill': `${volumePercent}%` }"
             min="0"
             max="100"
-            step="5"
+            step="10"
             :value="volumePercent"
             :aria-label="$t('header.volume')"
+            :aria-valuetext="String(volumeLevel)"
             data-testid="volume-slider"
             @input="onVolumeInput"
           >
+          <span
+            class="mui-slider-knob"
+            :style="{ left: `calc(12px + (100% - 24px) * ${volume})` }"
+            aria-hidden="true"
+          >
+            <AppIcon icon="tabler:percentage-100" />
+            <AppIcon
+              class="mui-slider-value"
+              :icon="volumeLevelIcon"
+            />
+          </span>
         </div>
       </div>
       <div

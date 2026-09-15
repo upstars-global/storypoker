@@ -1,17 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useSoundVolume } from '~/composables/useSoundVolume'
 
 describe('useSoundVolume', () => {
   beforeEach(() => {
     localStorage.clear()
-    useSoundVolume().setVolume(0.5)
+    useSoundVolume().setVolume(0)
     localStorage.clear()
   })
 
-  it('defaults to half volume', () => {
+  it('defaults to muted', () => {
     const { volume, initVolume } = useSoundVolume()
     initVolume()
-    expect(volume.value).toBe(0.5)
+    expect(volume.value).toBe(0)
   })
 
   it('persists a new value', () => {
@@ -43,10 +43,29 @@ describe('useSoundVolume', () => {
     expect(volume.value).toBe(0.6)
   })
 
-  it('falls back to half volume for a corrupted stored value', () => {
+  it('falls back to the default for a corrupted stored value', () => {
     localStorage.setItem('sp-volume', 'loud')
     const { volume, initVolume } = useSoundVolume()
     initVolume()
-    expect(volume.value).toBe(0.5)
+    expect(volume.value).toBe(0)
+  })
+
+  it('mutes and restores the previous volume', () => {
+    const { volume, setVolume, toggleMute } = useSoundVolume()
+    setVolume(0.4)
+    toggleMute()
+    expect(volume.value).toBe(0)
+    toggleMute()
+    expect(volume.value).toBe(0.4)
+  })
+
+  it('unmutes to an audible level without a prior audible volume', async () => {
+    vi.resetModules()
+    const { useSoundVolume: fresh } = await import('~/composables/useSoundVolume')
+    localStorage.setItem('sp-volume', '0')
+    const { volume, initVolume, toggleMute } = fresh()
+    initVolume()
+    toggleMute()
+    expect(volume.value).toBe(0.1)
   })
 })
