@@ -108,7 +108,7 @@ function pickPalette(id: PaletteId) {
   paletteMenuOpen.value = false
 }
 
-const { volume, setVolume, decisionSoundEnabled, setDecisionSoundEnabled } = useSoundVolume()
+const { volume, setVolume } = useSoundVolume()
 const volumeRef = ref<HTMLElement | null>(null)
 const volumeButtonRef = ref<HTMLButtonElement | null>(null)
 const volumeSliderRef = ref<HTMLInputElement | null>(null)
@@ -193,8 +193,8 @@ function onVolumeInput(event: Event) {
         </button>
         <div
           v-if="volumeOpen"
-          class="mui-menu z-50 flex flex-col gap-2 px-3 py-2"
-          style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 220px;"
+          class="mui-menu z-50 flex items-center px-3 py-2"
+          style="position: absolute; right: 0; top: calc(100% + 4px); min-width: 180px;"
         >
           <input
             ref="volumeSliderRef"
@@ -209,15 +209,6 @@ function onVolumeInput(event: Event) {
             data-testid="volume-slider"
             @input="onVolumeInput"
           >
-          <label class="flex items-center gap-2 text-mui-caption text-body cursor-pointer">
-            <input
-              type="checkbox"
-              :checked="decisionSoundEnabled"
-              data-testid="decision-sound-toggle"
-              @change="setDecisionSoundEnabled(($event.target as HTMLInputElement).checked)"
-            >
-            {{ $t('header.decisionSound') }}
-          </label>
         </div>
       </div>
       <div

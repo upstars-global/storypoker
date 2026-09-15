@@ -30,8 +30,7 @@
     "history": "Round History",
     "alignmentTrends": "Alignment Trends",
     "themePalette": "Color theme",
-    "volume": "Sound volume",
-    "decisionSound": "\"Decision made\" sound"
+    "volume": "Sound volume"
   },
   "theme": {
     "classic": "Classic",
