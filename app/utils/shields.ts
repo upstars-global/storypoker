@@ -83,6 +83,7 @@ export const PLAYER_ROLE_GROUPS = [
     { tag: 'DEV', shield: 'dev' },
     { tag: 'BE', shield: 'be' },
     { tag: 'FE', shield: 'fe' },
+    { tag: 'SRE', shield: 'sre' },
   ],
   [
     { tag: 'QA', shield: 'qa' },
