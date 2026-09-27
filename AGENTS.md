@@ -15,7 +15,8 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
   а не тут. Перед додаванням нової секції - винести наявну. Детальна продуктова специфікація - `DESIGN.md`.
 
 ## Workflow
-- **`main` захищений:** тільки PR зі squash-merge; strict-режим, розв'язані коментарі, approve не потрібен.
+- **`main` захищений:** тільки PR зі squash-merge, прямий push заборонено й адмінам (`enforce_admins`); розв'язані
+  коментарі, strict-режим вимкнений (оновлювати гілку з `main` не обов'язково), approve не потрібен.
   Required checks - це `name:` job-ів, а не job ids: `Detect secrets` / `Lint` / `Typecheck` / `Unit tests` /
   `Build` / `Public pages load`. `E2E` не required (скіпається без E2E-секретів).
 - **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
@@ -59,8 +60,9 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 | `supabase/` | схема таблиць, міграції, RLS, Storage-бакет | `supabase/AGENTS.md` |
 | `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
 | `tests/` | Vitest unit + Playwright e2e | `tests/AGENTS.md` |
+| `scripts/` | npm lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
 
-Решта: `scripts/` (npm lifecycle hooks), `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
+Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
 
 ## Tech Stack
