@@ -60,8 +60,9 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 | `supabase/` | схема таблиць, міграції, RLS, Storage-бакет | `supabase/AGENTS.md` |
 | `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
 | `tests/` | Vitest unit + Playwright e2e | `tests/AGENTS.md` |
+| `scripts/` | npm lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
 
-Решта: `scripts/` (npm lifecycle hooks), `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
+Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
 
 ## Tech Stack
