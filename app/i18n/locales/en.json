@@ -39,7 +39,7 @@
   },
   "trends": {
     "title": "Team Alignment Trends",
-    "titleWithTeam": "Team Alignment Trends — {name}",
+    "titleWithTeam": "Team Alignment Trends: {name}",
     "currentScore": "Current Score",
     "trend": "Trend",
     "averageScore": "Average Score",
@@ -240,7 +240,7 @@
     "renameTitle": "Rename Room",
     "renameLabel": "Room name",
     "renameHint": "Leave empty to remove the custom name.",
-    "slugError": "Use 2–32 chars: letters, numbers, dashes",
+    "slugError": "Use 2-32 chars: letters, numbers, dashes",
     "slugTaken": "This name is already taken",
     "kickTitle": "Kick Player",
     "kickConfirm": "Remove {name} from the room?",

@@ -31,7 +31,7 @@
 
 - [x] **Step 1.1: Write migration 011**
 
-`supabase/migrations/011_user_profiles_avatar_url.sql` per spec: `alter table user_profiles add column if not exists avatar_url text;`, insert bucket `avatars` (`public = true`, `on conflict do nothing`), three `storage.objects` policies (insert/update/delete) gated by `bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]`, each wrapped in `do $$ ... exception when duplicate_object then null; end $$;` like migrations 001–010.
+`supabase/migrations/011_user_profiles_avatar_url.sql` per spec: `alter table user_profiles add column if not exists avatar_url text;`, insert bucket `avatars` (`public = true`, `on conflict do nothing`), three `storage.objects` policies (insert/update/delete) gated by `bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]`, each wrapped in `do $$ ... exception when duplicate_object then null; end $$;` like migrations 001-010.
 
 - [x] **Step 1.2: Apply migration to Supabase (SQL Editor or Management API)**
 
