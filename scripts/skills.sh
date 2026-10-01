@@ -22,26 +22,26 @@ echo "npx -y skillio rm . -y" && npx -y skillio rm . -y
 npx skills add https://github.com/sentimony/skills -s \
   scope-triage \
   plan-crafting \
-  git-worktree-isolation \
-  parallel-agents \
   inline-plan-dev \
   subagent-plan-dev \
+  git-worktree-isolation \
+  parallel-agents \
   tdd \
-  debugging \
   review-request \
   review-resolution \
-  verification-gate \
-  commit-all \
-  branch-finish \
-  maintaining-agent-context \
-  prose-crafting \
-  dashfix \
-  negafix \
-  frontend-crafting \
+  debugging \
   web-debug \
+  verification-gate \
+  branch-finish \
+  commit-all \
+  frontend-crafting \
   vitest \
   typescript \
   echarts \
+  prose-crafting \
+  dashfix \
+  negafix \
+  maintaining-agent-context \
   \ skill-crafting \
   -a codex claude-code -y
 

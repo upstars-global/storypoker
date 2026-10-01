@@ -23,5 +23,5 @@
   "workbench.editor.openSideBySideDirection": "right",
   "extensions.ignoreRecommendations": true,
   "explorer.confirmDragAndDrop": false,
-  "explorer.confirmDelete": false
+  "explorer.confirmDelete": false,
 }
