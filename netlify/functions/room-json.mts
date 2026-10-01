@@ -82,15 +82,15 @@ function resolveActiveCards(activeCards: string[] | null, deckPreset: string | n
   return DEFAULT_ACTIVE_CARDS[deckPreset ?? LEGACY_DEFAULT_PRESET] ?? null
 }
 
-// QA disciplines route a player's vote into the separate QA pile — mirrors
-// QA_SHIELDS/isQaPlayer in app/utils/shields.ts.
+// QA disciplines route a player's vote into the separate QA pile (mirrors
+// QA_SHIELDS/isQaPlayer in app/utils/shields.ts).
 const QA_SHIELDS = new Set(['qa', 'aqa', 'gqa'])
 
 function isQaPlayer(shields: string[] | null | undefined): boolean {
   return Boolean(shields?.some(id => QA_SHIELDS.has(id)))
 }
 
-// Mirrors splitRoundAlignment() in app/utils/roundStats.ts — same per-round
+// Mirrors splitRoundAlignment() in app/utils/roundStats.ts: same per-round
 // DEV/QA split shown in the storypoker app's own Alignment Trends modal.
 function splitAlignment(
   votes: { player_id: string; vote: string }[],
@@ -156,7 +156,7 @@ async function buildRoomPayload(supabase: SupabaseClient, room: RoomRow) {
 
   if (roundsErr || playersErr) return { room: { id: room.id, slug: room.slug, name: room.name }, rounds: [], error: 'query failed' }
 
-  // Mirrors visiblePlayers in stores/players.ts — a player who has since left the
+  // Mirrors visiblePlayers in stores/players.ts: a player who has since left the
   // room falls back to being counted as DEV, same as in the storypoker app itself.
   const shieldsByPlayer = new Map<string, string[]>(
     (players ?? []).filter(p => p.left_at === null).map(p => [p.id as string, (p.shields ?? []) as string[]]),
@@ -220,7 +220,7 @@ export default async (req: Request): Promise<Response> => {
 
   if (rawSlug === 'teams') {
     // Team rooms are the aliased ones: a room only gets a slug when someone names
-    // it (setRoomName in app/stores/room.ts), ad-hoc rooms keep slug null — and no
+    // it (setRoomName in app/stores/room.ts), ad-hoc rooms keep slug null, and no
     // consumer can address a slugless room anyway (agilecharts keys its bulk room
     // map on room.slug). Filtering here also drops the ~250 ad-hoc rooms' worth of
     // per-room round_history/players queries, the bulk of this endpoint's latency.
