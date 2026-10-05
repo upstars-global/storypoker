@@ -22,28 +22,32 @@ run npx -y skills -v
 # a "\ " prefix disables a skill on purpose: the leading space makes the name match nothing
 run npx skills add https://github.com/sentimony/skills -s \
   scope-triage \
+  \ scope-check \
   plan-crafting \
-  git-worktree-isolation \
-  parallel-agents \
   inline-plan-dev \
   subagent-plan-dev \
+  git-worktree-isolation \
+  parallel-agents \
   tdd \
-  debugging \
   cross-review \
   review-request \
   review-resolution \
-  verification-gate \
-  commit-all \
-  branch-finish \
-  maintaining-agent-context \
-  prose-crafting \
-  dashfix \
-  negafix \
-  frontend-crafting \
+  debugging \
   web-debug \
+  \ webapp-debugger \
+  verification-gate \
+  branch-finish \
+  commit-all \
+  \ gh-switch \
+  frontend-crafting \
   vitest \
   typescript \
   echarts \
+  prose-crafting \
+  dashfix \
+  negafix \
+  maintaining-agent-context \
+  \ secret-hygiene \
   \ skill-crafting \
   -a codex claude-code -y
 
