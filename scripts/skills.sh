@@ -29,6 +29,7 @@ run npx skills add https://github.com/sentimony/skills -s \
   subagent-plan-dev \
   tdd \
   debugging \
+  cross-review \
   review-request \
   review-resolution \
   verification-gate \
