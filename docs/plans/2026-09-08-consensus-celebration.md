@@ -922,7 +922,7 @@ git commit -m "feat: add a volume slider to the app header"
 `AGENTS.md`, таблиця LocalStorage (після рядка `sp-side-widget`):
 
 ```markdown
-| `sp-volume` | `0`–`1`, гучність усіх звуків; дефолт `1`. Читається/пишеться `useSoundVolume()` |
+| `sp-volume` | `0`-`1`, гучність усіх звуків; дефолт `1`. Читається/пишеться `useSoundVolume()` |
 ```
 
 - [ ] **Step 6.4: Verify the line budget**
