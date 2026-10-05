@@ -394,7 +394,7 @@ git commit -m "feat: play the decision sound on every consensus reveal"
 **Interfaces:**
 - Consumes: нічого з попередніх задач
 - Produces: `useSoundVolume(): { volume: Ref<number>, initVolume: () => void, setVolume: (value: number) => void }`
-  - `volume` у діапазоні `0`–`1`; `initVolume` викликається один раз в `App.vue`; `volume`/`setVolume`
+  - `volume` у діапазоні `0`-`1`; `initVolume` викликається один раз в `App.vue`; `volume`/`setVolume`
   використовуються Task 4 (`useCountdown`, `SlotMachine`) і Task 5 (слайдер)
 
 - [ ] **Step 3.1: Write the failing test**

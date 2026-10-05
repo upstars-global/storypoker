@@ -1765,7 +1765,7 @@ Open two tabs at `http://localhost:3000`, create room in tab A, join in tab B wi
 | Vote shows immediately | Click a card in tab B → highlights instantly |
 | Mobile background = offline ≤ 1s | Tab A: hide tab (Cmd+Tab to another window) → tab B sees online count drop |
 | Auto-rejoin on return | Switch back to tab A → online count restores |
-| Reconnect banner | DevTools → Network → Offline → banner appears in ~1–2s |
+| Reconnect banner | DevTools → Network → Offline → banner appears in ~1-2s |
 | `is_online` removed | Check Supabase Table Editor - column gone |
 | No refetch on every event | DevTools → Network → vote in tab A → tab B shows no `select` request |
 | Stores in DevTools | Vue DevTools → Pinia tab shows 4 stores |
