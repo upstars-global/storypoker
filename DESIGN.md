@@ -7,7 +7,7 @@
 ## 1. Стек і архітектура UI
 
 - **Framework:** React + **Material UI 5** (Emotion CSS-in-JS, `MuiPaper-root`, `MuiAppBar-*`, `MuiCard-root`, `MuiMenu-paper` тощо)
-- **Дизайн-мова:** Material Design 2 (a не M3) - класичні `elevation 0..24`, прямокутні карточки з рад. 4–7px, тіні «Material shadow stack»
+- **Дизайн-мова:** Material Design 2 (a не M3) - класичні `elevation 0..24`, прямокутні карточки з рад. 4-7px, тіні «Material shadow stack»
 - **Тема:** автоматична через `prefers-color-scheme` (немає UI-перемикача - повністю системна)
 - **Іконки:** Material Symbols (виключно SVG, через `@mui/icons-material`)
 - **Аватари:** [DiceBear `bottts` 7.x](https://api.dicebear.com/7.x/bottts) - згенеровані за `seed = playerName`
@@ -218,7 +218,7 @@
 - ❌ **Немає UI-перемикача теми** - користувач залежить від системних налаштувань. UX-кейс «хочу темну тему вдень» не покритий
 - ❌ **Status icons без tooltip** на player row - `aria-label` є, але hover-tooltip не показує сенс іконки користувачу-без-screen-reader
 - ❌ **Контраст vote card в light:** значення `rgb(97,97,97)` на фоні `#f5f5f5` - контраст ~5.7:1 (OK для AA, але не AAA)
-- ⚠️ **Material Design 2** замість M3 - виглядає трохи застаріло (плоскі тіні, прямі углы). Сучасніший вигляд дав би перехід на MD3 (динамічна палітра, surface tint, ширші радіуси `12–16px`)
+- ⚠️ **Material Design 2** замість M3 - виглядає трохи застаріло (плоскі тіні, прямі углы). Сучасніший вигляд дав би перехід на MD3 (динамічна палітра, surface tint, ширші радіуси `12-16px`)
 - ⚠️ **DiceBear аватари** генеруються через зовнішнє API на кожен render - варто кешувати або генерувати на клієнті (`@dicebear/core`)
 
 ---
@@ -380,7 +380,7 @@ DEV/QA рахуються окремо (`splitRoundAlignment` ділить го�
 
 **Агрегати поверх відфільтрованих точок:**
 - Поточний бал / середній бал - останнє непусте значення / середнє арифметичне
-- Тренд - тільки якщо ≥4 точок: `pct = (середнє нової половини − середнє старої половини) / стара половина × 100`; `up` якщо `pct > 1`, `down` якщо `< -1`, інакше `stable`
+- Тренд - тільки якщо ≥4 точок: `pct = (середнє нової половини - середнє старої половини) / стара половина × 100`; `up` якщо `pct > 1`, `down` якщо `< -1`, інакше `stable`
 
 **Бейджі рівня (`alignmentLevel`/`levelColor`):** `Perfect ≥90` (зелений), `High ≥75` (зелений), `Medium ≥40` (жовтий), `Low <40` (червоний).
 
@@ -433,7 +433,7 @@ round_history (
 **А. Таймер раунду (`Timer.vue`)** - рахує, скільки триває поточний раунд голосування.
 
 - `room_state`: `round_started_at`, `paused_at` (nullable), `paused_elapsed_ms` (`supabase/migrations/006_room_state_timer.sql`)
-- `elapsedMs = max(0, pivot − round_started_at − paused_elapsed_ms)`, де `pivot` = момент `reveal` (заморожений `Date.now()` в момент переходу `phase → 'revealed'`), або `paused_at` якщо на паузі, або живий `now` (тік раз/сек)
+- `elapsedMs = max(0, pivot - round_started_at - paused_elapsed_ms)`, де `pivot` = момент `reveal` (заморожений `Date.now()` в момент переходу `phase → 'revealed'`), або `paused_at` якщо на паузі, або живий `now` (тік раз/сек)
 - **Контролі** (`reset`/`pause`/`resume`/`±30s`) - тільки `showControls = canControl && phase==='voting'`, `canControl = isModerator` (рядок 581 `[slug].vue`)
   - `reset` - повний рестарт (`round_started_at=now()`, скидає паузу)
   - `pause`/`resume` - `resume` додає тривалість паузи, що щойно закінчилась, до `paused_elapsed_ms`
