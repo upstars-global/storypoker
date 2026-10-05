@@ -72,7 +72,7 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **PWA:** `vite-plugin-pwa` (Workbox, `autoUpdate`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
   файл); splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
-- **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300–700;
+- **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300-700;
   **Charts:** `echarts` + `vue-echarts`
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 
@@ -114,7 +114,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - `/` - home + Recent Rooms; `/<roomId>` - кімната за 8-символьним id; `/<slug>` - alias (URL з id редиректиться)
 - `/login`, `/signup`, `/forgot-password`, `/reset-password` - auth routes; `/ffc` - Feature Flags console
 
-`isValidRoomSlug()` приймає 1–32 символи `[a-z0-9-]`, без дефісу на початку/кінці; `normalizeRoomSlug()` чистить
+`isValidRoomSlug()` приймає 1-32 символи `[a-z0-9-]`, без дефісу на початку/кінці; `normalizeRoomSlug()` чистить
 рядок, але довжину не перевіряє. Нові top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або
 вводь префікс.
 
@@ -126,7 +126,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
 | `sp-lang` | `uk \| en`; читається в `app/i18n.ts`, пишеться `persistLocale()`. Дефолт - `uk` |
 | `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
-| `sp-volume` | `0`–`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
+| `sp-volume` | `0`-`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
 | `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
 
 ## Roles
@@ -136,7 +136,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
   start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s) - усе
   гейтиться `v-if="isModerator"` в `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
 - **Authorized moderator (`isModerator && user`):** rename room, set slug/name, rename other players + set їхні shields.
-  Детальна матриця - `DESIGN.md` §11.1–11.2
+  Детальна матриця - `DESIGN.md` §11.1-11.2
 - **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.vue` (спільний селектор у
   JoinOverlay+PlayerEditModal) на базі `RoleBadge.vue` (те саме відображення у PlayerRow) і пишеться як один shield у
   `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи
