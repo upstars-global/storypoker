@@ -13,7 +13,9 @@ Shell-скрипти - POSIX `sh` з `set -e`; TS-скрипти запуска�
 | `audit-icon-build.ts` | `icons:audit-build` (CI-job `build`) | перевіряє `dist`: жодних повних Iconify-сетів чи генератора в бандлі, бюджет gzip 25 KiB, baseline - `docs/audits/icon-bundle-baseline.json` |
 
 ## `skills.sh` - свідомі рішення
-- Порядок skills у списку `-s` - навмисний (групування за workflow), зберігай його при змінах.
+- Блок `SENTIMONY SKILLS` (коментарі й порядок `-s`) - спільний еталон для всіх проєктів, такий самий, як у
+  `scripts/skills.sh` skills-aiassist. Список повний: скіли, не потрібні тут, вимикай через `\ `, а не видаляй
+  і не переставляй; `scope-check` і `webapp-debugger` завжди вимкнені.
 - **Вимкнений skill - `\ <name>`** (backslash + пробіл перед назвою), напр. `\ skill-crafting`. Аргумент стає
   `" skill-crafting"` з пробілом попереду, `skills add` його не знаходить і пропускає, а позиція в списку лишається.
   Це не баг - не «виправляй» і не видаляй такі рядки.
