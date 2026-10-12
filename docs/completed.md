@@ -53,6 +53,12 @@ Timer ↔ SlotMachine перемикач (`sp-side-widget`), джекпот-broa
 
 Interactive контроли → `AppTooltip`; декоративні status-іконки → native `title`.
 
+## Round alarm
+
+Будильник у віджеті таймера: особистий інтервал 3–20 хв (дефолт 5) і mute
+дзвінка в inline-налаштуваннях, по сигналу віджет блимає 3 рази, грає дзвінок,
+модератор автоматично ставить таймер на паузу. Деталі - `DESIGN.md` §11.6.
+
 ## Знято з обсягу
 
 - **Reka UI** - замінено власними `AppModal` / `AppTooltip` + `useClickOutside`
