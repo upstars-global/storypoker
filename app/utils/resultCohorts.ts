@@ -1,0 +1,53 @@
+import { roleTagForShields } from './shields'
+
+export const RESULT_COHORTS: readonly string[] = ['DEV', 'BE', 'FE', 'SRE', 'QA']
+export const ALWAYS_SHOWN_COHORT = 'QA'
+
+export type VoteCounts = Record<string, number>
+
+export interface VoteGroup {
+  key: string
+  votes: VoteCounts
+}
+
+export interface ResultGroup {
+  label: string
+  votes: VoteCounts
+}
+
+const COHORT_BY_TAG = new Map<string, string>([
+  ['DEV', 'DEV'],
+  ['BE', 'BE'],
+  ['FE', 'FE'],
+  ['SRE', 'SRE'],
+  ['QA', 'QA'],
+  ['GQA', 'QA'],
+  ['AQA', 'QA'],
+])
+
+export function normalizeCohorts(value: readonly string[] | null | undefined): string[] {
+  if (value == null) return [...RESULT_COHORTS]
+  const chosen = new Set([...value, ALWAYS_SHOWN_COHORT])
+  return RESULT_COHORTS.filter(tag => chosen.has(tag))
+}
+
+export function cohortForShields(shields: string[] | null | undefined): string | null {
+  const tag = roleTagForShields(shields)
+  return tag ? COHORT_BY_TAG.get(tag) ?? null : null
+}
+
+export function groupVotesByCohort(
+  players: readonly { shields: string[] | null; vote: string | null }[],
+  cohorts: readonly string[],
+): VoteGroup[] {
+  const buckets = new Map<string, VoteCounts>(normalizeCohorts(cohorts).map(key => [key, {}]))
+  for (const player of players) {
+    if (!player.vote) continue
+    const cohort = cohortForShields(player.shields)
+    const bucket = cohort ? buckets.get(cohort) : undefined
+    if (bucket) bucket[player.vote] = (bucket[player.vote] ?? 0) + 1
+  }
+  return [...buckets]
+    .filter(([, votes]) => Object.keys(votes).length > 0)
+    .map(([key, votes]) => ({ key, votes }))
+}

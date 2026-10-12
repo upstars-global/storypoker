@@ -3,39 +3,39 @@ import { createCelebrationParticles, shouldCelebrate } from '~/utils/resultCeleb
 
 describe('resultCelebration', () => {
   it('celebrates when general and qa are both unanimous and match', () => {
-    expect(shouldCelebrate({}, { general: { '5': 3 }, qa: { '5': 2 } })).toBe(true)
+    expect(shouldCelebrate({}, [{ '5': 3 }, { '5': 2 }])).toBe(true)
   })
 
   it('celebrates when general and qa are unanimous but different', () => {
-    expect(shouldCelebrate({}, { general: { '5': 3 }, qa: { '8': 2 } })).toBe(true)
+    expect(shouldCelebrate({}, [{ '5': 3 }, { '8': 2 }])).toBe(true)
   })
 
   it('celebrates when only one group is unanimous and the other is mixed', () => {
-    expect(shouldCelebrate({}, { general: { '5': 2, '8': 1 }, qa: { '5': 2 } })).toBe(true)
+    expect(shouldCelebrate({}, [{ '5': 2, '8': 1 }, { '5': 2 }])).toBe(true)
   })
 
   it('does not celebrate when both groups have mixed estimates', () => {
-    expect(shouldCelebrate({}, { general: { '5': 2, '8': 1 }, qa: { '5': 1, '8': 1 } })).toBe(false)
+    expect(shouldCelebrate({}, [{ '5': 2, '8': 1 }, { '5': 1, '8': 1 }])).toBe(false)
   })
 
   it('celebrates when only general group is unanimous', () => {
-    expect(shouldCelebrate({}, { general: { '5': 3 }, qa: {} })).toBe(true)
+    expect(shouldCelebrate({}, [{ '5': 3 }, {}])).toBe(true)
   })
 
   it('celebrates when only qa group is unanimous', () => {
-    expect(shouldCelebrate({}, { general: {}, qa: { '8': 2 } })).toBe(true)
+    expect(shouldCelebrate({}, [{}, { '8': 2 }])).toBe(true)
   })
 
   it('does not celebrate when only general group is not unanimous', () => {
-    expect(shouldCelebrate({}, { general: { '5': 2, '8': 1 }, qa: {} })).toBe(false)
+    expect(shouldCelebrate({}, [{ '5': 2, '8': 1 }, {}])).toBe(false)
   })
 
   it('does not celebrate when a lone qa voter agrees with nobody', () => {
-    expect(shouldCelebrate({}, { general: { '5': 2, '8': 1 }, qa: { '8': 1 } })).toBe(false)
+    expect(shouldCelebrate({}, [{ '5': 2, '8': 1 }, { '8': 1 }])).toBe(false)
   })
 
   it('does not celebrate when the only unanimous group has a single voter', () => {
-    expect(shouldCelebrate({}, { general: {}, qa: { '8': 1 } })).toBe(false)
+    expect(shouldCelebrate({}, [{}, { '8': 1 }])).toBe(false)
   })
 
   it('celebrates without qa split when every vote matches', () => {

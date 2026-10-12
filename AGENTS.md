@@ -140,10 +140,14 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.vue` (спільний селектор у
   JoinOverlay+PlayerEditModal) на базі `RoleBadge.vue` (те саме відображення у PlayerRow) і пишеться як один shield у
   `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи
-  role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` виводить QA-гравців в
-  окрему пилу
-- **Consensus:** салют + decision-sound при одноголосності з ≥ 2 голосами: з QA-розщепленням - хоча б в одній
-  групі (DEV/QA), без нього - серед усіх голосів. Деталі - `app/utils/AGENTS.md`
+  role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` дає DEV/QA-спліт
+  для історії, трендів і API
+- **Кола результатів:** після reveal - окреме коло на когорту DEV/BE/FE/SRE/QA (QA = QA+GQA+AQA, завжди показується);
+  DEV/BE/FE/SRE вмикаються чіпами в «Налаштувати колоду» (`room_state.result_cohorts`, `null` = усі). Голоси PO/SM,
+  кастомних ролей і без ролі не показуються й не йдуть у тренди (`trendCohorts()` у `shields.ts`); раунд, де нікого з
+  DEV/QA-ролей немає, рахується цілком як DEV. Логіка - `app/utils/resultCohorts.ts`
+- **Consensus:** салют + decision-sound, коли хоча б одне коло результатів одноголосне з ≥ 2 голосами. Деталі -
+  `app/utils/AGENTS.md`
 
 ## Code Style
 - Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline

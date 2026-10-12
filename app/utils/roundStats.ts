@@ -1,5 +1,5 @@
 import { alignmentScore } from './alignment'
-import { isQaPlayer } from './shields'
+import { trendCohorts } from './shields'
 import { DECK_PRESETS, DEFAULT_PRESET_ID } from './cardDecks'
 import type { RoundHistory } from '~/stores/types'
 
@@ -60,13 +60,11 @@ export function splitRoundAlignment(
 ): { dev: number | null; qa: number | null } {
   const devCounts: Record<string, number> = {}
   const qaCounts: Record<string, number> = {}
+  const cohorts = trendCohorts(round.votes, shieldsByPlayer)
   for (const v of round.votes) {
-    const shields = shieldsByPlayer.get(v.player_id) ?? []
-    if (isQaPlayer(shields)) {
-      qaCounts[v.vote] = (qaCounts[v.vote] ?? 0) + 1
-    } else {
-      devCounts[v.vote] = (devCounts[v.vote] ?? 0) + 1
-    }
+    const cohort = cohorts.get(v.player_id)
+    if (cohort === 'QA') qaCounts[v.vote] = (qaCounts[v.vote] ?? 0) + 1
+    else if (cohort === 'DEV') devCounts[v.vote] = (devCounts[v.vote] ?? 0) + 1
   }
   const activeCards = resolveActiveCards(round.active_cards, round.deck_preset)
   return {

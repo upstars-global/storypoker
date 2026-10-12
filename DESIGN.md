@@ -331,7 +331,7 @@ const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 | Запустити відлік розкриття | `CardsArea.vue` hold-to-start (силент/зі звуком/з атмосферою) → `broadcastCountdownStart` - деталі §11.6 |
 | Почати новий раунд | `ResultsArea.vue`, `:show-new-round="isModerator"` → `roomStore.startNewRound()` |
 | Налаштувати опитування (`voting`/`vote_question`) | `CardsArea.vue`, `v-else-if="... && isModerator"` → `setPollQuestion`/`startVoteQuestion` |
-| Налаштувати колоду карт | `AppHeader.vue` меню → `ConfigureCardDeckModal` |
+| Налаштувати колоду карт і кола результатів | `AppHeader.vue` меню → `ConfigureCardDeckModal` (чіпи «Показувати результати», §11.9) |
 | Виключити гравця (kick) | `PlayerRow.vue`, `v-else-if="currentUserIsModerator"` → `playersStore.kick` |
 | Керування таймером (reset/pause/resume/±30s) | `Timer.vue`, `canControl = isModerator` (саме `isModerator`, **не** `isAuthorizedModerator`) |
 
@@ -374,7 +374,7 @@ const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 5. `spread = max(індекс) - min(індекс)` серед голосів
 6. **`score = round(100 * (1 - spread / span))`** - 100 = усі обрали одну картку (або сусідні), 0 = найдальші картки колоди одночасно проголосовані
 
-DEV/QA рахуються окремо (`splitRoundAlignment` ділить голоси по `isQaPlayer(shields)`), кожен - той самий `alignmentScore` над своєю підмножиною.
+DEV/QA рахуються окремо (`splitRoundAlignment` ділить голоси через `trendCohorts()` з `utils/shields.ts`), кожен - той самий `alignmentScore` над своєю підмножиною. DEV = ролі DEV/BE/FE/SRE, QA = QA/GQA/AQA; голоси PO/SM, кастомних ролей і гравців без ролі в тренди не йдуть. Виняток - раунд, де нікого з DEV/QA-ролей немає (legacy-кімнати без ролей): тоді всі його голоси рахуються як DEV. Чіпи «Показувати результати» (§11.9) на тренди не впливають.
 
 **Legacy rounds без `active_cards`/`deck_preset`** (виправлено 2026-07-26): `alignmentScore` повертає `null`, якщо `deckOrder` порожній - а раунди, записані до міграції `010_round_history_deck.sql`, мають `active_cards = null` (і найстаріші - ще й `deck_preset = null`), тому їхній alignment мовчки випадав з графіка, хоча голоси в них цілком реальні й числові. `resolveActiveCards(activeCards, deckPreset)` (`app/utils/roundStats.ts`) підставляє `defaultActive` відповідного пресету з `cardDecks.ts`, а якщо навіть `deck_preset` відсутній - `DEFAULT_PRESET_ID` (`'scrum'`); це наближення (реальна колода на момент раунду могла бути звуженою), але краще за повне випадання точки. Викликається в `splitRoundAlignment`/`roundAlignment`/`summarizeRound` - тому й `AlignmentTrendsModal`, і `HistoryModal` тепер бачать ці раунди. **Дзеркалить** `resolveActiveCards` у `netlify/functions/room-json.mts` (комміти `e1dcf02`/`beca0e5`) - синхронізувати вручну при зміні формули в обох місцях.
 
@@ -394,11 +394,11 @@ DEV/QA рахуються окремо (`splitRoundAlignment` ділить го�
 
 **Reference lines** (100/75/50/25%) - окрема невидима серія `__refLines` (`data: []`, `silent: true`, `tooltip.show: false`) з `markLine`, завжди в `series` незалежно від toggle DEV/QA, щоб орієнтири не зникали разом із лінією.
 
-**Tooltip** - `trigger: 'item'`, **`triggerOn: 'click'`** (клік на крапку показує і "пришпилює" tooltip; ховається лише повторним кліком чи по порожньому місцю графіка - на відміну від строгого hover, це дає час дотягнутись курсором до кнопки "Деталі", особливо на крайніх точках), `enterable: true` (можна навести на сам tooltip не закривши його). Контент - `formatter()` повертає HTML: лейбл серії + значення (`%`), дата, кнопка-закриття `×` (`data-close-tooltip`) і клікабельний рядок `trends.viewDetails` (`data-view-details`, `data-index`). Лейбл серії - `series.name`: `QA` лишається `QA`, DEV-когорта (не-QA гравці) підписана `DEV/FE/BE`, щоб не читалось як "тільки роль DEV" (колір ліній не змінювався: жовта `#ffa726` - QA, бірюзова `#26a69a` - DEV/FE/BE).
+**Tooltip** - `trigger: 'item'`, **`triggerOn: 'click'`** (клік на крапку показує і "пришпилює" tooltip; ховається лише повторним кліком чи по порожньому місцю графіка - на відміну від строгого hover, це дає час дотягнутись курсором до кнопки "Деталі", особливо на крайніх точках), `enterable: true` (можна навести на сам tooltip не закривши його). Контент - `formatter()` повертає HTML: лейбл серії + значення (`%`), дата, кнопка-закриття `×` (`data-close-tooltip`) і клікабельний рядок `trends.viewDetails` (`data-view-details`, `data-index`). Лейбл серії - `series.name`: `QA` лишається `QA`, DEV-когорта підписана `DEV/FE/BE/SRE`, щоб не читалось як "тільки роль DEV" (колір ліній не змінювався: жовта `#ffa726` - QA, бірюзова `#26a69a` - DEV/FE/BE).
 
 **Round snapshot** - клік на `data-view-details` у tooltip ловиться делегованим `document`-listener'ом (ECharts рендерить tooltip у `document.body`, не всередині компонента), звідти `points.value[dataIndex].round` → `selectedRound` → `RoundSnapshotModal.vue` (вкладена `<dialog>` поверх поточної модалки) зі списком `{ім'я, голос}` усіх гравців того раунду (`round_history.votes`, повний знімок, не лише агреговані `counts`). Поруч з іменем - `RoleBadge` з тегом ролі (`roleTagForShields(shieldsMap.get(player_id))`, той самий `shieldsMap` з **поточних** shields, що й для DEV/QA split вище - те саме застереження про неактуальність ролі на момент голосування).
 
-**Когорта в round snapshot** - `data-view-details` несе ще й `data-cohort` (`'DEV'`/`'QA'`, з `params.seriesName` серії, на якій клікнули); прокидається як `selectedCohort` у `RoundSnapshotModal :cohort`. Модалка фільтрує `round.votes` через `isQaPlayer(shieldsMap.get(player_id))` під обрану когорту (лише QA-гравці / лише не-QA), у заголовку - кольоровий бейдж когорти (`QA` жовтий `#ffa726` / `DEV_COHORT_LABEL` бірюзовий `#26a69a`, константа винесена в `utils/shields.ts`, бо тепер спільна для `AlignmentTrendsModal` і `RoundSnapshotModal`). Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
+**Когорта в round snapshot** - `data-view-details` несе ще й `data-cohort` (`'DEV'`/`'QA'`, з `params.seriesName` серії, на якій клікнули); прокидається як `selectedCohort` у `RoundSnapshotModal :cohort`. Модалка фільтрує `round.votes` через `trendCohorts()` під обрану когорту (лише QA / лише DEV/BE/FE/SRE), у заголовку - кольоровий бейдж когорти (`QA` жовтий `#ffa726` / `DEV_COHORT_LABEL` бірюзовий `#26a69a`, константа винесена в `utils/shields.ts`, бо тепер спільна для `AlignmentTrendsModal` і `RoundSnapshotModal`). Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
 
 ### 11.4 Історія раундів (`round_history`)
 
@@ -487,3 +487,15 @@ round_history (
 - `slot-win` з `{playerId}` на 1.6с виставляє `slotWinnerId`
 
 **Індикація в `PlayerRow.vue`** (props `is-spinning-slot`/`is-slot-winner`) - єдиний видимий ефект джекпоту, без банера чи локального підсвічування самого слота. Кубик (`font-size: 1.125rem`, трохи менший за іконку модератора поруч) сидить у рядку з іменем за тим самим `AppTooltip`-патерном, що й `app:moderator` - колонка статусу голосу лишається незайманою. Кубик не обертається: поки триває спін, кожні 120мс перемикається грань (`tabler:dice-1`…`dice-6`, `DICE_FACES`/`diceFaceIndex`), імітуючи котіння в чашці; далі повертається дефолтна `dice-5`. Ці іконки резолвляться через Iconify API (не офлайн `ic:`-колекція), тому `loadIcons(DICE_FACES)` прогріває кеш при монтуванні `PlayerRow.vue` - інакше перше котіння блимає порожніми кадрами. При виграші ім'я і кубик разом блимають `.win-blink` (`@keyframes win-blink`, `animation-iteration-count: 3`).
+
+### 11.9 Кола результатів і когорти (`resultCohorts.ts`)
+
+Після reveal `ResultsArea.vue` малює окреме коло (PieChart + середнє) на кожну когорту, що має голоси. Когорти - `RESULT_COHORTS = DEV, BE, FE, SRE, QA`; `cohortForShields()` бере тег ролі гравця (`roleTagForShields`) і зводить QA/GQA/AQA в одне коло `QA`.
+
+- **Хто не показується:** PO, SM, кастомні ролі й гравці без ролі - їхні голоси в колах, узгодженості й салюті не враховуються. Якщо в раунді взагалі немає голосів когорт, `ResultsArea` показує одне загальне коло з усіх голосів (fallback для кімнат без ролей)
+- **Налаштування:** модератор у `ConfigureCardDeckModal` вмикає/вимикає чіпи DEV/BE/FE/SRE у рядку «Показувати результати» (той самий Save, що й колода). QA - завжди увімкнений, неактивний і блідий чіп (`is-locked`). Для колод без PieChart (`voting`, `vote_question`, `goal_clarity`) чіпи не показуються
+- **Збереження:** `room_state.result_cohorts text[]` (міграція `017`, check-констрейнт на `DEV/BE/FE/SRE/QA`); `null` = усі когорти. `normalizeCohorts()` завжди додає `QA` і впорядковує теги. До накату міграції вибір не зберігається (помилка лише в консоль), кола показуються всі
+- **Підсвітка в списку гравців:** якщо роль гравця належить вимкненій когорті, `RoleBadge` у `PlayerRow` стає червоним (`is-excluded`), tooltip додає «голос не показується в результатах» (`hiddenVotePlayerIds` у `[slug].vue`)
+- **Консенсус:** `shouldCelebrate(votes, groups)` - салют і decision-sound, якщо хоча б одне показане коло одноголосне з ≥ 2 голосами
+- **Узгодженість на екрані результатів** (`AlignmentCard`) рахується по тих самих колах
+- **Попередній раунд** (`lastRound` snapshot) зберігає вже підписані групи на момент reveal
