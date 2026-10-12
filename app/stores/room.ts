@@ -147,6 +147,15 @@ export const useRoomStore = defineStore('room', () => {
       .eq('room_id', roomId.value)
   }
 
+  async function setAlarm(settings: { minutes?: number; muted?: boolean }) {
+    if (!roomId.value) return
+    const update: TablesUpdate<'room_state'> = {}
+    if (settings.minutes !== undefined) update.alarm_minutes = settings.minutes
+    if (settings.muted !== undefined) update.alarm_muted = settings.muted
+    const { error } = await getSupabase().from('room_state').update(update).eq('room_id', roomId.value)
+    if (error) throw error
+  }
+
   async function setPollQuestion(question: string | null) {
     if (!roomId.value) return
     const value = question?.trim() || null
@@ -206,6 +215,7 @@ export const useRoomStore = defineStore('room', () => {
     saveCardDeck,
     setDeckPreset,
     setPollQuestion,
+    setAlarm,
     create,
     resolveRoom,
     setRoomName,

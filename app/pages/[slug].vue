@@ -30,6 +30,7 @@ import PlayersList from '~/components/PlayersList.vue'
 import AlignmentCard from '~/components/AlignmentCard.vue'
 import { alignmentScore } from '~/utils/alignment'
 import Timer from '~/components/Timer.vue'
+import type { AlarmSettings } from '~/utils/timerAlarm'
 import SlotMachine from '~/components/SlotMachine.vue'
 import CardsArea from '~/components/CardsArea.vue'
 import ResultsArea from '~/components/ResultsArea.vue'
@@ -592,6 +593,10 @@ async function handleAuthSuccess() {
   }
 }
 
+async function handleUpdateAlarm(settings: Partial<AlarmSettings>) {
+  await roomStore.setAlarm(settings).catch(error => console.error('[timer] alarm settings save failed:', error))
+}
+
 async function handleSaveCardDeck(payload: { deckPreset: DeckPresetId; cards: string[] }) {
   if (payload.deckPreset !== roomState.value?.deck_preset) {
     await roomStore.setDeckPreset(payload.deckPreset)
@@ -723,11 +728,14 @@ async function submitRenameRoom() {
           :paused-at="roomState.paused_at ?? null"
           :paused-elapsed-ms="roomState.paused_elapsed_ms ?? 0"
           :can-control="isModerator"
+          :alarm-minutes="roomState.alarm_minutes ?? null"
+          :alarm-muted="roomState.alarm_muted ?? null"
           @reset="roomStore.resetTimer"
           @pause="roomStore.pauseTimer"
           @resume="roomStore.resumeTimer"
           @adjust="(ms: number) => roomStore.adjustTimer(ms)"
           @switch-widget="switchSideWidget"
+          @update-alarm="handleUpdateAlarm"
         />
         <SlotMachine
           v-if="roomState && sideWidget === 'slot'"

@@ -3,7 +3,7 @@ import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import { useI18n } from 'vue-i18n'
-import { useTimerAlarm, playAlarmChime, ALARM_MIN_MINUTES, ALARM_MAX_MINUTES } from '~/composables/useTimerAlarm'
+import { playAlarmChime, clampAlarmMinutes, ALARM_MIN_MINUTES, ALARM_MAX_MINUTES, type AlarmSettings } from '~/utils/timerAlarm'
 
 const props = defineProps<{
   roundStartedAt: string
@@ -11,6 +11,8 @@ const props = defineProps<{
   pausedAt: string | null
   pausedElapsedMs: number
   canControl: boolean
+  alarmMinutes?: number | null
+  alarmMuted?: boolean | null
 }>()
 
 const emit = defineEmits<{
@@ -19,6 +21,7 @@ const emit = defineEmits<{
   (e: 'resume'): void
   (e: 'adjust', deltaMs: number): void
   (e: 'switchWidget'): void
+  (e: 'updateAlarm', settings: Partial<AlarmSettings>): void
 }>()
 
 const { t } = useI18n()
@@ -68,8 +71,8 @@ const text = computed(() => {
 
 const showControls = computed(() => props.canControl && props.phase === 'voting')
 
-const { alarmMinutes, alarmMuted, initAlarm, setAlarmMinutes, toggleAlarmMuted } = useTimerAlarm()
-initAlarm()
+const alarmMinutes = computed(() => clampAlarmMinutes(props.alarmMinutes))
+const alarmMuted = computed(() => props.alarmMuted ?? false)
 const alarmSettingsOpen = ref(false)
 const alarmBlinking = ref(false)
 
@@ -84,8 +87,13 @@ watch(elapsedMs, (current, previous) => {
 
 function onAlarmMinutesChange(event: Event) {
   const input = event.target as HTMLInputElement
-  setAlarmMinutes(Number(input.value))
-  input.value = String(alarmMinutes.value)
+  const minutes = clampAlarmMinutes(Number(input.value))
+  input.value = String(minutes)
+  if (minutes !== alarmMinutes.value) emit('updateAlarm', { minutes })
+}
+
+function toggleAlarmMuted() {
+  emit('updateAlarm', { muted: !alarmMuted.value })
 }
 </script>
 
@@ -97,7 +105,10 @@ function onAlarmMinutesChange(event: Event) {
     @animationend.self="alarmBlinking = false"
   >
     <div class="mui-paper-header justify-center relative">
-      <div class="absolute left-1.5 top-1/2 -translate-y-1/2">
+      <div
+        v-if="canControl"
+        class="absolute left-1.5 top-1/2 -translate-y-1/2"
+      >
         <AppTooltip
           side="top"
           :side-offset="6"
@@ -155,7 +166,7 @@ function onAlarmMinutesChange(event: Event) {
       </div>
     </div>
     <div
-      v-if="alarmSettingsOpen"
+      v-if="canControl && alarmSettingsOpen"
       class="flex items-center gap-2 px-4 pt-3 text-body"
       data-testid="timer-alarm-settings"
     >

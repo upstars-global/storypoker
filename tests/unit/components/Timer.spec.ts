@@ -2,11 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import Timer from '~/components/Timer.vue'
-import { useTimerAlarm } from '~/composables/useTimerAlarm'
 
 const playAlarmChime = vi.hoisted(() => vi.fn())
-vi.mock('~/composables/useTimerAlarm', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('~/composables/useTimerAlarm')>()
+vi.mock('~/utils/timerAlarm', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('~/utils/timerAlarm')>()
   return { ...actual, playAlarmChime }
 })
 
@@ -29,6 +28,8 @@ function mountTimer(props: Partial<InstanceType<typeof Timer>['$props']> = {}) {
       pausedAt: null,
       pausedElapsedMs: 0,
       canControl: true,
+      alarmMinutes: 3,
+      alarmMuted: false,
       ...props,
     },
     global: {
@@ -45,9 +46,6 @@ function blinking(wrapper: ReturnType<typeof mountTimer>) {
 
 describe('Timer alarm', () => {
   beforeEach(() => {
-    localStorage.clear()
-    useTimerAlarm().initAlarm()
-    useTimerAlarm().setAlarmMinutes(3)
     playAlarmChime.mockClear()
     vi.useFakeTimers()
   })
@@ -67,9 +65,8 @@ describe('Timer alarm', () => {
   })
 
   it('stays silent when muted and leaves pausing to moderators', async () => {
-    useTimerAlarm().toggleAlarmMuted()
     vi.setSystemTime(START + THREE_MIN - 500)
-    const wrapper = mountTimer({ canControl: false })
+    const wrapper = mountTimer({ canControl: false, alarmMuted: true })
     await vi.advanceTimersByTimeAsync(1000)
     expect(blinking(wrapper)).toBe(true)
     expect(playAlarmChime).not.toHaveBeenCalled()
@@ -112,7 +109,7 @@ describe('Timer alarm', () => {
     expect(blinking(wrapper)).toBe(false)
   })
 
-  it('opens settings with the gear and commits minutes on Enter', async () => {
+  it('lets a moderator change the room alarm from the gear and commits minutes on Enter', async () => {
     const wrapper = mountTimer()
     expect(wrapper.find('[data-testid="timer-alarm-settings"]').exists()).toBe(false)
     await wrapper.get('[data-testid="timer-alarm-toggle"]').trigger('click')
@@ -122,9 +119,21 @@ describe('Timer alarm', () => {
     await input.setValue('50')
     await input.trigger('keydown', { key: 'Enter' })
     expect(document.activeElement).not.toBe(input.element)
-    expect(useTimerAlarm().alarmMinutes.value).toBe(20)
     expect(input.element.value).toBe('20')
     await wrapper.get('[data-testid="timer-alarm-mute"]').trigger('click')
-    expect(useTimerAlarm().alarmMuted.value).toBe(true)
+    expect(wrapper.emitted('updateAlarm')).toEqual([[{ minutes: 20 }], [{ muted: true }]])
+  })
+
+  it('hides the alarm settings from players who are not moderators', () => {
+    const wrapper = mountTimer({ canControl: false })
+    expect(wrapper.find('[data-testid="timer-alarm-toggle"]').exists()).toBe(false)
+  })
+
+  it('defaults to a 5 minute alarm when the room has no setting', async () => {
+    vi.setSystemTime(START + 5 * 60_000 - 500)
+    const wrapper = mountTimer({ alarmMinutes: null, alarmMuted: null })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(blinking(wrapper)).toBe(true)
+    expect(playAlarmChime).toHaveBeenCalledTimes(1)
   })
 })
