@@ -18,7 +18,7 @@ import { touchRecentRoom } from '~/utils/recentRooms'
 import { DEFAULT_PRESET_ID, activeCardsForDeck, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
 import { roleTagForShields, roleTagOrder } from '~/utils/shields'
-import { cohortForShields, groupVotesByCohort, normalizeCohorts, type ResultGroup } from '~/utils/resultCohorts'
+import { cohortForShields, groupVotesByCohort, normalizeCohorts, resultCohortFor, type ResultGroup } from '~/utils/resultCohorts'
 import { shouldCelebrate } from '~/utils/resultCelebration'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
@@ -228,7 +228,7 @@ const hiddenVotePlayerIds = computed(() => {
   return new Set(visiblePlayers.value
     .filter(p => {
       const cohort = cohortForShields(p.shields)
-      return cohort !== null && !resultCohorts.value.includes(cohort)
+      return cohort !== null && resultCohortFor(cohort, resultCohorts.value) === null
     })
     .map(p => p.id))
 })

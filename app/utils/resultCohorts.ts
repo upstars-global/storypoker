@@ -2,6 +2,8 @@ import { roleTagForShields } from './shields'
 
 export const RESULT_COHORTS: readonly string[] = ['DEV', 'BE', 'FE', 'SRE', 'QA']
 export const ALWAYS_SHOWN_COHORT = 'QA'
+export const DEV_UMBRELLA_COHORT = 'DEV'
+const DEV_SUBCOHORTS = new Set(['BE', 'FE', 'SRE'])
 
 export type VoteCounts = Record<string, number>
 
@@ -36,15 +38,22 @@ export function cohortForShields(shields: string[] | null | undefined): string |
   return tag ? COHORT_BY_TAG.get(tag) ?? null : null
 }
 
+export function resultCohortFor(cohort: string | null, selected: readonly string[]): string | null {
+  if (!cohort) return null
+  if (selected.includes(cohort)) return cohort
+  return DEV_SUBCOHORTS.has(cohort) && selected.includes(DEV_UMBRELLA_COHORT) ? DEV_UMBRELLA_COHORT : null
+}
+
 export function groupVotesByCohort(
   players: readonly { shields: string[] | null; vote: string | null }[],
   cohorts: readonly string[],
 ): VoteGroup[] {
-  const buckets = new Map<string, VoteCounts>(normalizeCohorts(cohorts).map(key => [key, {}]))
+  const selected = normalizeCohorts(cohorts)
+  const buckets = new Map<string, VoteCounts>(selected.map(key => [key, {}]))
   for (const player of players) {
     if (!player.vote) continue
-    const cohort = cohortForShields(player.shields)
-    const bucket = cohort ? buckets.get(cohort) : undefined
+    const target = resultCohortFor(cohortForShields(player.shields), selected)
+    const bucket = target ? buckets.get(target) : undefined
     if (bucket) bucket[player.vote] = (bucket[player.vote] ?? 0) + 1
   }
   return [...buckets]

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cohortForShields, groupVotesByCohort, normalizeCohorts } from '~/utils/resultCohorts'
+import { cohortForShields, groupVotesByCohort, normalizeCohorts, resultCohortFor } from '~/utils/resultCohorts'
 
 describe('normalizeCohorts', () => {
   it('shows every cohort until the room configures them', () => {
@@ -55,7 +55,22 @@ describe('groupVotesByCohort', () => {
     ])
   })
 
-  it('drops votes of deselected cohorts', () => {
+  it('folds every developer into DEV when only DEV is selected', () => {
+    expect(groupVotesByCohort([...players, { shields: ['sre'], vote: '5' }], ['DEV'])).toEqual([
+      { key: 'DEV', votes: { '3': 2, '5': 3 } },
+      { key: 'QA', votes: { '8': 2 } },
+    ])
+  })
+
+  it('keeps selected developer roles apart and folds the rest into DEV', () => {
+    expect(groupVotesByCohort([...players, { shields: ['sre'], vote: '5' }], ['DEV', 'FE'])).toEqual([
+      { key: 'DEV', votes: { '3': 1, '5': 2 } },
+      { key: 'FE', votes: { '3': 1, '5': 1 } },
+      { key: 'QA', votes: { '8': 2 } },
+    ])
+  })
+
+  it('drops votes of deselected roles when DEV is off', () => {
     expect(groupVotesByCohort(players, ['FE', 'BE', 'QA'])).toEqual([
       { key: 'BE', votes: { '5': 1 } },
       { key: 'FE', votes: { '3': 1, '5': 1 } },
@@ -67,5 +82,16 @@ describe('groupVotesByCohort', () => {
     expect(groupVotesByCohort([{ shields: ['fe'], vote: '3' }], ['FE', 'SRE'])).toEqual([
       { key: 'FE', votes: { '3': 1 } },
     ])
+  })
+})
+
+describe('resultCohortFor', () => {
+  it('routes deselected developer roles into DEV only while DEV is selected', () => {
+    expect(resultCohortFor('SRE', ['DEV', 'QA'])).toBe('DEV')
+    expect(resultCohortFor('SRE', ['BE', 'FE', 'QA'])).toBeNull()
+    expect(resultCohortFor('DEV', ['BE', 'QA'])).toBeNull()
+    expect(resultCohortFor('BE', ['DEV', 'BE', 'QA'])).toBe('BE')
+    expect(resultCohortFor('QA', ['QA'])).toBe('QA')
+    expect(resultCohortFor(null, ['DEV'])).toBeNull()
   })
 })
