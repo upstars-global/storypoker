@@ -126,6 +126,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
 | `sp-lang` | `uk \| en`; читається в `app/i18n.ts`, пишеться `persistLocale()`. Дефолт - `uk` |
 | `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
+| `sp-timer-alarm` | `{ minutes, muted }` - сигнал таймера кожні N хв (3–20, дефолт 5; звук увімкнено): блимання ×3, дзвінок, модератор ставить паузу |
 | `sp-volume` | `0`–`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
 | `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
 

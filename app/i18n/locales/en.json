@@ -103,7 +103,11 @@
     "pause": "Pause",
     "continue": "Continue",
     "minus30": "-30s",
-    "plus30": "+30s"
+    "plus30": "+30s",
+    "alarmSettings": "Alarm settings",
+    "alarmAfter": "Alarm after",
+    "minutesShort": "min",
+    "alarmSound": "Alarm sound"
   },
   "slot": {
     "title": "Slot 777",
