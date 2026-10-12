@@ -101,18 +101,24 @@ export type Database = {
       }
       rooms: {
         Row: {
+          background_updated_at: string | null
+          background_url: string | null
           created_at: string | null
           id: string
           name: string | null
           slug: string | null
         }
         Insert: {
+          background_updated_at?: string | null
+          background_url?: string | null
           created_at?: string | null
           id: string
           name?: string | null
           slug?: string | null
         }
         Update: {
+          background_updated_at?: string | null
+          background_url?: string | null
           created_at?: string | null
           id?: string
           name?: string | null

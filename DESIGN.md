@@ -340,6 +340,7 @@ const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 | Дія | Компонент / handler |
 |---|---|
 | Перейменувати кімнату / встановити slug | `AppHeader.vue`, вкладене `v-if="user"` усередині `v-if="isModerator"` → `roomStore.setRoomName(name, slug)` |
+| Фон кімнати (завантажити / кадрувати / прибрати) | `AppHeader.vue` → `RoomBackgroundModal` (лише `isAuthorizedModerator`) → `roomStore.uploadBackground` / `removeBackground`, §11.10 |
 | Перейменувати іншого гравця + його shields | `PlayerRow.vue`, `v-if="currentUserIsAuthorizedModerator"` (вкладено в `currentUserIsModerator`-блок) → `PlayerEditModal` |
 
 ### 11.2 Функціонал гравця
@@ -487,3 +488,13 @@ round_history (
 - `slot-win` з `{playerId}` на 1.6с виставляє `slotWinnerId`
 
 **Індикація в `PlayerRow.vue`** (props `is-spinning-slot`/`is-slot-winner`) - єдиний видимий ефект джекпоту, без банера чи локального підсвічування самого слота. Кубик (`font-size: 1.125rem`, трохи менший за іконку модератора поруч) сидить у рядку з іменем за тим самим `AppTooltip`-патерном, що й `app:moderator` - колонка статусу голосу лишається незайманою. Кубик не обертається: поки триває спін, кожні 120мс перемикається грань (`tabler:dice-1`…`dice-6`, `DICE_FACES`/`diceFaceIndex`), імітуючи котіння в чашці; далі повертається дефолтна `dice-5`. Ці іконки резолвляться через Iconify API (не офлайн `ic:`-колекція), тому `loadIcons(DICE_FACES)` прогріває кеш при монтуванні `PlayerRow.vue` - інакше перше котіння блимає порожніми кадрами. При виграші ім'я і кубик разом блимають `.win-blink` (`@keyframes win-blink`, `animation-iteration-count: 3`).
+
+### 11.10 Фон кімнати (`RoomBackgroundModal.vue`)
+
+Авторизований модератор задає фонове зображення кімнати; його бачать усі учасники, оновлення приходить через Realtime-канал `rooms:<roomId>`.
+
+- **Модалка:** пункт «Фон кімнати» в меню хедера. Вибір JPG/PNG/WebP до 10 МБ → рамка 16:9, у якій картинку можна тягнути (pointer events), масштабувати повзунком 1–3× або колесом, з клавіатури - стрілки та `+`/`-`. Картинка завжди покриває рамку (`clampFraming`). «Прибрати фон» знімає поточний
+- **Кадрування:** `framingSourceRect()` (`app/utils/backgroundImage.ts`) перераховує видиму частину рамки в пікселі оригіналу; `encodeBackground()` ріже її з оригінального `ImageBitmap` у WebP (якість 0.8) розміром до 1920×1080 без апскейлу. Декодування й WebP-кодування спільні з аватарками (`imageEncoding.ts`)
+- **Збереження:** Storage bucket `room-backgrounds`, фіксований об'єкт `<room_id>/background.webp` (upsert, без сиріт), далі `rooms.background_url` + `background_updated_at` (кеш-інвалідація `?v=`). Зняття фону спершу пише `background_url: null`, файл видаляється best-effort. Міграція `016`; без неї аплоад падає (`Bucket not found`), а кімнати відкриваються як звичайно (`resolveRoom` читає `select('*')`)
+- **Рендер:** inline `background-image` на корені сторінки кімнати - напівпрозорий тінт `color-mix(var(--bg-app) 35%)` поверх картинки, `cover`, `fixed`. `backgroundDisplayUrl()` пропускає лише шлях за regex `^[A-Za-z0-9-]+/background\.webp$`, бо значення йде в CSS `url()`, а `rooms.id` може вставити будь-хто
+- **Доступ:** Storage-політики `to authenticated` на єдиний об'єкт існуючої кімнати - тобто змінити фон може будь-який залогінений користувач (як і решту даних кімнати, ролі модератора enforced лише на клієнті)

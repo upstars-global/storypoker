@@ -36,6 +36,7 @@ const emit = defineEmits<{
   openSignUp: []
   openCardDeck: []
   openRenameRoom: []
+  openRoomBackground: []
   openAccountSettings: []
   openHistory: []
   openAlignmentTrends: []
@@ -366,6 +367,21 @@ function onVolumeInput(event: Event) {
                 icon="ic:baseline-edit"
               />
               {{ $t('header.renameRoom') }}
+            </li>
+            <li
+              v-if="user"
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              role="menuitem"
+              tabindex="-1"
+              data-testid="room-background-menu-item"
+              @click="emit('openRoomBackground'); menuOpen = false"
+            >
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-wallpaper"
+              />
+              {{ $t('header.roomBackground') }}
             </li>
             <li
               v-wave

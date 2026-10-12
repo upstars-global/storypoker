@@ -7,6 +7,27 @@ import type { RoomState, RoundHistory, RoundHistoryVote } from './types'
 import type { Json, TablesInsert, TablesUpdate } from '~/lib/database.types'
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
+const BACKGROUND_BUCKET = 'room-backgrounds'
+
+export interface RoomBackground {
+  background_url: string | null
+  background_updated_at: string | null
+}
+
+export interface ResolvedRoom extends RoomBackground {
+  id: string
+  slug: string | null
+  name: string | null
+}
+
+const BACKGROUND_PATH_PATTERN = /^[A-Za-z0-9-]+\/background\.webp$/
+
+export function backgroundDisplayUrl(path: string, updatedAt: string | null): string | null {
+  if (!BACKGROUND_PATH_PATTERN.test(path)) return null
+  const { publicUrl } = getSupabase().storage.from(BACKGROUND_BUCKET).getPublicUrl(path).data
+  return `${publicUrl}?v=${encodeURIComponent(updatedAt ?? '')}`
+}
+
 export const useRoomStore = defineStore('room', () => {
   const roomId = ref<string | null>(null)
   const roomState = ref<RoomState | null>(null)
@@ -171,14 +192,21 @@ export const useRoomStore = defineStore('room', () => {
     return id
   }
 
-  async function resolveRoom(input: string): Promise<{ id: string; slug: string | null; name: string | null } | null> {
+  async function resolveRoom(input: string): Promise<ResolvedRoom | null> {
     const supabase = getSupabase()
     const { data } = await supabase
       .from('rooms')
-      .select('id, slug, name')
+      .select('*')
       .or(`id.eq.${input},slug.eq.${input}`)
       .maybeSingle()
-    return data ?? null
+    if (!data) return null
+    return {
+      id: data.id,
+      slug: data.slug,
+      name: data.name,
+      background_url: data.background_url ?? null,
+      background_updated_at: data.background_updated_at ?? null,
+    }
   }
 
   async function setRoomName(name: string | null, slug: string | null): Promise<void> {
@@ -195,6 +223,33 @@ export const useRoomStore = defineStore('room', () => {
     }
   }
 
+  async function uploadBackground(blob: Blob): Promise<RoomBackground | null> {
+    if (!roomId.value) return null
+    const supabase = getSupabase()
+    const path = `${roomId.value}/background.webp`
+    const { error: uploadErr } = await supabase.storage
+      .from(BACKGROUND_BUCKET)
+      .upload(path, blob, { upsert: true, contentType: 'image/webp' })
+    if (uploadErr) throw uploadErr
+    const background = { background_url: path, background_updated_at: new Date().toISOString() }
+    const { error } = await supabase.from('rooms').update(background).eq('id', roomId.value)
+    if (error) throw error
+    return background
+  }
+
+  async function removeBackground(): Promise<RoomBackground | null> {
+    if (!roomId.value) return null
+    const supabase = getSupabase()
+    const background = { background_url: null, background_updated_at: new Date().toISOString() }
+    const { error } = await supabase.from('rooms').update(background).eq('id', roomId.value)
+    if (error) throw error
+    await supabase.storage
+      .from(BACKGROUND_BUCKET)
+      .remove([`${roomId.value}/background.webp`])
+      .catch(() => undefined)
+    return background
+  }
+
   return {
     roomId,
     roomState,
@@ -209,6 +264,8 @@ export const useRoomStore = defineStore('room', () => {
     create,
     resolveRoom,
     setRoomName,
+    uploadBackground,
+    removeBackground,
     resetTimer,
     pauseTimer,
     resumeTimer,

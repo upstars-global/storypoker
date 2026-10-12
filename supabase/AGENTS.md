@@ -7,7 +7,7 @@ read-only API поверх них - `netlify/AGENTS.md`.
 Міграції в `supabase/migrations/` - нумеровані послідовно, накатуються вручну через Supabase SQL
 Editor або Management API (не CLI-міграції, тож застосований стан бази не виводиться з репо).
 Таблиці:
-- `rooms (id text PK, slug text unique, name text, created_at)`
+- `rooms (id text PK, slug text unique, name text, background_url, background_updated_at, created_at)`
 - `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms,
   poll_question)`
 - `players (id uuid PK, room_id, name, is_moderator, vote, user_id, shields text[], created_at, left_at)`
@@ -32,6 +32,14 @@ image/png,image/jpeg,image/webp` (як `AVATAR_ACCEPT`); `013` звужує вс
 `useDylanAvatar.ts`; public URL збирає `avatarDisplayUrl()` через `getPublicUrl()`, кеш-інвалідація `?v=<updated_at>`,
 offline grayscale через CSS filter), а `avatar_style` завжди лишається останнім DiceBear-стилем - fallback і зняття
 картинки повертають саме його. Спека - `docs/specs/2026-08-02-custom-avatar-upload-design.md`.
+
+Фон кімнати (`016`): bucket `room-backgrounds` (public read, 2 MB, лише `image/webp`), чотири політики
+`to authenticated` на єдиний об'єкт `<room_id>/background.webp` існуючої кімнати. `rooms.background_url` обмежений
+check-констрейнтом до `id || '/background.webp'`, `background_updated_at` - кеш-інвалідація `?v=`. Модалка дає кадрувати
+(drag/zoom у рамці 16:9), клієнт ріже кадр у WebP ≤ 1920×1080 (`app/utils/backgroundImage.ts`, спільне кодування з аватарками - `imageEncoding.ts`); UI лише для
+authorized moderator. Зняття фону, як і аватарки, спершу пише `background_url: null`, файл видаляється best-effort.
+`backgroundDisplayUrl()` (`stores/room.ts`) пропускає лише шлях за regex, бо значення йде в CSS `url()`, а `rooms.id`
+може вставити будь-хто.
 
 ## Round history snapshot
 

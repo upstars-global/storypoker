@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import AppModal from '~/components/AppModal.vue'
 import { useAuthStore } from '~/stores/auth'
-import { useRoomStore } from '~/stores/room'
+import { useRoomStore, backgroundDisplayUrl, type RoomBackground, type ResolvedRoom } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
 import { useProfilesStore } from '~/stores/profiles'
@@ -22,6 +22,7 @@ import { shouldCelebrate } from '~/utils/resultCelebration'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
+import RoomBackgroundModal from '~/components/RoomBackgroundModal.vue'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal.vue'
 import HistoryModal from '~/components/HistoryModal.vue'
 import AlignmentTrendsModal from '~/components/AlignmentTrendsModal.vue'
@@ -81,6 +82,21 @@ const roomNameInput = ref('')
 const roomNameError = ref<string | null>(null)
 const currentSlug = ref<string | null>(null)
 const currentRoomName = ref<string | null>(null)
+const showRoomBackground = ref(false)
+const roomBackground = ref<RoomBackground>({ background_url: null, background_updated_at: null })
+const roomBackgroundUrl = computed(() => {
+  const { background_url, background_updated_at } = roomBackground.value
+  return background_url ? backgroundDisplayUrl(background_url, background_updated_at) : null
+})
+const roomBackgroundStyle = computed(() => roomBackgroundUrl.value
+  ? {
+      backgroundImage: 'linear-gradient(color-mix(in srgb, var(--bg-app) 35%, transparent), '
+        + `color-mix(in srgb, var(--bg-app) 35%, transparent)), url("${roomBackgroundUrl.value}")`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+    }
+  : undefined)
 // Room name and player identity both arrive a few round-trips after first paint,
 // which slid the whole header cluster once they appeared. Seed them from the
 // previous visit so the header renders at its final size right away.
@@ -255,6 +271,7 @@ onMounted(async () => {
   }
   currentSlug.value = resolved.slug
   currentRoomName.value = resolved.name
+  roomBackground.value = { background_url: resolved.background_url, background_updated_at: resolved.background_updated_at }
   roomId = resolved.id
   roomStore.roomId = roomId
   playersStore.roomId = roomId
@@ -381,11 +398,12 @@ function subscribeRealtime() {
   roomChannel = supabase
     .channel(`rooms:${roomId}`)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
-      (payload: RealtimePostgresChangesPayload<{ id: string; slug: string | null; name: string | null }>) => {
+      (payload: RealtimePostgresChangesPayload<ResolvedRoom>) => {
         if (payload.eventType !== 'UPDATE') return
         const row = payload.new
         currentSlug.value = row.slug
         currentRoomName.value = row.name
+        roomBackground.value = { background_url: row.background_url, background_updated_at: row.background_updated_at }
         if (row.slug && route.params.slug !== row.slug) {
           router.replace(`/${row.slug}`)
         } else if (!row.slug && route.params.slug !== roomId) {
@@ -672,6 +690,8 @@ async function submitRenameRoom() {
   <div
     v-else
     class="min-h-screen flex flex-col"
+    :style="roomBackgroundStyle"
+    data-testid="room-root"
   >
     <AppHeader
       :online-count="onlineCount"
@@ -686,6 +706,7 @@ async function submitRenameRoom() {
       @open-sign-up="showAuth = 'signup'"
       @open-card-deck="showCardDeck = true"
       @open-rename-room="openRenameRoom"
+      @open-room-background="showRoomBackground = true"
       @open-account-settings="showAccountSettings = true"
       @open-history="showHistory = true"
       @open-alignment-trends="showAlignmentTrends = true"
@@ -840,6 +861,12 @@ async function submitRenameRoom() {
     <UserSettingsModal
       v-if="showAccountSettings && user"
       @close="showAccountSettings = false"
+    />
+    <RoomBackgroundModal
+      v-if="showRoomBackground && isAuthorizedModerator"
+      :current-url="roomBackgroundUrl"
+      @saved="(background: RoomBackground) => roomBackground = background"
+      @close="showRoomBackground = false"
     />
 
     <AppModal
