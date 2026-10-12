@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { cohortForShields, groupVotesByCohort, normalizeCohorts, resultCohortFor } from '~/utils/resultCohorts'
 
 describe('normalizeCohorts', () => {
-  it('shows every cohort until the room configures them', () => {
-    expect(normalizeCohorts(null)).toEqual(['DEV', 'BE', 'FE', 'SRE', 'QA'])
-    expect(normalizeCohorts(undefined)).toEqual(['DEV', 'BE', 'FE', 'SRE', 'QA'])
+  it('defaults to DEV and QA until the room configures them', () => {
+    expect(normalizeCohorts(null)).toEqual(['DEV', 'QA'])
+    expect(normalizeCohorts(undefined)).toEqual(['DEV', 'QA'])
   })
 
   it('drops unknown tags and keeps the canonical order', () => {
@@ -46,8 +46,15 @@ describe('groupVotesByCohort', () => {
     { shields: ['sm'], vote: null },
   ]
 
-  it('builds one group per cohort and ignores PO, SM and players without a role', () => {
+  it('shows all developers in DEV and QA apart by default', () => {
     expect(groupVotesByCohort(players, normalizeCohorts(null))).toEqual([
+      { key: 'DEV', votes: { '3': 2, '5': 2 } },
+      { key: 'QA', votes: { '8': 2 } },
+    ])
+  })
+
+  it('builds one group per cohort and ignores PO, SM and players without a role', () => {
+    expect(groupVotesByCohort(players, ['DEV', 'BE', 'FE', 'SRE', 'QA'])).toEqual([
       { key: 'DEV', votes: { '3': 1 } },
       { key: 'BE', votes: { '5': 1 } },
       { key: 'FE', votes: { '3': 1, '5': 1 } },

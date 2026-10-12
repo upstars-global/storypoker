@@ -3,6 +3,7 @@ import { roleTagForShields } from './shields'
 export const RESULT_COHORTS: readonly string[] = ['DEV', 'BE', 'FE', 'SRE', 'QA']
 export const ALWAYS_SHOWN_COHORT = 'QA'
 export const DEV_UMBRELLA_COHORT = 'DEV'
+export const DEFAULT_RESULT_COHORTS: readonly string[] = [DEV_UMBRELLA_COHORT, ALWAYS_SHOWN_COHORT]
 const DEV_SUBCOHORTS = new Set(['BE', 'FE', 'SRE'])
 
 export type VoteCounts = Record<string, number>
@@ -28,8 +29,7 @@ const COHORT_BY_TAG = new Map<string, string>([
 ])
 
 export function normalizeCohorts(value: readonly string[] | null | undefined): string[] {
-  if (value == null) return [...RESULT_COHORTS]
-  const chosen = new Set([...value, ALWAYS_SHOWN_COHORT])
+  const chosen = new Set([...(value ?? DEFAULT_RESULT_COHORTS), ALWAYS_SHOWN_COHORT])
   return RESULT_COHORTS.filter(tag => chosen.has(tag))
 }
 
