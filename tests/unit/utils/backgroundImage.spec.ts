@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   BACKGROUND_MAX_FILE_BYTES,
+  backgroundTint,
+  clampOpacity,
   DEFAULT_FRAMING,
   backgroundOutputSize,
   clampFraming,
@@ -69,5 +71,22 @@ describe('loadBackgroundImage', () => {
 
   it('rejects undecodable input as decode-failed', async () => {
     await expect(loadBackgroundImage(makeFile('image/png'))).rejects.toThrow('decode-failed')
+  })
+})
+
+describe('clampOpacity', () => {
+  it('defaults to 65% and keeps values within 10-100%', () => {
+    expect(clampOpacity(null)).toBe(0.65)
+    expect(clampOpacity(Number.NaN)).toBe(0.65)
+    expect(clampOpacity(0)).toBe(0.1)
+    expect(clampOpacity(1.5)).toBe(1)
+    expect(clampOpacity(0.333)).toBe(0.33)
+  })
+})
+
+describe('backgroundTint', () => {
+  it('veils the image with the app background by the missing opacity', () => {
+    expect(backgroundTint(0.65)).toBe('color-mix(in srgb, var(--bg-app) 35%, transparent)')
+    expect(backgroundTint(1)).toBe('color-mix(in srgb, var(--bg-app) 0%, transparent)')
   })
 })

@@ -350,6 +350,7 @@
     "errorDecodeFailed": "Couldn't read the image",
     "saveError": "Couldn't save the background",
     "zoom": "Zoom",
-    "adjustHint": "Drag to move the background, zoom with the slider or mouse wheel"
+    "adjustHint": "Drag to move the background, zoom with the slider or mouse wheel",
+    "opacity": "Opacity"
   }
 }

@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import AppModal from '~/components/AppModal.vue'
 import { useAuthStore } from '~/stores/auth'
+import { backgroundTint } from '~/utils/backgroundImage'
 import { useRoomStore, backgroundDisplayUrl, type RoomBackground, type ResolvedRoom } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
@@ -83,15 +84,15 @@ const roomNameError = ref<string | null>(null)
 const currentSlug = ref<string | null>(null)
 const currentRoomName = ref<string | null>(null)
 const showRoomBackground = ref(false)
-const roomBackground = ref<RoomBackground>({ background_url: null, background_updated_at: null })
+const roomBackground = ref<RoomBackground>({ background_url: null, background_updated_at: null, background_opacity: null })
 const roomBackgroundUrl = computed(() => {
   const { background_url, background_updated_at } = roomBackground.value
   return background_url ? backgroundDisplayUrl(background_url, background_updated_at) : null
 })
+const roomBackgroundTint = computed(() => backgroundTint(roomBackground.value.background_opacity))
 const roomBackgroundStyle = computed(() => roomBackgroundUrl.value
   ? {
-      backgroundImage: 'linear-gradient(color-mix(in srgb, var(--bg-app) 35%, transparent), '
-        + `color-mix(in srgb, var(--bg-app) 35%, transparent)), url("${roomBackgroundUrl.value}")`,
+      backgroundImage: `linear-gradient(${roomBackgroundTint.value}, ${roomBackgroundTint.value}), url("${roomBackgroundUrl.value}")`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundAttachment: 'fixed',
@@ -271,7 +272,11 @@ onMounted(async () => {
   }
   currentSlug.value = resolved.slug
   currentRoomName.value = resolved.name
-  roomBackground.value = { background_url: resolved.background_url, background_updated_at: resolved.background_updated_at }
+  roomBackground.value = {
+    background_url: resolved.background_url,
+    background_updated_at: resolved.background_updated_at,
+    background_opacity: resolved.background_opacity,
+  }
   roomId = resolved.id
   roomStore.roomId = roomId
   playersStore.roomId = roomId
@@ -403,7 +408,11 @@ function subscribeRealtime() {
         const row = payload.new
         currentSlug.value = row.slug
         currentRoomName.value = row.name
-        roomBackground.value = { background_url: row.background_url, background_updated_at: row.background_updated_at }
+        roomBackground.value = {
+          background_url: row.background_url,
+          background_updated_at: row.background_updated_at,
+          background_opacity: row.background_opacity ?? null,
+        }
         if (row.slug && route.params.slug !== row.slug) {
           router.replace(`/${row.slug}`)
         } else if (!row.slug && route.params.slug !== roomId) {
@@ -865,7 +874,8 @@ async function submitRenameRoom() {
     <RoomBackgroundModal
       v-if="showRoomBackground && isAuthorizedModerator"
       :current-url="roomBackgroundUrl"
-      @saved="(background: RoomBackground) => roomBackground = background"
+      :current-opacity="roomBackground.background_opacity"
+      @saved="(background: Partial<RoomBackground>) => roomBackground = { ...roomBackground, ...background }"
       @close="showRoomBackground = false"
     />
 

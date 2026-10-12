@@ -392,12 +392,13 @@ describe('roomStore background', () => {
     const store = useRoomStore()
     store.roomId = 'r1'
     const blob = new Blob(['x'], { type: 'image/webp' })
-    const result = await store.uploadBackground(blob)
+    const result = await store.uploadBackground(blob, 0.5)
     expect(client.storage.from).toHaveBeenCalledWith('room-backgrounds')
     expect(bucket.upload).toHaveBeenCalledWith('r1/background.webp', blob, { upsert: true, contentType: 'image/webp' })
     expect(client.from).toHaveBeenCalledWith('rooms')
     expect(update.mock.calls[0]![0].background_url).toBe('r1/background.webp')
     expect(update.mock.calls[0]![0].background_updated_at).toBeTruthy()
+    expect(update.mock.calls[0]![0].background_opacity).toBe(0.5)
     expect(eq).toHaveBeenCalledWith('id', 'r1')
     expect(result?.background_url).toBe('r1/background.webp')
   })
@@ -408,8 +409,18 @@ describe('roomStore background', () => {
     setSupabase(client as any)
     const store = useRoomStore()
     store.roomId = 'r1'
-    await expect(store.uploadBackground(new Blob())).rejects.toThrow('denied')
+    await expect(store.uploadBackground(new Blob(), 0.65)).rejects.toThrow('denied')
     expect(update).not.toHaveBeenCalled()
+  })
+
+  it('updates only the opacity', async () => {
+    const { bucket, update, client } = fakeClient()
+    setSupabase(client as any)
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    expect(await store.setBackgroundOpacity(0.3)).toEqual({ background_opacity: 0.3 })
+    expect(update).toHaveBeenCalledWith({ background_opacity: 0.3 })
+    expect(bucket.upload).not.toHaveBeenCalled()
   })
 
   it('clears the room row before removing the file and tolerates storage failure', async () => {
@@ -460,7 +471,7 @@ describe('roomStore.resolveRoom', () => {
     const { client } = clientReturning({ id: 'r1', slug: null, name: 'Team', created_at: null })
     setSupabase(client as any)
     expect(await useRoomStore().resolveRoom('r1')).toEqual({
-      id: 'r1', slug: null, name: 'Team', background_url: null, background_updated_at: null,
+      id: 'r1', slug: null, name: 'Team', background_url: null, background_updated_at: null, background_opacity: null,
     })
   })
 

@@ -1,5 +1,10 @@
 alter table rooms add column if not exists background_url text;
 alter table rooms add column if not exists background_updated_at timestamptz;
+alter table rooms add column if not exists background_opacity real;
+
+alter table rooms drop constraint if exists rooms_background_opacity_range;
+alter table rooms add constraint rooms_background_opacity_range
+  check (background_opacity is null or background_opacity between 0.1 and 1);
 
 alter table rooms drop constraint if exists rooms_background_url_storage;
 alter table rooms add constraint rooms_background_url_storage

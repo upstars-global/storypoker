@@ -101,6 +101,7 @@ export type Database = {
       }
       rooms: {
         Row: {
+          background_opacity: number | null
           background_updated_at: string | null
           background_url: string | null
           created_at: string | null
@@ -109,6 +110,7 @@ export type Database = {
           slug: string | null
         }
         Insert: {
+          background_opacity?: number | null
           background_updated_at?: string | null
           background_url?: string | null
           created_at?: string | null
@@ -117,6 +119,7 @@ export type Database = {
           slug?: string | null
         }
         Update: {
+          background_opacity?: number | null
           background_updated_at?: string | null
           background_url?: string | null
           created_at?: string | null

@@ -28,9 +28,9 @@ const i18n = createI18n({
 
 let pinia: Pinia
 
-function mountModal(currentUrl: string | null = null) {
+function mountModal(currentUrl: string | null = null, currentOpacity: number | null = null) {
   return mount(RoomBackgroundModal, {
-    props: { currentUrl },
+    props: { currentUrl, currentOpacity },
     global: { plugins: [pinia, i18n], directives: { wave: {} }, stubs: { AppIcon: true } },
     attachTo: document.body,
   })
@@ -75,9 +75,25 @@ describe('RoomBackgroundModal', () => {
     await wrapper.get('[data-testid="room-background-save"]').trigger('click')
     await flushPromises()
     expect(encodeMock).toHaveBeenCalledWith(bitmap, { zoom: 2, offsetX: 0, offsetY: 0 })
-    expect(upload).toHaveBeenCalledWith(blob)
+    expect(upload).toHaveBeenCalledWith(blob, 0.65)
     expect(wrapper.emitted('saved')).toEqual([[SAVED]])
     expect(wrapper.emitted('close')).toHaveLength(1)
+  })
+
+  it('saves only the opacity when the image is unchanged', async () => {
+    const setOpacity = vi.spyOn(useRoomStore(), 'setBackgroundOpacity').mockResolvedValue({ background_opacity: 0.4 })
+    const wrapper = mountModal('https://cdn/r1/background.webp', 0.8)
+    expect(wrapper.get('[data-testid="room-background-save"]').attributes('disabled')).toBeDefined()
+    await wrapper.get('[data-testid="room-background-opacity"]').setValue('0.4')
+    expect(wrapper.get('[data-testid="room-background-opacity"]').element.parentElement!.textContent).toContain('40%')
+    await wrapper.get('[data-testid="room-background-save"]').trigger('click')
+    await flushPromises()
+    expect(setOpacity).toHaveBeenCalledWith(0.4)
+    expect(wrapper.emitted('saved')).toEqual([[{ background_opacity: 0.4 }]])
+  })
+
+  it('hides the opacity slider without an image', () => {
+    expect(mountModal().find('[data-testid="room-background-opacity"]').exists()).toBe(false)
   })
 
   it('removes the current background', async () => {

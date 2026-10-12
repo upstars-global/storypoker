@@ -12,6 +12,7 @@ const BACKGROUND_BUCKET = 'room-backgrounds'
 export interface RoomBackground {
   background_url: string | null
   background_updated_at: string | null
+  background_opacity: number | null
 }
 
 export interface ResolvedRoom extends RoomBackground {
@@ -206,6 +207,7 @@ export const useRoomStore = defineStore('room', () => {
       name: data.name,
       background_url: data.background_url ?? null,
       background_updated_at: data.background_updated_at ?? null,
+      background_opacity: data.background_opacity ?? null,
     }
   }
 
@@ -223,7 +225,7 @@ export const useRoomStore = defineStore('room', () => {
     }
   }
 
-  async function uploadBackground(blob: Blob): Promise<RoomBackground | null> {
+  async function uploadBackground(blob: Blob, opacity: number): Promise<Partial<RoomBackground> | null> {
     if (!roomId.value) return null
     const supabase = getSupabase()
     const path = `${roomId.value}/background.webp`
@@ -231,13 +233,21 @@ export const useRoomStore = defineStore('room', () => {
       .from(BACKGROUND_BUCKET)
       .upload(path, blob, { upsert: true, contentType: 'image/webp' })
     if (uploadErr) throw uploadErr
-    const background = { background_url: path, background_updated_at: new Date().toISOString() }
+    const background = { background_url: path, background_updated_at: new Date().toISOString(), background_opacity: opacity }
     const { error } = await supabase.from('rooms').update(background).eq('id', roomId.value)
     if (error) throw error
     return background
   }
 
-  async function removeBackground(): Promise<RoomBackground | null> {
+  async function setBackgroundOpacity(opacity: number): Promise<Partial<RoomBackground> | null> {
+    if (!roomId.value) return null
+    const background = { background_opacity: opacity }
+    const { error } = await getSupabase().from('rooms').update(background).eq('id', roomId.value)
+    if (error) throw error
+    return background
+  }
+
+  async function removeBackground(): Promise<Partial<RoomBackground> | null> {
     if (!roomId.value) return null
     const supabase = getSupabase()
     const background = { background_url: null, background_updated_at: new Date().toISOString() }
@@ -265,6 +275,7 @@ export const useRoomStore = defineStore('room', () => {
     resolveRoom,
     setRoomName,
     uploadBackground,
+    setBackgroundOpacity,
     removeBackground,
     resetTimer,
     pauseTimer,

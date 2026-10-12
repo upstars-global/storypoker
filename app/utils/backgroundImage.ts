@@ -5,6 +5,8 @@ export const BACKGROUND_MAX_WIDTH = 1920
 export const BACKGROUND_ASPECT = 16 / 9
 export const BACKGROUND_MAX_ZOOM = 3
 export const BACKGROUND_ACCEPT = 'image/png,image/jpeg,image/webp'
+export const BACKGROUND_MIN_OPACITY = 0.1
+export const BACKGROUND_DEFAULT_OPACITY = 0.65
 
 const ACCEPTED_TYPES = BACKGROUND_ACCEPT.split(',')
 
@@ -45,6 +47,16 @@ export function framingSourceRect(framing: Framing, imageWidth: number, imageHei
 export function backgroundOutputSize(source: SourceRect): { width: number; height: number } {
   const width = Math.max(1, Math.min(BACKGROUND_MAX_WIDTH, Math.round(source.sw)))
   return { width, height: Math.max(1, Math.round(width / BACKGROUND_ASPECT)) }
+}
+
+export function clampOpacity(value: number | null | undefined): number {
+  if (value == null || !Number.isFinite(value)) return BACKGROUND_DEFAULT_OPACITY
+  return Math.min(1, Math.max(BACKGROUND_MIN_OPACITY, Math.round(value * 100) / 100))
+}
+
+export function backgroundTint(opacity: number | null | undefined): string {
+  const veil = Math.round((1 - clampOpacity(opacity)) * 100)
+  return `color-mix(in srgb, var(--bg-app) ${veil}%, transparent)`
 }
 
 export function loadBackgroundImage(file: File): Promise<ImageBitmap> {

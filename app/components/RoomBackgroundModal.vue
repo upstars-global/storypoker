@@ -8,7 +8,10 @@ import { useRoomStore, type RoomBackground } from '~/stores/room'
 import {
   BACKGROUND_ACCEPT,
   BACKGROUND_MAX_ZOOM,
+  BACKGROUND_MIN_OPACITY,
   DEFAULT_FRAMING,
+  backgroundTint,
+  clampOpacity,
   clampFraming,
   encodeBackground,
   framedSize,
@@ -18,11 +21,12 @@ import {
 
 const props = defineProps<{
   currentUrl: string | null
+  currentOpacity: number | null
 }>()
 
 const emit = defineEmits<{
   close: []
-  saved: [background: RoomBackground]
+  saved: [background: Partial<RoomBackground>]
 }>()
 
 const { t } = useI18n()
@@ -38,8 +42,14 @@ const processing = ref(false)
 const saving = ref(false)
 const error = ref<string | null>(null)
 
+const opacity = ref(clampOpacity(props.currentOpacity))
+const tint = computed(() => backgroundTint(opacity.value))
+
 const savedPreviewUrl = computed(() => removeRequested.value ? null : props.currentUrl)
-const hasChanges = computed(() => Boolean(pendingBitmap.value) || (removeRequested.value && Boolean(props.currentUrl)))
+const opacityChanged = computed(() => opacity.value !== clampOpacity(props.currentOpacity))
+const hasChanges = computed(() => Boolean(pendingBitmap.value)
+  || (removeRequested.value && Boolean(props.currentUrl))
+  || (Boolean(savedPreviewUrl.value) && opacityChanged.value))
 
 const pendingImageStyle = computed(() => {
   const bitmap = pendingBitmap.value
@@ -155,8 +165,10 @@ async function save() {
   error.value = null
   try {
     const background = pendingBitmap.value
-      ? await roomStore.uploadBackground(await encodeBackground(pendingBitmap.value, framing.value))
-      : await roomStore.removeBackground()
+      ? await roomStore.uploadBackground(await encodeBackground(pendingBitmap.value, framing.value), opacity.value)
+      : removeRequested.value
+        ? await roomStore.removeBackground()
+        : await roomStore.setBackgroundOpacity(opacity.value)
     if (background) emit('saved', background)
     emit('close')
   } catch {
@@ -218,12 +230,17 @@ onUnmounted(clearPending)
           draggable="false"
           data-testid="room-background-pending-image"
         >
+        <div
+          class="absolute inset-0 pointer-events-none"
+          :style="{ backgroundColor: tint }"
+          data-testid="room-background-tint"
+        />
       </div>
       <button
         v-else
         v-wave
         type="button"
-        class="mt-6 w-full overflow-hidden rounded flex items-center justify-center bg-skeleton"
+        class="mt-6 w-full overflow-hidden rounded relative flex items-center justify-center bg-skeleton"
         style="aspect-ratio: 16 / 9;"
         :aria-label="$t('roomBackground.chooseFile')"
         data-testid="room-background-preview"
@@ -235,6 +252,12 @@ onUnmounted(clearPending)
           :alt="$t('roomBackground.preview')"
           style="width: 100%; height: 100%; object-fit: cover;"
         >
+        <div
+          v-if="savedPreviewUrl"
+          class="absolute inset-0 pointer-events-none"
+          :style="{ backgroundColor: tint }"
+          data-testid="room-background-tint"
+        />
         <AppIcon
           v-else
           class="mui-svg-icon text-muted"
@@ -261,6 +284,30 @@ onUnmounted(clearPending)
           data-testid="room-background-zoom"
           @input="setZoom(Number(($event.target as HTMLInputElement).value))"
         >
+      </div>
+      <div
+        v-if="pendingObjectUrl || savedPreviewUrl"
+        class="mt-3 flex items-center gap-3"
+      >
+        <label
+          for="room-background-opacity"
+          class="text-mui-caption text-muted"
+        >{{ $t('roomBackground.opacity') }}</label>
+        <input
+          id="room-background-opacity"
+          type="range"
+          :min="BACKGROUND_MIN_OPACITY"
+          max="1"
+          step="0.05"
+          class="flex-1"
+          :value="opacity"
+          data-testid="room-background-opacity"
+          @input="opacity = clampOpacity(Number(($event.target as HTMLInputElement).value))"
+        >
+        <span
+          class="text-mui-caption text-muted tabular-nums"
+          style="min-width: 3ch; text-align: right;"
+        >{{ Math.round(opacity * 100) }}%</span>
       </div>
       <p class="text-mui-caption mt-2 text-center text-muted">
         {{ pendingObjectUrl ? $t('roomBackground.adjustHint') : $t('roomBackground.hint') }}
