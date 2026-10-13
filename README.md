@@ -171,15 +171,10 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/openai/codex"><img src="https://img.shields.io/github/stars/openai/codex?style=flat&logo=github&logoColor=white&label=&color=555" alt="Codex stars"></a></td>
     </tr>
     <tr>
-      <td rowspan="4"><strong>Skills</strong></td>
+      <td rowspan="3"><strong>Skills</strong></td>
       <td><img src="https://cdn.simpleicons.org/vercel" width="16" height="16"> <a href="https://github.com/vercel-labs/skills">vercel-labs/skills</a></td>
       <td><a href="https://www.npmjs.com/package/skills"><img src="https://img.shields.io/npm/dt/skills?style=flat&logo=npm&logoColor=white&label=&color=555" alt="skills downloads"></a> Skills installer for agents</td>
       <td><a href="https://github.com/vercel-labs/skills"><img src="https://img.shields.io/github/stars/vercel-labs/skills?style=flat&logo=github&logoColor=white&label=&color=555" alt="skills stars"></a></td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/obra/superpowers">obra/superpowers</a></td>
-      <td><a href="https://skills.sh/obra/superpowers"><img src="https://skills.sh/b/obra/superpowers" alt="skills.sh"></a> Agentic skills framework</td>
-      <td><a href="https://github.com/obra/superpowers"><img src="https://img.shields.io/github/stars/obra/superpowers?style=flat&logo=github&logoColor=white&label=&color=555" alt="superpowers stars"></a></td>
     </tr>
     <tr>
       <td><a href="https://github.com/sentimony/skills">sentimony/skills</a></td>

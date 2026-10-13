@@ -45,30 +45,6 @@ if [ -f "$skills_local" ]; then
   sh "$skills_local"
 fi
 
-# MATTPOCOCK SKILLS https://github.com/mattpocock/skills
-# npx -y --prefer-online skl-x add mattpocock/skills -s \
-#   \ grill-me \
-#   \ grill-with-docs \
-#   \ grilling \
-#   \ domain-modeling \
-#   improve-codebase-architecture \
-#   \ writing-for-agents \
-#   -a codex claude-code -y -m sm
-
-# SHADCN UI https://github.com/shadcn/ui
-# npx -y --prefer-online skl-x add shadcn/ui -s \
-#   \ migrate-radix-to-base \
-#   shadcn \
-#   -a codex claude-code -y -m sm
-
-# CLOUDFLARE SKILLS https://github.com/cloudflare/skills
-# npx -y --prefer-online skl-x add cloudflare/skills -s \
-#   wrangler \
-#   cloudflare-one \
-#   workers-best-practices \
-#   durable-objects \
-#   -a codex claude-code -y -m sm
-
 # npx -y --prefer-online skl-x -v
 # npx -y --prefer-online skl-x ls -g
 # npx -y --prefer-online skl-x ls
