@@ -195,7 +195,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 npm i
 ```
 
-`preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) - see [Skills](#skills).
+`preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) except in CI (`CI` set) - see [Skills](#skills).
 
 ### Run
 
@@ -239,7 +239,7 @@ claude --dangerously-skip-permissions
 
 ### Skills
 
-[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall`, or on demand with `npm run skills`.
+[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall` (skipped in CI, where `CI` is set), or on demand with `npm run skills`.
 
 ### How to see which skills Claude Code used
 

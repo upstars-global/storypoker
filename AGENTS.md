@@ -81,7 +81,7 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 
 ```bash
 npm install          # preinstall → scripts/setup.sh (створює .env/, .agents/, .claude/settings.json)
-                     # postinstall → scripts/skills.sh (мережевий skl-x add; skills-lock.json)
+                     # postinstall → scripts/skills.sh (мережевий skl-x add; skills-lock.json; у CI пропускається)
 npm run test:unit    # канонічний unit-run; `npm test` і `test:unit` - обидва `vitest run`
 npm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery)
 npm run test:ci      # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
