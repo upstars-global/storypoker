@@ -220,7 +220,7 @@ npm run test:e2e         # full Playwright suite, requires .env/.env.test
 
 ### CI/CD (GitHub Actions + Netlify)
 
-[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on PRs and pushes to `main`:
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on every push and on manual dispatch:
 
 - `detect-secrets`, `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
 - `e2e` (Chromium + WebKit against the test Supabase project) runs only when the `E2E_*` secrets are set.
