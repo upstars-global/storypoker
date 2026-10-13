@@ -10,7 +10,7 @@ npx -y --prefer-online skl-x -v
 # SENTIMONY SKILLS https://github.com/sentimony/skills
 npx -y --prefer-online skl-x add sentimony/skills -s \
   scope-triage \
-  \ scope-check \
+  scope-check \
   plan-crafting \
   inline-plan-dev \
   subagent-plan-dev \
