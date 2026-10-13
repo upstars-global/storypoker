@@ -195,7 +195,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 npm i
 ```
 
-`preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) except in CI (`CI` set) - see [Skills](#skills).
+`preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) except in CI (`CI` set) - see [Skills](#skills). `setup.sh` also adds a Claude Code `SessionStart` hook that runs [scripts/session-start.sh](scripts/session-start.sh), so every new `claude` session starts with fresh skills.
 
 ### Run
 
