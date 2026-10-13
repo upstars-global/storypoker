@@ -239,7 +239,7 @@ claude --dangerously-skip-permissions
 
 ### Skills
 
-[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall` (skipped in CI, where `CI` is set), or on demand with `npm run skills`.
+[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall` (skipped in CI, where `CI` is set), before `npm run dev` (a failure there does not stop `dev`), or on demand with `npm run skills`.
 
 ### How to see which skills Claude Code used
 

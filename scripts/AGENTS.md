@@ -6,7 +6,7 @@ Shell-скрипти - POSIX `sh` з `set -e`; TS-скрипти запуска�
 | --- | --- | --- |
 | `setup.sh` | `preinstall`, `npm run setup` | створює `.agents/skills`, `.claude/skills`, `.env/` з порожніми `.env` і `.env.local`; пише або доповнює через `jq` `.claude/settings.json` (`attribution` вимкнена); наприкінці викликає `migrate-test-artifacts.sh` |
 | `migrate-test-artifacts.sh` | із `setup.sh` | переносить legacy `coverage/`, `playwright-report/` з кореня в `test-results/`; тимчасовий, прибрати разом із рядками в `.gitignore` |
-| `skills.sh` | `postinstall` (крім CI), `npm run skills` | ставить skills через `skl-x add` поверх наявних (`skl-x rm` закоментований) для Codex і Claude Code; мережевий |
+| `skills.sh` | `postinstall` (крім CI), `predev` (збій не зупиняє `dev`), `npm run skills` | ставить skills через `skl-x add` поверх наявних (`skl-x rm` закоментований) для Codex і Claude Code; мережевий |
 | `clean.sh` | `npm run clean` | видаляє skills, `node_modules/`, `package-lock.json`, `dist/`, `.nuxt/` - повне перевстановлення з нуля |
 | `generate-icons.ts` | `icons:generate`, `icons:check` (у `test:ci`) | сканує `app/`, збирає підмножину Iconify-сетів у `app/generated/`; `--check` падає, якщо згенероване розійшлось із кодом. Модулі - `icons/` |
 | `audit-icon-build.ts` | `icons:audit-build` (CI-job `build`) | перевіряє `dist`: жодних повних Iconify-сетів чи генератора в бандлі, бюджет gzip 25 KiB, baseline - `docs/audits/icon-bundle-baseline.json` |
