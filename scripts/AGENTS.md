@@ -1,6 +1,8 @@
 # Scripts - npm lifecycle hooks і генератор іконок
 
 Shell-скрипти - POSIX `sh` з `set -e`; TS-скрипти запускаються напряму через `node` (type stripping), без `tsx`.
+npm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) теж розраховані на POSIX shell: під Windows
+`cmd` `predev` блокує `npm run dev`, тож там потрібен Git Bash як `script-shell`.
 
 | Скрипт | Запуск | Що робить |
 | --- | --- | --- |

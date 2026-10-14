@@ -2,7 +2,6 @@
 set -e
 
 npx -y --prefer-online skl-x@0.4.8 -v
-# npx -y skills -v
 # npx -y --prefer-online skl-x@0.4.8 rm . -y -m sm
 
 # A "\ name" line disables that skill on purpose: skl-x gets " name" and skips it
