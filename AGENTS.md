@@ -94,8 +94,8 @@ CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`
 Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "npm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
-`.github/workflows/claude-review.yml` - не required: на не-draft PR Claude проходить `review-request` і коментує від
-`so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`).
+`.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
+`review-request` і один раз коментує від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`).
 
 ## Environment Setup
 `package-lock.json` - committed (required for `npm ci`). Do NOT add it back to `.gitignore`.

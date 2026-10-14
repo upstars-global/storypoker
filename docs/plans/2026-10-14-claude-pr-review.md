@@ -1,6 +1,6 @@
 # Claude PR Review Implementation Plan
 
-**Goal:** Кожен не-draft PR отримує автоматичний коментар із результатом `review-request` від `so-upstars`.
+**Goal:** Кожен не-draft PR із зеленим `CI` отримує автоматичний коментар із результатом `review-request` від `so-upstars`.
 
 **Architecture:** Окремий workflow `.github/workflows/claude-review.yml` на `anthropics/claude-code-action@v1`;
 скіл ставиться в job через `skl-x@0.4.8`; ідентичність - PAT `so-upstars` у `github_token` і `GH_TOKEN`.
@@ -23,12 +23,15 @@
 **Files:**
 - Create: `.github/workflows/claude-review.yml`
 
-- [x] **Step 1.1:** Тригер `pull_request` `[opened, ready_for_review, reopened]`, `concurrency` на номер PR.
-- [x] **Step 1.2:** Умова job: не draft, `head.repo.full_name == github.repository`, автор не `Bot`.
-- [x] **Step 1.3:** `actions/checkout@v4` з `fetch-depth: 0`, `setup-node@v4` (24), встановлення `review-request`.
+- [x] **Step 1.1:** Тригери `workflow_run` (`CI`, `completed`) і `pull_request` (`ready_for_review`), `concurrency` на
+  head-гілку.
+- [x] **Step 1.2:** Job `gate`: відкритий не-draft PR з цього репо, автор не `Bot`, останній `ci.yml` на `head.sha` -
+  `success`, немає коментаря `so-upstars` з маркером `<!-- claude-review -->`. Вихід - номер PR, base і head.
+- [x] **Step 1.3:** `actions/checkout@v4` на `head.sha` з `fetch-depth: 0`, `setup-node@v4` (24), встановлення `review-request`.
 - [x] **Step 1.4:** `claude-code-action@v1` з `claude_code_oauth_token`, `github_token`, prompt із межею
   `base.sha...head.sha` і `--allowedTools` лише на читання та `gh pr view/diff/comment`.
-- [x] **Step 1.5:** YAML парситься (`python3 -c "import yaml; yaml.safe_load(...)"`).
+- [x] **Step 1.5:** YAML парситься; скрипт гейта проходить `bash -n` і сухий прогін на реальних PR (#36 - `review=true`,
+  #35 - закритий, порожній `pull_requests` і форк - пропуск).
 
 ### Task 2: Документація
 
@@ -43,7 +46,7 @@
 ### Task 3: Перевірка й PR
 
 - [x] **Step 3.1:** `npm run test:ci` зелений.
-- [ ] **Step 3.2:** Коміт, push гілки `claude-pr-review`, PR від `so-upstars`.
+- [x] **Step 3.2:** Коміт, push гілки `claude-pr-review`, PR від `so-upstars`.
 - [ ] **Step 3.3 (власник):** додати секрети `SO_UPSTARS_PR_TOKEN` і `CLAUDE_CODE_OAUTH_TOKEN`.
 - [ ] **Step 3.4:** Після мерджу й секретів - відкрити тестовий не-draft PR і перевірити критерії приймання
-  зі спеки. Цей PR сам ревʼю не отримає: `pull_request` бере workflow з head-гілки, але секретів ще немає.
+  зі спеки. До мерджу `workflow_run` не активний, тож цей PR сам ревʼю не отримає.
