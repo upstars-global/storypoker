@@ -1,0 +1,58 @@
+name: Claude review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Claude review
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    env:
+      GH_TOKEN: ${{ secrets.SO_UPSTARS_PR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install review-request skill
+        run: npx -y --prefer-online skl-x@0.4.8 add sentimony/skills -s review-request -a claude-code -y -m sm
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.SO_UPSTARS_PR_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            BASE SHA: ${{ github.event.pull_request.base.sha }}
+            HEAD SHA: ${{ github.event.pull_request.head.sha }}
+
+            Run the review-request skill for this pull request. The review boundary is the committed range
+            BASE SHA...HEAD SHA (three dots, from their merge base); both commits
+            are available locally. Read the PR title and description with
+            `gh pr view` for requirements. Do not run gh-switch and do not modify repository files.
+
+            Post exactly one top-level comment in English with `gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/claude-review.md`,
+            after writing the body to that file.
+            The comment must contain the reviewed range, the four verdicts, the findings with severity and location,
+            optional suggestions, and review gaps.
+          claude_args: >-
+            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
