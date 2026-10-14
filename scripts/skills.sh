@@ -1,14 +1,14 @@
 #!/usr/bin/env sh
 set -e
 
-npx -y --prefer-online skl-x -v
+npx -y --prefer-online skl-x@0.4.8 -v
 # npx -y skills -v
-# npx -y --prefer-online skl-x rm . -y -m sm
+# npx -y --prefer-online skl-x@0.4.8 rm . -y -m sm
 
 # A "\ name" line disables that skill on purpose: skl-x gets " name" and skips it
 
 # SENTIMONY SKILLS https://github.com/sentimony/skills
-npx -y --prefer-online skl-x add sentimony/skills -s \
+npx -y --prefer-online skl-x@0.4.8 add sentimony/skills -s \
   scope-triage \
   scope-check \
   plan-crafting \
@@ -45,8 +45,8 @@ if [ -f "$skills_local" ]; then
   sh "$skills_local"
 fi
 
-# npx -y --prefer-online skl-x -v
-# npx -y --prefer-online skl-x ls -g
-# npx -y --prefer-online skl-x ls
-# npx -y --prefer-online skl-x cst
-# npx -y --prefer-online skl-x usg -p 2d
+# npx -y --prefer-online skl-x@0.4.8 -v
+# npx -y --prefer-online skl-x@0.4.8 ls -g
+# npx -y --prefer-online skl-x@0.4.8 ls
+# npx -y --prefer-online skl-x@0.4.8 cst
+# npx -y --prefer-online skl-x@0.4.8 usg -p 2d

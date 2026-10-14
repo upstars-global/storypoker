@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -45,13 +47,13 @@ jobs:
           cache: npm
 
       - name: Install cross-review skill
-        run: npx -y --prefer-online skl-x add sentimony/skills -s cross-review -a codex claude-code -y -m sm
+        run: npx -y --prefer-online skl-x@0.4.8 add sentimony/skills -s cross-review -a codex claude-code -y -m sm
 
       - name: Check cross-review skill
         run: test -f .claude/skills/cross-review/SKILL.md && test -f .agents/skills/cross-review/SKILL.md
 
       - name: Remove cross-review skill
-        run: npx -y --prefer-online skl-x rm cross-review -y -m sm
+        run: npx -y --prefer-online skl-x@0.4.8 rm cross-review -y -m sm
 
       # -L catches a dangling symlink that -e misses
       - name: Check cross-review skill removal

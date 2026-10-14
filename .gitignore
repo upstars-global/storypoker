@@ -3,7 +3,7 @@ Thumbs.db
 .idea/
 __pycache__/
 
-*.local*
+*.local.*
 
 node_modules/
 *.log
