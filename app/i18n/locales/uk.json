@@ -103,7 +103,11 @@
     "pause": "Пауза",
     "continue": "Продовжити",
     "minus30": "-30с",
-    "plus30": "+30с"
+    "plus30": "+30с",
+    "alarmSettings": "Налаштування сигналу",
+    "alarmAfter": "Сигнал через",
+    "minutesShort": "хв",
+    "alarmSound": "Звук сигналу"
   },
   "slot": {
     "title": "Слот 777",

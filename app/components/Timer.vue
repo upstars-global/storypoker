@@ -3,6 +3,7 @@ import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import { useI18n } from 'vue-i18n'
+import { playAlarmChime, clampAlarmMinutes, ALARM_MIN_MINUTES, ALARM_MAX_MINUTES, type AlarmSettings } from '~/utils/timerAlarm'
 
 const props = defineProps<{
   roundStartedAt: string
@@ -10,6 +11,8 @@ const props = defineProps<{
   pausedAt: string | null
   pausedElapsedMs: number
   canControl: boolean
+  alarmMinutes?: number | null
+  alarmMuted?: boolean | null
 }>()
 
 const emit = defineEmits<{
@@ -18,6 +21,7 @@ const emit = defineEmits<{
   (e: 'resume'): void
   (e: 'adjust', deltaMs: number): void
   (e: 'switchWidget'): void
+  (e: 'updateAlarm', settings: Partial<AlarmSettings>): void
 }>()
 
 const { t } = useI18n()
@@ -45,8 +49,11 @@ function formatDuration(ms: number) {
 const isPaused = computed(() => Boolean(props.pausedAt))
 
 const pivotMs = computed(() => {
-  if (props.phase === 'revealed' && revealedAt.value !== null) return revealedAt.value
-  if (props.pausedAt) return new Date(props.pausedAt).getTime()
+  const pausedAtMs = props.pausedAt ? new Date(props.pausedAt).getTime() : null
+  if (props.phase === 'revealed' && revealedAt.value !== null) {
+    return pausedAtMs === null ? revealedAt.value : Math.min(revealedAt.value, pausedAtMs)
+  }
+  if (pausedAtMs !== null) return pausedAtMs
   return now.value
 })
 
@@ -63,11 +70,72 @@ const text = computed(() => {
 })
 
 const showControls = computed(() => props.canControl && props.phase === 'voting')
+
+const alarmMinutes = computed(() => clampAlarmMinutes(props.alarmMinutes))
+const alarmMuted = computed(() => props.alarmMuted ?? false)
+const alarmSettingsOpen = ref(false)
+const alarmBlinking = ref(false)
+
+watch(elapsedMs, (current, previous) => {
+  if (props.phase !== 'voting' || isPaused.value) return
+  const intervalMs = alarmMinutes.value * 60_000
+  if (Math.floor(current / intervalMs) <= Math.floor(previous / intervalMs)) return
+  alarmBlinking.value = true
+  if (!alarmMuted.value) playAlarmChime()
+  if (props.canControl) emit('pause')
+})
+
+function onAlarmMinutesChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const minutes = clampAlarmMinutes(Number(input.value))
+  input.value = String(minutes)
+  if (minutes !== alarmMinutes.value) emit('updateAlarm', { minutes })
+}
+
+function toggleAlarmMuted() {
+  emit('updateAlarm', { muted: !alarmMuted.value })
+}
 </script>
 
 <template>
-  <div class="mui-paper">
+  <div
+    class="mui-paper"
+    :class="{ 'timer-alarm-blink': alarmBlinking }"
+    data-testid="timer-widget"
+    @animationend.self="alarmBlinking = false"
+  >
     <div class="mui-paper-header justify-center relative">
+      <div
+        v-if="canControl"
+        class="absolute left-1.5 top-1/2 -translate-y-1/2"
+      >
+        <AppTooltip
+          side="top"
+          :side-offset="6"
+        >
+          <template #trigger>
+            <button
+              v-wave
+              type="button"
+              class="mui-icon-btn"
+              style="padding: 4px; color: inherit;"
+              :aria-label="$t('timer.alarmSettings')"
+              :aria-expanded="alarmSettingsOpen"
+              data-testid="timer-alarm-toggle"
+              @click="alarmSettingsOpen = !alarmSettingsOpen"
+            >
+              <AppIcon
+                class="mui-svg-icon"
+                icon="ic:baseline-settings"
+                style="font-size: 1.25rem;"
+              />
+            </button>
+          </template>
+          <template #content>
+            {{ $t('timer.alarmSettings') }}
+          </template>
+        </AppTooltip>
+      </div>
       <span>{{ $t('timer.title') }}</span>
       <div class="absolute right-1.5 top-1/2 -translate-y-1/2">
         <AppTooltip
@@ -97,7 +165,59 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
         </AppTooltip>
       </div>
     </div>
-    <p class="mui-body px-4 py-3 text-body">
+    <div
+      v-if="canControl && alarmSettingsOpen"
+      class="flex items-center gap-2 px-4 pt-3 text-body"
+      data-testid="timer-alarm-settings"
+    >
+      <label
+        for="timer-alarm-minutes"
+        class="mui-body"
+      >{{ $t('timer.alarmAfter') }}</label>
+      <input
+        id="timer-alarm-minutes"
+        type="number"
+        :min="ALARM_MIN_MINUTES"
+        :max="ALARM_MAX_MINUTES"
+        step="1"
+        class="mui-input"
+        style="width: 72px;"
+        :value="alarmMinutes"
+        data-testid="timer-alarm-minutes"
+        @change="onAlarmMinutesChange"
+        @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
+      >
+      <span class="mui-body">{{ $t('timer.minutesShort') }}</span>
+      <AppTooltip
+        side="top"
+        :side-offset="6"
+      >
+        <template #trigger>
+          <button
+            v-wave
+            type="button"
+            class="mui-icon-btn text-muted dark:text-inverse"
+            :aria-label="$t('timer.alarmSound')"
+            :aria-pressed="!alarmMuted"
+            data-testid="timer-alarm-mute"
+            @click="toggleAlarmMuted"
+          >
+            <AppIcon
+              class="mui-svg-icon"
+              :icon="alarmMuted ? 'ic:baseline-notifications-off' : 'ic:baseline-notifications-active'"
+              style="font-size: 1.5rem;"
+            />
+          </button>
+        </template>
+        <template #content>
+          {{ $t('timer.alarmSound') }}
+        </template>
+      </AppTooltip>
+    </div>
+    <p
+      class="mui-body px-4 py-3 text-body"
+      data-testid="timer-display"
+    >
       {{ text }}
     </p>
     <div
@@ -224,3 +344,13 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
     </div>
   </div>
 </template>
+
+<style scoped>
+.timer-alarm-blink {
+  animation: timer-alarm-blink 0.6s ease-in-out 3;
+}
+@keyframes timer-alarm-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+</style>
