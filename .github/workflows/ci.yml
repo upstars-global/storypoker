@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -38,10 +37,34 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check skills.sh syntax
+        run: sh -n scripts/skills.sh
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
+
+      - name: Install cross-review skill
+        run: npx -y --prefer-online skl-x@0.4.8 add sentimony/skills -s cross-review -a codex claude-code -y -m sm
+
+      - name: Check cross-review skill
+        run: test -f .claude/skills/cross-review/SKILL.md && test -f .agents/skills/cross-review/SKILL.md
+
+      - name: Remove cross-review skill
+        run: npx -y --prefer-online skl-x@0.4.8 rm cross-review -y -m sm
+
+      # -L catches a dangling symlink that -e misses
+      - name: Check cross-review skill removal
+        run: |
+          for dir in .claude/skills/cross-review .agents/skills/cross-review; do
+            if [ -e "$dir" ] || [ -L "$dir" ]; then
+              echo "$dir still exists"
+              exit 1
+            fi
+          done
+
       - run: npm ci
       - run: npm run lint
 
