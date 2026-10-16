@@ -7,7 +7,7 @@
 
 - `players:<roomId>` → `playersStore.applyChange`
 - `room_state:<roomId>` → `roomStore.applyChange`
-- `rooms:<roomId>` → sync `slug/name`, redirect між id і slug
+- `rooms:<roomId>` → sync `slug/name/background_*`, redirect між id і slug; фон - inline `background-image` на корені
 - `user_profiles:<roomId>` → `profilesStore.applyChange`
 - `room:<roomId>` Presence → online players
 - `countdown:<roomId>` broadcast (`self:true`) → синхронний відлік перед reveal; initiator викликає `reveal()`.

@@ -46,6 +46,7 @@ const MDI_TO_LUCIDE: Record<string, string> = {
   'ic:baseline-arrow-drop-up': 'lucide:chevron-up',
   'ic:baseline-visibility': 'lucide:eye',
   'ic:baseline-visibility-off': 'lucide:eye-closed',
+  'ic:baseline-wallpaper': 'lucide:wallpaper',
 }
 
 export function resolveIconName(name: string, flags: IconFlags): string {

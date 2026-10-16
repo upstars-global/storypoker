@@ -135,7 +135,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
   start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s) - усе
   гейтиться `v-if="isModerator"` в `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
-- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, rename other players + set їхні shields.
+- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
   Детальна матриця - `DESIGN.md` §11.1–11.2
 - **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.vue` (спільний селектор у
   JoinOverlay+PlayerEditModal) на базі `RoleBadge.vue` (те саме відображення у PlayerRow) і пишеться як один shield у

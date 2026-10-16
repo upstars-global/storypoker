@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { setSupabase, resetSupabase } from '~/lib/supabase-instance'
-import { useRoomStore } from '~/stores/room'
+import { useRoomStore, backgroundDisplayUrl } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import type { Player, RoomState } from '~/stores/types'
 
@@ -363,5 +363,121 @@ describe('roomStore timer actions', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('roomStore background', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    resetSupabase()
+  })
+
+  function fakeClient() {
+    const bucket = {
+      upload: vi.fn().mockResolvedValue({ error: null }),
+      remove: vi.fn().mockResolvedValue({ data: [], error: null }),
+    }
+    const eq = vi.fn().mockResolvedValue({ error: null })
+    const update = vi.fn().mockReturnValue({ eq })
+    const client = {
+      storage: { from: vi.fn().mockReturnValue(bucket) },
+      from: vi.fn().mockReturnValue({ update }),
+    }
+    return { bucket, update, eq, client }
+  }
+
+  it('uploads to the fixed room path, then points the room row at it', async () => {
+    const { bucket, update, eq, client } = fakeClient()
+    setSupabase(client as any)
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    const blob = new Blob(['x'], { type: 'image/webp' })
+    const result = await store.uploadBackground(blob, 0.5)
+    expect(client.storage.from).toHaveBeenCalledWith('room-backgrounds')
+    expect(bucket.upload).toHaveBeenCalledWith('r1/background.webp', blob, { upsert: true, contentType: 'image/webp' })
+    expect(client.from).toHaveBeenCalledWith('rooms')
+    expect(update.mock.calls[0]![0].background_url).toBe('r1/background.webp')
+    expect(update.mock.calls[0]![0].background_updated_at).toBeTruthy()
+    expect(update.mock.calls[0]![0].background_opacity).toBe(0.5)
+    expect(eq).toHaveBeenCalledWith('id', 'r1')
+    expect(result?.background_url).toBe('r1/background.webp')
+  })
+
+  it('does not touch the room row when the upload fails', async () => {
+    const { bucket, update, client } = fakeClient()
+    bucket.upload.mockResolvedValue({ error: new Error('denied') })
+    setSupabase(client as any)
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    await expect(store.uploadBackground(new Blob(), 0.65)).rejects.toThrow('denied')
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('updates only the opacity', async () => {
+    const { bucket, update, client } = fakeClient()
+    setSupabase(client as any)
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    expect(await store.setBackgroundOpacity(0.3)).toEqual({ background_opacity: 0.3 })
+    expect(update).toHaveBeenCalledWith({ background_opacity: 0.3 })
+    expect(bucket.upload).not.toHaveBeenCalled()
+  })
+
+  it('clears the room row before removing the file and tolerates storage failure', async () => {
+    const { bucket, update, client } = fakeClient()
+    bucket.remove.mockRejectedValue(new Error('gone'))
+    setSupabase(client as any)
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    const result = await store.removeBackground()
+    expect(update.mock.calls[0]![0].background_url).toBeNull()
+    expect(update.mock.invocationCallOrder[0]!).toBeLessThan(bucket.remove.mock.invocationCallOrder[0]!)
+    expect(bucket.remove).toHaveBeenCalledWith(['r1/background.webp'])
+    expect(result?.background_url).toBeNull()
+  })
+})
+
+describe('backgroundDisplayUrl', () => {
+  beforeEach(() => resetSupabase())
+
+  it('builds a cache-busted public URL for a well-formed path', () => {
+    const getPublicUrl = vi.fn((path: string) => ({ data: { publicUrl: `https://cdn/${path}` } }))
+    setSupabase({ storage: { from: vi.fn().mockReturnValue({ getPublicUrl }) } } as any)
+    expect(backgroundDisplayUrl('AbC12345/background.webp', '2026-10-12T10:00:00Z'))
+      .toBe('https://cdn/AbC12345/background.webp?v=2026-10-12T10%3A00%3A00Z')
+  })
+
+  it('rejects paths that could break out of a CSS url()', () => {
+    setSupabase({ storage: { from: vi.fn() } } as any)
+    expect(backgroundDisplayUrl('x")/background.webp', null)).toBeNull()
+    expect(backgroundDisplayUrl('r1/other.png', null)).toBeNull()
+  })
+})
+
+describe('roomStore.resolveRoom', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    resetSupabase()
+  })
+
+  function clientReturning(row: unknown) {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: row })
+    const or = vi.fn().mockReturnValue({ maybeSingle })
+    const select = vi.fn().mockReturnValue({ or })
+    return { select, client: { from: vi.fn().mockReturnValue({ select }) } }
+  }
+
+  it('defaults background fields to null for rows from before the background migration', async () => {
+    const { client } = clientReturning({ id: 'r1', slug: null, name: 'Team', created_at: null })
+    setSupabase(client as any)
+    expect(await useRoomStore().resolveRoom('r1')).toEqual({
+      id: 'r1', slug: null, name: 'Team', background_url: null, background_updated_at: null, background_opacity: null,
+    })
+  })
+
+  it('returns null for an unknown room', async () => {
+    const { client } = clientReturning(null)
+    setSupabase(client as any)
+    expect(await useRoomStore().resolveRoom('nope')).toBeNull()
   })
 })
