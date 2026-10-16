@@ -100,7 +100,9 @@ jobs:
           node-version: 24
 
       - name: Install review-request skill
-        run: npx -y --prefer-online skl-x@0.4.8 add sentimony/skills -s review-request -a claude-code -y -m sm
+        run: |
+          npx -y --prefer-online skl-x@0.4.8 add sentimony/skills -s review-request -a claude-code -y -m sm
+          test -f .claude/skills/review-request/SKILL.md
 
       - uses: anthropics/claude-code-action@v1
         with:
@@ -117,9 +119,23 @@ jobs:
             Read the PR title and description with `gh pr view` for requirements. CI is green on HEAD SHA.
             Do not run gh-switch and do not modify repository files.
 
+            If the review-request skill is not available to you, do not review and do not post anything; stop and
+            report that the skill is missing.
+
             Post exactly one top-level comment in English with
             `gh pr comment ${{ needs.gate.outputs.number }} --body-file /tmp/claude-review.md`, after writing the body
             to that file. The body must start with the line `<!-- claude-review -->` and contain the reviewed range,
             the four verdicts, the findings with severity and location, optional suggestions, and review gaps.
+            The body must end with the line `Reviewed with: review-request skill`.
+
+      - name: Verify review comment
+        env:
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ needs.gate.outputs.number }}
+        run: |
+          gh api --paginate "repos/$REPO/issues/$NUMBER/comments" \
+            --jq '.[] | select(.user.login == "so-upstars") | .body' \
+            | grep -qF 'Reviewed with: review-request skill' \
+            || { echo "No review comment made with the review-request skill"; exit 1; }
           claude_args: >-
             --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"

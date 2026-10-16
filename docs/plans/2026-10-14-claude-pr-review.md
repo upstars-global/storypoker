@@ -32,6 +32,9 @@
   `base.sha...head.sha` і `--allowedTools` лише на читання та `gh pr view/diff/comment`.
 - [x] **Step 1.5:** YAML парситься; скрипт гейта проходить `bash -n` і сухий прогін на реальних PR (#36 - `review=true`,
   #35 - закритий, порожній `pull_requests` і форк - пропуск).
+- [x] **Step 1.6:** Перевірка скіла: `test -f .claude/skills/review-request/SKILL.md` після встановлення, у prompt -
+  нічого не публікувати без скіла й закінчувати тіло рядком `Reviewed with: review-request skill`, крок
+  `Verify review comment` шукає цей рядок у коментарях `so-upstars`.
 
 ### Task 2: Документація
 

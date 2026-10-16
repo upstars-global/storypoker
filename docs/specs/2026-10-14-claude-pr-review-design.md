@@ -35,7 +35,9 @@ GitHub Actions workflow `.github/workflows/claude-review.yml` на офіцій�
   Issues RW, Contents R. `gh-switch` у CI не потрібен і не встановлюється.
 - **Доступ до моделі:** секрет `CLAUDE_CODE_OAUTH_TOKEN` (видає `claude setup-token`).
 - **Скіл:** скіли не закомічені, їх ставить `postinstall`. Workflow ставить лише `review-request` тим самим
-  `skl-x@0.4.8`, що й `scripts/skills.sh`.
+  `skl-x@0.4.8`, що й `scripts/skills.sh`, і падає, якщо `.claude/skills/review-request/SKILL.md` не зʼявився.
+  Без скіла Claude нічого не публікує; коментар закінчується рядком `Reviewed with: review-request skill`, а
+  крок `Verify review comment` фарбує job у червоне, якщо такого коментаря від `so-upstars` немає.
 - **Межа ревʼю:** `base.sha...head.sha` із PR на момент гейту (від merge base); checkout `head.sha`; checkout з `fetch-depth: 0`, щоб обидва коміти були локально.
 - **Інструменти агента:** лише читання репо, git-читання, `gh pr view/diff/comment`, Skill і субагенти. Без
   редагування файлів репо (лише тимчасове тіло коментаря в `/tmp`), push і інших записів у GitHub.
@@ -72,4 +74,5 @@ GitHub Actions workflow `.github/workflows/claude-review.yml` на офіцій�
 - Червоний або скасований `CI` - ревʼю немає; після фіксу і зеленого `CI` - є.
 - Draft PR ревʼю не отримує; переведення в ready при зеленому `CI` - отримує.
 - Наступний push із зеленим `CI` другого коментаря не додає.
+- Коментар закінчується рядком `Reviewed with: review-request skill`; без нього job `review` червоний.
 - PR з форка або від бота - `gate` завершується з `review=false`, job `review` - `skipped`.
