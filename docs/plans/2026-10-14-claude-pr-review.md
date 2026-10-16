@@ -35,6 +35,7 @@
 - [x] **Step 1.6:** Перевірка скіла: `test -f .claude/skills/review-request/SKILL.md` після встановлення, у prompt -
   нічого не публікувати без скіла й закінчувати тіло рядком `Reviewed with: review-request skill`, крок
   `Verify review comment` шукає цей рядок у коментарях `so-upstars`.
+- [x] **Step 1.7:** Крок `Check reviewer identity` перед action: секрет заданий і `gh api user` == `so-upstars`.
 
 ### Task 2: Документація
 

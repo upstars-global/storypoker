@@ -32,7 +32,8 @@ GitHub Actions workflow `.github/workflows/claude-review.yml` на офіцій�
   отримати нове, достатньо видалити коментар і перезапустити `CI`.
 - **Ідентичність:** fine-grained PAT акаунта `so-upstars` у секреті `SO_UPSTARS_PR_TOKEN` іде і в
   `github_token` action, і в `GH_TOKEN` для `gh pr comment`. Доступ PAT - лише цей репозиторій: Pull requests RW,
-  Issues RW, Contents R. `gh-switch` у CI не потрібен і не встановлюється.
+  Contents R (Metadata R додається сама). Крок `Check reviewer identity` до запуску Claude перевіряє
+  `gh api user` == `so-upstars`. `gh-switch` у CI не потрібен і не встановлюється.
 - **Доступ до моделі:** секрет `CLAUDE_CODE_OAUTH_TOKEN` (видає `claude setup-token`).
 - **Скіл:** скіли не закомічені, їх ставить `postinstall`. Workflow ставить лише `review-request` тим самим
   `skl-x@0.4.8`, що й `scripts/skills.sh`, і падає, якщо `.claude/skills/review-request/SKILL.md` не зʼявився.
@@ -61,7 +62,8 @@ GitHub Actions workflow `.github/workflows/claude-review.yml` на офіцій�
 
 ## Ручні кроки власника
 
-1. Створити fine-grained PAT від `so-upstars` з правами вище й додати як `SO_UPSTARS_PR_TOKEN`.
+1. Створити fine-grained PAT від `so-upstars` (resource owner `upstars-global`) з правами вище, дочекатися
+   схвалення адміном організації й додати як `SO_UPSTARS_PR_TOKEN`.
 2. Виконати `claude setup-token` і додати результат як `CLAUDE_CODE_OAUTH_TOKEN`.
 
 Без секретів job `review` падає на кроці action; на required checks це не впливає. `workflow_run` спрацьовує лише

@@ -104,6 +104,12 @@ jobs:
           npx -y --prefer-online skl-x@0.4.8 add sentimony/skills -s review-request -a claude-code -y -m sm
           test -f .claude/skills/review-request/SKILL.md
 
+      - name: Check reviewer identity
+        run: |
+          test -n "$GH_TOKEN" || { echo "::error::SO_UPSTARS_PR_TOKEN is not set"; exit 1; }
+          login="$(gh api user --jq .login)"
+          test "$login" = so-upstars || { echo "::error::SO_UPSTARS_PR_TOKEN belongs to '$login', not so-upstars"; exit 1; }
+
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
