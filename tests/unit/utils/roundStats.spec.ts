@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { averageOf, voteToNumber, summarizeRound, isNumericPreset } from '~/utils/roundStats'
+import { averageOf, voteToNumber, summarizeRound, isNumericPreset, splitRoundAlignment } from '~/utils/roundStats'
 import type { RoundHistory } from '~/stores/types'
 
 const FIB = ['1', '2', '3', '5', '8', '13', '21', '?', '☕']
@@ -116,5 +116,21 @@ describe('isNumericPreset', () => {
     expect(isNumericPreset('tshirt')).toBe(false)
     expect(isNumericPreset('voting')).toBe(false)
     expect(isNumericPreset(null)).toBe(true)
+  })
+})
+
+describe('splitRoundAlignment without non-estimators', () => {
+  it('ignores PO votes when DEV and QA roles are present', () => {
+    const round = {
+      id: 'r', room_id: 'x', started_at: '', revealed_at: '', created_at: null,
+      active_cards: ['1', '2', '3', '5', '8'], deck_preset: 'scrum',
+      votes: [
+        { player_id: 'd1', name: 'D1', vote: '3' },
+        { player_id: 'd2', name: 'D2', vote: '3' },
+        { player_id: 'po', name: 'PO', vote: '8' },
+      ],
+    }
+    const shields = new Map([['d1', ['be']], ['d2', ['fe']], ['po', ['po']]])
+    expect(splitRoundAlignment(round as never, shields)).toEqual({ dev: 100, qa: null })
   })
 })

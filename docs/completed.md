@@ -53,6 +53,14 @@ Timer ↔ SlotMachine перемикач (`sp-side-widget`), джекпот-broa
 
 Interactive контроли → `AppTooltip`; декоративні status-іконки → native `title`.
 
+## Result cohorts
+
+Окремі кола результатів на ролі DEV / BE / FE / SRE / QA (QA = QA + GQA + AQA),
+вибір чіпами «Показувати результати» в налаштуваннях колоди
+(`room_state.result_cohorts`, міграція `017`); увімкнений DEV збирає вимкнені
+BE / FE / SRE, без DEV голоси вимкнених ролей приховані з червоним бейджем. PO / SM / без ролі виключені з кіл і трендів; роль SRE повернута в
+RolePicker. Scrum і Fibonacci без `0` і карт понад 21. Деталі - `DESIGN.md` §11.9.
+
 ## Знято з обсягу
 
 - **Reka UI** - замінено власними `AppModal` / `AppTooltip` + `useClickOutside`

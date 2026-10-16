@@ -11,7 +11,7 @@ import { usePlayersStore } from '~/stores/players'
 import { useCardLabel } from '~/composables/useCardLabel'
 import { summarizeRound, isNumericPreset, voteToNumber, type RoundSummary } from '~/utils/roundStats'
 import { DECK_PRESETS } from '~/utils/cardDecks'
-import { isQaPlayer, DEV_COHORT_LABEL } from '~/utils/shields'
+import { trendCohorts, DEV_COHORT_LABEL } from '~/utils/shields'
 import type { RoundHistory } from '~/stores/types'
 
 const emit = defineEmits<{ close: [] }>()
@@ -54,8 +54,11 @@ const summaries = computed<EnrichedSummary[]>(() => {
     const round = rounds.value[i]!
     const devCounts: Record<string, number> = {}
     const qaCounts: Record<string, number> = {}
+    const cohorts = trendCohorts(round.votes, shieldsMap.value)
     for (const v of round.votes) {
-      const target = isQaPlayer(shieldsMap.value.get(v.player_id)) ? qaCounts : devCounts
+      const cohort = cohorts.get(v.player_id)
+      if (!cohort) continue
+      const target = cohort === 'QA' ? qaCounts : devCounts
       target[v.vote] = (target[v.vote] ?? 0) + 1
     }
     return { ...s, trend, round, devCounts, qaCounts, hasQa: Object.keys(qaCounts).length > 0 }
