@@ -1,0 +1,147 @@
+name: Claude review
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  pull_request:
+    types: [ready_for_review]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.head.ref || github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Review gate
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+    outputs:
+      review: ${{ steps.gate.outputs.review }}
+      number: ${{ steps.gate.outputs.number }}
+      base_sha: ${{ steps.gate.outputs.base_sha }}
+      head_sha: ${{ steps.gate.outputs.head_sha }}
+    steps:
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          EVENT_PR: ${{ github.event.pull_request.number }}
+          RUN_HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          RUN_PRS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
+          MARKER: '<!-- claude-review -->'
+        run: |
+          skip() {
+            echo "Skip: $1"
+            echo "review=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          if [ "$EVENT" = pull_request ]; then
+            number="$EVENT_PR"
+          else
+            [ "$RUN_HEAD_REPO" = "$REPO" ] || skip "fork PR"
+            number=$(jq -r '.[0].number // empty' <<< "$RUN_PRS")
+          fi
+          [ -n "$number" ] || skip "no pull request for this run"
+
+          pr=$(gh api "repos/$REPO/pulls/$number")
+          [ "$(jq -r .state <<< "$pr")" = open ] || skip "PR #$number is not open"
+          [ "$(jq -r .draft <<< "$pr")" = false ] || skip "PR #$number is a draft"
+          [ "$(jq -r .head.repo.full_name <<< "$pr")" = "$REPO" ] || skip "PR #$number is from a fork"
+          [ "$(jq -r .user.type <<< "$pr")" != Bot ] || skip "PR #$number is from a bot"
+          head_sha=$(jq -r .head.sha <<< "$pr")
+          base_sha=$(jq -r .base.sha <<< "$pr")
+
+          ci=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$head_sha&event=pull_request&per_page=1" \
+            --jq '.workflow_runs[0].conclusion // "none"')
+          [ "$ci" = success ] || skip "CI on $head_sha is $ci"
+
+          if gh api --paginate "repos/$REPO/issues/$number/comments" \
+            --jq '.[] | select(.user.login == "so-upstars") | .body' | grep -qF "$MARKER"; then
+            skip "PR #$number already has a Claude review"
+          fi
+
+          {
+            echo "review=true"
+            echo "number=$number"
+            echo "base_sha=$base_sha"
+            echo "head_sha=$head_sha"
+          } >> "$GITHUB_OUTPUT"
+
+  review:
+    name: Claude review
+    needs: gate
+    if: needs.gate.outputs.review == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    env:
+      GH_TOKEN: ${{ secrets.SO_UPSTARS_PR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.head_sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install review-request skill
+        run: |
+          npx -y --prefer-online skl-x@0.4.8 add sentimony/skills -s review-request -a claude-code -y -m sm
+          test -f .claude/skills/review-request/SKILL.md
+
+      - name: Check reviewer identity
+        run: |
+          test -n "$GH_TOKEN" || { echo "::error::SO_UPSTARS_PR_TOKEN is not set"; exit 1; }
+          login="$(gh api user --jq .login)"
+          test "$login" = so-upstars || { echo "::error::SO_UPSTARS_PR_TOKEN belongs to '$login', not so-upstars"; exit 1; }
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.SO_UPSTARS_PR_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ needs.gate.outputs.number }}
+            BASE SHA: ${{ needs.gate.outputs.base_sha }}
+            HEAD SHA: ${{ needs.gate.outputs.head_sha }}
+
+            Run the review-request skill for this pull request. The review boundary is the committed range
+            BASE SHA...HEAD SHA (three dots, from their merge base); both commits are available locally.
+            Read the PR title and description with `gh pr view` for requirements. CI is green on HEAD SHA.
+            Do not run gh-switch and do not modify repository files.
+
+            If the review-request skill is not available to you, do not review and do not post anything; stop and
+            report that the skill is missing.
+
+            Post exactly one top-level comment in English with
+            `gh pr comment ${{ needs.gate.outputs.number }} --body-file /tmp/claude-review.md`, after writing the body
+            to that file. The body must start with the line `<!-- claude-review -->` and contain the reviewed range,
+            the four verdicts, the findings with severity and location, optional suggestions, and review gaps.
+            The body must end with the line `Reviewed with: review-request skill`.
+
+      - name: Verify review comment
+        env:
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ needs.gate.outputs.number }}
+        run: |
+          gh api --paginate "repos/$REPO/issues/$NUMBER/comments" \
+            --jq '.[] | select(.user.login == "so-upstars") | .body' \
+            | grep -qF 'Reviewed with: review-request skill' \
+            || { echo "No review comment made with the review-request skill"; exit 1; }
+          claude_args: >-
+            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
