@@ -48,8 +48,8 @@ jobs:
 
       - name: Install probe skills
         run: |
-          npx -y --prefer-online skl-x@0.4.8 add sentimony/skills -s cross-review -a codex claude-code -y -m sm
-          npx -y --prefer-online skl-x@0.4.8 add sentimony/agentic-workflow -s cr-request cr-received session-learnings -a codex claude-code -y -m sm
+          npx -y --prefer-online skl-x@0.4.12 add sentimony/skills -s cross-review -a codex claude-code -y -m sm
+          npx -y --prefer-online skl-x@0.4.12 add sentimony/agentic-workflow -s cr-request cr-received session-learnings -a codex claude-code -y -m sm
 
       - name: Check probe skills
         run: |
@@ -63,7 +63,7 @@ jobs:
           done
 
       - name: Remove probe skills
-        run: npx -y --prefer-online skl-x@0.4.8 rm cross-review cr-request cr-received session-learnings -y -m sm
+        run: npx -y --prefer-online skl-x@0.4.12 rm cross-review cr-request cr-received session-learnings -y -m sm
 
       # -L catches a dangling symlink that -e misses
       - name: Check probe skills removal
