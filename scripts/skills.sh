@@ -46,12 +46,6 @@ npx -y --prefer-online skl-x add sentimony/agentic-workflow -s \
   session-learnings \
   -a codex claude-code -y -m sm
 
-# LOCAL SKILLS
-skills_local="$(dirname "$0")/skills.local.sh"
-if [ -f "$skills_local" ]; then
-  sh "$skills_local"
-fi
-
 # # VERCEL-LABS AGENT-BROWSER https://github.com/vercel-labs/agent-browser
 # npx -y --prefer-online skl-x add vercel-labs/agent-browser -s \
 #   agent-browser \
@@ -62,6 +56,12 @@ npx -y --prefer-online skl-x add supabase/agent-skills -s \
   supabase \
   supabase-postgres-best-practices \
   -a codex claude-code -y -m sm
+
+# LOCAL SKILLS
+skills_local="$(dirname "$0")/skills.local.sh"
+if [ -f "$skills_local" ]; then
+  sh "$skills_local"
+fi
 
 # npx -y --prefer-online skl-x -v
 # npx -y --prefer-online skl-x ls -g

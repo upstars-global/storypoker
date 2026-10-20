@@ -24,5 +24,5 @@ npm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) теж
   разом. `skills.sh` і `skills.local.sh` беруть останній `skl-x`: `sln` у local-скрипті
   знімає опубліковану копію сам лише з 0.4.9.
   Свіжість skills пін не обмежує: їх тягне `skl-x add` з GitHub.
-- Gitignored `scripts/skills.local.sh`, якщо є, запускається з `skills.sh` і підміняє опубліковані копії
-  симлінками на локальні клони.
+- Gitignored `scripts/skills.local.sh`, якщо є, запускається з `skills.sh` останнім, після всіх
+  `skl-x add`, і підміняє опубліковані копії симлінками на локальні клони.
