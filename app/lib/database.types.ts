@@ -61,31 +61,40 @@ export type Database = {
       room_state: {
         Row: {
           active_cards: string[]
+          alarm_minutes: number | null
+          alarm_muted: boolean | null
           deck_preset: string
           paused_at: string | null
           paused_elapsed_ms: number
           phase: string
           poll_question: string | null
+          result_cohorts: string[] | null
           room_id: string
           round_started_at: string | null
         }
         Insert: {
           active_cards?: string[]
+          alarm_minutes?: number | null
+          alarm_muted?: boolean | null
           deck_preset?: string
           paused_at?: string | null
           paused_elapsed_ms?: number
           phase?: string
           poll_question?: string | null
+          result_cohorts?: string[] | null
           room_id: string
           round_started_at?: string | null
         }
         Update: {
           active_cards?: string[]
+          alarm_minutes?: number | null
+          alarm_muted?: boolean | null
           deck_preset?: string
           paused_at?: string | null
           paused_elapsed_ms?: number
           phase?: string
           poll_question?: string | null
+          result_cohorts?: string[] | null
           room_id?: string
           round_started_at?: string | null
         }

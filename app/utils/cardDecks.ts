@@ -15,13 +15,13 @@ export const DECK_PRESETS: DeckPreset[] = [
   {
     id: 'scrum',
     name: 'Scrum Scale',
-    cards: ['0', '1/2', '1', '2', '3', '5', '8', '13', '20', '40', '100', '?', '☕', '🚬', '🍺'],
+    cards: ['1/2', '1', '2', '3', '5', '8', '13', '20', '?', '☕', '🚬', '🍺'],
     defaultActive: ['1/2', '1', '2', '3', '5', '8', '13', '20', '?', '☕'],
   },
   {
     id: 'fibonacci',
     name: 'Fibonacci Sequence',
-    cards: ['0', '1/2 *', '1', '2', '3', '5', '8', '13', '21', '34', '55', '89', '144', '?', '☕'],
+    cards: ['1/2 *', '1', '2', '3', '5', '8', '13', '21', '?', '☕'],
     defaultActive: ['1', '2', '3', '5', '8', '13', '21', '?', '☕'],
   },
   {
@@ -72,4 +72,9 @@ export const DEFAULT_PRESET_ID: DeckPresetId = 'scrum'
 
 export function getDeck(id: DeckPresetId): DeckPreset {
   return DECK_PRESETS.find(p => p.id === id) ?? DECK_PRESETS[0]!
+}
+
+export function activeCardsForDeck(id: DeckPresetId, activeCards: readonly string[]): string[] {
+  const { cards } = getDeck(id)
+  return cards.length ? activeCards.filter(card => cards.includes(card)) : [...activeCards]
 }

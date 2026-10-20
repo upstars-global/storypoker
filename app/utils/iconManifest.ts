@@ -52,6 +52,11 @@ export const dynamicBindings: readonly { file: string; expression: string; names
     names: ['ic:baseline-volume-off', 'app:timer', 'app:town-hall'],
   },
   {
+    file: 'app/components/Timer.vue',
+    expression: "alarmMuted ? 'ic:baseline-notifications-off' : 'ic:baseline-notifications-active'",
+    names: ['ic:baseline-notifications-off', 'ic:baseline-notifications-active'],
+  },
+  {
     file: 'app/components/PasswordInput.vue',
     expression: "visible ? 'ic:baseline-visibility-off' : 'ic:baseline-visibility'",
     names: ['ic:baseline-visibility-off', 'ic:baseline-visibility'],

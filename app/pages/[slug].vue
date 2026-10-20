@@ -16,9 +16,10 @@ import type { Player, RoomState } from '~/stores/types'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 import type { UserProfile } from '~/stores/profiles'
 import { touchRecentRoom } from '~/utils/recentRooms'
-import { DEFAULT_PRESET_ID, type DeckPresetId } from '~/utils/cardDecks'
+import { DEFAULT_PRESET_ID, activeCardsForDeck, type DeckPresetId } from '~/utils/cardDecks'
 import { normalizeRoomSlug, isValidRoomSlug } from '~/utils/roomId'
-import { isQaPlayer, roleTagForShields, roleTagOrder } from '~/utils/shields'
+import { roleTagForShields, roleTagOrder } from '~/utils/shields'
+import { cohortForShields, groupVotesByCohort, normalizeCohorts, resultCohortFor, type ResultGroup } from '~/utils/resultCohorts'
 import { shouldCelebrate } from '~/utils/resultCelebration'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
@@ -32,6 +33,7 @@ import PlayersList from '~/components/PlayersList.vue'
 import AlignmentCard from '~/components/AlignmentCard.vue'
 import { alignmentScore } from '~/utils/alignment'
 import Timer from '~/components/Timer.vue'
+import type { AlarmSettings } from '~/utils/timerAlarm'
 import SlotMachine from '~/components/SlotMachine.vue'
 import CardsArea from '~/components/CardsArea.vue'
 import ResultsArea from '~/components/ResultsArea.vue'
@@ -56,7 +58,7 @@ const { online, status: connectionStatus } = storeToRefs(presenceStore)
 
 interface LastRoundSnapshot {
   votes: Record<string, number>
-  groupedVotes: { general: Record<string, number>; qa: Record<string, number> } | null
+  groups: ResultGroup[] | null
   playerVotes: { id: string; name: string; vote: string }[]
   pollQuestion: string | null
   isVotingDeck: boolean
@@ -187,27 +189,24 @@ const isPollDeck = computed(() =>
 
 const alignmentBlocks = computed(() => {
   let votes: Record<string, number>
-  let grouped: { general: Record<string, number>; qa: Record<string, number> } | null
+  let groups: ResultGroup[] | null
   let deck: string[] | null | undefined
   if (showLastRound.value && lastRound.value && !lastRound.value.isVotingDeck) {
     votes = lastRound.value.votes
-    grouped = lastRound.value.groupedVotes
+    groups = lastRound.value.groups
     deck = lastRound.value.activeCards
   } else if (roomState.value?.phase === 'revealed' && !isPollDeck.value) {
     votes = voteCounts.value
-    grouped = groupedVoteCounts.value
-    deck = roomState.value?.active_cards
+    groups = resultGroups.value
+    deck = activeCards.value
   } else {
     return null
   }
   const blocks: { label: string; value: number }[] = []
-  if (grouped) {
-    const dev = alignmentScore(grouped.general, deck)
-    if (dev !== null) blocks.push({ label: t('results.general'), value: dev })
-    const qaTotal = Object.values(grouped.qa).reduce((a, b) => a + b, 0)
-    if (qaTotal) {
-      const qa = alignmentScore(grouped.qa, deck)
-      if (qa !== null) blocks.push({ label: 'QA', value: qa })
+  if (groups) {
+    for (const group of groups) {
+      const value = alignmentScore(group.votes, deck)
+      if (value !== null) blocks.push({ label: group.label, value })
     }
   } else {
     const all = alignmentScore(votes, deck)
@@ -218,7 +217,7 @@ const alignmentBlocks = computed(() => {
 
 const isConsensus = computed(() => {
   if (isPollDeck.value) return false
-  return shouldCelebrate(voteCounts.value, groupedVoteCounts.value)
+  return shouldCelebrate(voteCounts.value, resultGroups.value?.map(group => group.votes))
 })
 
 const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown, playDecision } = useCountdown()
@@ -236,22 +235,28 @@ const voteCounts = computed(() => {
   }, {} as Record<string, number>)
 })
 
-const groupedVoteCounts = computed(() => {
+const resultCohorts = computed(() => normalizeCohorts(roomState.value?.result_cohorts))
+
+const resultGroups = computed<ResultGroup[] | null>(() => {
   if (!roomState.value) return null
-  const general: Record<string, number> = {}
-  const qa: Record<string, number> = {}
-  let hasQa = false
-  for (const p of visiblePlayers.value) {
-    if (!p.vote) continue
-    if (isQaPlayer(p.shields)) {
-      qa[p.vote] = (qa[p.vote] ?? 0) + 1
-      hasQa = true
-    } else {
-      general[p.vote] = (general[p.vote] ?? 0) + 1
-    }
-  }
-  return hasQa ? { general, qa } : null
+  if (!visiblePlayers.value.some(p => p.vote && cohortForShields(p.shields))) return null
+  return groupVotesByCohort(visiblePlayers.value, resultCohorts.value).map(group => ({ label: group.key, votes: group.votes }))
 })
+
+const hiddenVotePlayerIds = computed(() => {
+  const preset = roomState.value?.deck_preset
+  if (!preset || isPollDeck.value || preset === 'goal_clarity') return new Set<string>()
+  return new Set(visiblePlayers.value
+    .filter(p => {
+      const cohort = cohortForShields(p.shields)
+      return cohort !== null && resultCohortFor(cohort, resultCohorts.value) === null
+    })
+    .map(p => p.id))
+})
+
+const activeCards = computed(() => roomState.value
+  ? activeCardsForDeck(roomState.value.deck_preset ?? DEFAULT_PRESET_ID, roomState.value.active_cards ?? [])
+  : [])
 
 let playersChannel: RealtimeChannel | null = null
 let stateChannel: RealtimeChannel | null = null
@@ -341,15 +346,13 @@ watch(() => roomState.value?.phase, (phase, prev) => {
     playersStore.clearPendingVotes()
     pendingSnapshot.value = {
       votes: { ...voteCounts.value },
-      groupedVotes: groupedVoteCounts.value
-        ? { general: { ...groupedVoteCounts.value.general }, qa: { ...groupedVoteCounts.value.qa } }
-        : null,
+      groups: resultGroups.value?.map(group => ({ label: group.label, votes: { ...group.votes } })) ?? null,
       playerVotes: visiblePlayers.value
         .filter(p => p.vote !== null)
         .map(p => ({ id: p.id, name: p.name, vote: p.vote as string })),
       pollQuestion: roomState.value?.poll_question ?? null,
       isVotingDeck: isPollDeck.value,
-      activeCards: [...(roomState.value?.active_cards ?? [])],
+      activeCards: [...activeCards.value],
       deckPreset: roomState.value?.deck_preset ?? null,
     }
     showLastRound.value = false
@@ -623,11 +626,18 @@ async function handleAuthSuccess() {
   }
 }
 
-async function handleSaveCardDeck(payload: { deckPreset: DeckPresetId; cards: string[] }) {
+async function handleUpdateAlarm(settings: Partial<AlarmSettings>) {
+  await roomStore.setAlarm(settings).catch(error => console.error('[timer] alarm settings save failed:', error))
+}
+
+async function handleSaveCardDeck(payload: { deckPreset: DeckPresetId; cards: string[]; cohorts: string[] }) {
   if (payload.deckPreset !== roomState.value?.deck_preset) {
     await roomStore.setDeckPreset(payload.deckPreset)
   }
   await roomStore.saveCardDeck(payload.cards)
+  if (payload.cohorts.join() !== resultCohorts.value.join()) {
+    await roomStore.setResultCohorts(payload.cohorts).catch(error => console.error('[deck] result cohorts save failed:', error))
+  }
   showCardDeck.value = false
 }
 
@@ -742,6 +752,7 @@ async function submitRenameRoom() {
           :truncate-votes="roomState?.deck_preset === 'vote_question'"
           :spinning-player-ids="spinningPlayerIds"
           :slot-winner-id="slotWinnerId"
+          :hidden-vote-player-ids="hiddenVotePlayerIds"
           @edit="handleEdit"
           @toggle-moderator="handleToggleModerator"
           @leave="handleLeave"
@@ -758,11 +769,14 @@ async function submitRenameRoom() {
           :paused-at="roomState.paused_at ?? null"
           :paused-elapsed-ms="roomState.paused_elapsed_ms ?? 0"
           :can-control="isModerator"
+          :alarm-minutes="roomState.alarm_minutes ?? null"
+          :alarm-muted="roomState.alarm_muted ?? null"
           @reset="roomStore.resetTimer"
           @pause="roomStore.pauseTimer"
           @resume="roomStore.resumeTimer"
           @adjust="(ms: number) => roomStore.adjustTimer(ms)"
           @switch-widget="switchSideWidget"
+          @update-alarm="handleUpdateAlarm"
         />
         <SlotMachine
           v-if="roomState && sideWidget === 'slot'"
@@ -779,7 +793,7 @@ async function submitRenameRoom() {
         <ResultsArea
           v-if="roomState?.phase === 'voting' && showLastRound && lastRound"
           :votes="lastRound.votes"
-          :grouped-votes="lastRound.groupedVotes"
+          :groups="lastRound.groups"
           :show-new-round="false"
           :poll-question="lastRound.pollQuestion"
           :disable-celebration="true"
@@ -790,18 +804,18 @@ async function submitRenameRoom() {
         <ResultsArea
           v-if="roomState?.phase === 'revealed'"
           :votes="voteCounts"
-          :grouped-votes="groupedVoteCounts"
+          :groups="resultGroups"
           :show-new-round="isModerator"
           :poll-question="roomState.poll_question ?? null"
           :disable-celebration="isPollDeck"
           :show-alignment="!isPollDeck"
-          :active-cards="roomState.active_cards ?? undefined"
+          :active-cards="activeCards"
           :goal-clarity-score="roomState?.deck_preset === 'goal_clarity'"
           @start-new-round="roomStore.startNewRound()"
         />
         <CardsArea
           v-if="roomState?.phase === 'voting'"
-          :active-cards="roomState.active_cards ?? []"
+          :active-cards="activeCards"
           :selected-vote="currentPlayer ? playersStore.voteOf(currentPlayer.id) : null"
           :is-moderator="isModerator"
           :has-votes="hasVotes"
@@ -849,7 +863,8 @@ async function submitRenameRoom() {
     <ConfigureCardDeckModal
       v-if="showCardDeck && roomState"
       :deck-preset="roomState.deck_preset ?? DEFAULT_PRESET_ID"
-      :active-cards="roomState.active_cards"
+      :active-cards="activeCards"
+      :result-cohorts="resultCohorts"
       @close="showCardDeck = false"
       @save="handleSaveCardDeck"
     />

@@ -104,7 +104,11 @@
     "pause": "Пауза",
     "continue": "Продовжити",
     "minus30": "-30с",
-    "plus30": "+30с"
+    "plus30": "+30с",
+    "alarmSettings": "Налаштування сигналу",
+    "alarmAfter": "Сигнал через",
+    "minutesShort": "хв",
+    "alarmSound": "Звук сигналу"
   },
   "slot": {
     "title": "Слот 777",
@@ -123,7 +127,9 @@
       "no": "Ні"
     },
     "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні",
-    "alwaysIncluded": "Завжди включено"
+    "alwaysIncluded": "Завжди включено",
+    "resultCohorts": "Показувати результати",
+    "qaCohortHint": "QA, GQA і AQA завжди показуються одним колом"
   },
   "poll": {
     "thirdCard": "Третя картка",
@@ -161,11 +167,13 @@
       "PO": "Product Owner",
       "BE": "Backend",
       "FE": "Frontend",
+      "SRE": "Site Reliability Engineering",
       "DEV": "Developer",
       "QA": "Quality Assurance",
       "AQA": "Automated Quality Assurance",
       "GQA": "General Quality Assurance"
-    }
+    },
+    "voteHiddenInResults": "голос не показується в результатах"
   },
   "results": {
     "general": "DEV",
