@@ -3,6 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { setSupabase, resetSupabase } from '~/lib/supabase-instance'
 import { useRoomStore, backgroundDisplayUrl } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
+import { useAuthStore } from '~/stores/auth'
 import type { Player, RoomState } from '~/stores/types'
 
 function fakeRoomState(overrides: Partial<RoomState> = {}): RoomState {
@@ -370,6 +371,7 @@ describe('roomStore background', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     resetSupabase()
+    useAuthStore().user = { id: 'u1' } as any
   })
 
   function fakeClient() {
@@ -377,14 +379,38 @@ describe('roomStore background', () => {
       upload: vi.fn().mockResolvedValue({ error: null }),
       remove: vi.fn().mockResolvedValue({ data: [], error: null }),
     }
-    const eq = vi.fn().mockResolvedValue({ error: null })
+    const is = vi.fn().mockResolvedValue({ error: null })
+    const eq = vi.fn(() => Object.assign(Promise.resolve({ error: null }), { is }))
     const update = vi.fn().mockReturnValue({ eq })
     const client = {
       storage: { from: vi.fn().mockReturnValue(bucket) },
       from: vi.fn().mockReturnValue({ update }),
     }
-    return { bucket, update, eq, client }
+    return { bucket, update, eq, is, client }
   }
+
+  it('claims an unowned room background for the signed-in user before uploading', async () => {
+    const { bucket, update, eq, is, client } = fakeClient()
+    setSupabase(client as any)
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    const result = await store.uploadBackground(new Blob(['x'], { type: 'image/webp' }), 0.5)
+    expect(update.mock.calls[0]![0]).toEqual({ background_owner_id: 'u1' })
+    expect(eq.mock.calls[0]).toEqual(['id', 'r1'])
+    expect(is).toHaveBeenCalledWith('background_owner_id', null)
+    expect(update.mock.invocationCallOrder[0]!).toBeLessThan(bucket.upload.mock.invocationCallOrder[0]!)
+    expect(result?.background_owner_id).toBe('u1')
+  })
+
+  it('refuses to upload without a signed-in user', async () => {
+    const { bucket, client } = fakeClient()
+    setSupabase(client as any)
+    useAuthStore().user = null
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    await expect(store.uploadBackground(new Blob(), 0.5)).rejects.toThrow()
+    expect(bucket.upload).not.toHaveBeenCalled()
+  })
 
   it('uploads to the fixed room path, then points the room row at it', async () => {
     const { bucket, update, eq, client } = fakeClient()
@@ -396,9 +422,9 @@ describe('roomStore background', () => {
     expect(client.storage.from).toHaveBeenCalledWith('room-backgrounds')
     expect(bucket.upload).toHaveBeenCalledWith('r1/background.webp', blob, { upsert: true, contentType: 'image/webp' })
     expect(client.from).toHaveBeenCalledWith('rooms')
-    expect(update.mock.calls[0]![0].background_url).toBe('r1/background.webp')
-    expect(update.mock.calls[0]![0].background_updated_at).toBeTruthy()
-    expect(update.mock.calls[0]![0].background_opacity).toBe(0.5)
+    expect(update.mock.calls[1]![0].background_url).toBe('r1/background.webp')
+    expect(update.mock.calls[1]![0].background_updated_at).toBeTruthy()
+    expect(update.mock.calls[1]![0].background_opacity).toBe(0.5)
     expect(eq).toHaveBeenCalledWith('id', 'r1')
     expect(result?.background_url).toBe('r1/background.webp')
   })
@@ -410,7 +436,7 @@ describe('roomStore background', () => {
     const store = useRoomStore()
     store.roomId = 'r1'
     await expect(store.uploadBackground(new Blob(), 0.65)).rejects.toThrow('denied')
-    expect(update).not.toHaveBeenCalled()
+    expect(update.mock.calls.map(([row]) => Object.keys(row))).toEqual([['background_owner_id']])
   })
 
   it('updates only the opacity', async () => {
@@ -472,6 +498,7 @@ describe('roomStore.resolveRoom', () => {
     setSupabase(client as any)
     expect(await useRoomStore().resolveRoom('r1')).toEqual({
       id: 'r1', slug: null, name: 'Team', background_url: null, background_updated_at: null, background_opacity: null,
+      background_owner_id: null,
     })
   })
 

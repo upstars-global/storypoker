@@ -340,7 +340,7 @@ const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 | Дія | Компонент / handler |
 |---|---|
 | Перейменувати кімнату / встановити slug | `AppHeader.vue`, вкладене `v-if="user"` усередині `v-if="isModerator"` → `roomStore.setRoomName(name, slug)` |
-| Фон кімнати (завантажити / кадрувати / прибрати) | `AppHeader.vue` → `RoomBackgroundModal` (лише `isAuthorizedModerator`) → `roomStore.uploadBackground` / `removeBackground`, §11.10 |
+| Фон кімнати (завантажити / кадрувати / прибрати) | `AppHeader.vue` → `RoomBackgroundModal` (лише `isAuthorizedModerator`, який є власником фону або фон ще нічий) → `roomStore.uploadBackground` / `removeBackground`, §11.10 |
 | Перейменувати іншого гравця + його shields | `PlayerRow.vue`, `v-if="currentUserIsAuthorizedModerator"` (вкладено в `currentUserIsModerator`-блок) → `PlayerEditModal` |
 
 ### 11.2 Функціонал гравця
@@ -493,8 +493,8 @@ round_history (
 
 Авторизований модератор задає фонове зображення кімнати; його бачать усі учасники, оновлення приходить через Realtime-канал `rooms:<roomId>`.
 
-- **Модалка:** пункт «Фон кімнати» в меню хедера. Вибір JPG/PNG/WebP до 10 МБ → рамка 16:9, у якій картинку можна тягнути (pointer events), масштабувати повзунком 1–3× або колесом, з клавіатури - стрілки та `+`/`-`. Картинка завжди покриває рамку (`clampFraming`). Повзунок «Непрозорість» (10–100%, дефолт 65%) показує результат одразу в прев'ю і зберігається окремо, без перезаливки картинки (`setBackgroundOpacity`). «Прибрати фон» знімає поточний
+- **Модалка:** пункт «Фон кімнати» в меню хедера. Вибір JPG/PNG/WebP до 10 МБ → рамка 16:9, у якій картинку можна тягнути (pointer events), масштабувати повзунком 1–3× або колесом, з клавіатури - стрілки та `+`/`-`. Картинка завжди покриває рамку (`clampFraming`). Повзунок «Непрозорість» (10–100%, дефолт 65%) показує результат одразу в прев'ю і зберігається окремо, без перезаливки картинки (`setBackgroundOpacity`). «Прибрати фон» знімає поточний фон
 - **Кадрування:** `framingSourceRect()` (`app/utils/backgroundImage.ts`) перераховує видиму частину рамки в пікселі оригіналу; `encodeBackground()` ріже її з оригінального `ImageBitmap` у WebP (якість 0.8) розміром до 1920×1080 без апскейлу. Декодування й WebP-кодування спільні з аватарками (`imageEncoding.ts`)
 - **Збереження:** Storage bucket `room-backgrounds`, фіксований об'єкт `<room_id>/background.webp` (upsert, без сиріт), далі `rooms.background_url` + `background_updated_at` (кеш-інвалідація `?v=`). Зняття фону спершу пише `background_url: null`, файл видаляється best-effort. Міграція `016`; без неї аплоад падає (`Bucket not found`), а кімнати відкриваються як звичайно (`resolveRoom` читає `select('*')`)
 - **Рендер:** inline `background-image` на корені сторінки кімнати - тінт `backgroundTint(opacity)` = `color-mix(var(--bg-app) (1 − opacity))` поверх картинки, `cover`, `fixed`. `backgroundDisplayUrl()` пропускає лише шлях за regex `^[A-Za-z0-9-]+/background\.webp$`, бо значення йде в CSS `url()`, а `rooms.id` може вставити будь-хто
-- **Доступ:** Storage-політики `to authenticated` на єдиний об'єкт існуючої кімнати - тобто змінити фон може будь-який залогінений користувач (як і решту даних кімнати, ролі модератора enforced лише на клієнті)
+- **Доступ:** фон має власника `rooms.background_owner_id`. Перше заливання закріплює фон за поточним користувачем (`update ... where background_owner_id is null`), далі фон міняє лише він. Storage-політики пускають запис, оновлення й видалення об'єкта лише власнику, а тригер `rooms_guard_background` не дає іншим (зокрема анонімам) змінити власника, `background_url` чи `background_opacity`. Кімнату без фону може закріпити будь-який залогінений користувач. Пункт меню бачить лише авторизований модератор, який є власником або коли фон ще нічий

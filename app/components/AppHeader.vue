@@ -15,6 +15,7 @@ import { useTheme, PALETTES, type PaletteId } from '~/composables/useTheme'
 const props = withDefaults(defineProps<{
   onlineCount: number
   isModerator: boolean
+  canEditRoomBackground?: boolean
   playerName: string
   playerUserId?: string | null
   roomName?: string
@@ -24,6 +25,7 @@ const props = withDefaults(defineProps<{
   countdownTotal?: number
 }>(), {
   playerUserId: null,
+  canEditRoomBackground: false,
   roomName: '',
   title: 'Story Poker',
   countdownActive: false,
@@ -369,7 +371,7 @@ function onVolumeInput(event: Event) {
               {{ $t('header.renameRoom') }}
             </li>
             <li
-              v-if="user"
+              v-if="canEditRoomBackground"
               v-wave
               class="mui-menu-item whitespace-nowrap"
               role="menuitem"
