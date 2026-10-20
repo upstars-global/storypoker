@@ -22,6 +22,8 @@ export interface RoomState {
   paused_elapsed_ms: number
   poll_question: string | null
   result_cohorts?: string[] | null
+  alarm_minutes?: number | null
+  alarm_muted?: boolean | null
 }
 
 export interface RoundHistoryVote {
