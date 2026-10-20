@@ -57,6 +57,12 @@ fi
 #   agent-browser \
 #   -a codex claude-code -y -m sm
 
+# VERCEL-LABS AGENT-BROWSER https://github.com/supabase/agent-skills
+npx -y --prefer-online skl-x add supabase/agent-skills -s \
+  supabase \
+  supabase-postgres-best-practices \
+  -a codex claude-code -y -m sm
+
 # npx -y --prefer-online skl-x -v
 # npx -y --prefer-online skl-x ls -g
 # npx -y --prefer-online skl-x ls
