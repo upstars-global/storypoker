@@ -5,7 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import AppModal from '~/components/AppModal.vue'
 import { useAuthStore } from '~/stores/auth'
-import { useRoomStore } from '~/stores/room'
+import { backgroundTint } from '~/utils/backgroundImage'
+import { useRoomStore, backgroundDisplayUrl, type RoomBackground, type ResolvedRoom } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
 import { useProfilesStore } from '~/stores/profiles'
@@ -23,6 +24,7 @@ import { shouldCelebrate } from '~/utils/resultCelebration'
 import AppHeader from '~/components/AppHeader.vue'
 import AuthModal from '~/components/AuthModal.vue'
 import UserSettingsModal from '~/components/UserSettingsModal.vue'
+import RoomBackgroundModal from '~/components/RoomBackgroundModal.vue'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal.vue'
 import HistoryModal from '~/components/HistoryModal.vue'
 import AlignmentTrendsModal from '~/components/AlignmentTrendsModal.vue'
@@ -83,6 +85,21 @@ const roomNameInput = ref('')
 const roomNameError = ref<string | null>(null)
 const currentSlug = ref<string | null>(null)
 const currentRoomName = ref<string | null>(null)
+const showRoomBackground = ref(false)
+const roomBackground = ref<RoomBackground>({ background_url: null, background_updated_at: null, background_opacity: null, background_owner_id: null })
+const roomBackgroundUrl = computed(() => {
+  const { background_url, background_updated_at } = roomBackground.value
+  return background_url ? backgroundDisplayUrl(background_url, background_updated_at) : null
+})
+const roomBackgroundTint = computed(() => backgroundTint(roomBackground.value.background_opacity))
+const roomBackgroundStyle = computed(() => roomBackgroundUrl.value
+  ? {
+      backgroundImage: `linear-gradient(${roomBackgroundTint.value}, ${roomBackgroundTint.value}), url("${roomBackgroundUrl.value}")`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+    }
+  : undefined)
 // Room name and player identity both arrive a few round-trips after first paint,
 // which slid the whole header cluster once they appeared. Seed them from the
 // previous visit so the header renders at its final size right away.
@@ -115,6 +132,8 @@ const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
 const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
 const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
+const canEditRoomBackground = computed(() => isAuthorizedModerator.value
+  && (!roomBackground.value.background_owner_id || roomBackground.value.background_owner_id === user.value?.id))
 const onlineCount = computed(() => visiblePlayers.value.filter(p => online.value.has(p.id)).length)
 
 const lastRoundVoteMap = computed(() => {
@@ -260,6 +279,12 @@ onMounted(async () => {
   }
   currentSlug.value = resolved.slug
   currentRoomName.value = resolved.name
+  roomBackground.value = {
+    background_url: resolved.background_url,
+    background_updated_at: resolved.background_updated_at,
+    background_opacity: resolved.background_opacity,
+    background_owner_id: resolved.background_owner_id,
+  }
   roomId = resolved.id
   roomStore.roomId = roomId
   playersStore.roomId = roomId
@@ -384,11 +409,17 @@ function subscribeRealtime() {
   roomChannel = supabase
     .channel(`rooms:${roomId}`)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
-      (payload: RealtimePostgresChangesPayload<{ id: string; slug: string | null; name: string | null }>) => {
+      (payload: RealtimePostgresChangesPayload<ResolvedRoom>) => {
         if (payload.eventType !== 'UPDATE') return
         const row = payload.new
         currentSlug.value = row.slug
         currentRoomName.value = row.name
+        roomBackground.value = {
+          background_url: row.background_url,
+          background_updated_at: row.background_updated_at,
+          background_opacity: row.background_opacity ?? null,
+          background_owner_id: row.background_owner_id ?? null,
+        }
         if (row.slug && route.params.slug !== row.slug) {
           router.replace(`/${row.slug}`)
         } else if (!row.slug && route.params.slug !== roomId) {
@@ -682,10 +713,13 @@ async function submitRenameRoom() {
   <div
     v-else
     class="min-h-screen flex flex-col"
+    :style="roomBackgroundStyle"
+    data-testid="room-root"
   >
     <AppHeader
       :online-count="onlineCount"
       :is-moderator="isModerator"
+      :can-edit-room-background="canEditRoomBackground"
       :player-name="currentPlayer?.name ?? headerSeed.playerName"
       :player-user-id="currentPlayer?.user_id ?? null"
       :room-name="currentRoomName ?? currentSlug ?? headerSeed.roomName"
@@ -696,6 +730,7 @@ async function submitRenameRoom() {
       @open-sign-up="showAuth = 'signup'"
       @open-card-deck="showCardDeck = true"
       @open-rename-room="openRenameRoom"
+      @open-room-background="showRoomBackground = true"
       @open-account-settings="showAccountSettings = true"
       @open-history="showHistory = true"
       @open-alignment-trends="showAlignmentTrends = true"
@@ -855,6 +890,13 @@ async function submitRenameRoom() {
     <UserSettingsModal
       v-if="showAccountSettings && user"
       @close="showAccountSettings = false"
+    />
+    <RoomBackgroundModal
+      v-if="showRoomBackground && canEditRoomBackground"
+      :current-url="roomBackgroundUrl"
+      :current-opacity="roomBackground.background_opacity"
+      @saved="(background: Partial<RoomBackground>) => roomBackground = { ...roomBackground, ...background }"
+      @close="showRoomBackground = false"
     />
 
     <AppModal

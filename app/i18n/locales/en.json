@@ -30,7 +30,8 @@
     "history": "Round History",
     "alignmentTrends": "Alignment Trends",
     "themePalette": "Color theme",
-    "volume": "Sound volume"
+    "volume": "Sound volume",
+    "roomBackground": "Room background"
   },
   "theme": {
     "classic": "Classic",
@@ -345,5 +346,19 @@
         "description": "Just to show how to make more feature flags"
       }
     }
+  },
+  "roomBackground": {
+    "title": "Room background",
+    "chooseFile": "Choose file",
+    "remove": "Remove background",
+    "preview": "Background preview",
+    "hint": "JPG, PNG or WebP up to 10 MB. Everyone in the room sees it",
+    "errorFileTooLarge": "File is too large (max 10 MB)",
+    "errorUnsupportedType": "Only JPG, PNG and WebP are supported",
+    "errorDecodeFailed": "Couldn't read the image",
+    "saveError": "Couldn't save the background",
+    "zoom": "Zoom",
+    "adjustHint": "Drag to move the background, zoom with the slider or mouse wheel",
+    "opacity": "Opacity"
   }
 }

@@ -15,6 +15,7 @@ import { useTheme, PALETTES, type PaletteId } from '~/composables/useTheme'
 const props = withDefaults(defineProps<{
   onlineCount: number
   isModerator: boolean
+  canEditRoomBackground?: boolean
   playerName: string
   playerUserId?: string | null
   roomName?: string
@@ -24,6 +25,7 @@ const props = withDefaults(defineProps<{
   countdownTotal?: number
 }>(), {
   playerUserId: null,
+  canEditRoomBackground: false,
   roomName: '',
   title: 'Story Poker',
   countdownActive: false,
@@ -36,6 +38,7 @@ const emit = defineEmits<{
   openSignUp: []
   openCardDeck: []
   openRenameRoom: []
+  openRoomBackground: []
   openAccountSettings: []
   openHistory: []
   openAlignmentTrends: []
@@ -366,6 +369,21 @@ function onVolumeInput(event: Event) {
                 icon="ic:baseline-edit"
               />
               {{ $t('header.renameRoom') }}
+            </li>
+            <li
+              v-if="canEditRoomBackground"
+              v-wave
+              class="mui-menu-item whitespace-nowrap"
+              role="menuitem"
+              tabindex="-1"
+              data-testid="room-background-menu-item"
+              @click="emit('openRoomBackground'); menuOpen = false"
+            >
+              <AppIcon
+                class="mui-menu-icon"
+                icon="ic:baseline-wallpaper"
+              />
+              {{ $t('header.roomBackground') }}
             </li>
             <li
               v-wave

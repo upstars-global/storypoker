@@ -30,7 +30,8 @@
     "history": "Історія раундів",
     "alignmentTrends": "Тренди узгодженості",
     "themePalette": "Кольорова тема",
-    "volume": "Гучність звуку"
+    "volume": "Гучність звуку",
+    "roomBackground": "Фон кімнати"
   },
   "theme": {
     "classic": "Classic",
@@ -345,5 +346,19 @@
         "description": "Просто щоб показати, як додавати нові фіче-флаги"
       }
     }
+  },
+  "roomBackground": {
+    "title": "Фон кімнати",
+    "chooseFile": "Вибрати файл",
+    "remove": "Прибрати фон",
+    "preview": "Прев'ю фону",
+    "hint": "JPG, PNG або WebP до 10 МБ. Фон бачать усі учасники кімнати",
+    "errorFileTooLarge": "Файл завеликий (максимум 10 МБ)",
+    "errorUnsupportedType": "Підтримуються лише JPG, PNG і WebP",
+    "errorDecodeFailed": "Не вдалося прочитати зображення",
+    "saveError": "Не вдалося зберегти фон",
+    "zoom": "Масштаб",
+    "adjustHint": "Перетягніть, щоб посунути фон, масштабуйте повзунком або колесом миші",
+    "opacity": "Непрозорість"
   }
 }

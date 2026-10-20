@@ -126,6 +126,7 @@ const literalNames: readonly string[] = [
   'ic:baseline-timer',
   'ic:baseline-trending-up',
   'ic:baseline-volume-off',
+  'ic:baseline-wallpaper',
   'lucide:id-card',
   'lucide:undo',
   'lucide:volume-1',

@@ -68,6 +68,13 @@ RolePicker. Scrum і Fibonacci без `0` і карт понад 21. Детал�
 чують усі; по сигналу віджет блимає 3 рази, грає дзвінок,
 модератор автоматично ставить таймер на паузу. Деталі - `DESIGN.md` §11.6.
 
+## Room background
+
+Авторизований модератор задає фон кімнати: аплоад JPG/PNG/WebP, кадрування
+(drag / zoom у рамці 16:9) і стиснення у WebP ≤ 1920×1080 на клієнті, Storage
+bucket `room-backgrounds` + `rooms.background_url` (міграція `016`), синхронізація
+через Realtime. Деталі - `DESIGN.md` §11.10.
+
 ## Знято з обсягу
 
 - **Reka UI** - замінено власними `AppModal` / `AppTooltip` + `useClickOutside`
