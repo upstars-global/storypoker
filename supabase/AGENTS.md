@@ -38,7 +38,7 @@ offline grayscale через CSS filter), а `avatar_style` завжди лиш�
 Фон кімнати (`016`): bucket `room-backgrounds` (public read, 2 MB, лише `image/webp`), чотири політики
 `to authenticated` на єдиний об'єкт `<room_id>/background.webp` існуючої кімнати; запис, оновлення й видалення - лише
 власнику `rooms.background_owner_id` (перше заливання закріплює фон, тригер `rooms_guard_background` блокує зміну
-власника, `background_url` і `background_opacity` для інших). `rooms.background_url` обмежений
+власника, `background_url`, `background_opacity` і `background_updated_at` для інших, анонімів теж). `rooms.background_url` обмежений
 check-констрейнтом до `id || '/background.webp'`, `background_updated_at` - кеш-інвалідація `?v=`, `background_opacity` (0.1–1, `null` = 0.65) - непрозорість фону. Модалка дає кадрувати
 (drag/zoom у рамці 16:9), клієнт ріже кадр у WebP ≤ 1920×1080 (`app/utils/backgroundImage.ts`, спільне кодування з аватарками - `imageEncoding.ts`); UI лише для
 authorized moderator - власника фону. Зняття фону, як і аватарки, спершу пише `background_url: null`, файл видаляється best-effort.
