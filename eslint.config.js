@@ -14,6 +14,12 @@ export default [
     },
   },
   {
+    files: ['app/components/AppIcon.vue'],
+    rules: {
+      'vue/no-v-html': 'off',
+    },
+  },
+  {
     ignores: [
       'dist/**',
       '.netlify/**',
