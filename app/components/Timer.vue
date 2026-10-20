@@ -3,7 +3,7 @@ import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import { useI18n } from 'vue-i18n'
-import { playAlarmChime, clampAlarmMinutes, ALARM_MIN_MINUTES, ALARM_MAX_MINUTES, type AlarmSettings } from '~/utils/timerAlarm'
+import { playAlarmChime, unlockAlarmAudio, clampAlarmMinutes, ALARM_MIN_MINUTES, ALARM_MAX_MINUTES, type AlarmSettings } from '~/utils/timerAlarm'
 
 const props = defineProps<{
   roundStartedAt: string
@@ -76,14 +76,28 @@ const alarmMuted = computed(() => props.alarmMuted ?? false)
 const alarmSettingsOpen = ref(false)
 const alarmBlinking = ref(false)
 
-watch(elapsedMs, (current, previous) => {
-  if (props.phase !== 'voting' || isPaused.value) return
-  const intervalMs = alarmMinutes.value * 60_000
-  if (Math.floor(current / intervalMs) <= Math.floor(previous / intervalMs)) return
+function alarmIndexAt(ms: number) {
+  return Math.floor(ms / (alarmMinutes.value * 60_000))
+}
+
+let firedAlarmIndex = alarmIndexAt(elapsedMs.value)
+watch([() => props.roundStartedAt, alarmMinutes], () => {
+  firedAlarmIndex = alarmIndexAt(elapsedMs.value)
+}, { flush: 'sync' })
+
+watch(elapsedMs, (current) => {
+  const index = alarmIndexAt(current)
+  if (index <= firedAlarmIndex) return
+  firedAlarmIndex = index
+  if (props.phase !== 'voting') return
   alarmBlinking.value = true
+  if (props.canControl && !isPaused.value) emit('pause')
   if (!alarmMuted.value) playAlarmChime()
-  if (props.canControl) emit('pause')
 })
+
+const unlockAlarmEvents = ['pointerdown', 'keydown'] as const
+onMounted(() => unlockAlarmEvents.forEach(type => window.addEventListener(type, unlockAlarmAudio, { once: true })))
+onUnmounted(() => unlockAlarmEvents.forEach(type => window.removeEventListener(type, unlockAlarmAudio)))
 
 function onAlarmMinutesChange(event: Event) {
   const input = event.target as HTMLInputElement

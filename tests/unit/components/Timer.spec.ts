@@ -88,6 +88,39 @@ describe('Timer alarm', () => {
     expect(wrapper.emitted('pause')).toHaveLength(2)
   })
 
+  it('rings once on a lagging clock when the pause crosses the interval, not again after play', async () => {
+    vi.setSystemTime(START + THREE_MIN - 1500)
+    const wrapper = mountTimer()
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(playAlarmChime).not.toHaveBeenCalled()
+    await wrapper.setProps({ pausedAt: new Date(START + THREE_MIN + 200).toISOString() })
+    expect(playAlarmChime).toHaveBeenCalledTimes(1)
+    expect(blinking(wrapper)).toBe(true)
+    await vi.advanceTimersByTimeAsync(30_000)
+    await wrapper.setProps({ pausedAt: null, pausedElapsedMs: 30_000 })
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(playAlarmChime).toHaveBeenCalledTimes(1)
+    expect(wrapper.emitted('pause')).toBeUndefined()
+  })
+
+  it('does not fire right away when the interval is shortened mid-round', async () => {
+    vi.setSystemTime(START + 4 * 60_000)
+    const wrapper = mountTimer({ alarmMinutes: 5 })
+    await wrapper.setProps({ alarmMinutes: 3 })
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(playAlarmChime).not.toHaveBeenCalled()
+  })
+
+  it('fires again in the next round after a new round starts', async () => {
+    vi.setSystemTime(START + THREE_MIN - 500)
+    const wrapper = mountTimer()
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(playAlarmChime).toHaveBeenCalledTimes(1)
+    await wrapper.setProps({ roundStartedAt: new Date(Date.now()).toISOString() })
+    await vi.advanceTimersByTimeAsync(THREE_MIN)
+    expect(playAlarmChime).toHaveBeenCalledTimes(2)
+  })
+
   it('freezes the displayed duration at the pause when votes are revealed', async () => {
     vi.setSystemTime(START + THREE_MIN + 60_000)
     const wrapper = mountTimer({ pausedAt: new Date(START + THREE_MIN).toISOString() })

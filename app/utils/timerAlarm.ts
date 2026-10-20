@@ -16,9 +16,18 @@ export function clampAlarmMinutes(value: number | null | undefined): number {
 }
 
 let audioCtx: AudioContext | undefined
-export function playAlarmChime() {
+function runningAudioContext() {
   audioCtx ??= new AudioContext()
-  const ctx = audioCtx
+  if (audioCtx.state === 'suspended') void audioCtx.resume()
+  return audioCtx
+}
+
+export function unlockAlarmAudio() {
+  runningAudioContext()
+}
+
+export function playAlarmChime() {
+  const ctx = runningAudioContext()
   for (let i = 0; i < ALARM_BLINK_COUNT; i++) {
     const startAt = ctx.currentTime + i * ALARM_BLINK_PERIOD_S
     const osc = ctx.createOscillator()
