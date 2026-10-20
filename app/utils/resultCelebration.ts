@@ -19,7 +19,7 @@ function isUnanimous(votes: VoteCounts): boolean {
 }
 
 export function shouldCelebrate(votes: VoteCounts, groups: readonly VoteCounts[] | null | undefined): boolean {
-  if (groups?.length) return groups.some(isUnanimous)
+  if (groups) return groups.some(isUnanimous)
   return isUnanimous(votes)
 }
 

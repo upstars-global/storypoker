@@ -35,7 +35,7 @@ export function normalizeCohorts(value: readonly string[] | null | undefined): s
 
 export function cohortForShields(shields: string[] | null | undefined): string | null {
   const tag = roleTagForShields(shields)
-  return tag ? COHORT_BY_TAG.get(tag) ?? null : null
+  return tag ? COHORT_BY_TAG.get(tag) ?? null : DEV_UMBRELLA_COHORT
 }
 
 export function resultCohortFor(cohort: string | null, selected: readonly string[]): string | null {

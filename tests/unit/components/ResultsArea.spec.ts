@@ -13,7 +13,7 @@ const i18n = createI18n({
 
 function mountResults(props: {
   votes: Record<string, number>
-  groups?: { label: string; votes: Record<string, number> }[]
+  groups?: { label: string; votes: Record<string, number> }[] | null
   disableCelebration?: boolean
 }) {
   return mount(ResultsArea, {
@@ -69,5 +69,11 @@ describe('ResultsArea cohort circles', () => {
       groups: [{ label: 'FE', votes: { '3': 2 } }, { label: 'BE', votes: { '5': 1, '8': 1 } }],
     })
     expect(wrapper.find('.celebration-layer').exists()).toBe(true)
+  })
+
+  it('shows no circle and no celebration when every vote is left out of the shown cohorts', () => {
+    const wrapper = mountResults({ votes: { '5': 3 }, groups: [] })
+    expect(wrapper.findAllComponents({ name: 'PieChart' })).toHaveLength(0)
+    expect(wrapper.find('.celebration-layer').exists()).toBe(false)
   })
 })

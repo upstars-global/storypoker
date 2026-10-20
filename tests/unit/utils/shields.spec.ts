@@ -70,12 +70,17 @@ describe('trendCohorts', () => {
   ])
   const votes = (...ids: string[]) => ids.map(player_id => ({ player_id }))
 
-  it('splits estimators into DEV and QA and leaves everyone else out', () => {
+  it('splits estimators into DEV and QA and leaves PO, SM and custom roles out', () => {
     expect(Object.fromEntries(trendCohorts(votes('dev', 'fe', 'sre', 'gqa', 'po', 'sm', 'none', 'custom'), shields)))
-      .toEqual({ dev: 'DEV', fe: 'DEV', sre: 'DEV', gqa: 'QA' })
+      .toEqual({ dev: 'DEV', fe: 'DEV', sre: 'DEV', gqa: 'QA', none: 'DEV' })
   })
 
-  it('counts everyone as DEV when nobody in the round has a DEV or QA role', () => {
-    expect(Object.fromEntries(trendCohorts(votes('po', 'none'), shields))).toEqual({ po: 'DEV', none: 'DEV' })
+  it('counts players without a role and players who left the room as DEV', () => {
+    expect(Object.fromEntries(trendCohorts(votes('none', 'departed', 'po'), shields)))
+      .toEqual({ none: 'DEV', departed: 'DEV' })
+  })
+
+  it('counts everyone as DEV when only PO, SM or custom roles voted', () => {
+    expect(Object.fromEntries(trendCohorts(votes('po', 'custom'), shields))).toEqual({ po: 'DEV', custom: 'DEV' })
   })
 })

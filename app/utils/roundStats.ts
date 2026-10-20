@@ -85,16 +85,21 @@ export function roundAlignment(
   return alignmentScore(counts, resolveActiveCards(round.active_cards, round.deck_preset))
 }
 
-export function summarizeRound(round: RoundHistory): RoundSummary {
+export function summarizeRound(round: RoundHistory, shieldsByPlayer?: ReadonlyMap<string, string[]>): RoundSummary {
   const counts: Record<string, number> = {}
   for (const v of round.votes) counts[v.vote] = (counts[v.vote] ?? 0) + 1
+  const cohorts = trendCohorts(round.votes, shieldsByPlayer)
+  const estimateCounts: Record<string, number> = {}
+  for (const v of round.votes) {
+    if (cohorts.has(v.player_id)) estimateCounts[v.vote] = (estimateCounts[v.vote] ?? 0) + 1
+  }
   const isPoll = isPollPreset(round.deck_preset)
   return {
     id: round.id,
     revealedAt: round.revealed_at,
     voterCount: round.votes.length,
-    average: isPoll ? null : averageOf(counts),
-    alignment: isPoll ? null : alignmentScore(counts, resolveActiveCards(round.active_cards, round.deck_preset)),
+    average: isPoll ? null : averageOf(estimateCounts),
+    alignment: isPoll ? null : alignmentScore(estimateCounts, resolveActiveCards(round.active_cards, round.deck_preset)),
     counts,
     isPoll,
     deckPreset: round.deck_preset,

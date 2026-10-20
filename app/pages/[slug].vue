@@ -55,7 +55,7 @@ const { online, status: connectionStatus } = storeToRefs(presenceStore)
 
 interface LastRoundSnapshot {
   votes: Record<string, number>
-  groups: ResultGroup[]
+  groups: ResultGroup[] | null
   playerVotes: { id: string; name: string; vote: string }[]
   pollQuestion: string | null
   isVotingDeck: boolean
@@ -169,7 +169,7 @@ const isPollDeck = computed(() =>
 
 const alignmentBlocks = computed(() => {
   let votes: Record<string, number>
-  let groups: ResultGroup[]
+  let groups: ResultGroup[] | null
   let deck: string[] | null | undefined
   if (showLastRound.value && lastRound.value && !lastRound.value.isVotingDeck) {
     votes = lastRound.value.votes
@@ -183,7 +183,7 @@ const alignmentBlocks = computed(() => {
     return null
   }
   const blocks: { label: string; value: number }[] = []
-  if (groups.length) {
+  if (groups) {
     for (const group of groups) {
       const value = alignmentScore(group.votes, deck)
       if (value !== null) blocks.push({ label: group.label, value })
@@ -197,7 +197,7 @@ const alignmentBlocks = computed(() => {
 
 const isConsensus = computed(() => {
   if (isPollDeck.value) return false
-  return shouldCelebrate(voteCounts.value, resultGroups.value.map(group => group.votes))
+  return shouldCelebrate(voteCounts.value, resultGroups.value?.map(group => group.votes))
 })
 
 const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown, playDecision } = useCountdown()
@@ -217,8 +217,9 @@ const voteCounts = computed(() => {
 
 const resultCohorts = computed(() => normalizeCohorts(roomState.value?.result_cohorts))
 
-const resultGroups = computed<ResultGroup[]>(() => {
-  if (!roomState.value) return []
+const resultGroups = computed<ResultGroup[] | null>(() => {
+  if (!roomState.value) return null
+  if (!visiblePlayers.value.some(p => p.vote && cohortForShields(p.shields))) return null
   return groupVotesByCohort(visiblePlayers.value, resultCohorts.value).map(group => ({ label: group.key, votes: group.votes }))
 })
 
@@ -319,7 +320,7 @@ watch(() => roomState.value?.phase, (phase, prev) => {
     playersStore.clearPendingVotes()
     pendingSnapshot.value = {
       votes: { ...voteCounts.value },
-      groups: resultGroups.value.map(group => ({ label: group.label, votes: { ...group.votes } })),
+      groups: resultGroups.value?.map(group => ({ label: group.label, votes: { ...group.votes } })) ?? null,
       playerVotes: visiblePlayers.value
         .filter(p => p.vote !== null)
         .map(p => ({ id: p.id, name: p.name, vote: p.vote as string })),

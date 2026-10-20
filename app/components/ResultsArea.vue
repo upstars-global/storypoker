@@ -10,7 +10,7 @@ import type { ResultGroup } from '~/utils/resultCohorts'
 
 const props = defineProps<{
   votes: Record<string, number>
-  groups?: ResultGroup[]
+  groups?: ResultGroup[] | null
   showNewRound: boolean
   pollQuestion?: string | null
   disableCelebration?: boolean
@@ -63,7 +63,7 @@ const showGoalClarityHint = computed(() => {
 })
 
 const groups = computed(() => {
-  if (!props.groups?.length) return [{ label: t('results.general'), votes: props.votes, average: averageOf(props.votes) }]
+  if (!props.groups) return [{ label: t('results.general'), votes: props.votes, average: averageOf(props.votes) }]
   return props.groups.map(group => ({ ...group, average: averageOf(group.votes) }))
 })
 

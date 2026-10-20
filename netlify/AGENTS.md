@@ -13,7 +13,7 @@ Read-only API поверх Supabase. Схема таблиць, з яких чи
 - `GET /api/teams.json` → `{teams:[{room,rounds:[...]}]}` по **всіх** кімнатах у базі
 
 `votes` - per-player знімок раунду (`name`+`vote`+`cohort: 'DEV'|'QA'`, той самий `trendCohorts` спліт, що й
-`devAlignment`/`qaAlignment`; голоси PO/SM/без ролі відсутні, якщо в раунді є DEV/QA-ролі) - додано для round-snapshot drill-down в agilecharts (клік по точці графіка → хто як
+`devAlignment`/`qaAlignment`; голоси PO/SM/кастомних ролей відсутні, якщо в раунді є DEV/QA-голоси; без ролі й ті, хто вийшов, - DEV; `voters` і `average` рахуються з тих самих голосів) - додано для round-snapshot drill-down в agilecharts (клік по точці графіка → хто як
 голосував). Імена гравців тут не ширші за те, що й так видно будь-кому, хто заходить у кімнату; ендпоінт і так
 token-gated.
 

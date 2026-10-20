@@ -34,6 +34,10 @@ describe('resultCelebration', () => {
     expect(shouldCelebrate({}, [{ '5': 2, '8': 1 }, { '8': 1 }])).toBe(false)
   })
 
+  it('does not celebrate votes that every shown group leaves out', () => {
+    expect(shouldCelebrate({ '5': 3 }, [])).toBe(false)
+  })
+
   it('does not celebrate when the only unanimous group has a single voter', () => {
     expect(shouldCelebrate({}, [{}, { '8': 1 }])).toBe(false)
   })

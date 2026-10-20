@@ -44,7 +44,7 @@ type EnrichedSummary = RoundSummary & {
 }
 
 const summaries = computed<EnrichedSummary[]>(() => {
-  const base = rounds.value.map(summarizeRound)
+  const base = rounds.value.map(round => summarizeRound(round, shieldsMap.value))
   return base.map((s, i) => {
     const older = base[i + 1]
     let trend: 'up' | 'down' | 'flat' | null = null

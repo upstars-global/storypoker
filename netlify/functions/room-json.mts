@@ -90,9 +90,16 @@ function isQaPlayer(shields: string[] | null | undefined): boolean {
   return Boolean(shields?.some(id => QA_SHIELDS.has(id)))
 }
 
-// Mirrors trendCohorts() in app/utils/shields.ts: only DEV/BE/FE/SRE and QA roles are estimators;
-// a round where nobody picked such a role counts everyone as DEV.
+// Mirrors trendCohorts() in app/utils/shields.ts: PO/SM and custom roles are not estimators;
+// players without a role, players who left the room and rounds of non-estimators only count as DEV.
 const DEV_ROLE_SHIELDS = new Set(['dev', 'be', 'fe', 'sre'])
+const ROLE_SHIELDS = new Set([...DEV_ROLE_SHIELDS, ...QA_SHIELDS, 'po', 'sm'])
+
+function trendCohortForShields(shields: string[]): 'DEV' | 'QA' | null {
+  if (isQaPlayer(shields)) return 'QA'
+  const role = shields.find(id => ROLE_SHIELDS.has(id) || id.startsWith('custom:'))
+  return !role || DEV_ROLE_SHIELDS.has(role) ? 'DEV' : null
+}
 
 function trendCohorts(
   votes: { player_id: string }[],
@@ -100,9 +107,9 @@ function trendCohorts(
 ): Map<string, 'DEV' | 'QA'> {
   const cohorts = new Map<string, 'DEV' | 'QA'>()
   for (const v of votes) {
-    const shields = shieldsByPlayer.get(v.player_id) ?? []
-    if (isQaPlayer(shields)) cohorts.set(v.player_id, 'QA')
-    else if (shields.some(id => DEV_ROLE_SHIELDS.has(id))) cohorts.set(v.player_id, 'DEV')
+    const shields = shieldsByPlayer.get(v.player_id)
+    const cohort = shields ? trendCohortForShields(shields) : 'DEV'
+    if (cohort) cohorts.set(v.player_id, cohort)
   }
   if (cohorts.size === 0) for (const v of votes) cohorts.set(v.player_id, 'DEV')
   return cohorts
@@ -184,11 +191,12 @@ async function buildRoomPayload(supabase: SupabaseClient, room: RoomRow) {
   const result = ((rounds ?? []) as RoundRow[])
     .filter(r => isNumericPreset(r.deck_preset))
     .map((r) => {
+      const cohorts = trendCohorts(r.votes ?? [], shieldsByPlayer)
+      const estimateVotes = (r.votes ?? []).filter(v => cohorts.has(v.player_id))
       const counts: Record<string, number> = {}
-      for (const v of r.votes ?? []) counts[v.vote] = (counts[v.vote] ?? 0) + 1
+      for (const v of estimateVotes) counts[v.vote] = (counts[v.vote] ?? 0) + 1
       const date = new Date(r.revealed_at as string)
       const { dev, qa } = splitAlignment(r.votes ?? [], shieldsByPlayer, resolveActiveCards(r.active_cards, r.deck_preset))
-      const cohorts = trendCohorts(r.votes ?? [], shieldsByPlayer)
       return {
         id: r.id,
         date: r.revealed_at,
@@ -197,16 +205,13 @@ async function buildRoomPayload(supabase: SupabaseClient, room: RoomRow) {
         average: averageOf(counts),
         devAlignment: dev,
         qaAlignment: qa,
-        voters: (r.votes ?? []).length,
+        voters: estimateVotes.length,
         // Per-player breakdown for consumers wanting "who voted what" drill-down
         // (storypoker's own Alignment Trends modal, agilecharts' round snapshot).
         // Player names are already visible to anyone who joins the room; exposing
         // them here is no wider than that, and this endpoint is already gated by
         // STORYPOKER_API_TOKEN.
-        votes: (r.votes ?? []).flatMap((v) => {
-          const cohort = cohorts.get(v.player_id)
-          return cohort ? [{ name: v.name, vote: v.vote, cohort }] : []
-        }),
+        votes: estimateVotes.map(v => ({ name: v.name, vote: v.vote, cohort: cohorts.get(v.player_id)! })),
       }
     })
     .filter(r => r.average !== null && (r.devAlignment !== null || r.qaAlignment !== null))

@@ -52,6 +52,20 @@ describe('summarizeRound', () => {
     expect(s.isPoll).toBe(false)
   })
 
+  it('leaves PO, SM and custom roles out of the average and alignment', () => {
+    const s = summarizeRound(round({
+      active_cards: ['1', '2', '3', '5', '8', '13'],
+      votes: [
+        { player_id: 'd1', name: 'A', vote: '5' },
+        { player_id: 'gone', name: 'B', vote: '5' },
+        { player_id: 'po', name: 'C', vote: '13' },
+      ],
+    }), new Map([['d1', ['dev']], ['po', ['po']]]))
+    expect(s.counts).toEqual({ '5': 2, '13': 1 })
+    expect(s.average).toBe('5.0')
+    expect(s.alignment).toBe(100)
+  })
+
   it('skips average and alignment for poll decks', () => {
     const s = summarizeRound(round({
       deck_preset: 'vote_question',

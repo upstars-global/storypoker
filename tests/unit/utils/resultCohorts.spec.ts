@@ -25,11 +25,15 @@ describe('cohortForShields', () => {
     expect(cohortForShields(['aqa'])).toBe('QA')
   })
 
-  it('leaves PO, SM, custom roles and no role outside the cohorts', () => {
+  it('leaves PO, SM and custom roles outside the cohorts', () => {
     expect(cohortForShields(['po'])).toBeNull()
     expect(cohortForShields(['sm'])).toBeNull()
     expect(cohortForShields(['custom:Design'])).toBeNull()
-    expect(cohortForShields([])).toBeNull()
+  })
+
+  it('counts players without a role as DEV', () => {
+    expect(cohortForShields([])).toBe('DEV')
+    expect(cohortForShields(null)).toBe('DEV')
   })
 })
 
@@ -42,7 +46,7 @@ describe('groupVotesByCohort', () => {
     { shields: ['aqa'], vote: '8' },
     { shields: ['dev'], vote: '3' },
     { shields: ['po'], vote: '2' },
-    { shields: [], vote: '2' },
+    { shields: ['custom:Design'], vote: '2' },
     { shields: ['sm'], vote: null },
   ]
 
