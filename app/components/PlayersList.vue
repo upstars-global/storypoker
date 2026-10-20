@@ -19,6 +19,7 @@ const props = defineProps<{
   currentUserIsAuthorizedModerator: boolean
   truncateVotes?: boolean
   spinningPlayerIds?: Set<string>
+  hiddenVotePlayerIds?: Set<string>
   slotWinnerId?: string | null
 }>()
 
@@ -56,6 +57,7 @@ const totalCount = computed(() => props.players.length)
         :truncate-votes="truncateVotes"
         :is-spinning-slot="spinningPlayerIds?.has(player.id) ?? false"
         :is-slot-winner="slotWinnerId === player.id"
+        :vote-hidden="hiddenVotePlayerIds?.has(player.id) ?? false"
         @edit="emit('edit', $event)"
         @toggle-moderator="(id: string, val: boolean) => emit('toggleModerator', id, val)"
         @leave="emit('leave', $event)"

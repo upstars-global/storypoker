@@ -18,11 +18,8 @@ function isUnanimous(votes: VoteCounts): boolean {
   return entries.length === 1 && entries[0]![1] >= 2
 }
 
-export function shouldCelebrate(votes: VoteCounts, grouped: {
-  general: VoteCounts
-  qa: VoteCounts
-} | null | undefined): boolean {
-  if (grouped) return isUnanimous(grouped.general) || isUnanimous(grouped.qa)
+export function shouldCelebrate(votes: VoteCounts, groups: readonly VoteCounts[] | null | undefined): boolean {
+  if (groups) return groups.some(isUnanimous)
   return isUnanimous(votes)
 }
 

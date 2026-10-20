@@ -147,6 +147,15 @@ export const useRoomStore = defineStore('room', () => {
       .eq('room_id', roomId.value)
   }
 
+  async function setResultCohorts(cohorts: string[]) {
+    if (!roomId.value) return
+    const { error } = await getSupabase()
+      .from('room_state')
+      .update({ result_cohorts: cohorts })
+      .eq('room_id', roomId.value)
+    if (error) throw error
+  }
+
   async function setAlarm(settings: { minutes?: number; muted?: boolean }) {
     if (!roomId.value) return
     const update: TablesUpdate<'room_state'> = {}
@@ -215,6 +224,7 @@ export const useRoomStore = defineStore('room', () => {
     saveCardDeck,
     setDeckPreset,
     setPollQuestion,
+    setResultCohorts,
     setAlarm,
     create,
     resolveRoom,

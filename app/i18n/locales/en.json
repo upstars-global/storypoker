@@ -126,7 +126,9 @@
       "no": "No"
     },
     "voteQuestionInfo": "Question and answers are configured in the voting area",
-    "alwaysIncluded": "Always included"
+    "alwaysIncluded": "Always included",
+    "resultCohorts": "Show results",
+    "qaCohortHint": "QA, GQA and AQA are always shown as one circle"
   },
   "poll": {
     "thirdCard": "Third card",
@@ -164,11 +166,13 @@
       "PO": "Product Owner",
       "BE": "Backend",
       "FE": "Frontend",
+      "SRE": "Site Reliability Engineering",
       "DEV": "Developer",
       "QA": "Quality Assurance",
       "AQA": "Automated Quality Assurance",
       "GQA": "General Quality Assurance"
-    }
+    },
+    "voteHiddenInResults": "vote is hidden from results"
   },
   "results": {
     "general": "DEV",
