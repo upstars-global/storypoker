@@ -75,6 +75,8 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 - **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300–700;
   **Charts:** `echarts` + `vue-echarts`
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
+- **TypeScript лишається 6.x:** TS 7 (Go-порт) не має JS compiler API, на якому стоїть `scripts/icons/scan.ts`
+  (`ts.createSourceFile`, падає `icons:check`), а peer `typescript-eslint` - `<6.1.0`; мажор від `ncu` не бери
 
 ## Common Commands
 `package.json` - джерело правди для повного списку скриптів. Тут лише неочевидне:
