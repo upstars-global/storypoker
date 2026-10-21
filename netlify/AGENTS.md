@@ -31,3 +31,5 @@ legacy `deck_preset=null`), poll-колоди (`voting`/`vote_question`) і не
 синхронізувати вручну в обох місцях. Споживач - `agilecharts` (сусідній репо, Nuxt), вкладка "Estimation Trends"
 (`app/components/team/TeamConsistencyTrends.vue`).
 
+Функція виходить разом із prod-білдом Netlify з `main`, окремого деплою не треба. Перевірка -
+`netlify api listSiteDeploys` (`commit_ref`, `available_functions`) і живий запит із Bearer-токеном.

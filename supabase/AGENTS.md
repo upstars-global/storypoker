@@ -5,7 +5,10 @@ read-only API поверх них - `netlify/AGENTS.md`.
 
 ## Database
 Міграції в `supabase/migrations/` - нумеровані послідовно, накатуються вручну через Supabase SQL
-Editor або Management API (не CLI-міграції, тож застосований стан бази не виводиться з репо).
+Editor або Management API (`POST /v1/projects/<ref>/database/query` з особистим `sbp_`-токеном з
+`.env/.env.local`; локальний `supabase` CLI цього проєкту не бачить). Історії міграцій у базі немає:
+перед накатом звір стан через `information_schema`, кілька файлів - однією транзакцією, після DDL -
+`notify pgrst, 'reload schema';`.
 Таблиці:
 - `rooms (id text PK, slug text unique, name text, background_url, background_updated_at, background_opacity,
   background_owner_id, created_at)`
@@ -35,8 +38,9 @@ image/png,image/jpeg,image/webp` (як `AVATAR_ACCEPT`); `013` звужує вс
 offline grayscale через CSS filter), а `avatar_style` завжди лишається останнім DiceBear-стилем - fallback і зняття
 картинки повертають саме його. Спека - `docs/specs/2026-08-02-custom-avatar-upload-design.md`.
 
-Фон кімнати (`016`): bucket `room-backgrounds` (public read, 2 MB, лише `image/webp`), чотири політики
-`to authenticated` на єдиний об'єкт `<room_id>/background.webp` існуючої кімнати; запис, оновлення й видалення - лише
+Фон кімнати (`016`; `019` кваліфікує `objects.name` у політиках, бо `name` у підзапиті ловив `rooms.name`):
+bucket `room-backgrounds` (public read, 2 MB, лише `image/webp`), чотири політики `to authenticated` на єдиний
+об'єкт `<room_id>/background.webp` існуючої кімнати; запис, оновлення й видалення - лише
 власнику `rooms.background_owner_id` (перше заливання закріплює фон, тригер `rooms_guard_background` блокує зміну
 власника, `background_url`, `background_opacity` і `background_updated_at` для інших, анонімів теж). `rooms.background_url` обмежений
 check-констрейнтом до `id || '/background.webp'`, `background_updated_at` - кеш-інвалідація `?v=`, `background_opacity` (0.1–1, `null` = 0.65) - непрозорість фону. Модалка дає кадрувати
