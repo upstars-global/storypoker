@@ -14,7 +14,6 @@ export interface RoomBackground {
   background_url: string | null
   background_updated_at: string | null
   background_opacity: number | null
-  background_owner_id: string | null
 }
 
 export interface ResolvedRoom extends RoomBackground {
@@ -228,7 +227,6 @@ export const useRoomStore = defineStore('room', () => {
       background_url: data.background_url ?? null,
       background_updated_at: data.background_updated_at ?? null,
       background_opacity: data.background_opacity ?? null,
-      background_owner_id: data.background_owner_id ?? null,
     }
   }
 
@@ -248,15 +246,8 @@ export const useRoomStore = defineStore('room', () => {
 
   async function uploadBackground(blob: Blob, opacity: number): Promise<Partial<RoomBackground> | null> {
     if (!roomId.value) return null
-    const ownerId = useAuthStore().user?.id
-    if (!ownerId) throw new Error('Sign in to set the room background')
+    if (!useAuthStore().user) throw new Error('Sign in to set the room background')
     const supabase = getSupabase()
-    const { error: claimErr } = await supabase
-      .from('rooms')
-      .update({ background_owner_id: ownerId })
-      .eq('id', roomId.value)
-      .is('background_owner_id', null)
-    if (claimErr) throw claimErr
     const path = `${roomId.value}/background.webp`
     const { error: uploadErr } = await supabase.storage
       .from(BACKGROUND_BUCKET)
@@ -265,7 +256,7 @@ export const useRoomStore = defineStore('room', () => {
     const background = { background_url: path, background_updated_at: new Date().toISOString(), background_opacity: opacity }
     const { error } = await supabase.from('rooms').update(background).eq('id', roomId.value)
     if (error) throw error
-    return { ...background, background_owner_id: ownerId }
+    return background
   }
 
   async function setBackgroundOpacity(opacity: number): Promise<Partial<RoomBackground> | null> {

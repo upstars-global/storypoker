@@ -35,7 +35,6 @@ function fakeRoom(overrides: Partial<ResolvedRoom> = {}): ResolvedRoom {
     background_url: null,
     background_updated_at: null,
     background_opacity: null,
-    background_owner_id: null,
     ...overrides,
   }
 }
@@ -220,18 +219,13 @@ describe('room page results', () => {
 })
 
 describe('room page background permission', () => {
-  it('lets a signed-in moderator edit an unclaimed background', async () => {
+  it('lets any signed-in moderator edit the background', async () => {
     const page = await mountRoom()
     expect(page.findComponent(AppHeader).props('canEditRoomBackground')).toBe(true)
   })
 
-  it('lets the owner edit their own background', async () => {
-    const page = await mountRoom({ room: fakeRoom({ background_owner_id: 'u1' }) })
-    expect(page.findComponent(AppHeader).props('canEditRoomBackground')).toBe(true)
-  })
-
-  it('blocks a moderator from a background another user owns', async () => {
-    const page = await mountRoom({ room: fakeRoom({ background_owner_id: 'u2' }) })
+  it('blocks a signed-in player who is not a moderator', async () => {
+    const page = await mountRoom({ players: [{ ...me, is_moderator: false }] })
     expect(page.findComponent(AppHeader).props('canEditRoomBackground')).toBe(false)
   })
 

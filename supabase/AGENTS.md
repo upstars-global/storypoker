@@ -42,14 +42,16 @@ image/png,image/jpeg,image/webp` (як `AVATAR_ACCEPT`); `013` звужує вс
 offline grayscale через CSS filter), а `avatar_style` завжди лишається останнім DiceBear-стилем - fallback і зняття
 картинки повертають саме його. Спека - `docs/specs/2026-08-02-custom-avatar-upload-design.md`.
 
-Фон кімнати (`016`, політики виправлені в `019`):
+Фон кімнати (`016`, політики виправлені в `019`, власника знято в `020`):
 bucket `room-backgrounds` (public read, 2 MB, лише `image/webp`), чотири політики `to authenticated` на єдиний
-об'єкт `<room_id>/background.webp` існуючої кімнати; запис, оновлення й видалення - лише
-власнику `rooms.background_owner_id` (перше заливання закріплює фон, тригер `rooms_guard_background` блокує зміну
-власника, `background_url`, `background_opacity` і `background_updated_at` для інших, анонімів теж). `rooms.background_url` обмежений
+об'єкт `<room_id>/background.webp` існуючої кімнати; запис, оновлення й видалення - будь-якому залогіненому
+(модераторство - лише клієнтський гейт: `players.is_moderator` і `user_id` пише будь-хто). Тригер
+`rooms_guard_background` блокує анонімам зміну `background_url`, `background_opacity`, `background_updated_at` і
+`background_owner_id`. `background_owner_id` клієнт більше не читає й не пише; колонка лишилась, бо старі клієнти
+ще роблять claim, - її можна дропнути окремою міграцією. `rooms.background_url` обмежений
 check-констрейнтом до `id || '/background.webp'`, `background_updated_at` - кеш-інвалідація `?v=`, `background_opacity` (0.1–1, `null` = 0.65) - непрозорість фону. Модалка дає кадрувати
 (drag/zoom у рамці 16:9), клієнт ріже кадр у WebP ≤ 1920×1080 (`app/utils/backgroundImage.ts`, спільне кодування з аватарками - `imageEncoding.ts`); UI лише для
-authorized moderator - власника фону. Зняття фону, як і аватарки, спершу пише `background_url: null`, файл видаляється best-effort.
+authorized moderator. Зняття фону, як і аватарки, спершу пише `background_url: null`, файл видаляється best-effort.
 `backgroundDisplayUrl()` (`stores/room.ts`) пропускає лише шлях за regex, бо значення йде в CSS `url()`, а `rooms.id`
 може вставити будь-хто.
 
