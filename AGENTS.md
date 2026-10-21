@@ -25,9 +25,8 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
 CI check = `npm run test:ci` - обов'язково перед завершенням будь-якої задачі.
-- **New feature:** `scope-triage` → `plan-crafting` → `inline-plan-dev` (незалежні задачі -
-  `parallel-agents` / `subagent-plan-dev`); за потреби `typescript` · `echarts` · `web-debug`;
-  тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
+- **New feature:** `scope-triage` → `plan-crafting` → `inline-plan-dev`; за потреби `typescript` · `echarts` ·
+  `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verification-gate` → CI check
 - **Bug / regression:** `debugging` → `tdd` → `verification-gate` → CI check
 - **Supabase (DB / Auth / RLS / Storage):** `tdd` → `/security-review` → CI check

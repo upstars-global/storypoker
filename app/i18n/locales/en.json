@@ -100,6 +100,7 @@
     "title": "Timer",
     "roundStartedAgo": "Round started {duration} ago",
     "roundDuration": "Round duration: {duration}",
+    "roundStopped": "Timer stopped after {duration}",
     "reset": "Reset",
     "pause": "Pause",
     "continue": "Continue",
