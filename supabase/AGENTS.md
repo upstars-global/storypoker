@@ -9,10 +9,14 @@ Editor або Management API (`POST /v1/projects/<ref>/database/query` з осо
 `.env/.env.local`; локальний `supabase` CLI цього проєкту не бачить). Історії міграцій у базі немає:
 перед накатом звір стан через `information_schema`, кілька файлів - однією транзакцією, після DDL -
 `notify pgrst, 'reload schema';`.
-RLS перевіряй живою пробою в транзакції з `rollback`: `set local role authenticated`, `set local
-request.jwt.claims` з `sub` потрібного користувача, далі запит як власник і як чужий. У storage-політиках із
-підзапитом до таблиці з колонкою `name` (`rooms`) пиши `objects.name`: некваліфікований `name` береться з таблиці
-підзапиту (так зламався `016`, виправив `019`).
+RLS перевіряй живою пробою, що нічого не лишає: міграцію й перевірки - в один `do`-блок, який закінчується
+`raise exception` з результатами (Management API відкочує все й повертає їх у тексті помилки). Роль і користувач -
+`set_config('role', 'authenticated', true)` і `set_config('request.jwt.claims', ...)` з `sub`, далі запит як
+власник і як чужий (claims до кінця блоку не скидаються: перед запитом як чужий - новий `set_config` з його
+`sub`). Пряме `delete from storage.objects` Storage блокує завжди («Direct deletion from storage tables is not
+allowed»), тож delete-політику так не перевірити - лише через Storage API. У storage-політиках із підзапитом до
+таблиці з колонкою `name` (`rooms`) пиши `objects.name`: некваліфікований `name` береться з таблиці підзапиту
+(так зламався `016`, виправив `019`).
 Таблиці:
 - `rooms (id text PK, slug text unique, name text, background_url, background_updated_at, background_opacity,
   background_owner_id, created_at)`

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { clampAlarmMinutes } from '~/utils/timerAlarm'
+import { clampAlarmMinutes, isRoundTimerStale, ROUND_TIMER_CAP_MS } from '~/utils/timerAlarm'
 
 describe('clampAlarmMinutes', () => {
   it('defaults to 5 minutes when the room has no value yet', () => {
@@ -15,6 +15,33 @@ describe('clampAlarmMinutes', () => {
   })
 })
 
+describe('isRoundTimerStale', () => {
+  const START = new Date('2026-10-12T10:00:00Z').getTime()
+  const state = (overrides: { phase?: 'voting' | 'revealed'; paused_at?: string | null; paused_elapsed_ms?: number } = {}) => ({
+    phase: 'voting' as const,
+    round_started_at: new Date(START).toISOString(),
+    paused_at: null,
+    paused_elapsed_ms: 0,
+    ...overrides,
+  })
+
+  it('is stale once a voting round has run for the cap', () => {
+    expect(isRoundTimerStale(state(), START + ROUND_TIMER_CAP_MS - 1)).toBe(false)
+    expect(isRoundTimerStale(state(), START + ROUND_TIMER_CAP_MS)).toBe(true)
+    expect(isRoundTimerStale(state(), START + 3 * 24 * 60 * 60_000)).toBe(true)
+  })
+
+  it('does not count paused time', () => {
+    const days = START + 3 * 24 * 60 * 60_000
+    expect(isRoundTimerStale(state({ paused_at: new Date(START + 60_000).toISOString() }), days)).toBe(false)
+    expect(isRoundTimerStale(state({ paused_elapsed_ms: 30 * 60_000 }), START + ROUND_TIMER_CAP_MS)).toBe(false)
+  })
+
+  it('leaves revealed rounds alone', () => {
+    expect(isRoundTimerStale(state({ phase: 'revealed' }), START + 3 * 24 * 60 * 60_000)).toBe(false)
+  })
+})
+
 describe('alarm audio', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
@@ -23,6 +50,7 @@ describe('alarm audio', () => {
 
   function stubAudioContext(state: AudioContextState) {
     const resume = vi.fn(() => Promise.resolve())
+    const createOscillator = vi.fn(() => node())
     const node = () => ({
       type: '',
       frequency: { value: 0 },
@@ -32,16 +60,23 @@ describe('alarm audio', () => {
       stop: vi.fn(),
     })
     const AudioContextStub = vi.fn(function (this: Record<string, unknown>) {
-      Object.assign(this, { state, currentTime: 0, destination: {}, resume, createOscillator: node, createGain: node })
+      Object.assign(this, { state, currentTime: 0, destination: {}, resume, createOscillator, createGain: node })
     })
     vi.stubGlobal('AudioContext', AudioContextStub)
-    return { resume, AudioContextStub }
+    return { resume, AudioContextStub, createOscillator }
   }
+
+  it('plays as many beeps as asked', async () => {
+    const { createOscillator } = stubAudioContext('running')
+    const { playAlarmChime } = await import('~/utils/timerAlarm')
+    playAlarmChime(2)
+    expect(createOscillator).toHaveBeenCalledTimes(2)
+  })
 
   it('resumes a suspended context before the chime', async () => {
     const { resume } = stubAudioContext('suspended')
     const { playAlarmChime } = await import('~/utils/timerAlarm')
-    playAlarmChime()
+    playAlarmChime(1)
     expect(resume).toHaveBeenCalledTimes(1)
   })
 
@@ -49,7 +84,7 @@ describe('alarm audio', () => {
     const { resume, AudioContextStub } = stubAudioContext('suspended')
     const { unlockAlarmAudio, playAlarmChime } = await import('~/utils/timerAlarm')
     unlockAlarmAudio()
-    playAlarmChime()
+    playAlarmChime(1)
     expect(AudioContextStub).toHaveBeenCalledTimes(1)
     expect(resume).toHaveBeenCalledTimes(2)
   })

@@ -14,7 +14,7 @@ const i18n = createI18n({
   locale: 'en',
   missingWarn: false,
   fallbackWarn: false,
-  messages: { en: { timer: { roundDuration: 'Round duration: {duration}' } } },
+  messages: { en: { timer: { roundDuration: 'Round duration: {duration}', roundStopped: 'Round stopped after {duration}' } } },
 })
 
 const START = new Date('2026-10-12T10:00:00Z').getTime()
@@ -44,6 +44,10 @@ function blinking(wrapper: ReturnType<typeof mountTimer>) {
   return wrapper.get('[data-testid="timer-widget"]').classes().includes('timer-alarm-blink')
 }
 
+function blinkCount(wrapper: ReturnType<typeof mountTimer>) {
+  return wrapper.get<HTMLElement>('[data-testid="timer-widget"]').element.style.getPropertyValue('--alarm-blinks')
+}
+
 describe('Timer alarm', () => {
   beforeEach(() => {
     playAlarmChime.mockClear()
@@ -51,20 +55,20 @@ describe('Timer alarm', () => {
   })
   afterEach(() => vi.useRealTimers())
 
-  it('blinks the whole widget, rings and pauses once the interval elapses', async () => {
+  it('blinks the whole widget and rings once the interval elapses, without pausing the timer', async () => {
     vi.setSystemTime(START + THREE_MIN - 2000)
     const wrapper = mountTimer()
     await vi.advanceTimersByTimeAsync(1000)
     expect(blinking(wrapper)).toBe(false)
     await vi.advanceTimersByTimeAsync(1000)
     expect(blinking(wrapper)).toBe(true)
-    expect(playAlarmChime).toHaveBeenCalledTimes(1)
-    expect(wrapper.emitted('pause')).toHaveLength(1)
+    expect(playAlarmChime).toHaveBeenCalledWith(1)
+    expect(wrapper.emitted('pause')).toBeUndefined()
     await wrapper.get('[data-testid="timer-widget"]').trigger('animationend')
     expect(blinking(wrapper)).toBe(false)
   })
 
-  it('stays silent when muted and leaves pausing to moderators', async () => {
+  it('stays silent when muted', async () => {
     vi.setSystemTime(START + THREE_MIN - 500)
     const wrapper = mountTimer({ canControl: false, alarmMuted: true })
     await vi.advanceTimersByTimeAsync(1000)
@@ -73,19 +77,38 @@ describe('Timer alarm', () => {
     expect(wrapper.emitted('pause')).toBeUndefined()
   })
 
-  it('fires again one interval after play resumes the timer', async () => {
+  it('rings one, two, then three beeps on the first three intervals and stays quiet after', async () => {
     vi.setSystemTime(START + THREE_MIN - 500)
     const wrapper = mountTimer()
     await vi.advanceTimersByTimeAsync(1000)
-    const pausedAt = new Date(Date.now()).toISOString()
-    await wrapper.setProps({ pausedAt })
+    expect(playAlarmChime).toHaveBeenLastCalledWith(1)
+    expect(blinkCount(wrapper)).toBe('1')
+    await vi.advanceTimersByTimeAsync(THREE_MIN - 2000)
+    expect(playAlarmChime).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(playAlarmChime).toHaveBeenLastCalledWith(2)
+    expect(blinkCount(wrapper)).toBe('2')
+    await vi.advanceTimersByTimeAsync(THREE_MIN)
+    expect(playAlarmChime).toHaveBeenLastCalledWith(3)
+    expect(blinkCount(wrapper)).toBe('3')
+    await wrapper.get('[data-testid="timer-widget"]').trigger('animationend')
+    await vi.advanceTimersByTimeAsync(2 * THREE_MIN)
+    expect(playAlarmChime).toHaveBeenCalledTimes(3)
+    expect(blinking(wrapper)).toBe(false)
+    expect(wrapper.emitted('pause')).toBeUndefined()
+  })
+
+  it('fires again one interval after a manual pause is resumed', async () => {
+    vi.setSystemTime(START + THREE_MIN - 500)
+    const wrapper = mountTimer()
+    await vi.advanceTimersByTimeAsync(1000)
+    await wrapper.setProps({ pausedAt: new Date(Date.now()).toISOString() })
     await vi.advanceTimersByTimeAsync(30_000)
     await wrapper.setProps({ pausedAt: null, pausedElapsedMs: 30_000 })
     await vi.advanceTimersByTimeAsync(THREE_MIN - 2000)
     expect(playAlarmChime).toHaveBeenCalledTimes(1)
     await vi.advanceTimersByTimeAsync(2000)
     expect(playAlarmChime).toHaveBeenCalledTimes(2)
-    expect(wrapper.emitted('pause')).toHaveLength(2)
   })
 
   it('rings once on a lagging clock when the pause crosses the interval, not again after play', async () => {
@@ -101,6 +124,17 @@ describe('Timer alarm', () => {
     await vi.advanceTimersByTimeAsync(3000)
     expect(playAlarmChime).toHaveBeenCalledTimes(1)
     expect(wrapper.emitted('pause')).toBeUndefined()
+  })
+
+  it('stops counting at one hour and stays silent past it', async () => {
+    const ONE_HOUR = 60 * 60_000
+    vi.setSystemTime(START + ONE_HOUR - 1500)
+    const wrapper = mountTimer({ alarmMinutes: 7 })
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(wrapper.text()).toContain('Round stopped after 1h 0m 0s')
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    expect(wrapper.text()).toContain('Round stopped after 1h 0m 0s')
+    expect(playAlarmChime).not.toHaveBeenCalled()
   })
 
   it('does not fire right away when the interval is shortened mid-round', async () => {

@@ -33,7 +33,7 @@ import PlayersList from '~/components/PlayersList.vue'
 import AlignmentCard from '~/components/AlignmentCard.vue'
 import { alignmentScore } from '~/utils/alignment'
 import Timer from '~/components/Timer.vue'
-import type { AlarmSettings } from '~/utils/timerAlarm'
+import { isRoundTimerStale, type AlarmSettings } from '~/utils/timerAlarm'
 import SlotMachine from '~/components/SlotMachine.vue'
 import CardsArea from '~/components/CardsArea.vue'
 import ResultsArea from '~/components/ResultsArea.vue'
@@ -329,6 +329,14 @@ watch(connectionStatus, async (next, prev) => {
   if (prev === 'reconnecting' && next === 'online') {
     await fetchInitialData()
   }
+})
+
+watch(onlineCount, (count, prev) => {
+  const state = roomState.value
+  if (count <= 1 || count <= prev || !state || !isRoundTimerStale(state, Date.now())) return
+  roomStore.resetTimer(state.round_started_at)
+    .then(fetchInitialData)
+    .catch(error => console.error('[timer] stale round reset failed:', error))
 })
 
 watch([currentRoomName, currentSlug, () => currentPlayer.value?.name], () => {

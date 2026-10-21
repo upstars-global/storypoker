@@ -112,9 +112,9 @@ export const useRoomStore = defineStore('room', () => {
     playersStore.clearPendingVotes()
   }
 
-  async function resetTimer() {
+  async function resetTimer(expectedStartedAt?: string) {
     if (!roomId.value) return
-    await getSupabase()
+    const query = getSupabase()
       .from('room_state')
       .update({
         round_started_at: new Date().toISOString(),
@@ -122,6 +122,10 @@ export const useRoomStore = defineStore('room', () => {
         paused_elapsed_ms: 0,
       })
       .eq('room_id', roomId.value)
+    const { error } = await (expectedStartedAt
+      ? query.eq('round_started_at', expectedStartedAt).eq('phase', 'voting')
+      : query)
+    if (error) throw error
   }
 
   async function pauseTimer() {

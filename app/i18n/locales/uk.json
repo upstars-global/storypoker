@@ -100,6 +100,7 @@
     "title": "Таймер",
     "roundStartedAgo": "Раунд розпочато {duration} тому",
     "roundDuration": "Тривалість раунду: {duration}",
+    "roundStopped": "Таймер зупинено після {duration}",
     "reset": "Скинути",
     "pause": "Пауза",
     "continue": "Продовжити",
