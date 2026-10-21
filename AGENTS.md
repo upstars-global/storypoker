@@ -97,7 +97,10 @@ Supabase-кредами) на кожен run; `e2e` - тільки коли за
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "npm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
-`cr-request` і один раз коментує від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`).
+`cr-request` і один раз коментує від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
+хід і підсумок - commit status `Claude review` на head PR. Правки воркфлоу діють лише після злиття
+(`workflow_run` бере копію з `main`). Повторне рев'ю: маркер старого коментаря заміни на
+`<!-- claude-review-superseded -->` і перезапусти CI або пушни.
 Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
 прогоном `Claude review` і коментарем `so-upstars` з `<!-- claude-review -->` на PR.
 
