@@ -387,7 +387,8 @@ async function fetchInitialData() {
   playersStore.players = (pData ?? []) as Player[]
   roomStore.roomState = (sData ?? null) as RoomState | null
   if (roomStore.roomState && isRoundTimerStale(roomStore.roomState, Date.now())) {
-    await roomStore.resetTimer().catch(error => console.error('[timer] stale round reset failed:', error))
+    await roomStore.resetTimer(roomStore.roomState.round_started_at)
+      .catch(error => console.error('[timer] stale round reset failed:', error))
   }
   const ids = (pData ?? []).map(p => p.user_id).filter((id): id is string => Boolean(id))
   if (user.value?.id) ids.push(user.value.id)

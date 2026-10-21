@@ -160,6 +160,7 @@ describe('room page timer', () => {
     const resetTimer = vi.spyOn(useRoomStore(), 'resetTimer').mockResolvedValue()
     await mountRoom({ state: fakeState({ phase: 'voting' }) })
     expect(resetTimer).toHaveBeenCalledTimes(1)
+    expect(resetTimer).toHaveBeenCalledWith('2026-10-21T00:00:00Z')
   })
 
   it('keeps a fresh voting round timer and a revealed round untouched', async () => {
