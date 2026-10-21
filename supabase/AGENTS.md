@@ -38,8 +38,9 @@ image/png,image/jpeg,image/webp` (як `AVATAR_ACCEPT`); `013` звужує вс
 offline grayscale через CSS filter), а `avatar_style` завжди лишається останнім DiceBear-стилем - fallback і зняття
 картинки повертають саме його. Спека - `docs/specs/2026-08-02-custom-avatar-upload-design.md`.
 
-Фон кімнати (`016`): bucket `room-backgrounds` (public read, 2 MB, лише `image/webp`), чотири політики
-`to authenticated` на єдиний об'єкт `<room_id>/background.webp` існуючої кімнати; запис, оновлення й видалення - лише
+Фон кімнати (`016`; `019` кваліфікує `objects.name` у політиках, бо `name` у підзапиті ловив `rooms.name`):
+bucket `room-backgrounds` (public read, 2 MB, лише `image/webp`), чотири політики `to authenticated` на єдиний
+об'єкт `<room_id>/background.webp` існуючої кімнати; запис, оновлення й видалення - лише
 власнику `rooms.background_owner_id` (перше заливання закріплює фон, тригер `rooms_guard_background` блокує зміну
 власника, `background_url`, `background_opacity` і `background_updated_at` для інших, анонімів теж). `rooms.background_url` обмежений
 check-констрейнтом до `id || '/background.webp'`, `background_updated_at` - кеш-інвалідація `?v=`, `background_opacity` (0.1–1, `null` = 0.65) - непрозорість фону. Модалка дає кадрувати
