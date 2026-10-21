@@ -387,17 +387,15 @@ describe('roomStore background', () => {
     return { bucket, update, eq, is, client }
   }
 
-  it('claims an unowned room background for the signed-in user before uploading', async () => {
-    const { bucket, update, eq, is, client } = fakeClient()
+  it('replaces a background without claiming ownership of it', async () => {
+    const { update, is, client } = fakeClient()
     setSupabase(asSupabase(client))
     const store = useRoomStore()
     store.roomId = 'r1'
     const result = await store.uploadBackground(new Blob(['x'], { type: 'image/webp' }), 0.5)
-    expect(update.mock.calls[0]![0]).toEqual({ background_owner_id: 'u1' })
-    expect(eq.mock.calls[0]).toEqual(['id', 'r1'])
-    expect(is).toHaveBeenCalledWith('background_owner_id', null)
-    expect(update.mock.invocationCallOrder[0]!).toBeLessThan(bucket.upload.mock.invocationCallOrder[0]!)
-    expect(result?.background_owner_id).toBe('u1')
+    expect(update.mock.calls.map(([row]) => Object.keys(row))).toEqual([['background_url', 'background_updated_at', 'background_opacity']])
+    expect(is).not.toHaveBeenCalled()
+    expect(result).not.toHaveProperty('background_owner_id')
   })
 
   it('refuses to upload without a signed-in user', async () => {
@@ -420,9 +418,9 @@ describe('roomStore background', () => {
     expect(client.storage.from).toHaveBeenCalledWith('room-backgrounds')
     expect(bucket.upload).toHaveBeenCalledWith('r1/background.webp', blob, { upsert: true, contentType: 'image/webp' })
     expect(client.from).toHaveBeenCalledWith('rooms')
-    expect(update.mock.calls[1]![0].background_url).toBe('r1/background.webp')
-    expect(update.mock.calls[1]![0].background_updated_at).toBeTruthy()
-    expect(update.mock.calls[1]![0].background_opacity).toBe(0.5)
+    expect(update.mock.calls[0]![0].background_url).toBe('r1/background.webp')
+    expect(update.mock.calls[0]![0].background_updated_at).toBeTruthy()
+    expect(update.mock.calls[0]![0].background_opacity).toBe(0.5)
     expect(eq).toHaveBeenCalledWith('id', 'r1')
     expect(result?.background_url).toBe('r1/background.webp')
   })
@@ -434,7 +432,7 @@ describe('roomStore background', () => {
     const store = useRoomStore()
     store.roomId = 'r1'
     await expect(store.uploadBackground(new Blob(), 0.65)).rejects.toThrow('denied')
-    expect(update.mock.calls.map(([row]) => Object.keys(row))).toEqual([['background_owner_id']])
+    expect(update).not.toHaveBeenCalled()
   })
 
   it('updates only the opacity', async () => {
@@ -496,7 +494,6 @@ describe('roomStore.resolveRoom', () => {
     setSupabase(asSupabase(client))
     expect(await useRoomStore().resolveRoom('r1')).toEqual({
       id: 'r1', slug: null, name: 'Team', background_url: null, background_updated_at: null, background_opacity: null,
-      background_owner_id: null,
     })
   })
 

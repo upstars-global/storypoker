@@ -86,7 +86,7 @@ const roomNameError = ref<string | null>(null)
 const currentSlug = ref<string | null>(null)
 const currentRoomName = ref<string | null>(null)
 const showRoomBackground = ref(false)
-const roomBackground = ref<RoomBackground>({ background_url: null, background_updated_at: null, background_opacity: null, background_owner_id: null })
+const roomBackground = ref<RoomBackground>({ background_url: null, background_updated_at: null, background_opacity: null })
 const roomBackgroundUrl = computed(() => {
   const { background_url, background_updated_at } = roomBackground.value
   return background_url ? backgroundDisplayUrl(background_url, background_updated_at) : null
@@ -132,8 +132,6 @@ const { t } = useI18n()
 const currentPlayer = computed(() => visiblePlayers.value.find(p => p.id === currentPlayerId.value) ?? null)
 const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
 const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
-const canEditRoomBackground = computed(() => isAuthorizedModerator.value
-  && (!roomBackground.value.background_owner_id || roomBackground.value.background_owner_id === user.value?.id))
 const onlineCount = computed(() => visiblePlayers.value.filter(p => online.value.has(p.id)).length)
 
 const lastRoundVoteMap = computed(() => {
@@ -283,7 +281,6 @@ onMounted(async () => {
     background_url: resolved.background_url,
     background_updated_at: resolved.background_updated_at,
     background_opacity: resolved.background_opacity,
-    background_owner_id: resolved.background_owner_id,
   }
   roomId = resolved.id
   roomStore.roomId = roomId
@@ -418,7 +415,6 @@ function subscribeRealtime() {
           background_url: row.background_url,
           background_updated_at: row.background_updated_at,
           background_opacity: row.background_opacity ?? null,
-          background_owner_id: row.background_owner_id ?? null,
         }
         if (row.slug && route.params.slug !== row.slug) {
           router.replace(`/${row.slug}`)
@@ -719,7 +715,7 @@ async function submitRenameRoom() {
     <AppHeader
       :online-count="onlineCount"
       :is-moderator="isModerator"
-      :can-edit-room-background="canEditRoomBackground"
+      :can-edit-room-background="isAuthorizedModerator"
       :player-name="currentPlayer?.name ?? headerSeed.playerName"
       :player-user-id="currentPlayer?.user_id ?? null"
       :room-name="currentRoomName ?? currentSlug ?? headerSeed.roomName"
@@ -892,7 +888,7 @@ async function submitRenameRoom() {
       @close="showAccountSettings = false"
     />
     <RoomBackgroundModal
-      v-if="showRoomBackground && canEditRoomBackground"
+      v-if="showRoomBackground && isAuthorizedModerator"
       :current-url="roomBackgroundUrl"
       :current-opacity="roomBackground.background_opacity"
       @saved="(background: Partial<RoomBackground>) => roomBackground = { ...roomBackground, ...background }"

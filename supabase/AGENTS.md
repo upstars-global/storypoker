@@ -9,6 +9,10 @@ Editor або Management API (`POST /v1/projects/<ref>/database/query` з осо
 `.env/.env.local`; локальний `supabase` CLI цього проєкту не бачить). Історії міграцій у базі немає:
 перед накатом звір стан через `information_schema`, кілька файлів - однією транзакцією, після DDL -
 `notify pgrst, 'reload schema';`.
+RLS перевіряй живою пробою в транзакції з `rollback`: `set local role authenticated`, `set local
+request.jwt.claims` з `sub` потрібного користувача, далі запит як власник і як чужий. У storage-політиках із
+підзапитом до таблиці з колонкою `name` (`rooms`) пиши `objects.name`: некваліфікований `name` береться з таблиці
+підзапиту (так зламався `016`, виправив `019`).
 Таблиці:
 - `rooms (id text PK, slug text unique, name text, background_url, background_updated_at, background_opacity,
   background_owner_id, created_at)`
@@ -38,14 +42,16 @@ image/png,image/jpeg,image/webp` (як `AVATAR_ACCEPT`); `013` звужує вс
 offline grayscale через CSS filter), а `avatar_style` завжди лишається останнім DiceBear-стилем - fallback і зняття
 картинки повертають саме його. Спека - `docs/specs/2026-08-02-custom-avatar-upload-design.md`.
 
-Фон кімнати (`016`; `019` кваліфікує `objects.name` у політиках, бо `name` у підзапиті ловив `rooms.name`):
+Фон кімнати (`016`, політики виправлені в `019`, власника знято в `020`):
 bucket `room-backgrounds` (public read, 2 MB, лише `image/webp`), чотири політики `to authenticated` на єдиний
-об'єкт `<room_id>/background.webp` існуючої кімнати; запис, оновлення й видалення - лише
-власнику `rooms.background_owner_id` (перше заливання закріплює фон, тригер `rooms_guard_background` блокує зміну
-власника, `background_url`, `background_opacity` і `background_updated_at` для інших, анонімів теж). `rooms.background_url` обмежений
+об'єкт `<room_id>/background.webp` існуючої кімнати; запис, оновлення й видалення - будь-якому залогіненому
+(модераторство - лише клієнтський гейт: `players.is_moderator` і `user_id` пише будь-хто). Тригер
+`rooms_guard_background` блокує анонімам зміну `background_url`, `background_opacity`, `background_updated_at` і
+`background_owner_id`. `background_owner_id` клієнт більше не читає й не пише; колонка лишилась, бо старі клієнти
+ще роблять claim, - її можна дропнути окремою міграцією. `rooms.background_url` обмежений
 check-констрейнтом до `id || '/background.webp'`, `background_updated_at` - кеш-інвалідація `?v=`, `background_opacity` (0.1–1, `null` = 0.65) - непрозорість фону. Модалка дає кадрувати
 (drag/zoom у рамці 16:9), клієнт ріже кадр у WebP ≤ 1920×1080 (`app/utils/backgroundImage.ts`, спільне кодування з аватарками - `imageEncoding.ts`); UI лише для
-authorized moderator - власника фону. Зняття фону, як і аватарки, спершу пише `background_url: null`, файл видаляється best-effort.
+authorized moderator. Зняття фону, як і аватарки, спершу пише `background_url: null`, файл видаляється best-effort.
 `backgroundDisplayUrl()` (`stores/room.ts`) пропускає лише шлях за regex, бо значення йде в CSS `url()`, а `rooms.id`
 може вставити будь-хто.
 
