@@ -133,6 +133,8 @@ jobs:
             to that file. The body must start with the line `<!-- claude-review -->` and contain the reviewed range,
             the four verdicts, the findings with severity and location, optional suggestions, and review gaps.
             The body must end with the line `Reviewed with: review-request skill`.
+          claude_args: >-
+            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
 
       - name: Verify review comment
         env:
@@ -143,5 +145,3 @@ jobs:
             --jq '.[] | select(.user.login == "so-upstars") | .body' \
             | grep -qF 'Reviewed with: review-request skill' \
             || { echo "No review comment made with the review-request skill"; exit 1; }
-          claude_args: >-
-            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
