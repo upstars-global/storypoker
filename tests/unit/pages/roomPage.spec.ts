@@ -10,7 +10,7 @@ import CardsArea from '~/components/CardsArea.vue'
 import HistoryModal from '~/components/HistoryModal.vue'
 import PlayersList from '~/components/PlayersList.vue'
 import ResultsArea from '~/components/ResultsArea.vue'
-import { setSupabase, resetSupabase } from '~/lib/supabase-instance'
+import { getSupabase, setSupabase, resetSupabase } from '~/lib/supabase-instance'
 import { useAuthStore } from '~/stores/auth'
 import { useRoomStore, type ResolvedRoom } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
@@ -166,9 +166,26 @@ describe('room page timer', () => {
     await mountRoom({ state: fakeState({ phase: 'voting' }) })
     await setOnline(['me'])
     expect(resetTimer).not.toHaveBeenCalled()
+    const from = vi.spyOn(getSupabase(), 'from')
     await setOnline(['me', 'alice'])
     expect(resetTimer).toHaveBeenCalledTimes(1)
     expect(resetTimer).toHaveBeenCalledWith('2026-10-21T00:00:00Z')
+    expect(from).toHaveBeenCalledWith('room_state')
+  })
+
+  it('does not restart on room state changes while nobody new comes online', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-21T00:30:00Z'))
+    const resetTimer = vi.spyOn(useRoomStore(), 'resetTimer').mockResolvedValue()
+    await mountRoom({ state: fakeState({ phase: 'voting' }) })
+    await setOnline(['me', 'alice'])
+    vi.setSystemTime(new Date('2026-10-21T01:30:00Z'))
+    useRoomStore().roomState = fakeState({ phase: 'voting', paused_at: '2026-10-21T01:30:00Z' })
+    await flushPromises()
+    await setOnline(['me'])
+    expect(resetTimer).not.toHaveBeenCalled()
+    await setOnline(['me', 'alice', 'bob'])
+    expect(resetTimer).toHaveBeenCalledTimes(1)
   })
 
   it('keeps a fresh voting round timer and a revealed round untouched', async () => {

@@ -122,7 +122,10 @@ export const useRoomStore = defineStore('room', () => {
         paused_elapsed_ms: 0,
       })
       .eq('room_id', roomId.value)
-    await (expectedStartedAt ? query.eq('round_started_at', expectedStartedAt) : query)
+    const { error } = await (expectedStartedAt
+      ? query.eq('round_started_at', expectedStartedAt).eq('phase', 'voting')
+      : query)
+    if (error) throw error
   }
 
   async function pauseTimer() {

@@ -331,12 +331,11 @@ watch(connectionStatus, async (next, prev) => {
   }
 })
 
-watch(() => {
+watch(onlineCount, (count, prev) => {
   const state = roomState.value
-  return onlineCount.value > 1 && state !== null && isRoundTimerStale(state, Date.now())
-}, (stale) => {
-  if (!stale || !roomState.value) return
-  roomStore.resetTimer(roomState.value.round_started_at)
+  if (count <= 1 || count <= prev || !state || !isRoundTimerStale(state, Date.now())) return
+  roomStore.resetTimer(state.round_started_at)
+    .then(fetchInitialData)
     .catch(error => console.error('[timer] stale round reset failed:', error))
 })
 

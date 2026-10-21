@@ -237,7 +237,7 @@ describe('roomStore timer actions', () => {
     expect(typeof arg.round_started_at).toBe('string')
   })
 
-  it('resetTimer(expectedStartedAt) only resets the round it was asked about', async () => {
+  it('resetTimer(expectedStartedAt) only resets the voting round it was asked about', async () => {
     const filters: [string, unknown][] = []
     const builder = {
       eq: vi.fn((column: string, value: unknown) => { filters.push([column, value]); return builder }),
@@ -248,7 +248,17 @@ describe('roomStore timer actions', () => {
     store.roomId = 'r1'
     store.roomState = fakeRoomState()
     await store.resetTimer('2026-10-21T00:00:00+00:00')
-    expect(filters).toEqual([['room_id', 'r1'], ['round_started_at', '2026-10-21T00:00:00+00:00']])
+    expect(filters).toEqual([['room_id', 'r1'], ['round_started_at', '2026-10-21T00:00:00+00:00'], ['phase', 'voting']])
+  })
+
+  it('resetTimer() rejects when the update fails', async () => {
+    const failure = { message: 'denied' }
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: failure }) })
+    setSupabase(asSupabase({ from: () => ({ update }) }))
+    const store = useRoomStore()
+    store.roomId = 'r1'
+    store.roomState = fakeRoomState()
+    await expect(store.resetTimer()).rejects.toBe(failure)
   })
 
   it('pauseTimer() sets paused_at when not paused', async () => {
