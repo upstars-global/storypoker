@@ -25,14 +25,13 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
 CI check = `npm run test:ci` - обов'язково перед завершенням будь-якої задачі.
-- **New feature:** `scope-triage` → `plan-crafting` → `inline-plan-dev` (незалежні задачі -
-  `parallel-agents` / `subagent-plan-dev`); за потреби `typescript` · `echarts` · `web-debug`;
-  тести - `tdd` + `vitest` і/або `web-debug`; фініш - `review-request` →
+- **New feature:** `scope-triage` → `plan-crafting` → `inline-plan-dev`; за потреби `typescript` · `echarts` ·
+  `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verification-gate` → CI check
 - **Bug / regression:** `debugging` → `tdd` → `verification-gate` → CI check
 - **Supabase (DB / Auth / RLS / Storage):** `tdd` → `/security-review` → CI check
 - **Refactoring:** `scope-triage` → `tdd` → CI check
-- **Received code review:** `review-resolution` → (fixes) → `verification-gate` → CI check
+- **Received code review:** `cr-received` → (fixes) → `verification-gate` → CI check
 - **Prose (docs, README, UI copy, commits):** `dashfix` · `negafix`
 - **Закриття гілки:** `branch-finish`
 
@@ -75,6 +74,8 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 - **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300–700;
   **Charts:** `echarts` + `vue-echarts`
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
+- **TypeScript лишається 6.x:** TS 7 (Go-порт) не має JS compiler API, на якому стоїть `scripts/icons/scan.ts`
+  (`ts.createSourceFile`, падає `icons:check`), а peer `typescript-eslint` - `<6.1.0`; мажор від `ncu` не бери
 
 ## Common Commands
 `package.json` - джерело правди для повного списку скриптів. Тут лише неочевидне:
@@ -94,6 +95,15 @@ CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`
 Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "npm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
+`.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
+`cr-request` і один раз лишає PR review від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
+хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
+`so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
+(копія з `main`), для `review_requested` - одразу з гілки PR.
+Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
+прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review -->`. GitHub не дає запросити рев'ю в
+автора PR, а агент тут відкриває PR від `so-upstars` (`GH_ACC`): шлях `review_requested` перевіряй на PR
+іншого акаунта.
 
 ## Environment Setup
 `package-lock.json` - committed (required for `npm ci`). Do NOT add it back to `.gitignore`.
@@ -133,17 +143,23 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - **Player:** vote, rename self, set own shields, leave room, **toggle own moderator flag** (self-promote/demote -
   доступно будь-кому, не лише поточному модератору); history/trends/theme/language/widget/slot - без ролевих обмежень
 - **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
-  start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s) - усе
-  гейтиться `v-if="isModerator"` в `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
-- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, rename other players + set їхні shields.
+  start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s),
+  будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `v-if="isModerator"` в
+  `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
+- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
   Детальна матриця - `DESIGN.md` §11.1–11.2
 - **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.vue` (спільний селектор у
   JoinOverlay+PlayerEditModal) на базі `RoleBadge.vue` (те саме відображення у PlayerRow) і пишеться як один shield у
   `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи
-  role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` виводить QA-гравців в
-  окрему пилу
-- **Consensus:** салют + decision-sound при одноголосності з ≥ 2 голосами: з QA-розщепленням - хоча б в одній
-  групі (DEV/QA), без нього - серед усіх голосів. Деталі - `app/utils/AGENTS.md`
+  role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` дає DEV/QA-спліт
+  для історії, трендів і API
+- **Кола результатів:** після reveal - коло на когорту DEV/BE/FE/SRE/QA (QA = QA+GQA+AQA, завжди показується),
+  набір - чіпи «Показувати результати» в «Налаштувати колоду» (`room_state.result_cohorts`, `null` = DEV+QA). DEV увімкнено
+  - загальне коло: вимкнені BE/FE/SRE зливаються в нього; DEV вимкнено - голоси DEV і вимкнених ролей приховані, бейдж
+  червоний. PO/SM і кастомні - поза колами й трендами; без ролі й ті, хто вийшов, - DEV; у трендах усі розробники - один DEV
+  (`resultCohortFor()` у `resultCohorts.ts`, `trendCohorts()` у `shields.ts`)
+- **Consensus:** салют + decision-sound, коли хоча б одне коло результатів одноголосне з ≥ 2 голосами. Деталі -
+  `app/utils/AGENTS.md`
 
 ## Code Style
 - Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline

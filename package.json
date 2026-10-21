@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@iconify-json/ic": "^1.2.4",
-    "@iconify-json/lucide": "^1.2.145",
+    "@iconify-json/lucide": "^1.2.147",
     "@iconify-json/tabler": "^1.2.42",
     "@iconify/types": "^2.0.0",
     "@iconify/utils": "^3.1.7",
@@ -51,10 +51,10 @@
     "dotenv": "^18.0.8",
     "eslint": "^10.13.0",
     "eslint-plugin-vue": "^10.11.1",
-    "happy-dom": "^21.0.3",
+    "happy-dom": "^21.0.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
+    "vite": "^8.3.5",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.5",
     "vue-eslint-parser": "^10.4.1",
@@ -69,7 +69,7 @@
     "v-wave": "^3.1.1",
     "vue": "^3.5.44",
     "vue-echarts": "^8.3.2",
-    "vue-i18n": "^11.4.14",
+    "vue-i18n": "^11.4.16",
     "vue-router": "^5.4.0"
   },
   "engines": {

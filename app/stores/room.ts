@@ -3,9 +3,32 @@ import { ref } from 'vue'
 import { getSupabase } from '~/lib/supabase-instance'
 import { getDeck, type DeckPresetId } from '~/utils/cardDecks'
 import { usePlayersStore } from './players'
+import { useAuthStore } from './auth'
 import type { RoomState, RoundHistory, RoundHistoryVote } from './types'
 import type { Json, TablesInsert, TablesUpdate } from '~/lib/database.types'
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+
+const BACKGROUND_BUCKET = 'room-backgrounds'
+
+export interface RoomBackground {
+  background_url: string | null
+  background_updated_at: string | null
+  background_opacity: number | null
+}
+
+export interface ResolvedRoom extends RoomBackground {
+  id: string
+  slug: string | null
+  name: string | null
+}
+
+const BACKGROUND_PATH_PATTERN = /^[A-Za-z0-9-]+\/background\.webp$/
+
+export function backgroundDisplayUrl(path: string, updatedAt: string | null): string | null {
+  if (!BACKGROUND_PATH_PATTERN.test(path)) return null
+  const { publicUrl } = getSupabase().storage.from(BACKGROUND_BUCKET).getPublicUrl(path).data
+  return `${publicUrl}?v=${encodeURIComponent(updatedAt ?? '')}`
+}
 
 export const useRoomStore = defineStore('room', () => {
   const roomId = ref<string | null>(null)
@@ -89,9 +112,9 @@ export const useRoomStore = defineStore('room', () => {
     playersStore.clearPendingVotes()
   }
 
-  async function resetTimer() {
+  async function resetTimer(expectedStartedAt?: string) {
     if (!roomId.value) return
-    await getSupabase()
+    const query = getSupabase()
       .from('room_state')
       .update({
         round_started_at: new Date().toISOString(),
@@ -99,6 +122,10 @@ export const useRoomStore = defineStore('room', () => {
         paused_elapsed_ms: 0,
       })
       .eq('room_id', roomId.value)
+    const { error } = await (expectedStartedAt
+      ? query.eq('round_started_at', expectedStartedAt).eq('phase', 'voting')
+      : query)
+    if (error) throw error
   }
 
   async function pauseTimer() {
@@ -147,6 +174,24 @@ export const useRoomStore = defineStore('room', () => {
       .eq('room_id', roomId.value)
   }
 
+  async function setResultCohorts(cohorts: string[]) {
+    if (!roomId.value) return
+    const { error } = await getSupabase()
+      .from('room_state')
+      .update({ result_cohorts: cohorts })
+      .eq('room_id', roomId.value)
+    if (error) throw error
+  }
+
+  async function setAlarm(settings: { minutes?: number; muted?: boolean }) {
+    if (!roomId.value) return
+    const update: TablesUpdate<'room_state'> = {}
+    if (settings.minutes !== undefined) update.alarm_minutes = settings.minutes
+    if (settings.muted !== undefined) update.alarm_muted = settings.muted
+    const { error } = await getSupabase().from('room_state').update(update).eq('room_id', roomId.value)
+    if (error) throw error
+  }
+
   async function setPollQuestion(question: string | null) {
     if (!roomId.value) return
     const value = question?.trim() || null
@@ -171,14 +216,22 @@ export const useRoomStore = defineStore('room', () => {
     return id
   }
 
-  async function resolveRoom(input: string): Promise<{ id: string; slug: string | null; name: string | null } | null> {
+  async function resolveRoom(input: string): Promise<ResolvedRoom | null> {
     const supabase = getSupabase()
     const { data } = await supabase
       .from('rooms')
-      .select('id, slug, name')
+      .select('*')
       .or(`id.eq.${input},slug.eq.${input}`)
       .maybeSingle()
-    return data ?? null
+    if (!data) return null
+    return {
+      id: data.id,
+      slug: data.slug,
+      name: data.name,
+      background_url: data.background_url ?? null,
+      background_updated_at: data.background_updated_at ?? null,
+      background_opacity: data.background_opacity ?? null,
+    }
   }
 
   async function setRoomName(name: string | null, slug: string | null): Promise<void> {
@@ -195,6 +248,42 @@ export const useRoomStore = defineStore('room', () => {
     }
   }
 
+  async function uploadBackground(blob: Blob, opacity: number): Promise<Partial<RoomBackground> | null> {
+    if (!roomId.value) return null
+    if (!useAuthStore().user) throw new Error('Sign in to set the room background')
+    const supabase = getSupabase()
+    const path = `${roomId.value}/background.webp`
+    const { error: uploadErr } = await supabase.storage
+      .from(BACKGROUND_BUCKET)
+      .upload(path, blob, { upsert: true, contentType: 'image/webp' })
+    if (uploadErr) throw uploadErr
+    const background = { background_url: path, background_updated_at: new Date().toISOString(), background_opacity: opacity }
+    const { error } = await supabase.from('rooms').update(background).eq('id', roomId.value)
+    if (error) throw error
+    return background
+  }
+
+  async function setBackgroundOpacity(opacity: number): Promise<Partial<RoomBackground> | null> {
+    if (!roomId.value) return null
+    const background = { background_opacity: opacity }
+    const { error } = await getSupabase().from('rooms').update(background).eq('id', roomId.value)
+    if (error) throw error
+    return background
+  }
+
+  async function removeBackground(): Promise<Partial<RoomBackground> | null> {
+    if (!roomId.value) return null
+    const supabase = getSupabase()
+    const background = { background_url: null, background_updated_at: new Date().toISOString() }
+    const { error } = await supabase.from('rooms').update(background).eq('id', roomId.value)
+    if (error) throw error
+    await supabase.storage
+      .from(BACKGROUND_BUCKET)
+      .remove([`${roomId.value}/background.webp`])
+      .catch(() => undefined)
+    return background
+  }
+
   return {
     roomId,
     roomState,
@@ -206,9 +295,14 @@ export const useRoomStore = defineStore('room', () => {
     saveCardDeck,
     setDeckPreset,
     setPollQuestion,
+    setResultCohorts,
+    setAlarm,
     create,
     resolveRoom,
     setRoomName,
+    uploadBackground,
+    setBackgroundOpacity,
+    removeBackground,
     resetTimer,
     pauseTimer,
     resumeTimer,

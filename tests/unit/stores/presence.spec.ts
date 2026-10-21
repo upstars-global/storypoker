@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setSupabase, resetSupabase } from '~/lib/supabase-instance'
 import { usePresenceStore } from '~/stores/presence'
+import { asSupabase } from '../../support/helpers/fakeSupabase'
+
+type PresenceHandler = (payload: unknown) => void
 
 function makeFakeChannel() {
-  const handlers: Record<string, Function[]> = {}
-  const channel: any = {
-    on(_type: string, _filter: any, handler: Function) {
+  const handlers: Record<string, PresenceHandler[]> = {}
+  const channel = {
+    on(_type: string, _filter: { event?: string } | undefined, handler: PresenceHandler) {
       const key = _filter?.event ?? _type
       handlers[key] = handlers[key] ?? []
       handlers[key].push(handler)
@@ -19,15 +22,15 @@ function makeFakeChannel() {
     },
     unsubscribe: vi.fn().mockResolvedValue('ok'),
     presenceState: vi.fn().mockReturnValue({}),
-    _trigger(event: string, payload: any) {
+    _trigger(event: string, payload: unknown) {
       ;(handlers[event] ?? []).forEach(h => h(payload))
     },
   }
   return channel
 }
 
-function fakeSupabase(channel: any) {
-  return { channel: vi.fn().mockReturnValue(channel) }
+function fakeSupabase(channel: ReturnType<typeof makeFakeChannel>) {
+  return asSupabase({ channel: vi.fn().mockReturnValue(channel) })
 }
 
 describe('presenceStore - initial state', () => {
@@ -45,7 +48,7 @@ describe('presenceStore - start/stop', () => {
 
   it('start() subscribes and tracks the player', async () => {
     const ch = makeFakeChannel()
-    setSupabase(fakeSupabase(ch) as any)
+    setSupabase(fakeSupabase(ch))
     const store = usePresenceStore()
     await store.start('r1', 'p1')
     await new Promise(r => setTimeout(r, 5))
@@ -55,7 +58,7 @@ describe('presenceStore - start/stop', () => {
 
   it('stop() untracks and unsubscribes; status → offline', async () => {
     const ch = makeFakeChannel()
-    setSupabase(fakeSupabase(ch) as any)
+    setSupabase(fakeSupabase(ch))
     const store = usePresenceStore()
     await store.start('r1', 'p1')
     await new Promise(r => setTimeout(r, 5))
@@ -75,7 +78,7 @@ describe('presenceStore - presence sync', () => {
       key1: [{ playerId: 'p1' }],
       key2: [{ playerId: 'p2' }],
     })
-    setSupabase(fakeSupabase(ch) as any)
+    setSupabase(fakeSupabase(ch))
     const store = usePresenceStore()
     await store.start('r1', 'p1')
     await new Promise(r => setTimeout(r, 5))
@@ -92,7 +95,7 @@ describe('presenceStore - presence sync', () => {
         k1: [{ playerId: 'p1' }],
         k2: [{ playerId: 'p2' }],
       })
-      setSupabase(fakeSupabase(ch) as any)
+      setSupabase(fakeSupabase(ch))
       const store = usePresenceStore()
       await store.start('r1', 'p1')
       await vi.advanceTimersByTimeAsync(5)
@@ -122,7 +125,7 @@ describe('presenceStore - visibility handler', () => {
     vi.useFakeTimers()
     try {
       const ch = makeFakeChannel()
-      setSupabase(fakeSupabase(ch) as any)
+      setSupabase(fakeSupabase(ch))
       const store = usePresenceStore()
       await store.start('r1', 'p1')
       await vi.advanceTimersByTimeAsync(5)
@@ -143,7 +146,7 @@ describe('presenceStore - visibility handler', () => {
     vi.useFakeTimers()
     try {
       const ch = makeFakeChannel()
-      setSupabase(fakeSupabase(ch) as any)
+      setSupabase(fakeSupabase(ch))
       const store = usePresenceStore()
       await store.start('r1', 'p1')
       await vi.advanceTimersByTimeAsync(5)
@@ -164,7 +167,7 @@ describe('presenceStore - visibility handler', () => {
     vi.useFakeTimers()
     try {
       const ch = makeFakeChannel()
-      setSupabase(fakeSupabase(ch) as any)
+      setSupabase(fakeSupabase(ch))
       const store = usePresenceStore()
       await store.start('r1', 'p1')
       await vi.advanceTimersByTimeAsync(5)
@@ -187,7 +190,7 @@ describe('presenceStore - network handler', () => {
 
   it('window offline event → status becomes reconnecting', async () => {
     const ch = makeFakeChannel()
-    setSupabase(fakeSupabase(ch) as any)
+    setSupabase(fakeSupabase(ch))
     const store = usePresenceStore()
     await store.start('r1', 'p1')
     await new Promise(r => setTimeout(r, 5))

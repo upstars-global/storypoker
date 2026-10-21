@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { averageOf, voteToNumber, summarizeRound, isNumericPreset } from '~/utils/roundStats'
+import { averageOf, voteToNumber, summarizeRound, isNumericPreset, splitRoundAlignment } from '~/utils/roundStats'
 import type { RoundHistory } from '~/stores/types'
 
 const FIB = ['1', '2', '3', '5', '8', '13', '21', '?', '☕']
@@ -50,6 +50,20 @@ describe('summarizeRound', () => {
     expect(s.average).toBe('6.0')
     expect(s.alignment).toBe(83)
     expect(s.isPoll).toBe(false)
+  })
+
+  it('leaves PO, SM and custom roles out of the average and alignment', () => {
+    const s = summarizeRound(round({
+      active_cards: ['1', '2', '3', '5', '8', '13'],
+      votes: [
+        { player_id: 'd1', name: 'A', vote: '5' },
+        { player_id: 'gone', name: 'B', vote: '5' },
+        { player_id: 'po', name: 'C', vote: '13' },
+      ],
+    }), new Map([['d1', ['dev']], ['po', ['po']]]))
+    expect(s.counts).toEqual({ '5': 2, '13': 1 })
+    expect(s.average).toBe('5.0')
+    expect(s.alignment).toBe(100)
   })
 
   it('skips average and alignment for poll decks', () => {
@@ -116,5 +130,21 @@ describe('isNumericPreset', () => {
     expect(isNumericPreset('tshirt')).toBe(false)
     expect(isNumericPreset('voting')).toBe(false)
     expect(isNumericPreset(null)).toBe(true)
+  })
+})
+
+describe('splitRoundAlignment without non-estimators', () => {
+  it('ignores PO votes when DEV and QA roles are present', () => {
+    const round = {
+      id: 'r', room_id: 'x', started_at: '', revealed_at: '', created_at: null,
+      active_cards: ['1', '2', '3', '5', '8'], deck_preset: 'scrum',
+      votes: [
+        { player_id: 'd1', name: 'D1', vote: '3' },
+        { player_id: 'd2', name: 'D2', vote: '3' },
+        { player_id: 'po', name: 'PO', vote: '8' },
+      ],
+    }
+    const shields = new Map([['d1', ['be']], ['d2', ['fe']], ['po', ['po']]])
+    expect(splitRoundAlignment(round as never, shields)).toEqual({ dev: 100, qa: null })
   })
 })
