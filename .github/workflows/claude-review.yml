@@ -157,8 +157,8 @@ jobs:
             | Axis | Verdict |
             | --- | --- |
             | Intent | PASS, FINDINGS, or UNASSESSED |
-            | System | ... |
-            | Craft | ... |
+            | System | PASS, FINDINGS, or UNASSESSED |
+            | Craft | PASS, FINDINGS, or UNASSESSED |
 
             | Severity | Count |
             | --- | --- |
