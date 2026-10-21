@@ -130,9 +130,27 @@ jobs:
 
             Post exactly one top-level comment in English with
             `gh pr comment ${{ needs.gate.outputs.number }} --body-file /tmp/claude-review.md`, after writing the body
-            to that file. The body must start with the line `<!-- claude-review -->` and contain the reviewed range,
-            the Intent, System, and Craft verdicts, the findings with severity, location, impact, evidence, and
-            confidence, the set-aside list, and open questions about intent.
+            to that file. The body must start with the line `<!-- claude-review -->`, then the reviewed range and
+            the coverage (files read, what was skipped), then a `### Summary` section with two Markdown tables and
+            one line:
+
+            | Axis | Verdict |
+            | --- | --- |
+            | Intent | PASS, FINDINGS, or UNASSESSED |
+            | System | ... |
+            | Craft | ... |
+
+            | Severity | Count |
+            | --- | --- |
+            | Critical | <n> |
+            | Important | <n> |
+            | Minor | <n> |
+
+            **Merge readiness:** ready, ready with fixes, or not ready - <one line>
+
+            Use only the severities Critical, Important, and Minor; the counts must match the findings, and zero
+            findings means zeros. After the summary: the findings with severity, location, impact, evidence, and
+            confidence, the set-aside list, open questions about intent, and strengths.
             The body must end with the line `Reviewed with: cr-request skill`.
           claude_args: >-
             --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git branch:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
