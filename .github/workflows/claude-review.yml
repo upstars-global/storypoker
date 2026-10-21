@@ -20,7 +20,7 @@ jobs:
     if: >-
       (github.event_name == 'pull_request' &&
         (github.event.action == 'ready_for_review' || github.event.requested_reviewer.login == 'so-upstars')) ||
-      (github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success')
+      github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -77,7 +77,11 @@ jobs:
           ci=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$head_sha&event=pull_request&per_page=1" \
             --jq '.workflow_runs[0].conclusion // "none"')
           if [ "$ci" != success ]; then
-            [ "$requested" != true ] || post_status pending "Review requested; waiting for green CI"
+            if [ "$requested" = true ] && [ "$ci" = none ]; then
+              post_status pending "Review requested; waiting for green CI"
+            elif [ "$requested" = true ]; then
+              post_status error "Review requested; CI is $ci, the review waits for a green run"
+            fi
             skip "CI on $head_sha is $ci"
           fi
 
@@ -229,7 +233,12 @@ jobs:
             grep -oE "^\| *$1 *\| *[0-9]+ *\|" <<< "$body" | grep -oE '[0-9]+' | head -n 1 || true
           }
 
-          [ "$JOB_STATUS" != cancelled ] || { post_status error "Claude review was cancelled"; exit 0; }
+          if [ "$JOB_STATUS" = cancelled ]; then
+            latest=$(gh api "repos/$REPO/commits/$HEAD_SHA/statuses" \
+              --jq '[.[] | select(.context == env.CONTEXT)][0].target_url // ""')
+            [ "$latest" != "$RUN_URL" ] || post_status error "Claude review was cancelled"
+            exit 0
+          fi
           [ "$VERIFY" = success ] || { post_status failure "Claude review failed before posting a review"; exit 0; }
 
           body=$(gh api --paginate --slurp "repos/$REPO/pulls/$NUMBER/reviews" \
