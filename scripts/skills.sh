@@ -13,7 +13,7 @@ npx -y --prefer-online skl-x add sentimony/skills -s \
   scope-check \
   plan-crafting \
   inline-plan-dev \
-  subagent-plan-dev \
+  \ subagent-plan-dev \
   git-worktree-isolation \
   \ parallel-agents \
   tdd \
@@ -22,11 +22,11 @@ npx -y --prefer-online skl-x add sentimony/skills -s \
   review-resolution \
   debugging \
   web-debug \
-  webapp-debugger \
+  \ webapp-debugger \
   verification-gate \
   branch-finish \
-  commit-all \
-  gh-switch \
+  \ commit-all \
+  \ gh-switch \
   frontend-crafting \
   vitest \
   typescript \
