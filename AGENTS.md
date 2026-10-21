@@ -135,17 +135,23 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - **Player:** vote, rename self, set own shields, leave room, **toggle own moderator flag** (self-promote/demote -
   доступно будь-кому, не лише поточному модератору); history/trends/theme/language/widget/slot - без ролевих обмежень
 - **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
-  start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s) - усе
-  гейтиться `v-if="isModerator"` в `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
-- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, rename other players + set їхні shields.
+  start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s),
+  будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `v-if="isModerator"` в
+  `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
+- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
   Детальна матриця - `DESIGN.md` §11.1–11.2
 - **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.vue` (спільний селектор у
   JoinOverlay+PlayerEditModal) на базі `RoleBadge.vue` (те саме відображення у PlayerRow) і пишеться як один shield у
   `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи
-  role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` виводить QA-гравців в
-  окрему пилу
-- **Consensus:** салют + decision-sound при одноголосності з ≥ 2 голосами: з QA-розщепленням - хоча б в одній
-  групі (DEV/QA), без нього - серед усіх голосів. Деталі - `app/utils/AGENTS.md`
+  role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` дає DEV/QA-спліт
+  для історії, трендів і API
+- **Кола результатів:** після reveal - коло на когорту DEV/BE/FE/SRE/QA (QA = QA+GQA+AQA, завжди показується),
+  набір - чіпи «Показувати результати» в «Налаштувати колоду» (`room_state.result_cohorts`, `null` = DEV+QA). DEV увімкнено
+  - загальне коло: вимкнені BE/FE/SRE зливаються в нього; DEV вимкнено - голоси DEV і вимкнених ролей приховані, бейдж
+  червоний. PO/SM і кастомні - поза колами й трендами; без ролі й ті, хто вийшов, - DEV; у трендах усі розробники - один DEV
+  (`resultCohortFor()` у `resultCohorts.ts`, `trendCohorts()` у `shields.ts`)
+- **Consensus:** салют + decision-sound, коли хоча б одне коло результатів одноголосне з ≥ 2 голосами. Деталі -
+  `app/utils/AGENTS.md`
 
 ## Code Style
 - Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline

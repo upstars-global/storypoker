@@ -83,6 +83,7 @@ export const PLAYER_ROLE_GROUPS = [
     { tag: 'DEV', shield: 'dev' },
     { tag: 'BE', shield: 'be' },
     { tag: 'FE', shield: 'fe' },
+    { tag: 'SRE', shield: 'sre' },
   ],
   [
     { tag: 'QA', shield: 'qa' },
@@ -138,10 +139,37 @@ export function toggleShield(selected: string[], shield: Shield): string[] {
 // QA disciplines route a player's vote into the separate QA pile.
 const QA_SHIELDS = new Set(['qa', 'aqa', 'gqa'])
 
-export const DEV_COHORT_LABEL = 'DEV/FE/BE'
+export const DEV_COHORT_LABEL = 'DEV/FE/BE/SRE'
 
 export function isQaPlayer(shields: string[] | null | undefined): boolean {
   return Boolean(shields?.some(id => QA_SHIELDS.has(id)))
+}
+
+export type TrendCohort = 'DEV' | 'QA'
+
+const DEV_ROLE_TAGS = new Set(['DEV', 'BE', 'FE', 'SRE'])
+
+export function trendCohortForShields(shields: string[] | null | undefined): TrendCohort | null {
+  if (isQaPlayer(shields)) return 'QA'
+  const tag = roleTagForShields(shields)
+  return !tag || DEV_ROLE_TAGS.has(tag) ? 'DEV' : null
+}
+
+// PO/SM and custom roles are not estimators, so their votes stay out of the DEV/QA split. Players
+// without a role and players who left the room count as DEV, and so does a round where only
+// non-estimators voted. Mirrors trendCohorts() in netlify/functions/room-json.mts - keep both in sync.
+export function trendCohorts(
+  votes: readonly { player_id: string }[],
+  shieldsByPlayer: ReadonlyMap<string, string[]> | undefined,
+): Map<string, TrendCohort> {
+  const cohorts = new Map<string, TrendCohort>()
+  for (const v of votes) {
+    const shields = shieldsByPlayer?.get(v.player_id)
+    const cohort = shields ? trendCohortForShields(shields) : 'DEV'
+    if (cohort) cohorts.set(v.player_id, cohort)
+  }
+  if (cohorts.size === 0) for (const v of votes) cohorts.set(v.player_id, 'DEV')
+  return cohorts
 }
 
 export function shieldsForGroup(group: ShieldGroup): Shield[] {

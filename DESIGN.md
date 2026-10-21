@@ -331,7 +331,7 @@ const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 | Запустити відлік розкриття | `CardsArea.vue` hold-to-start (силент/зі звуком/з атмосферою) → `broadcastCountdownStart` - деталі §11.6 |
 | Почати новий раунд | `ResultsArea.vue`, `:show-new-round="isModerator"` → `roomStore.startNewRound()` |
 | Налаштувати опитування (`voting`/`vote_question`) | `CardsArea.vue`, `v-else-if="... && isModerator"` → `setPollQuestion`/`startVoteQuestion` |
-| Налаштувати колоду карт | `AppHeader.vue` меню → `ConfigureCardDeckModal` |
+| Налаштувати колоду карт і кола результатів | `AppHeader.vue` меню → `ConfigureCardDeckModal` (чіпи «Показувати результати», §11.9) |
 | Виключити гравця (kick) | `PlayerRow.vue`, `v-else-if="currentUserIsModerator"` → `playersStore.kick` |
 | Керування таймером (reset/pause/resume/±30s) | `Timer.vue`, `canControl = isModerator` (саме `isModerator`, **не** `isAuthorizedModerator`) |
 
@@ -340,6 +340,7 @@ const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 | Дія | Компонент / handler |
 |---|---|
 | Перейменувати кімнату / встановити slug | `AppHeader.vue`, вкладене `v-if="user"` усередині `v-if="isModerator"` → `roomStore.setRoomName(name, slug)` |
+| Фон кімнати (завантажити / кадрувати / прибрати) | `AppHeader.vue` → `RoomBackgroundModal` (лише `isAuthorizedModerator`, який є власником фону або фон ще нічий) → `roomStore.uploadBackground` / `removeBackground`, §11.10 |
 | Перейменувати іншого гравця + його shields | `PlayerRow.vue`, `v-if="currentUserIsAuthorizedModerator"` (вкладено в `currentUserIsModerator`-блок) → `PlayerEditModal` |
 
 ### 11.2 Функціонал гравця
@@ -374,7 +375,7 @@ const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
 5. `spread = max(індекс) - min(індекс)` серед голосів
 6. **`score = round(100 * (1 - spread / span))`** - 100 = усі обрали одну картку (або сусідні), 0 = найдальші картки колоди одночасно проголосовані
 
-DEV/QA рахуються окремо (`splitRoundAlignment` ділить голоси по `isQaPlayer(shields)`), кожен - той самий `alignmentScore` над своєю підмножиною.
+DEV/QA рахуються окремо (`splitRoundAlignment` ділить голоси через `trendCohorts()` з `utils/shields.ts`), кожен - той самий `alignmentScore` над своєю підмножиною. DEV = ролі DEV/BE/FE/SRE, QA = QA/GQA/AQA; голоси PO/SM і кастомних ролей в тренди, середнє й узгодженість історії не йдуть. Гравці без ролі й ті, хто вже вийшов з кімнати, рахуються як DEV. Виняток - раунд, де голосували лише PO/SM і кастомні ролі: тоді всі його голоси рахуються як DEV. Чіпи «Показувати результати» (§11.9) на тренди не впливають.
 
 **Legacy rounds без `active_cards`/`deck_preset`** (виправлено 2026-07-26): `alignmentScore` повертає `null`, якщо `deckOrder` порожній - а раунди, записані до міграції `010_round_history_deck.sql`, мають `active_cards = null` (і найстаріші - ще й `deck_preset = null`), тому їхній alignment мовчки випадав з графіка, хоча голоси в них цілком реальні й числові. `resolveActiveCards(activeCards, deckPreset)` (`app/utils/roundStats.ts`) підставляє `defaultActive` відповідного пресету з `cardDecks.ts`, а якщо навіть `deck_preset` відсутній - `DEFAULT_PRESET_ID` (`'scrum'`); це наближення (реальна колода на момент раунду могла бути звуженою), але краще за повне випадання точки. Викликається в `splitRoundAlignment`/`roundAlignment`/`summarizeRound` - тому й `AlignmentTrendsModal`, і `HistoryModal` тепер бачать ці раунди. **Дзеркалить** `resolveActiveCards` у `netlify/functions/room-json.mts` (комміти `e1dcf02`/`beca0e5`) - синхронізувати вручну при зміні формули в обох місцях.
 
@@ -394,11 +395,11 @@ DEV/QA рахуються окремо (`splitRoundAlignment` ділить го�
 
 **Reference lines** (100/75/50/25%) - окрема невидима серія `__refLines` (`data: []`, `silent: true`, `tooltip.show: false`) з `markLine`, завжди в `series` незалежно від toggle DEV/QA, щоб орієнтири не зникали разом із лінією.
 
-**Tooltip** - `trigger: 'item'`, **`triggerOn: 'click'`** (клік на крапку показує і "пришпилює" tooltip; ховається лише повторним кліком чи по порожньому місцю графіка - на відміну від строгого hover, це дає час дотягнутись курсором до кнопки "Деталі", особливо на крайніх точках), `enterable: true` (можна навести на сам tooltip не закривши його). Контент - `formatter()` повертає HTML: лейбл серії + значення (`%`), дата, кнопка-закриття `×` (`data-close-tooltip`) і клікабельний рядок `trends.viewDetails` (`data-view-details`, `data-index`). Лейбл серії - `series.name`: `QA` лишається `QA`, DEV-когорта (не-QA гравці) підписана `DEV/FE/BE`, щоб не читалось як "тільки роль DEV" (колір ліній не змінювався: жовта `#ffa726` - QA, бірюзова `#26a69a` - DEV/FE/BE).
+**Tooltip** - `trigger: 'item'`, **`triggerOn: 'click'`** (клік на крапку показує і "пришпилює" tooltip; ховається лише повторним кліком чи по порожньому місцю графіка - на відміну від строгого hover, це дає час дотягнутись курсором до кнопки "Деталі", особливо на крайніх точках), `enterable: true` (можна навести на сам tooltip не закривши його). Контент - `formatter()` повертає HTML: лейбл серії + значення (`%`), дата, кнопка-закриття `×` (`data-close-tooltip`) і клікабельний рядок `trends.viewDetails` (`data-view-details`, `data-index`). Лейбл серії - `series.name`: `QA` лишається `QA`, DEV-когорта підписана `DEV/FE/BE/SRE`, щоб не читалось як "тільки роль DEV" (колір ліній не змінювався: жовта `#ffa726` - QA, бірюзова `#26a69a` - DEV/FE/BE).
 
 **Round snapshot** - клік на `data-view-details` у tooltip ловиться делегованим `document`-listener'ом (ECharts рендерить tooltip у `document.body`, не всередині компонента), звідти `points.value[dataIndex].round` → `selectedRound` → `RoundSnapshotModal.vue` (вкладена `<dialog>` поверх поточної модалки) зі списком `{ім'я, голос}` усіх гравців того раунду (`round_history.votes`, повний знімок, не лише агреговані `counts`). Поруч з іменем - `RoleBadge` з тегом ролі (`roleTagForShields(shieldsMap.get(player_id))`, той самий `shieldsMap` з **поточних** shields, що й для DEV/QA split вище - те саме застереження про неактуальність ролі на момент голосування).
 
-**Когорта в round snapshot** - `data-view-details` несе ще й `data-cohort` (`'DEV'`/`'QA'`, з `params.seriesName` серії, на якій клікнули); прокидається як `selectedCohort` у `RoundSnapshotModal :cohort`. Модалка фільтрує `round.votes` через `isQaPlayer(shieldsMap.get(player_id))` під обрану когорту (лише QA-гравці / лише не-QA), у заголовку - кольоровий бейдж когорти (`QA` жовтий `#ffa726` / `DEV_COHORT_LABEL` бірюзовий `#26a69a`, константа винесена в `utils/shields.ts`, бо тепер спільна для `AlignmentTrendsModal` і `RoundSnapshotModal`). Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
+**Когорта в round snapshot** - `data-view-details` несе ще й `data-cohort` (`'DEV'`/`'QA'`, з `params.seriesName` серії, на якій клікнули); прокидається як `selectedCohort` у `RoundSnapshotModal :cohort`. Модалка фільтрує `round.votes` через `trendCohorts()` під обрану когорту (лише QA / лише DEV/BE/FE/SRE), у заголовку - кольоровий бейдж когорти (`QA` жовтий `#ffa726` / `DEV_COHORT_LABEL` бірюзовий `#26a69a`, константа винесена в `utils/shields.ts`, бо тепер спільна для `AlignmentTrendsModal` і `RoundSnapshotModal`). Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
 
 ### 11.4 Історія раундів (`round_history`)
 
@@ -438,7 +439,11 @@ round_history (
   - `reset` - повний рестарт (`round_started_at=now()`, скидає паузу)
   - `pause`/`resume` - `resume` додає тривалість паузи, що щойно закінчилась, до `paused_elapsed_ms`
   - `±30s` (`adjustTimer`) - зсуває `round_started_at`; для "+30s" зсув затиснутий (`min(cap, ...)`), щоб не пересунути старт у майбутнє
-- Якщо `reveal()` стається під час паузи - `paused_elapsed_ms` домотується до моменту reveal, і показана тривалість коректно заморожується
+- Якщо `reveal()` стається під час паузи - `paused_elapsed_ms` домотується до моменту reveal, і показана тривалість коректно заморожується; `Timer.vue` у фазі `revealed` бере `min(revealedAt, paused_at)`, тож тривалість не стрибає на час простою
+- **Сигнал раунду (будильник)** - шестерня зліва в хедері віджета (лише для модератора, `canControl`) розгортає inline-налаштування: «Сигнал через N хв» (3–20, дефолт 5; Enter фіксує значення й знімає фокус) і дзвіночок mute (звук за замовчуванням увімкнений). Налаштування спільні для кімнати - `room_state.alarm_minutes` / `alarm_muted` (міграція `018`, `null` = 5 хв і звук увімкнено), пише `roomStore.setAlarm()`; хелпери й синтез дзвінка - `app/utils/timerAlarm.ts`. Сигнал бачать і чують усі учасники
+  - Коли під час `voting` `elapsedMs` перетинає кратне N хвилин (N, 2N, 3N…), увесь віджет блимає 3 рази (`timer-alarm-blink`), грає синтезований Web Audio дзвінок (3 «дзеньки» в такт блиманню, не залежить від `sp-volume`) і клієнт модератора ставить таймер на паузу (`emit('pause')`) - для всієї кімнати
+  - ▶ (resume) запускає наступний інтервал; reveal і новий раунд працюють як звичайно, `round_history` пишеться так само
+  - Спрацьовує лише на перетині порогу: після reload зі вже пройденим порогом сигналу немає; на паузі й після reveal не спрацьовує
 
 **Б. Відлік перед розкриттям (hold-to-start, `CardsArea.vue` + `useCountdown.ts`)** - опційний "хайп"-відлік із звуком перед тим, як модератор розкриє оцінки.
 
@@ -487,3 +492,27 @@ round_history (
 - `slot-win` з `{playerId}` на 1.6с виставляє `slotWinnerId`
 
 **Індикація в `PlayerRow.vue`** (props `is-spinning-slot`/`is-slot-winner`) - єдиний видимий ефект джекпоту, без банера чи локального підсвічування самого слота. Кубик (`font-size: 1.125rem`, трохи менший за іконку модератора поруч) сидить у рядку з іменем за тим самим `AppTooltip`-патерном, що й `app:moderator` - колонка статусу голосу лишається незайманою. Кубик не обертається: поки триває спін, кожні 120мс перемикається грань (`tabler:dice-1`…`dice-6`, `DICE_FACES`/`diceFaceIndex`), імітуючи котіння в чашці; далі повертається дефолтна `dice-5`. Ці іконки резолвляться через Iconify API (не офлайн `ic:`-колекція), тому `loadIcons(DICE_FACES)` прогріває кеш при монтуванні `PlayerRow.vue` - інакше перше котіння блимає порожніми кадрами. При виграші ім'я і кубик разом блимають `.win-blink` (`@keyframes win-blink`, `animation-iteration-count: 3`).
+
+### 11.9 Кола результатів і когорти (`resultCohorts.ts`)
+
+Після reveal `ResultsArea.vue` малює окреме коло (PieChart + середнє) на кожну когорту, що має голоси. Когорти - `RESULT_COHORTS = DEV, BE, FE, SRE, QA`; `cohortForShields()` бере тег ролі гравця (`roleTagForShields`) і зводить QA/GQA/AQA в одне коло `QA`.
+
+- **Тренди** не залежать від чіпів: усі DEV/BE/FE/SRE завжди сумуються в загальну когорту DEV (§11.3)
+- **Хто не показується:** PO, SM і кастомні ролі - їхні голоси в колах, узгодженості й салюті не враховуються. Гравці без ролі йдуть у DEV. Якщо голосували лише PO/SM і кастомні ролі, `ResultsArea` показує одне загальне коло з усіх голосів; якщо ж усі голоси когорт приховані чіпами, кіл і салюту немає
+- **Налаштування:** модератор у `ConfigureCardDeckModal` вмикає/вимикає чіпи DEV/BE/FE/SRE у рядку «Показувати результати» (той самий Save, що й колода). QA - завжди увімкнений, неактивний і блідий чіп (`is-locked`). Для колод без PieChart (`voting`, `vote_question`, `goal_clarity`) чіпи не показуються
+- **DEV як загальне коло** (`resultCohortFor()`): якщо DEV увімкнено, увімкнені BE/FE/SRE мають окремі кола, а вимкнені зливаються в коло DEV (лише DEV увімкнено - усі розробники в одному колі). Якщо DEV вимкнено, показуються лише увімкнені ролі, а голоси гравців з роллю DEV і з вимкненими ролями не рахуються
+- **Збереження:** `room_state.result_cohorts text[]` (міграція `017`, check-констрейнт на `DEV/BE/FE/SRE/QA`); `null` (старі й нові кімнати, поки модератор нічого не змінив) = лише DEV і QA, тобто всі розробники в одному колі DEV. `normalizeCohorts()` завжди додає `QA` і впорядковує теги. До накату міграції вибір не зберігається (помилка лише в консоль), діє дефолт DEV + QA
+- **Підсвітка в списку гравців:** якщо голос гравця не потрапляє в жодне коло (DEV вимкнено, а його роль - DEV або вимкнена BE/FE/SRE), `RoleBadge` у `PlayerRow` стає червоним (`is-excluded`), tooltip додає «голос не показується в результатах» (`hiddenVotePlayerIds` у `[slug].vue`)
+- **Консенсус:** `shouldCelebrate(votes, groups)` - салют і decision-sound, якщо хоча б одне показане коло одноголосне з ≥ 2 голосами
+- **Узгодженість на екрані результатів** (`AlignmentCard`) рахується по тих самих колах
+- **Попередній раунд** (`lastRound` snapshot) зберігає вже підписані групи на момент reveal
+
+### 11.10 Фон кімнати (`RoomBackgroundModal.vue`)
+
+Авторизований модератор задає фонове зображення кімнати; його бачать усі учасники, оновлення приходить через Realtime-канал `rooms:<roomId>`.
+
+- **Модалка:** пункт «Фон кімнати» в меню хедера. Вибір JPG/PNG/WebP до 10 МБ → рамка 16:9, у якій картинку можна тягнути (pointer events), масштабувати повзунком 1–3× або колесом, з клавіатури - стрілки та `+`/`-`. Картинка завжди покриває рамку (`clampFraming`). Повзунок «Непрозорість» (10–100%, дефолт 65%) показує результат одразу в прев'ю і зберігається окремо, без перезаливки картинки (`setBackgroundOpacity`). «Прибрати фон» знімає поточний фон
+- **Кадрування:** `framingSourceRect()` (`app/utils/backgroundImage.ts`) перераховує видиму частину рамки в пікселі оригіналу; `encodeBackground()` ріже її з оригінального `ImageBitmap` у WebP (якість 0.8) розміром до 1920×1080 без апскейлу. Декодування й WebP-кодування спільні з аватарками (`imageEncoding.ts`)
+- **Збереження:** Storage bucket `room-backgrounds`, фіксований об'єкт `<room_id>/background.webp` (upsert, без сиріт), далі `rooms.background_url` + `background_updated_at` (кеш-інвалідація `?v=`). Зняття фону спершу пише `background_url: null`, файл видаляється best-effort. Міграція `016`; без неї аплоад падає (`Bucket not found`), а кімнати відкриваються як звичайно (`resolveRoom` читає `select('*')`)
+- **Рендер:** inline `background-image` на корені сторінки кімнати - тінт `backgroundTint(opacity)` = `color-mix(var(--bg-app) (1 − opacity))` поверх картинки, `cover`, `fixed`. `backgroundDisplayUrl()` пропускає лише шлях за regex `^[A-Za-z0-9-]+/background\.webp$`, бо значення йде в CSS `url()`, а `rooms.id` може вставити будь-хто
+- **Доступ:** фон має власника `rooms.background_owner_id`. Перше заливання закріплює фон за поточним користувачем (`update ... where background_owner_id is null`), далі фон міняє лише він. Storage-політики пускають запис, оновлення й видалення об'єкта лише власнику, а тригер `rooms_guard_background` не дає іншим (зокрема анонімам) змінити власника, `background_url`, `background_opacity` чи `background_updated_at`. Міграція знімає `background_url` у кімнат без власника. Кімнату без фону може закріпити будь-який залогінений користувач. Пункт меню бачить лише авторизований модератор, який є власником або коли фон ще нічий

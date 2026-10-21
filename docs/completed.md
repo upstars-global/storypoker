@@ -53,6 +53,28 @@ Timer ↔ SlotMachine перемикач (`sp-side-widget`), джекпот-broa
 
 Interactive контроли → `AppTooltip`; декоративні status-іконки → native `title`.
 
+## Result cohorts
+
+Окремі кола результатів на ролі DEV / BE / FE / SRE / QA (QA = QA + GQA + AQA),
+вибір чіпами «Показувати результати» в налаштуваннях колоди
+(`room_state.result_cohorts`, міграція `017`); увімкнений DEV збирає вимкнені
+BE / FE / SRE, без DEV голоси вимкнених ролей приховані з червоним бейджем. PO / SM / кастомні ролі виключені з кіл і трендів, без ролі - DEV; роль SRE повернута в
+RolePicker. Scrum і Fibonacci без `0` і карт понад 21. Деталі - `DESIGN.md` §11.9.
+
+## Round alarm
+
+Будильник у віджеті таймера: модератор задає для кімнати інтервал 3–20 хв
+(дефолт 5) і mute дзвінка (`room_state.alarm_*`, міграція `018`), сигнал бачать і
+чують усі; по сигналу віджет блимає 3 рази, грає дзвінок,
+модератор автоматично ставить таймер на паузу. Деталі - `DESIGN.md` §11.6.
+
+## Room background
+
+Авторизований модератор задає фон кімнати: аплоад JPG/PNG/WebP, кадрування
+(drag / zoom у рамці 16:9) і стиснення у WebP ≤ 1920×1080 на клієнті, Storage
+bucket `room-backgrounds` + `rooms.background_url` (міграція `016`), синхронізація
+через Realtime. Деталі - `DESIGN.md` §11.10.
+
 ## Знято з обсягу
 
 - **Reka UI** - замінено власними `AppModal` / `AppTooltip` + `useClickOutside`

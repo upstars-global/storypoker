@@ -5,6 +5,7 @@ const props = defineProps<{
   tag: string
   interactive?: boolean
   selected?: boolean
+  excluded?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -23,7 +24,8 @@ const emit = defineEmits<{
         v-wave="props.interactive || undefined"
         :type="props.interactive ? 'button' : undefined"
         class="mui-role-tag"
-        :class="{ 'is-interactive': props.interactive, 'is-selected': props.selected }"
+        :class="{ 'is-interactive': props.interactive, 'is-selected': props.selected, 'is-excluded': props.excluded }"
+        :data-excluded="props.excluded || undefined"
         :aria-pressed="props.interactive ? props.selected : undefined"
         @click="props.interactive && emit('select')"
       >
@@ -31,7 +33,9 @@ const emit = defineEmits<{
       </component>
     </template>
     <template #content>
-      {{ $t(`players.roleNames.${props.tag}`, props.tag) }}
+      {{ $t(`players.roleNames.${props.tag}`, props.tag) }}<template v-if="props.excluded">
+        · {{ $t('players.voteHiddenInResults') }}
+      </template>
     </template>
   </AppTooltip>
 </template>
