@@ -44,6 +44,10 @@ function blinking(wrapper: ReturnType<typeof mountTimer>) {
   return wrapper.get('[data-testid="timer-widget"]').classes().includes('timer-alarm-blink')
 }
 
+function blinkCount(wrapper: ReturnType<typeof mountTimer>) {
+  return wrapper.get<HTMLElement>('[data-testid="timer-widget"]').element.style.getPropertyValue('--alarm-blinks')
+}
+
 describe('Timer alarm', () => {
   beforeEach(() => {
     playAlarmChime.mockClear()
@@ -58,7 +62,7 @@ describe('Timer alarm', () => {
     expect(blinking(wrapper)).toBe(false)
     await vi.advanceTimersByTimeAsync(1000)
     expect(blinking(wrapper)).toBe(true)
-    expect(playAlarmChime).toHaveBeenCalledTimes(1)
+    expect(playAlarmChime).toHaveBeenCalledWith(1)
     expect(wrapper.emitted('pause')).toBeUndefined()
     await wrapper.get('[data-testid="timer-widget"]').trigger('animationend')
     expect(blinking(wrapper)).toBe(false)
@@ -73,15 +77,24 @@ describe('Timer alarm', () => {
     expect(wrapper.emitted('pause')).toBeUndefined()
   })
 
-  it('fires again every interval while the timer keeps running', async () => {
+  it('rings one, two, then three beeps on the first three intervals and stays quiet after', async () => {
     vi.setSystemTime(START + THREE_MIN - 500)
     const wrapper = mountTimer()
     await vi.advanceTimersByTimeAsync(1000)
-    expect(playAlarmChime).toHaveBeenCalledTimes(1)
+    expect(playAlarmChime).toHaveBeenLastCalledWith(1)
+    expect(blinkCount(wrapper)).toBe('1')
     await vi.advanceTimersByTimeAsync(THREE_MIN - 2000)
     expect(playAlarmChime).toHaveBeenCalledTimes(1)
     await vi.advanceTimersByTimeAsync(2000)
-    expect(playAlarmChime).toHaveBeenCalledTimes(2)
+    expect(playAlarmChime).toHaveBeenLastCalledWith(2)
+    expect(blinkCount(wrapper)).toBe('2')
+    await vi.advanceTimersByTimeAsync(THREE_MIN)
+    expect(playAlarmChime).toHaveBeenLastCalledWith(3)
+    expect(blinkCount(wrapper)).toBe('3')
+    await wrapper.get('[data-testid="timer-widget"]').trigger('animationend')
+    await vi.advanceTimersByTimeAsync(2 * THREE_MIN)
+    expect(playAlarmChime).toHaveBeenCalledTimes(3)
+    expect(blinking(wrapper)).toBe(false)
     expect(wrapper.emitted('pause')).toBeUndefined()
   })
 

@@ -3,7 +3,7 @@ import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import { useI18n } from 'vue-i18n'
-import { playAlarmChime, unlockAlarmAudio, clampAlarmMinutes, ALARM_MIN_MINUTES, ALARM_MAX_MINUTES, ROUND_TIMER_CAP_MS, type AlarmSettings } from '~/utils/timerAlarm'
+import { playAlarmChime, unlockAlarmAudio, clampAlarmMinutes, ALARM_MIN_MINUTES, ALARM_MAX_MINUTES, ROUND_TIMER_CAP_MS, ALARM_MAX_BEEPS, type AlarmSettings } from '~/utils/timerAlarm'
 
 const props = defineProps<{
   roundStartedAt: string
@@ -75,7 +75,7 @@ const showControls = computed(() => props.canControl && props.phase === 'voting'
 const alarmMinutes = computed(() => clampAlarmMinutes(props.alarmMinutes))
 const alarmMuted = computed(() => props.alarmMuted ?? false)
 const alarmSettingsOpen = ref(false)
-const alarmBlinking = ref(false)
+const alarmBeeps = ref(0)
 
 function alarmIndexAt(ms: number) {
   return Math.floor(ms / (alarmMinutes.value * 60_000))
@@ -90,9 +90,9 @@ watch(elapsedMs, (current) => {
   const index = alarmIndexAt(current)
   if (index <= firedAlarmIndex) return
   firedAlarmIndex = index
-  if (props.phase !== 'voting') return
-  alarmBlinking.value = true
-  if (!alarmMuted.value) playAlarmChime()
+  if (props.phase !== 'voting' || index > ALARM_MAX_BEEPS) return
+  alarmBeeps.value = index
+  if (!alarmMuted.value) playAlarmChime(index)
 })
 
 const unlockAlarmEvents = ['pointerdown', 'keydown'] as const
@@ -114,9 +114,10 @@ function toggleAlarmMuted() {
 <template>
   <div
     class="mui-paper"
-    :class="{ 'timer-alarm-blink': alarmBlinking }"
+    :class="{ 'timer-alarm-blink': alarmBeeps > 0 }"
+    :style="alarmBeeps > 0 ? { '--alarm-blinks': alarmBeeps } : undefined"
     data-testid="timer-widget"
-    @animationend.self="alarmBlinking = false"
+    @animationend.self="alarmBeeps = 0"
   >
     <div class="mui-paper-header justify-center relative">
       <div
@@ -361,7 +362,7 @@ function toggleAlarmMuted() {
 
 <style scoped>
 .timer-alarm-blink {
-  animation: timer-alarm-blink 0.6s ease-in-out 3;
+  animation: timer-alarm-blink 0.6s ease-in-out var(--alarm-blinks);
 }
 @keyframes timer-alarm-blink {
   0%, 100% { opacity: 1; }

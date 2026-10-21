@@ -2,9 +2,9 @@ export const ALARM_DEFAULT_MINUTES = 5
 export const ALARM_MIN_MINUTES = 3
 export const ALARM_MAX_MINUTES = 20
 export const ROUND_TIMER_CAP_MS = 60 * 60_000
+export const ALARM_MAX_BEEPS = 3
 const CHIME_GAIN = 0.2
 const ALARM_BLINK_PERIOD_S = 0.6
-const ALARM_BLINK_COUNT = 3
 
 export interface AlarmSettings {
   minutes: number
@@ -41,9 +41,9 @@ export function unlockAlarmAudio() {
   runningAudioContext()
 }
 
-export function playAlarmChime() {
+export function playAlarmChime(beeps: number) {
   const ctx = runningAudioContext()
-  for (let i = 0; i < ALARM_BLINK_COUNT; i++) {
+  for (let i = 0; i < beeps; i++) {
     const startAt = ctx.currentTime + i * ALARM_BLINK_PERIOD_S
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()

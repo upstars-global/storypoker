@@ -50,6 +50,7 @@ describe('alarm audio', () => {
 
   function stubAudioContext(state: AudioContextState) {
     const resume = vi.fn(() => Promise.resolve())
+    const createOscillator = vi.fn(() => node())
     const node = () => ({
       type: '',
       frequency: { value: 0 },
@@ -59,16 +60,23 @@ describe('alarm audio', () => {
       stop: vi.fn(),
     })
     const AudioContextStub = vi.fn(function (this: Record<string, unknown>) {
-      Object.assign(this, { state, currentTime: 0, destination: {}, resume, createOscillator: node, createGain: node })
+      Object.assign(this, { state, currentTime: 0, destination: {}, resume, createOscillator, createGain: node })
     })
     vi.stubGlobal('AudioContext', AudioContextStub)
-    return { resume, AudioContextStub }
+    return { resume, AudioContextStub, createOscillator }
   }
+
+  it('plays as many beeps as asked', async () => {
+    const { createOscillator } = stubAudioContext('running')
+    const { playAlarmChime } = await import('~/utils/timerAlarm')
+    playAlarmChime(2)
+    expect(createOscillator).toHaveBeenCalledTimes(2)
+  })
 
   it('resumes a suspended context before the chime', async () => {
     const { resume } = stubAudioContext('suspended')
     const { playAlarmChime } = await import('~/utils/timerAlarm')
-    playAlarmChime()
+    playAlarmChime(1)
     expect(resume).toHaveBeenCalledTimes(1)
   })
 
@@ -76,7 +84,7 @@ describe('alarm audio', () => {
     const { resume, AudioContextStub } = stubAudioContext('suspended')
     const { unlockAlarmAudio, playAlarmChime } = await import('~/utils/timerAlarm')
     unlockAlarmAudio()
-    playAlarmChime()
+    playAlarmChime(1)
     expect(AudioContextStub).toHaveBeenCalledTimes(1)
     expect(resume).toHaveBeenCalledTimes(2)
   })
