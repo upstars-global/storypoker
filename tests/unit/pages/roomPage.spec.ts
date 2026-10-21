@@ -151,6 +151,29 @@ function blockLabels(page: VueWrapper) {
   return page.findComponent(AlignmentCard).props('blocks').map((block: { label: string }) => block.label)
 }
 
+describe('room page timer', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('restarts a voting round timer left running past two hours when the room opens', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-24T09:00:00Z'))
+    const resetTimer = vi.spyOn(useRoomStore(), 'resetTimer').mockResolvedValue()
+    await mountRoom({ state: fakeState({ phase: 'voting' }) })
+    expect(resetTimer).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps a fresh voting round timer and a revealed round untouched', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-21T00:30:00Z'))
+    const resetTimer = vi.spyOn(useRoomStore(), 'resetTimer').mockResolvedValue()
+    await mountRoom({ state: fakeState({ phase: 'voting' }) })
+    wrapper?.unmount()
+    vi.setSystemTime(new Date('2026-10-24T09:00:00Z'))
+    await mountRoom({ state: fakeState({ phase: 'revealed' }) })
+    expect(resetTimer).not.toHaveBeenCalled()
+  })
+})
+
 describe('room page results', () => {
   it('splits revealed votes into cohort groups for ResultsArea and AlignmentCard', async () => {
     const page = await mountRoom()

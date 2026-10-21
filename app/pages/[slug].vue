@@ -33,7 +33,7 @@ import PlayersList from '~/components/PlayersList.vue'
 import AlignmentCard from '~/components/AlignmentCard.vue'
 import { alignmentScore } from '~/utils/alignment'
 import Timer from '~/components/Timer.vue'
-import type { AlarmSettings } from '~/utils/timerAlarm'
+import { isRoundTimerStale, type AlarmSettings } from '~/utils/timerAlarm'
 import SlotMachine from '~/components/SlotMachine.vue'
 import CardsArea from '~/components/CardsArea.vue'
 import ResultsArea from '~/components/ResultsArea.vue'
@@ -386,6 +386,9 @@ async function fetchInitialData() {
   ])
   playersStore.players = (pData ?? []) as Player[]
   roomStore.roomState = (sData ?? null) as RoomState | null
+  if (roomStore.roomState && isRoundTimerStale(roomStore.roomState, Date.now())) {
+    await roomStore.resetTimer().catch(error => console.error('[timer] stale round reset failed:', error))
+  }
   const ids = (pData ?? []).map(p => p.user_id).filter((id): id is string => Boolean(id))
   if (user.value?.id) ids.push(user.value.id)
   if (ids.length) await profilesStore.fetchMany(ids)

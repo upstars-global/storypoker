@@ -3,7 +3,7 @@ import AppIcon from '~/components/AppIcon.vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import AppTooltip from '~/components/AppTooltip.vue'
 import { useI18n } from 'vue-i18n'
-import { playAlarmChime, unlockAlarmAudio, clampAlarmMinutes, ALARM_MIN_MINUTES, ALARM_MAX_MINUTES, type AlarmSettings } from '~/utils/timerAlarm'
+import { playAlarmChime, unlockAlarmAudio, clampAlarmMinutes, ALARM_MIN_MINUTES, ALARM_MAX_MINUTES, ROUND_TIMER_CAP_MS, type AlarmSettings } from '~/utils/timerAlarm'
 
 const props = defineProps<{
   roundStartedAt: string
@@ -59,14 +59,15 @@ const pivotMs = computed(() => {
 
 const elapsedMs = computed(() => {
   const start = new Date(props.roundStartedAt).getTime()
-  return Math.max(0, pivotMs.value - start - (props.pausedElapsedMs ?? 0))
+  return Math.min(ROUND_TIMER_CAP_MS, Math.max(0, pivotMs.value - start - (props.pausedElapsedMs ?? 0)))
 })
 
 const text = computed(() => {
   const duration = formatDuration(elapsedMs.value)
-  return props.phase === 'voting'
-    ? t('timer.roundStartedAgo', { duration })
-    : t('timer.roundDuration', { duration })
+  if (props.phase !== 'voting') return t('timer.roundDuration', { duration })
+  return elapsedMs.value >= ROUND_TIMER_CAP_MS
+    ? t('timer.roundStopped', { duration })
+    : t('timer.roundStartedAgo', { duration })
 })
 
 const showControls = computed(() => props.canControl && props.phase === 'voting')
@@ -91,7 +92,6 @@ watch(elapsedMs, (current) => {
   firedAlarmIndex = index
   if (props.phase !== 'voting') return
   alarmBlinking.value = true
-  if (props.canControl && !isPaused.value) emit('pause')
   if (!alarmMuted.value) playAlarmChime()
 })
 

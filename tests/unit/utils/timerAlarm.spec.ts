@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { clampAlarmMinutes } from '~/utils/timerAlarm'
+import { clampAlarmMinutes, isRoundTimerStale, ROUND_TIMER_CAP_MS } from '~/utils/timerAlarm'
 
 describe('clampAlarmMinutes', () => {
   it('defaults to 5 minutes when the room has no value yet', () => {
@@ -12,6 +12,33 @@ describe('clampAlarmMinutes', () => {
     expect(clampAlarmMinutes(7.6)).toBe(8)
     expect(clampAlarmMinutes(1)).toBe(3)
     expect(clampAlarmMinutes(999)).toBe(20)
+  })
+})
+
+describe('isRoundTimerStale', () => {
+  const START = new Date('2026-10-12T10:00:00Z').getTime()
+  const state = (overrides: { phase?: 'voting' | 'revealed'; paused_at?: string | null; paused_elapsed_ms?: number } = {}) => ({
+    phase: 'voting' as const,
+    round_started_at: new Date(START).toISOString(),
+    paused_at: null,
+    paused_elapsed_ms: 0,
+    ...overrides,
+  })
+
+  it('is stale once a voting round has run for the cap', () => {
+    expect(isRoundTimerStale(state(), START + ROUND_TIMER_CAP_MS - 1)).toBe(false)
+    expect(isRoundTimerStale(state(), START + ROUND_TIMER_CAP_MS)).toBe(true)
+    expect(isRoundTimerStale(state(), START + 3 * 24 * 60 * 60_000)).toBe(true)
+  })
+
+  it('does not count paused time', () => {
+    const days = START + 3 * 24 * 60 * 60_000
+    expect(isRoundTimerStale(state({ paused_at: new Date(START + 60_000).toISOString() }), days)).toBe(false)
+    expect(isRoundTimerStale(state({ paused_elapsed_ms: 30 * 60_000 }), START + ROUND_TIMER_CAP_MS)).toBe(false)
+  })
+
+  it('leaves revealed rounds alone', () => {
+    expect(isRoundTimerStale(state({ phase: 'revealed' }), START + 3 * 24 * 60 * 60_000)).toBe(false)
   })
 })
 

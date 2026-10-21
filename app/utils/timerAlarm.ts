@@ -1,6 +1,7 @@
 export const ALARM_DEFAULT_MINUTES = 5
 export const ALARM_MIN_MINUTES = 3
 export const ALARM_MAX_MINUTES = 20
+export const ROUND_TIMER_CAP_MS = 2 * 60 * 60_000
 const CHIME_GAIN = 0.2
 const ALARM_BLINK_PERIOD_S = 0.6
 const ALARM_BLINK_COUNT = 3
@@ -13,6 +14,20 @@ export interface AlarmSettings {
 export function clampAlarmMinutes(value: number | null | undefined): number {
   if (value == null || !Number.isFinite(value)) return ALARM_DEFAULT_MINUTES
   return Math.min(ALARM_MAX_MINUTES, Math.max(ALARM_MIN_MINUTES, Math.round(value)))
+}
+
+interface RoundTimerState {
+  phase: 'voting' | 'revealed'
+  round_started_at: string
+  paused_at: string | null
+  paused_elapsed_ms: number | null
+}
+
+export function isRoundTimerStale(state: RoundTimerState, now: number): boolean {
+  if (state.phase !== 'voting') return false
+  const pivot = state.paused_at ? new Date(state.paused_at).getTime() : now
+  const elapsed = pivot - new Date(state.round_started_at).getTime() - (state.paused_elapsed_ms ?? 0)
+  return elapsed >= ROUND_TIMER_CAP_MS
 }
 
 let audioCtx: AudioContext | undefined
