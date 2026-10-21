@@ -1,7 +1,7 @@
 export const ALARM_DEFAULT_MINUTES = 5
 export const ALARM_MIN_MINUTES = 3
 export const ALARM_MAX_MINUTES = 20
-export const ROUND_TIMER_CAP_MS = 2 * 60 * 60_000
+export const ROUND_TIMER_CAP_MS = 60 * 60_000
 const CHIME_GAIN = 0.2
 const ALARM_BLINK_PERIOD_S = 0.6
 const ALARM_BLINK_COUNT = 3

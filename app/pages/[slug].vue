@@ -331,6 +331,15 @@ watch(connectionStatus, async (next, prev) => {
   }
 })
 
+watch(() => {
+  const state = roomState.value
+  return onlineCount.value > 1 && state !== null && isRoundTimerStale(state, Date.now())
+}, (stale) => {
+  if (!stale || !roomState.value) return
+  roomStore.resetTimer(roomState.value.round_started_at)
+    .catch(error => console.error('[timer] stale round reset failed:', error))
+})
+
 watch([currentRoomName, currentSlug, () => currentPlayer.value?.name], () => {
   const playerName = currentPlayer.value?.name
   if (!playerName) return
@@ -386,10 +395,6 @@ async function fetchInitialData() {
   ])
   playersStore.players = (pData ?? []) as Player[]
   roomStore.roomState = (sData ?? null) as RoomState | null
-  if (roomStore.roomState && isRoundTimerStale(roomStore.roomState, Date.now())) {
-    await roomStore.resetTimer(roomStore.roomState.round_started_at)
-      .catch(error => console.error('[timer] stale round reset failed:', error))
-  }
   const ids = (pData ?? []).map(p => p.user_id).filter((id): id is string => Boolean(id))
   if (user.value?.id) ids.push(user.value.id)
   if (ids.length) await profilesStore.fetchMany(ids)

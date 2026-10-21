@@ -154,11 +154,19 @@ function blockLabels(page: VueWrapper) {
 describe('room page timer', () => {
   afterEach(() => vi.useRealTimers())
 
-  it('restarts a voting round timer left running past two hours when the room opens', async () => {
+  async function setOnline(ids: string[]) {
+    usePresenceStore().online = new Set(ids)
+    await flushPromises()
+  }
+
+  it('restarts a voting round timer past the cap once a second player is online', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-10-24T09:00:00Z'))
     const resetTimer = vi.spyOn(useRoomStore(), 'resetTimer').mockResolvedValue()
     await mountRoom({ state: fakeState({ phase: 'voting' }) })
+    await setOnline(['me'])
+    expect(resetTimer).not.toHaveBeenCalled()
+    await setOnline(['me', 'alice'])
     expect(resetTimer).toHaveBeenCalledTimes(1)
     expect(resetTimer).toHaveBeenCalledWith('2026-10-21T00:00:00Z')
   })
@@ -168,9 +176,12 @@ describe('room page timer', () => {
     vi.setSystemTime(new Date('2026-10-21T00:30:00Z'))
     const resetTimer = vi.spyOn(useRoomStore(), 'resetTimer').mockResolvedValue()
     await mountRoom({ state: fakeState({ phase: 'voting' }) })
+    await setOnline(['me', 'alice'])
     wrapper?.unmount()
+    await setOnline([])
     vi.setSystemTime(new Date('2026-10-24T09:00:00Z'))
     await mountRoom({ state: fakeState({ phase: 'revealed' }) })
+    await setOnline(['me', 'alice'])
     expect(resetTimer).not.toHaveBeenCalled()
   })
 })

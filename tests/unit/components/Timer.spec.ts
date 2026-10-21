@@ -113,14 +113,14 @@ describe('Timer alarm', () => {
     expect(wrapper.emitted('pause')).toBeUndefined()
   })
 
-  it('stops counting at two hours and stays silent past it', async () => {
-    const TWO_HOURS = 2 * 60 * 60_000
-    vi.setSystemTime(START + TWO_HOURS - 1500)
+  it('stops counting at one hour and stays silent past it', async () => {
+    const ONE_HOUR = 60 * 60_000
+    vi.setSystemTime(START + ONE_HOUR - 1500)
     const wrapper = mountTimer({ alarmMinutes: 7 })
     await vi.advanceTimersByTimeAsync(2000)
-    expect(wrapper.text()).toContain('Round stopped after 2h 0m 0s')
+    expect(wrapper.text()).toContain('Round stopped after 1h 0m 0s')
     await vi.advanceTimersByTimeAsync(10 * 60_000)
-    expect(wrapper.text()).toContain('Round stopped after 2h 0m 0s')
+    expect(wrapper.text()).toContain('Round stopped after 1h 0m 0s')
     expect(playAlarmChime).not.toHaveBeenCalled()
   })
 
