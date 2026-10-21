@@ -18,8 +18,8 @@ npx -y --prefer-online skl-x add sentimony/skills -s \
   \ parallel-agents \
   tdd \
   cross-review \
-  review-request \
-  review-resolution \
+  \ review-request \
+  \ review-resolution \
   debugging \
   web-debug \
   \ webapp-debugger \
