@@ -27,12 +27,12 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 CI check = `npm run test:ci` - обов'язково перед завершенням будь-якої задачі.
 - **New feature:** `scope-triage` → `plan-crafting` → `inline-plan-dev` (незалежні задачі -
   `parallel-agents` / `subagent-plan-dev`); за потреби `typescript` · `echarts` · `web-debug`;
-  тести - `tdd` + `vitest` і/або `web-debug`; фініш - `review-request` →
+  тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verification-gate` → CI check
 - **Bug / regression:** `debugging` → `tdd` → `verification-gate` → CI check
 - **Supabase (DB / Auth / RLS / Storage):** `tdd` → `/security-review` → CI check
 - **Refactoring:** `scope-triage` → `tdd` → CI check
-- **Received code review:** `review-resolution` → (fixes) → `verification-gate` → CI check
+- **Received code review:** `cr-received` → (fixes) → `verification-gate` → CI check
 - **Prose (docs, README, UI copy, commits):** `dashfix` · `negafix`
 - **Закриття гілки:** `branch-finish`
 
@@ -97,7 +97,9 @@ Supabase-кредами) на кожен run; `e2e` - тільки коли за
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "npm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
-`review-request` і один раз коментує від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`).
+`cr-request` і один раз коментує від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`).
+Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
+прогоном `Claude review` і коментарем `so-upstars` з `<!-- claude-review -->` на PR.
 
 ## Environment Setup
 `package-lock.json` - committed (required for `npm ci`). Do NOT add it back to `.gitignore`.

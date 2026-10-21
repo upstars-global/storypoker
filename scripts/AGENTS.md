@@ -20,8 +20,8 @@ npm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) теж
 - Вимкнений skill позначено `\ <name>` у списку, а не видалено й не закоментовано: аргумент стає
   `" <name>"` з пробілом попереду й нічого не знаходить. Це не баг - не «виправляй» такі рядки.
   Закоментований рядок продовження обірвав би команду.
-- Версія `skl-x` запінена (`skl-x@0.4.12`) у `clean.sh` і `.github/workflows/ci.yml` - оновлюй обидва
-  разом. `skills.sh` і `skills.local.sh` беруть останній `skl-x`: `sln` у local-скрипті
+- Версія `skl-x` запінена (`skl-x@0.4.12`) у `clean.sh`, `.github/workflows/ci.yml` і
+  `.github/workflows/claude-review.yml` - оновлюй усі разом. `skills.sh` і `skills.local.sh` беруть останній `skl-x`: `sln` у local-скрипті
   знімає опубліковану копію сам лише з 0.4.9.
   Свіжість skills пін не обмежує: їх тягне `skl-x add` з GitHub.
 - Gitignored `scripts/skills.local.sh`, якщо є, запускається з `skills.sh` останнім, після всіх
