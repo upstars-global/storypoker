@@ -96,12 +96,14 @@ Supabase-кредами) на кожен run; `e2e` - тільки коли за
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "npm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
-`cr-request` і один раз коментує від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
-хід і підсумок - commit status `Claude review` на head PR. Правки воркфлоу діють лише після злиття
-(`workflow_run` бере копію з `main`). Повторне рев'ю: маркер старого коментаря заміни на
-`<!-- claude-review-superseded -->` і перезапусти CI або пушни.
+`cr-request` і один раз лишає PR review від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
+хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
+`so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
+(копія з `main`), для `review_requested` - одразу з гілки PR.
 Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
-прогоном `Claude review` і коментарем `so-upstars` з `<!-- claude-review -->` на PR.
+прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review -->`. GitHub не дає запросити рев'ю в
+автора PR, а агент тут відкриває PR від `so-upstars` (`GH_ACC`): шлях `review_requested` перевіряй на PR
+іншого акаунта.
 
 ## Environment Setup
 `package-lock.json` - committed (required for `npm ci`). Do NOT add it back to `.gitignore`.
