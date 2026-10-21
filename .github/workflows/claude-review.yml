@@ -194,7 +194,7 @@ jobs:
           NUMBER: ${{ needs.gate.outputs.number }}
           HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
           VERIFY: ${{ steps.verify.outcome }}
-          CANCELLED: ${{ cancelled() }}
+          JOB_STATUS: ${{ job.status }}
           MARKER: '<!-- claude-review -->'
           CONTEXT: Claude review
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -207,7 +207,7 @@ jobs:
             grep -oE "^\| *$1 *\| *[0-9]+ *\|" <<< "$body" | grep -oE '[0-9]+' | head -n 1 || true
           }
 
-          [ "$CANCELLED" != true ] || { post_status error "Claude review was cancelled"; exit 0; }
+          [ "$JOB_STATUS" != cancelled ] || { post_status error "Claude review was cancelled"; exit 0; }
           [ "$VERIFY" = success ] || { post_status failure "Claude review failed before posting a comment"; exit 0; }
 
           body=$(gh api --paginate --slurp "repos/$REPO/issues/$NUMBER/comments" \
