@@ -5,17 +5,21 @@ on:
     workflows: [CI]
     types: [completed]
   pull_request:
-    types: [ready_for_review]
+    types: [ready_for_review, review_requested]
 
 concurrency:
-  group: claude-review-${{ github.event.pull_request.head.ref || github.event.workflow_run.head_branch }}
+  group: >-
+    claude-review-${{ github.event.pull_request.head.ref || github.event.workflow_run.head_branch }}${{
+    github.event.action == 'review_requested' && github.event.requested_reviewer.login != 'so-upstars'
+    && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 jobs:
   gate:
     name: Review gate
     if: >-
-      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request' &&
+        (github.event.action == 'ready_for_review' || github.event.requested_reviewer.login == 'so-upstars')) ||
       (github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -68,13 +72,23 @@ jobs:
           [ "$(jq -r .user.type <<< "$pr")" != Bot ] || skip "PR #$number is from a bot"
           head_sha=$(jq -r .head.sha <<< "$pr")
           base_sha=$(jq -r .base.sha <<< "$pr")
+          requested=$(jq '[.requested_reviewers[].login] | index("so-upstars") != null' <<< "$pr")
 
           ci=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$head_sha&event=pull_request&per_page=1" \
             --jq '.workflow_runs[0].conclusion // "none"')
-          [ "$ci" = success ] || skip "CI on $head_sha is $ci"
+          if [ "$ci" != success ]; then
+            [ "$requested" != true ] || post_status pending "Review requested; waiting for green CI"
+            skip "CI on $head_sha is $ci"
+          fi
 
-          if gh api --paginate "repos/$REPO/issues/$number/comments" \
-            --jq '.[] | select(.user.login == "so-upstars") | .body' | grep -qF "$MARKER"; then
+          bodies=""
+          if [ "$requested" != true ]; then
+            bodies=$(gh api --paginate "repos/$REPO/pulls/$number/reviews" \
+              --jq '.[] | select(.user.login == "so-upstars") | .body'
+            gh api --paginate "repos/$REPO/issues/$number/comments" \
+              --jq '.[] | select(.user.login == "so-upstars") | .body')
+          fi
+          if grep -qF "$MARKER" <<< "$bodies"; then
             post_status success "Skipped: the PR already has a Claude review"
             skip "PR #$number already has a Claude review"
           fi
@@ -122,6 +136,10 @@ jobs:
           login="$(gh api user --jq .login)"
           test "$login" = so-upstars || { echo "::error::SO_UPSTARS_PR_TOKEN belongs to '$login', not so-upstars"; exit 1; }
 
+      - name: Record review start
+        id: start
+        run: echo "at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -140,11 +158,11 @@ jobs:
             If the cr-request skill is not available to you, do not review and do not post anything; stop and
             report that the skill is missing.
 
-            Post exactly one top-level comment in English with
-            `gh pr comment ${{ needs.gate.outputs.number }} --body-file /tmp/claude-review.md`, after writing the body
-            to that file. The body must start with the line `<!-- claude-review -->`, then the reviewed range, the
-            commits in it, and the coverage (files read, what was skipped), then a `### Summary` section with two
-            Markdown tables and one line.
+            Post exactly one pull request review in English with
+            `gh pr review ${{ needs.gate.outputs.number }} --comment --body-file /tmp/claude-review.md`, after writing
+            the body to that file; never approve or request changes. The body must start with the line
+            `<!-- claude-review -->`, then the reviewed range, the commits in it, and the coverage (files read, what
+            was skipped), then a `### Summary` section with two Markdown tables and one line.
 
             Write the reviewed range as a compare link with short SHAs, followed by the number of files and lines:
             [`<base7>...<head7>`](https://github.com/${{ github.repository }}/compare/<BASE SHA>...<HEAD SHA>)
@@ -173,18 +191,21 @@ jobs:
             confidence, the set-aside list, open questions about intent, and strengths.
             The body must end with the line `Reviewed with: cr-request skill`.
           claude_args: >-
-            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git branch:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
+            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git branch:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review ${{ needs.gate.outputs.number }} --comment --body-file /tmp/claude-review.md)"
 
-      - name: Verify review comment
+      - name: Verify review
         id: verify
         env:
           REPO: ${{ github.repository }}
           NUMBER: ${{ needs.gate.outputs.number }}
+          HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
+          STARTED_AT: ${{ steps.start.outputs.at }}
         run: |
-          gh api --paginate "repos/$REPO/issues/$NUMBER/comments" \
-            --jq '.[] | select(.user.login == "so-upstars") | .body' \
-            | grep -qF 'Reviewed with: cr-request skill' \
-            || { echo "No review comment made with the cr-request skill"; exit 1; }
+          reviews=$(gh api --paginate "repos/$REPO/pulls/$NUMBER/reviews" \
+            --jq '.[] | select(.user.login == "so-upstars" and .commit_id == env.HEAD_SHA
+              and .submitted_at >= env.STARTED_AT) | .body')
+          grep -qF 'Reviewed with: cr-request skill' <<< "$reviews" \
+            || { echo "No review on $HEAD_SHA since $STARTED_AT made with the cr-request skill"; exit 1; }
 
       - name: Report review status
         if: always()
@@ -194,6 +215,7 @@ jobs:
           NUMBER: ${{ needs.gate.outputs.number }}
           HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
           VERIFY: ${{ steps.verify.outcome }}
+          STARTED_AT: ${{ steps.start.outputs.at }}
           CANCELLED: ${{ cancelled() }}
           MARKER: '<!-- claude-review -->'
           CONTEXT: Claude review
@@ -208,11 +230,12 @@ jobs:
           }
 
           [ "$CANCELLED" != true ] || { post_status error "Claude review was cancelled"; exit 0; }
-          [ "$VERIFY" = success ] || { post_status failure "Claude review failed before posting a comment"; exit 0; }
+          [ "$VERIFY" = success ] || { post_status failure "Claude review failed before posting a review"; exit 0; }
 
-          body=$(gh api --paginate --slurp "repos/$REPO/issues/$NUMBER/comments" \
-            | jq -r --arg marker "$MARKER" \
-              '[.[][] | select(.user.login == "so-upstars" and (.body | contains($marker)))] | last | .body // ""')
+          body=$(gh api --paginate --slurp "repos/$REPO/pulls/$NUMBER/reviews" \
+            | jq -r --arg marker "$MARKER" --arg sha "$HEAD_SHA" --arg since "$STARTED_AT" \
+              '[.[][] | select(.user.login == "so-upstars" and .commit_id == $sha and .submitted_at >= $since
+                and (.body | contains($marker)))] | last | .body // ""')
           critical=$(count Critical)
           important=$(count Important)
           minor=$(count Minor)
@@ -220,7 +243,7 @@ jobs:
             | sed -E 's/.*\*\* *//' | head -n 1 || true)
 
           if [ -z "$critical" ] || [ -z "$important" ] || [ -z "$minor" ] || [ -z "$readiness" ]; then
-            post_status failure "The review comment has no Summary counts or merge readiness"
+            post_status failure "The review has no Summary counts or merge readiness"
             exit 0
           fi
 
