@@ -5,6 +5,8 @@ import { useRoomStore, backgroundDisplayUrl } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { useAuthStore } from '~/stores/auth'
 import type { Player, RoomState } from '~/stores/types'
+import type { User } from '@supabase/supabase-js'
+import { asSupabase, changePayload } from '../../support/helpers/fakeSupabase'
 
 function fakeRoomState(overrides: Partial<RoomState> = {}): RoomState {
   return {
@@ -44,18 +46,14 @@ describe('roomStore.applyChange', () => {
   it('applies UPDATE to roomState', () => {
     const store = useRoomStore()
     store.roomState = fakeRoomState({ phase: 'voting' })
-    store.applyChange({
-      eventType: 'UPDATE',
-      new: fakeRoomState({ phase: 'revealed' }),
-      old: {} as any,
-    } as any)
+    store.applyChange(changePayload<RoomState>('UPDATE', { new: fakeRoomState({ phase: 'revealed' }) }))
     expect(store.roomState?.phase).toBe('revealed')
   })
 
   it('ignores INSERT/DELETE on room_state (singleton row)', () => {
     const store = useRoomStore()
     store.roomState = fakeRoomState()
-    store.applyChange({ eventType: 'INSERT', new: fakeRoomState({ phase: 'revealed' }) } as any)
+    store.applyChange(changePayload<RoomState>('INSERT', { new: fakeRoomState({ phase: 'revealed' }) }))
     expect(store.roomState.phase).toBe('voting')
   })
 })
@@ -67,19 +65,19 @@ describe('roomStore actions', () => {
   })
 
   it('reveal() sends update with phase=revealed (and skips history with <2 votes)', async () => {
-    const calls: Array<{ table: string; op: string; arg: any }> = []
-    setSupabase({
+    const calls: Array<{ table: string; op: string; arg: Record<string, unknown> }> = []
+    setSupabase(asSupabase({
       from: (table: string) => ({
-        update: (arg: any) => {
+        update: (arg: Record<string, unknown>) => {
           calls.push({ table, op: 'update', arg })
           return { eq: vi.fn().mockResolvedValue({ error: null }) }
         },
-        insert: (arg: any) => {
+        insert: (arg: Record<string, unknown>) => {
           calls.push({ table, op: 'insert', arg })
           return Promise.resolve({ error: null })
         },
       }),
-    } as any)
+    }))
     const store = useRoomStore()
     store.roomId = 'r1'
     store.roomState = fakeRoomState()
@@ -91,19 +89,19 @@ describe('roomStore actions', () => {
   })
 
   it('reveal() writes round_history when votes>=2', async () => {
-    const calls: Array<{ table: string; op: string; arg: any }> = []
-    setSupabase({
+    const calls: Array<{ table: string; op: string; arg: Record<string, unknown> }> = []
+    setSupabase(asSupabase({
       from: (table: string) => ({
-        update: (arg: any) => {
+        update: (arg: Record<string, unknown>) => {
           calls.push({ table, op: 'update', arg })
           return { eq: vi.fn().mockResolvedValue({ error: null }) }
         },
-        insert: (arg: any) => {
+        insert: (arg: Record<string, unknown>) => {
           calls.push({ table, op: 'insert', arg })
           return Promise.resolve({ error: null })
         },
       }),
-    } as any)
+    }))
     const store = useRoomStore()
     store.roomId = 'r1'
     store.roomState = fakeRoomState()
@@ -130,19 +128,19 @@ describe('roomStore actions', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-05-04T00:01:00Z'))
     try {
-      const calls: Array<{ table: string; op: string; arg: any }> = []
-      setSupabase({
+      const calls: Array<{ table: string; op: string; arg: Record<string, unknown> }> = []
+      setSupabase(asSupabase({
         from: (table: string) => ({
-          update: (arg: any) => {
+          update: (arg: Record<string, unknown>) => {
             calls.push({ table, op: 'update', arg })
             return { eq: vi.fn().mockResolvedValue({ error: null }) }
           },
-          insert: (arg: any) => {
+          insert: (arg: Record<string, unknown>) => {
             calls.push({ table, op: 'insert', arg })
             return Promise.resolve({ error: null })
           },
         }),
-      } as any)
+      }))
       const store = useRoomStore()
       store.roomId = 'r1'
       store.roomState = fakeRoomState({
@@ -163,15 +161,15 @@ describe('roomStore actions', () => {
   })
 
   it('startNewRound() resets player votes and sets phase=voting + round_started_at', async () => {
-    const calls: Array<{ table: string; arg: any }> = []
-    setSupabase({
+    const calls: Array<{ table: string; arg: Record<string, unknown> }> = []
+    setSupabase(asSupabase({
       from: (table: string) => ({
-        update: (arg: any) => {
+        update: (arg: Record<string, unknown>) => {
           calls.push({ table, arg })
           return { eq: vi.fn().mockResolvedValue({ error: null }) }
         },
       }),
-    } as any)
+    }))
     const store = useRoomStore()
     store.roomId = 'r1'
     await store.startNewRound()
@@ -186,7 +184,7 @@ describe('roomStore actions', () => {
 
   it('saveCardDeck(cards) sends update with active_cards', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     await store.saveCardDeck(['1', '5'])
@@ -195,7 +193,7 @@ describe('roomStore actions', () => {
 
   it('setDeckPreset(id) sends deck_preset + defaultActive', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     await store.setDeckPreset('boolean')
@@ -208,7 +206,7 @@ describe('roomStore actions', () => {
 
   it('setDeckPreset(id) writes the preset defaultQuestion into poll_question when it has one', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     await store.setDeckPreset('goal_clarity')
@@ -228,7 +226,7 @@ describe('roomStore timer actions', () => {
 
   it('resetTimer() zeroes paused state and updates round_started_at', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     store.roomState = fakeRoomState({ paused_at: '2026-05-04T00:00:30Z', paused_elapsed_ms: 5000 })
@@ -241,7 +239,7 @@ describe('roomStore timer actions', () => {
 
   it('pauseTimer() sets paused_at when not paused', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     store.roomState = fakeRoomState({ paused_at: null })
@@ -252,7 +250,7 @@ describe('roomStore timer actions', () => {
 
   it('pauseTimer() is no-op when already paused', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     store.roomState = fakeRoomState({ paused_at: '2026-05-04T00:00:30Z' })
@@ -265,7 +263,7 @@ describe('roomStore timer actions', () => {
     vi.setSystemTime(new Date('2026-05-04T00:01:00Z'))
     try {
       const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-      setSupabase({ from: () => ({ update }) } as any)
+      setSupabase(asSupabase({ from: () => ({ update }) }))
       const store = useRoomStore()
       store.roomId = 'r1'
       store.roomState = fakeRoomState({ paused_at: '2026-05-04T00:00:30Z', paused_elapsed_ms: 2000 })
@@ -278,7 +276,7 @@ describe('roomStore timer actions', () => {
 
   it('resumeTimer() is no-op when not paused', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     store.roomState = fakeRoomState({ paused_at: null })
@@ -288,7 +286,7 @@ describe('roomStore timer actions', () => {
 
   it('adjustTimer(+10000) shifts round_started_at 10s back', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     store.roomState = fakeRoomState({
@@ -301,7 +299,7 @@ describe('roomStore timer actions', () => {
 
   it('adjustTimer(-10000) caps round_started_at at pivot to avoid negative elapsed', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     store.roomState = fakeRoomState({
@@ -314,7 +312,7 @@ describe('roomStore timer actions', () => {
 
   it('adjustTimer(-10000) caps at pivot minus accumulated pause time', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = useRoomStore()
     store.roomId = 'r1'
     store.roomState = fakeRoomState({
@@ -329,18 +327,18 @@ describe('roomStore timer actions', () => {
   it('preserves adjusted start and accumulated pause across pause, resume, and reveal', async () => {
     vi.useFakeTimers()
     try {
-      const updates: any[] = []
+      const updates: Partial<RoomState>[] = []
       const store = useRoomStore()
-      setSupabase({
+      setSupabase(asSupabase({
         from: () => ({
-          update: (arg: any) => {
+          update: (arg: Partial<RoomState>) => {
             updates.push(arg)
             store.roomState = { ...store.roomState!, ...arg }
             return { eq: vi.fn().mockResolvedValue({ error: null }) }
           },
           insert: vi.fn().mockResolvedValue({ error: null }),
         }),
-      } as any)
+      }))
       store.roomId = 'r1'
       store.roomState = fakeRoomState({ round_started_at: '2026-05-04T00:00:00.000Z' })
       const players = usePlayersStore()
@@ -371,7 +369,7 @@ describe('roomStore background', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     resetSupabase()
-    useAuthStore().user = { id: 'u1' } as any
+    useAuthStore().user = { id: 'u1' } as User
   })
 
   function fakeClient() {
@@ -391,7 +389,7 @@ describe('roomStore background', () => {
 
   it('claims an unowned room background for the signed-in user before uploading', async () => {
     const { bucket, update, eq, is, client } = fakeClient()
-    setSupabase(client as any)
+    setSupabase(asSupabase(client))
     const store = useRoomStore()
     store.roomId = 'r1'
     const result = await store.uploadBackground(new Blob(['x'], { type: 'image/webp' }), 0.5)
@@ -404,7 +402,7 @@ describe('roomStore background', () => {
 
   it('refuses to upload without a signed-in user', async () => {
     const { bucket, client } = fakeClient()
-    setSupabase(client as any)
+    setSupabase(asSupabase(client))
     useAuthStore().user = null
     const store = useRoomStore()
     store.roomId = 'r1'
@@ -414,7 +412,7 @@ describe('roomStore background', () => {
 
   it('uploads to the fixed room path, then points the room row at it', async () => {
     const { bucket, update, eq, client } = fakeClient()
-    setSupabase(client as any)
+    setSupabase(asSupabase(client))
     const store = useRoomStore()
     store.roomId = 'r1'
     const blob = new Blob(['x'], { type: 'image/webp' })
@@ -432,7 +430,7 @@ describe('roomStore background', () => {
   it('does not touch the room row when the upload fails', async () => {
     const { bucket, update, client } = fakeClient()
     bucket.upload.mockResolvedValue({ error: new Error('denied') })
-    setSupabase(client as any)
+    setSupabase(asSupabase(client))
     const store = useRoomStore()
     store.roomId = 'r1'
     await expect(store.uploadBackground(new Blob(), 0.65)).rejects.toThrow('denied')
@@ -441,7 +439,7 @@ describe('roomStore background', () => {
 
   it('updates only the opacity', async () => {
     const { bucket, update, client } = fakeClient()
-    setSupabase(client as any)
+    setSupabase(asSupabase(client))
     const store = useRoomStore()
     store.roomId = 'r1'
     expect(await store.setBackgroundOpacity(0.3)).toEqual({ background_opacity: 0.3 })
@@ -452,7 +450,7 @@ describe('roomStore background', () => {
   it('clears the room row before removing the file and tolerates storage failure', async () => {
     const { bucket, update, client } = fakeClient()
     bucket.remove.mockRejectedValue(new Error('gone'))
-    setSupabase(client as any)
+    setSupabase(asSupabase(client))
     const store = useRoomStore()
     store.roomId = 'r1'
     const result = await store.removeBackground()
@@ -468,13 +466,13 @@ describe('backgroundDisplayUrl', () => {
 
   it('builds a cache-busted public URL for a well-formed path', () => {
     const getPublicUrl = vi.fn((path: string) => ({ data: { publicUrl: `https://cdn/${path}` } }))
-    setSupabase({ storage: { from: vi.fn().mockReturnValue({ getPublicUrl }) } } as any)
+    setSupabase(asSupabase({ storage: { from: vi.fn().mockReturnValue({ getPublicUrl }) } }))
     expect(backgroundDisplayUrl('AbC12345/background.webp', '2026-10-12T10:00:00Z'))
       .toBe('https://cdn/AbC12345/background.webp?v=2026-10-12T10%3A00%3A00Z')
   })
 
   it('rejects paths that could break out of a CSS url()', () => {
-    setSupabase({ storage: { from: vi.fn() } } as any)
+    setSupabase(asSupabase({ storage: { from: vi.fn() } }))
     expect(backgroundDisplayUrl('x")/background.webp', null)).toBeNull()
     expect(backgroundDisplayUrl('r1/other.png', null)).toBeNull()
   })
@@ -495,7 +493,7 @@ describe('roomStore.resolveRoom', () => {
 
   it('defaults background fields to null for rows from before the background migration', async () => {
     const { client } = clientReturning({ id: 'r1', slug: null, name: 'Team', created_at: null })
-    setSupabase(client as any)
+    setSupabase(asSupabase(client))
     expect(await useRoomStore().resolveRoom('r1')).toEqual({
       id: 'r1', slug: null, name: 'Team', background_url: null, background_updated_at: null, background_opacity: null,
       background_owner_id: null,
@@ -504,7 +502,7 @@ describe('roomStore.resolveRoom', () => {
 
   it('returns null for an unknown room', async () => {
     const { client } = clientReturning(null)
-    setSupabase(client as any)
+    setSupabase(asSupabase(client))
     expect(await useRoomStore().resolveRoom('nope')).toBeNull()
   })
 })
