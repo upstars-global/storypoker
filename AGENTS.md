@@ -101,7 +101,9 @@ job `build` збирає `dist` лише для `icons:audit-build` і з placeh
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `review_requested` - одразу з гілки PR.
 Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
-прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review -->`.
+прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review -->`. GitHub не дає запросити рев'ю в
+автора PR, а агент тут відкриває PR від `so-upstars` (`GH_ACC`): шлях `review_requested` перевіряй на PR
+іншого акаунта.
 
 ## Environment Setup
 `package-lock.json` - committed (required for `npm ci`). Do NOT add it back to `.gitignore`.
