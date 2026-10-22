@@ -5,6 +5,7 @@ import App from './App.vue'
 import { router } from './router'
 import { i18n } from './i18n'
 import { initSupabase } from './lib/supabase-instance'
+import { initAppUpdate } from './pwa'
 import '~/assets/css/main.css'
 
 initSupabase()
@@ -21,3 +22,5 @@ createApp(App)
     easing: 'ease-out',
   })
   .mount('#app')
+
+initAppUpdate()

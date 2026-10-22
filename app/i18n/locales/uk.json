@@ -264,6 +264,10 @@
   "connection": {
     "reconnecting": "Перепідключення…"
   },
+  "appUpdate": {
+    "available": "Доступна нова версія",
+    "reload": "Оновити"
+  },
   "userSettings": {
     "title": "Налаштування акаунту",
     "styleRobots": "Роботи",

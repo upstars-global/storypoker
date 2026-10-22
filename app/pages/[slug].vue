@@ -11,6 +11,7 @@ import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
 import { useProfilesStore } from '~/stores/profiles'
 import { useCountdown, type CountdownMode } from '~/composables/useCountdown'
+import { useAppUpdate } from '~/composables/useAppUpdate'
 import { getSupabase } from '~/lib/supabase-instance'
 import type { Player, RoomState } from '~/stores/types'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
@@ -219,6 +220,9 @@ const isConsensus = computed(() => {
 })
 
 const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown, playDecision } = useCountdown()
+const { holdUpdate } = useAppUpdate()
+watch(countdownActive, holdUpdate)
+onUnmounted(() => holdUpdate(false))
 
 function broadcastCountdownStart(mode: CountdownMode) {
   countdownChannel?.send({ type: 'broadcast', event: 'start', payload: { initiatorId: currentPlayerId.value, mode } })

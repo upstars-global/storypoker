@@ -264,6 +264,10 @@
   "connection": {
     "reconnecting": "Reconnecting…"
   },
+  "appUpdate": {
+    "available": "A new version is available",
+    "reload": "Reload"
+  },
   "userSettings": {
     "title": "Account Settings",
     "styleRobots": "Robots",

@@ -69,8 +69,10 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 - **Routing:** `vue-router@5`; **State:** Pinia 4; **i18n:** `vue-i18n@11`, локалі `app/i18n/locales/{uk,en}.json`
 - **Styling:** Tailwind v4 через `@tailwindcss/vite`, CSS-first config - `app/assets/css/main.css`
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
-- **PWA:** `vite-plugin-pwa` (Workbox, `autoUpdate`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
-  файл); splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
+- **PWA:** `vite-plugin-pwa` (Workbox, `prompt`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
+  файл); нову версію застосовує `app/pwa.ts` за правилами `useAppUpdate` (прихована вкладка, простій, тост);
+  `skipWaiting: true` - тимчасово, щоб вкладки зі старим `autoUpdate`-бандлом перейшли; прибрати наступним релізом;
+  splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
 - **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300–700;
   **Charts:** `echarts` + `vue-echarts`
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
