@@ -15,6 +15,14 @@ function watchForUpdates(swUrl: string, registration: ServiceWorkerRegistration)
   })
 }
 
+function watchForTakeover(onTakeover: () => void) {
+  let controlled = Boolean(navigator.serviceWorker.controller)
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (controlled) onTakeover()
+    controlled = true
+  })
+}
+
 async function applyUpdate(updateServiceWorker: () => Promise<void>) {
   const registration = await navigator.serviceWorker.getRegistration()
   if (!registration?.waiting) {
@@ -28,6 +36,7 @@ async function applyUpdate(updateServiceWorker: () => Promise<void>) {
 export function initAppUpdate() {
   const { scheduleUpdate } = useAppUpdate()
   const scheduleApply = () => scheduleUpdate(() => void applyUpdate(updateServiceWorker))
+  if ('serviceWorker' in navigator) watchForTakeover(scheduleApply)
   const updateServiceWorker = registerSW({
     immediate: true,
     onNeedRefresh: scheduleApply,

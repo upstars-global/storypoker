@@ -11,9 +11,14 @@ vi.mock('virtual:pwa-register', () => ({
   },
 }))
 
-const swListeners = new Map<string, () => void>()
+const swListeners = new Map<string, Array<() => void>>()
 let waiting: object | null = null
+let controller: object | null = null
 const reload = vi.fn()
+
+function fireSw(event: string) {
+  swListeners.get(event)?.forEach((listener) => listener())
+}
 
 async function setup() {
   vi.resetModules()
@@ -31,13 +36,19 @@ describe('initAppUpdate', () => {
   beforeEach(() => {
     swListeners.clear()
     waiting = null
+    controller = null
     reload.mockClear()
     updateServiceWorker.mockClear()
     vi.stubGlobal('navigator', {
       onLine: true,
       serviceWorker: {
+        get controller() {
+          return controller
+        },
         getRegistration: () => Promise.resolve({ waiting }),
-        addEventListener: (event: string, listener: () => void) => swListeners.set(event, listener),
+        addEventListener: (event: string, listener: () => void) => {
+          swListeners.set(event, [...(swListeners.get(event) ?? []), listener])
+        },
       },
     })
     vi.stubGlobal('location', { ...window.location, reload })
@@ -55,7 +66,7 @@ describe('initAppUpdate', () => {
 
     expect(updateServiceWorker).toHaveBeenCalledOnce()
     expect(reload).not.toHaveBeenCalled()
-    swListeners.get('controllerchange')?.()
+    fireSw('controllerchange')
     expect(reload).toHaveBeenCalledOnce()
   })
 
@@ -75,5 +86,25 @@ describe('initAppUpdate', () => {
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
     document.dispatchEvent(new Event('visibilitychange'))
     await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce())
+  })
+
+  it('schedules a reload when a new worker takes over a controlled tab', async () => {
+    controller = {}
+    await setup()
+    fireSw('controllerchange')
+    expect(reload).not.toHaveBeenCalled()
+
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce())
+  })
+
+  it('does not reload when the first worker claims a fresh tab', async () => {
+    await setup()
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    fireSw('controllerchange')
+    document.dispatchEvent(new Event('visibilitychange'))
+    await Promise.resolve()
+    expect(reload).not.toHaveBeenCalled()
   })
 })
