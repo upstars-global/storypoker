@@ -131,8 +131,8 @@ jobs:
 
       - name: Install cr-request skill
         run: |
-          npx -y --prefer-online skl-x@0.4.12 add sentimony/agentic-workflow -s cr-request -a claude-code -y -m sm
-          test -f .claude/skills/cr-request/SKILL.md
+          npx -y --prefer-online skl-x@0.4.12 add sentimony/agentic-workflow -s cr-request -a claude-code -g -y -m sm
+          test -f ~/.claude/skills/cr-request/SKILL.md
 
       - name: Check reviewer identity
         run: |

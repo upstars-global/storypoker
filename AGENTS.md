@@ -99,6 +99,7 @@ Supabase-кредами) на кожен run; `e2e` - тільки коли за
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
 `cr-request` і один раз лишає PR review від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
+скіл ставиться в `~/.claude/skills` (`-g`): на подіях `pull_request` дія відновлює `.claude` з `main`;
 хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `review_requested` - одразу з гілки PR.
