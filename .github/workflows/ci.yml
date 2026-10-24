@@ -189,6 +189,35 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # Baselines are Linux renders from the pinned Playwright image, so the image tag must match
+  # @playwright/test in package.json. Not a required check.
+  visual:
+    name: Visual
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --user root
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright test --project=visual
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-visual
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
   e2e:
     name: E2E
     needs: detect-secrets
