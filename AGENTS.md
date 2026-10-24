@@ -73,7 +73,7 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
   файл); нову версію застосовує `app/pwa.ts` за правилами `useAppUpdate` (прихована вкладка, простій, тост);
   `skipWaiting: true` і `importScripts: ['sw-reload-clients.js']` (`public/`: новий worker при активації
   перезавантажує вкладки, бо старий `autoUpdate`-бандл сам не перезавантажується) - тимчасово, прибрати
-  наступним релізом;
+  наступним релізом разом із винятком у `scripts/audit-icon-build.ts`;
   splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
 - **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300-700;
   **Charts:** `echarts` + `vue-echarts`
