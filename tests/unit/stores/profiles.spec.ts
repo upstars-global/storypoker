@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setSupabase, resetSupabase } from '~/lib/supabase-instance'
 import { useProfilesStore } from '~/stores/profiles'
+import { asSupabase } from '../../support/helpers/fakeSupabase'
 
 function fakeStorage() {
   const bucket = {
@@ -23,7 +24,7 @@ describe('profilesStore - avatar storage', () => {
 
   it('uploadAvatar uploads webp with upsert and returns the object path', async () => {
     const { bucket, storage } = fakeStorage()
-    setSupabase({ storage } as any)
+    setSupabase(asSupabase({ storage }))
     const store = useProfilesStore()
     const blob = new Blob(['x'], { type: 'image/webp' })
     const path = await store.uploadAvatar('u1', blob)
@@ -38,14 +39,14 @@ describe('profilesStore - avatar storage', () => {
   it('uploadAvatar throws on storage error', async () => {
     const { bucket, storage } = fakeStorage()
     bucket.upload.mockResolvedValue({ error: new Error('denied') })
-    setSupabase({ storage } as any)
+    setSupabase(asSupabase({ storage }))
     const store = useProfilesStore()
     await expect(store.uploadAvatar('u1', new Blob())).rejects.toThrow('denied')
   })
 
   it('removeAvatar removes the fixed path', async () => {
     const { bucket, storage } = fakeStorage()
-    setSupabase({ storage } as any)
+    setSupabase(asSupabase({ storage }))
     const store = useProfilesStore()
     await store.removeAvatar('u1')
     expect(bucket.remove).toHaveBeenCalledWith(['u1/avatar.webp'])
@@ -54,7 +55,7 @@ describe('profilesStore - avatar storage', () => {
   it('removeAvatar throws on storage error', async () => {
     const { bucket, storage } = fakeStorage()
     bucket.remove.mockResolvedValue({ data: null, error: new Error('denied') })
-    setSupabase({ storage } as any)
+    setSupabase(asSupabase({ storage }))
     const store = useProfilesStore()
     await expect(store.removeAvatar('u1')).rejects.toThrow('denied')
   })
@@ -65,7 +66,7 @@ describe('profilesStore - upsert', () => {
 
   it('caches exactly the row it wrote, including updated_at', async () => {
     const upsert = vi.fn().mockResolvedValue({ error: null })
-    setSupabase({ from: vi.fn().mockReturnValue({ upsert }) } as any)
+    setSupabase(asSupabase({ from: vi.fn().mockReturnValue({ upsert }) }))
     const store = useProfilesStore()
     await store.upsert({
       user_id: 'u1',
@@ -91,7 +92,7 @@ describe('profilesStore - fetch', () => {
       updated_at: '2026-08-02T00:00:00Z',
     }
     const { select } = fakeSelect([row])
-    setSupabase({ from: vi.fn().mockReturnValue({ select }) } as any)
+    setSupabase(asSupabase({ from: vi.fn().mockReturnValue({ select }) }))
     const store = useProfilesStore()
     const profile = await store.fetchOne('u1')
     expect(select).toHaveBeenCalledWith('user_id, avatar_style, avatar_seed, avatar_url, updated_at')

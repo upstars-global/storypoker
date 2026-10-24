@@ -6,7 +6,7 @@ import AppModalPaper from '~/components/AppModalPaper.vue'
 import RoleBadge from '~/components/RoleBadge.vue'
 import { useCardLabel } from '~/composables/useCardLabel'
 import { DECK_PRESETS } from '~/utils/cardDecks'
-import { roleTagForShields, roleTagOrder, isQaPlayer, DEV_COHORT_LABEL } from '~/utils/shields'
+import { roleTagForShields, roleTagOrder, trendCohorts, DEV_COHORT_LABEL } from '~/utils/shields'
 import type { RoundHistory } from '~/stores/types'
 
 const props = defineProps<{ round: RoundHistory; shieldsMap?: Map<string, string[]>; cohort?: 'DEV' | 'QA' | null }>()
@@ -27,12 +27,10 @@ const cohortLabel = computed(() => {
   return props.cohort === 'QA' ? 'QA' : DEV_COHORT_LABEL
 })
 
+const voteCohorts = computed(() => trendCohorts(props.round.votes, props.shieldsMap))
+
 const sortedVotes = computed(() => [...props.round.votes]
-  .filter(v => {
-    if (!props.cohort) return true
-    const isQa = isQaPlayer(props.shieldsMap?.get(v.player_id))
-    return props.cohort === 'QA' ? isQa : !isQa
-  })
+  .filter(v => !props.cohort || voteCohorts.value.get(v.player_id) === props.cohort)
   .map(v => ({ ...v, roleTag: roleTagForShields(props.shieldsMap?.get(v.player_id)) }))
   .sort((a, b) => roleTagOrder(a.roleTag) - roleTagOrder(b.roleTag) || a.name.localeCompare(b.name)))
 </script>

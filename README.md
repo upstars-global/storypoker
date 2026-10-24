@@ -171,25 +171,15 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/openai/codex"><img src="https://img.shields.io/github/stars/openai/codex?style=flat&logo=github&logoColor=white&label=&color=555" alt="Codex stars"></a></td>
     </tr>
     <tr>
-      <td rowspan="4"><strong>Skills</strong></td>
-      <td><img src="https://cdn.simpleicons.org/vercel" width="16" height="16"> <a href="https://github.com/vercel-labs/skills">vercel-labs/skills</a></td>
-      <td><a href="https://www.npmjs.com/package/skills"><img src="https://img.shields.io/npm/dt/skills?style=flat&logo=npm&logoColor=white&label=&color=555" alt="skills downloads"></a> Skills installer for agents</td>
-      <td><a href="https://github.com/vercel-labs/skills"><img src="https://img.shields.io/github/stars/vercel-labs/skills?style=flat&logo=github&logoColor=white&label=&color=555" alt="skills stars"></a></td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/obra/superpowers">obra/superpowers</a></td>
-      <td><a href="https://skills.sh/obra/superpowers"><img src="https://skills.sh/b/obra/superpowers" alt="skills.sh"></a> Agentic skills framework</td>
-      <td><a href="https://github.com/obra/superpowers"><img src="https://img.shields.io/github/stars/obra/superpowers?style=flat&logo=github&logoColor=white&label=&color=555" alt="superpowers stars"></a></td>
+      <td rowspan="2"><strong>Skills</strong></td>
+      <td><a href="https://github.com/sentimony/skl-x">sentimony/skl-x</a></td>
+      <td><a href="https://www.npmjs.com/package/skl-x"><img src="https://img.shields.io/npm/dt/skl-x?style=flat&logo=npm&logoColor=white&label=&color=555" alt="skl-x downloads"></a> Skills installer and usage stats</td>
+      <td><a href="https://github.com/sentimony/skl-x"><img src="https://img.shields.io/github/stars/sentimony/skl-x?style=flat&logo=github&logoColor=white&label=&color=555" alt="skl-x stars"></a></td>
     </tr>
     <tr>
       <td><a href="https://github.com/sentimony/skills">sentimony/skills</a></td>
       <td><a href="https://skills.sh/sentimony/skills"><img src="https://skills.sh/b/sentimony/skills" alt="skills.sh"></a> Agent skills collection</td>
       <td><a href="https://github.com/sentimony/skills"><img src="https://img.shields.io/github/stars/sentimony/skills?style=flat&logo=github&logoColor=white&label=&color=555" alt="sentimony/skills stars"></a></td>
-    </tr>
-    <tr>
-      <td><a href="https://github.com/ihororlovskyi/skillio">ihororlovskyi/skillio</a></td>
-      <td><a href="https://www.npmjs.com/package/skillio"><img src="https://img.shields.io/npm/dt/skillio?style=flat&logo=npm&logoColor=white&label=&color=555" alt="skillio downloads"></a> Skills usage stats</td>
-      <td><a href="https://github.com/ihororlovskyi/skillio"><img src="https://img.shields.io/github/stars/ihororlovskyi/skillio?style=flat&logo=github&logoColor=white&label=&color=555" alt="skillio stars"></a></td>
     </tr>
   </tbody>
 </table>
@@ -200,7 +190,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 npm i
 ```
 
-`preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) - see [Skills](#skills).
+`preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) except in CI (`CI` set) - see [Skills](#skills). `setup.sh` also adds a Claude Code `SessionStart` hook that runs [scripts/session-start.sh](scripts/session-start.sh), so every new `claude` session starts with fresh skills.
 
 ### Run
 
@@ -225,7 +215,7 @@ npm run test:e2e         # full Playwright suite, requires .env/.env.test
 
 ### CI/CD (GitHub Actions + Netlify)
 
-[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on PRs and pushes to `main`:
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests, pushes to `main` and manual dispatch:
 
 - `detect-secrets`, `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
 - `e2e` (Chromium + WebKit against the test Supabase project) runs only when the `E2E_*` secrets are set.
@@ -244,12 +234,12 @@ claude --dangerously-skip-permissions
 
 ### Skills
 
-[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall`, or on demand with `npm run skills`.
+[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall` (skipped in CI, where `CI` is set), before `npm run dev` (a failure there does not stop `dev`), or on demand with `npm run skills`.
 
 ### How to see which skills Claude Code used
 
 ```bash
-npm i -g skillio
+npm i -g skl-x
 skl usg -p 3h
 ```
 
