@@ -6,7 +6,10 @@ function loadWorker(activeWorker: object | null) {
   const client = { url: 'https://example.test/agile-office', navigate: vi.fn(() => Promise.resolve(null)) }
   const worker = {
     registration: { active: activeWorker },
-    clients: { matchAll: vi.fn(() => Promise.resolve([client])) },
+    clients: {
+      claim: vi.fn(() => Promise.resolve()),
+      matchAll: vi.fn(() => Promise.resolve([client])),
+    },
     addEventListener: (event: string, listener: (event: { waitUntil: (promise: Promise<unknown>) => void }) => void) => {
       listeners.set(event, listener)
     },
@@ -28,6 +31,7 @@ describe('sw-reload-clients', () => {
     await fire('install')
     await fire('activate')
 
+    expect(worker.clients.claim).toHaveBeenCalledBefore(worker.clients.matchAll)
     expect(worker.clients.matchAll).toHaveBeenCalledWith({ type: 'window' })
     expect(client.navigate).toHaveBeenCalledWith(client.url)
   })
@@ -39,6 +43,15 @@ describe('sw-reload-clients', () => {
 
     expect(worker.clients.matchAll).not.toHaveBeenCalled()
     expect(client.navigate).not.toHaveBeenCalled()
+  })
+
+  it('finishes activation without waiting for the navigations', async () => {
+    const { client, fire } = loadWorker({})
+    client.navigate.mockReturnValueOnce(new Promise(() => {}))
+    await fire('install')
+
+    await expect(fire('activate')).resolves.toBeUndefined()
+    expect(client.navigate).toHaveBeenCalledOnce()
   })
 
   it('ignores windows that refuse to navigate', async () => {
