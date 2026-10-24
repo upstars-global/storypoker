@@ -687,7 +687,11 @@ Task 3: done - (subagent sonnet) controller rerun: playwright test --project=vis
 Task 4: done - (subagent opus) controller rerun: playwright test --project=visual -> 192 passed (72 public + 12 support + 108 room); lint 0
 Ruling: room join screenshot is viewport-only, other room states full-page - overlay backdrop covers only the viewport - low
 Deferred: room header overflows horizontally at 375 px (full page 463-473 px wide, account button off-screen); current Vue behavior, captured in baselines - P5 mobile spec
-Task 5: in progress - started after Task 4 commit
+Task 5: done - (subagent opus) controller rerun: playwright test --project=visual -> 336 passed (modals 144 incl. 24 trends-chart clips); lint 0; typecheck 0
+Round task-5 1: trends screenshot passes at 1% even with chart lines missing; add chart-clipped screenshot and separate DEV/QA lines in fixture
+Ruling: trends gets a second screenshot clipped to the ECharts plot area (TRENDS_PLOT_INSET); with clock jump 0 all 24 chart clips fail - full-modal shot misses absent lines at 1% - medium: classic dark margin only 1.1-1.4%, stricter threshold would break Decision 4
+Ruling: fixture QA alignment 71 vs DEV 86 in two history rounds (Emery 8->13, 5->8) so both trend lines are visible - only scene.ts reads the fixture - low
+Ruling: ECharts animation completes by advancing the frozen clock 5 s and back to FROZEN_NOW in the spec, no app change - low
 Task 6: pending
 Task 7: pending
 Task 8: pending
