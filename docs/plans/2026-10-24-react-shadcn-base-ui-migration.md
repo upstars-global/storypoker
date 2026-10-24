@@ -692,7 +692,7 @@ Round task-5 1: trends screenshot passes at 1% even with chart lines missing; ad
 Ruling: trends gets a second screenshot clipped to the ECharts plot area (TRENDS_PLOT_INSET); with clock jump 0 all 24 chart clips fail - full-modal shot misses absent lines at 1% - medium: classic dark margin only 1.1-1.4%, stricter threshold would break Decision 4
 Ruling: fixture QA alignment 71 vs DEV 86 in two history rounds (Emery 8->13, 5->8) so both trend lines are visible - only scene.ts reads the fixture - low
 Ruling: ECharts animation completes by advancing the frozen clock 5 s and back to FROZEN_NOW in the spec, no app change - low
-Task 6: in progress - started at 4c0c212
+Task 6: done - actionlint 0; Visual baselines run 40140558827 success; CI run 40140903128 on e86533d attempts 1 and 2 -> Visual success, all required checks success, baselines unchanged
 Ruling: Visual project runs with retries 0 so a flaky screenshot cannot pass on retry - low
 Ruling: baselines = artifact visual-baselines of run 40140558827 (PR #46, label update-visual-baselines), 348 PNGs, replace local macOS captures - owner approved push and draft PR - low
 Ruling: visual-baselines also runs on pull_request labeled update-visual-baselines (job-level if, no concurrency) - workflow_dispatch needs the file on main - low
