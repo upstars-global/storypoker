@@ -66,6 +66,7 @@ const visualProject: Project = {
   name: 'visual',
   testDir: resolve(__cfgDir, 'tests/visual'),
   testMatch: ['**/*.spec.ts'],
+  retries: 0,
   snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',
   use: {
     ...devices['Desktop Chrome'],
