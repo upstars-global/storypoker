@@ -70,6 +70,13 @@ npx -y --prefer-online skl-x add supabase/agent-skills -s \
   supabase-postgres-best-practices \
   -a codex claude-code -y -m sm
 
+# SUPABASE AGENT-SKILLS https://github.com/netlify/context-and-tools
+npx -y --prefer-online skl-x add netlify/context-and-tools -s \
+  netlify-config \
+  netlify-functions \
+  netlify-deploy \
+  -a codex claude-code -y -m sm
+
 # npx -y --prefer-online skl-x -v
 npx -y --prefer-online skl-x ls -g -m sm
 npx -y --prefer-online skl-x ls -m sm

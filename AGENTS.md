@@ -25,15 +25,15 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
 CI check = `pnpm run test:ci` - обов'язково перед завершенням будь-якої задачі.
-- **New feature:** `scope-triage` → `plan-crafting` → `inline-plan-dev`; за потреби `typescript` · `echarts` ·
+- **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
   `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
-  `verification-gate` → CI check
-- **Bug / regression:** `debugging` → `tdd` → `verification-gate` → CI check
+  `verify` → CI check
+- **Bug / regression:** `debugging` → `tdd` → `verify` → CI check
 - **Supabase (DB / Auth / RLS / Storage):** `tdd` → `/security-review` → CI check
-- **Refactoring:** `scope-triage` → `tdd` → CI check
-- **Received code review:** `cr-received` → (fixes) → `verification-gate` → CI check
+- **Refactoring:** `specify` → `tdd` → CI check
+- **Received code review:** `cr-received` → (fixes) → `verify` → CI check
 - **Prose (docs, README, UI copy, commits):** `dashfix` · `negafix`
-- **Закриття гілки:** `branch-finish`
+- **Закриття гілки:** `finalize`
 
 ## Project Overview
 **Story Poker** - Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 8 пресетів або
