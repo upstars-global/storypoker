@@ -693,6 +693,8 @@ Ruling: trends gets a second screenshot clipped to the ECharts plot area (TRENDS
 Ruling: fixture QA alignment 71 vs DEV 86 in two history rounds (Emery 8->13, 5->8) so both trend lines are visible - only scene.ts reads the fixture - low
 Ruling: ECharts animation completes by advancing the frozen clock 5 s and back to FROZEN_NOW in the spec, no app change - low
 Task 6: in progress - started at 4c0c212
+Ruling: Visual project runs with retries 0 so a flaky screenshot cannot pass on retry - low
+Ruling: baselines = artifact visual-baselines of run 40140558827 (PR #46, label update-visual-baselines), 348 PNGs, replace local macOS captures - owner approved push and draft PR - low
 Ruling: visual-baselines also runs on pull_request labeled update-visual-baselines (job-level if, no concurrency) - workflow_dispatch needs the file on main - low
 Ruling: Visual and baselines jobs run in playwright:v1.64.1-noble with --user root, HOME=/root - container defaults to HOME=/github/home - low: confirmed only by a real run
 Task 7: pending
