@@ -684,8 +684,10 @@ Ruling: visual project and its server (port 4174, fixed fake Supabase URL) load 
 Ruling: Google Fonts (fonts.googleapis.com, fonts.gstatic.com) pass through to the network in visual; everything else is blocked - self-hosting fonts changes the app and is out of P0 scope - medium: font CDN drift can move baselines
 Deferred: tests/AGENTS.md still describes tests/visual as .gitkeep-only; typecheck does not cover tests/visual/** - Task 24
 Task 3: done - (subagent sonnet) controller rerun: playwright test --project=visual public -> 72 passed against local baselines; lint 0; local PNGs stay untracked until Task 6
-Task 4: in progress - started after Task 3 commit
-Task 5: pending
+Task 4: done - (subagent opus) controller rerun: playwright test --project=visual -> 192 passed (72 public + 12 support + 108 room); lint 0
+Ruling: room join screenshot is viewport-only, other room states full-page - overlay backdrop covers only the viewport - low
+Deferred: room header overflows horizontally at 375 px (full page 463-473 px wide, account button off-screen); current Vue behavior, captured in baselines - P5 mobile spec
+Task 5: in progress - started after Task 4 commit
 Task 6: pending
 Task 7: pending
 Task 8: pending
