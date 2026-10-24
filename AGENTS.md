@@ -24,7 +24,7 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
-CI check = `npm run test:ci` - обов'язково перед завершенням будь-якої задачі.
+CI check = `pnpm run test:ci` - обов'язково перед завершенням будь-якої задачі.
 - **New feature:** `scope-triage` → `plan-crafting` → `inline-plan-dev`; за потреби `typescript` · `echarts` ·
   `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verification-gate` → CI check
@@ -59,7 +59,7 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 | `supabase/` | схема таблиць, міграції, RLS, Storage-бакет | `supabase/AGENTS.md` |
 | `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
 | `tests/` | Vitest unit + Playwright e2e | `tests/AGENTS.md` |
-| `scripts/` | npm lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
+| `scripts/` | lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
 
 Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
@@ -73,9 +73,9 @@ CI check = `npm run test:ci` - обов'язково перед завершен
   файл); нову версію застосовує `app/pwa.ts` за правилами `useAppUpdate` (прихована вкладка, простій, тост);
   `skipWaiting: true` - тимчасово, щоб вкладки зі старим `autoUpdate`-бандлом перейшли; прибрати наступним релізом;
   splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
-- **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300–700;
+- **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300-700;
   **Charts:** `echarts` + `vue-echarts`
-- **Node/npm:** Node >=24.15.0, npm >=11.12.0
+- **Node/pnpm:** Node >=24.15.0, pnpm >=12.14.0 (`packageManager` у `package.json`)
 - **TypeScript лишається 6.x:** TS 7 (Go-порт) не має JS compiler API, на якому стоїть `scripts/icons/scan.ts`
   (`ts.createSourceFile`, падає `icons:check`), а peer `typescript-eslint` - `<6.1.0`; мажор від `ncu` не бери
 
@@ -83,19 +83,19 @@ CI check = `npm run test:ci` - обов'язково перед завершен
 `package.json` - джерело правди для повного списку скриптів. Тут лише неочевидне:
 
 ```bash
-npm install          # preinstall → scripts/setup.sh (створює .env/, .agents/, .claude/settings.json)
+pnpm install         # preinstall → scripts/setup.sh (створює .env/, .agents/, .claude/settings.json)
                      # postinstall → scripts/skills.sh (мережевий skl-x add; skills-lock.json; у CI пропускається)
-npm run test:unit    # канонічний unit-run; `npm test` і `test:unit` - обидва `vitest run`
-npm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery)
-npm run test:ci      # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
-npm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
+pnpm run test:unit   # канонічний unit-run; `pnpm test` і `test:unit` - обидва `vitest run`
+pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery)
+pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
+pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
                      # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
 ```
 
 CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`lint`/`typecheck` (`icons:check` + `typecheck`)/
 `unit` (`test:unit:coverage`)/`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
 Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
-деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "npm run build"`) зі своїм site env;
+деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
 `cr-request` і один раз лишає PR review від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
@@ -109,7 +109,7 @@ job `build` збирає `dist` лише для `icons:audit-build` і з placeh
 іншого акаунта.
 
 ## Environment Setup
-`package-lock.json` - committed (required for `npm ci`). Do NOT add it back to `.gitignore`.
+`pnpm-lock.yaml` - committed (required for `pnpm install --frozen-lockfile`). Do NOT add it to `.gitignore`.
 
 Усі env-файли - у `/.env/` (gitignored, окрім `*.example`). Vite читає через `envDir: '.env'` у `vite.config.ts`:
 `/.env/.env.local` (персональні override), `/.env/.env` (командні defaults), `/.env/.env.test` (креди тестового
@@ -127,7 +127,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - `/` - home + Recent Rooms; `/<roomId>` - кімната за 8-символьним id; `/<slug>` - alias (URL з id редиректиться)
 - `/login`, `/signup`, `/forgot-password`, `/reset-password` - auth routes; `/ffc` - Feature Flags console
 
-`isValidRoomSlug()` приймає 1–32 символи `[a-z0-9-]`, без дефісу на початку/кінці; `normalizeRoomSlug()` чистить
+`isValidRoomSlug()` приймає 1-32 символи `[a-z0-9-]`, без дефісу на початку/кінці; `normalizeRoomSlug()` чистить
 рядок, але довжину не перевіряє. Нові top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або
 вводь префікс.
 
@@ -139,7 +139,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
 | `sp-lang` | `uk \| en`; читається в `app/i18n.ts`, пишеться `persistLocale()`. Дефолт - `uk` |
 | `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
-| `sp-volume` | `0`–`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
+| `sp-volume` | `0`-`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
 | `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
 
 ## Roles
@@ -150,7 +150,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
   будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `v-if="isModerator"` в
   `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
 - **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
-  Детальна матриця - `DESIGN.md` §11.1–11.2
+  Детальна матриця - `DESIGN.md` §11.1-11.2
 - **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.vue` (спільний селектор у
   JoinOverlay+PlayerEditModal) на базі `RoleBadge.vue` (те саме відображення у PlayerRow) і пишеться як один shield у
   `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи

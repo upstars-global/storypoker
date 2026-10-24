@@ -120,7 +120,7 @@ if (flag === '--check') {
       process.exit(1)
     }
     if (actual !== content) {
-      console.error(`generated file is stale: ${relative(root, path)} - run npm run icons:generate`)
+      console.error(`generated file is stale: ${relative(root, path)} - run pnpm run icons:generate`)
       process.exit(1)
     }
   }

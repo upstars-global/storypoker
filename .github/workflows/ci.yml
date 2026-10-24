@@ -41,10 +41,11 @@ jobs:
       - name: Check skills.sh syntax
         run: sh -n scripts/skills.sh
 
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
+          cache: pnpm
 
       - name: Install probe skills
         run: |
@@ -77,8 +78,8 @@ jobs:
             done
           done
 
-      - run: npm ci
-      - run: npm run lint
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
 
   typecheck:
     name: Typecheck
@@ -86,13 +87,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run icons:check
-      - run: npm run typecheck
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run icons:check
+      - run: pnpm run typecheck
 
   unit:
     name: Unit tests
@@ -100,12 +102,13 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run test:unit:coverage
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:unit:coverage
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -121,20 +124,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       # Placeholders keep the Supabase client in the graph so the icon budget measures a
       # production-shaped bundle; see docs/audits/README.md. This dist is for auditing only -
       # production is built by Netlify from the repo, not shipped from here.
-      - run: npm run build
+      - run: pnpm run build
         env:
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_KEY: placeholder
       - name: Audit the icon delivery graph
-        run: npm run icons:audit-build
+        run: pnpm run icons:audit-build
       - name: Upload icon audit report
         if: always()
         uses: actions/upload-artifact@v4
@@ -151,11 +155,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Resolve Playwright version
         id: pw
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
@@ -167,11 +172,11 @@ jobs:
           key: playwright-chromium-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - name: Install Playwright browsers
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
       - name: Install Playwright system deps
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
-      - run: npx playwright test --project page-load --project icon-delivery
+        run: pnpm exec playwright install-deps chromium
+      - run: pnpm exec playwright test --project page-load --project icon-delivery
         env:
           VITE_SUPABASE_URL: https://dummy.supabase.co
           VITE_SUPABASE_KEY: sb_publishable_dummy_key_for_page_load_smoke_only
@@ -192,11 +197,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Resolve Playwright version
         id: pw
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
@@ -208,11 +214,11 @@ jobs:
           key: playwright-chromium-webkit-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - name: Install Playwright browsers
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium webkit
+        run: pnpm exec playwright install --with-deps chromium webkit
       - name: Install Playwright system deps
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium webkit
-      - run: npm run test:e2e
+        run: pnpm exec playwright install-deps chromium webkit
+      - run: pnpm run test:e2e
         env:
           VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           VITE_SUPABASE_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}

@@ -1,16 +1,16 @@
-# Scripts - npm lifecycle hooks і генератор іконок
+# Scripts - lifecycle hooks і генератор іконок
 
 Shell-скрипти - POSIX `sh` з `set -e`; TS-скрипти запускаються напряму через `node` (type stripping), без `tsx`.
-npm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) теж розраховані на POSIX shell: під Windows
-`cmd` `predev` блокує `npm run dev`, тож там потрібен Git Bash як `script-shell`.
+pnpm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) теж розраховані на POSIX shell: під Windows
+`cmd` `predev` блокує `pnpm run dev`, тож там потрібен Git Bash як `script-shell`.
 
 | Скрипт | Запуск | Що робить |
 | --- | --- | --- |
-| `setup.sh` | `preinstall`, `npm run setup` | створює `.agents/skills`, `.claude/skills`, `.env/` з порожніми `.env` і `.env.local`; пише або доповнює через `jq` `.claude/settings.json` (`attribution` вимкнена, хук `SessionStart` на `session-start.sh` додається один раз); наприкінці викликає `migrate-test-artifacts.sh` |
+| `setup.sh` | `preinstall`, `pnpm run setup` | створює `.agents/skills`, `.claude/skills`, `.env/` з порожніми `.env` і `.env.local`; пише або доповнює через `jq` `.claude/settings.json` (`attribution` вимкнена, хук `SessionStart` на `session-start.sh` додається один раз); наприкінці викликає `migrate-test-artifacts.sh` |
 | `migrate-test-artifacts.sh` | із `setup.sh` | переносить legacy `coverage/`, `playwright-report/` з кореня в `test-results/`; тимчасовий, прибрати разом із рядками в `.gitignore` |
-| `skills.sh` | `postinstall` (крім CI), `predev` (збій не зупиняє `dev`), `npm run skills` | спершу `skl-x rm .` знімає всі skills проєкту, далі ставить skills через `skl-x add` для Codex і Claude Code; мережевий |
-| `session-start.sh` | хук Claude Code `SessionStart` (`startup`) | тихо запускає `npm run skills` і повертає `reloadSkills`, щоб нова сесія бачила свіжі skills; stdout хука йде в контекст моделі, тож друкує лише JSON |
-| `clean.sh` | `npm run clean` | видаляє skills, `node_modules/`, `package-lock.json`, `dist/`, `.nuxt/` - повне перевстановлення з нуля |
+| `skills.sh` | `postinstall` (крім CI), `predev` (збій не зупиняє `dev`), `pnpm run skills` | спершу `skl-x rm .` знімає всі skills проєкту, далі ставить skills через `skl-x add` для Codex і Claude Code; мережевий |
+| `session-start.sh` | хук Claude Code `SessionStart` (`startup`) | тихо запускає `pnpm run skills` і повертає `reloadSkills`, щоб нова сесія бачила свіжі skills; stdout хука йде в контекст моделі, тож друкує лише JSON |
+| `clean.sh` | `pnpm run clean` | видаляє skills, `node_modules/`, `pnpm-lock.yaml`, `dist/`, `.nuxt/` - повне перевстановлення з нуля |
 | `generate-icons.ts` | `icons:generate`, `icons:check` (у `test:ci`) | сканує `app/`, збирає підмножину Iconify-сетів у `app/generated/`; `--check` падає, якщо згенероване розійшлось із кодом. Модулі - `icons/` |
 | `audit-icon-build.ts` | `icons:audit-build` (CI-job `build`) | перевіряє `dist`: жодних повних Iconify-сетів чи генератора в бандлі, бюджет gzip 25 KiB, baseline - `docs/audits/icon-bundle-baseline.json` |
 
