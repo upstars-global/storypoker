@@ -683,8 +683,8 @@ Ruling: plan commands use --project=visual <filter> - Playwright 1.64.1 reads `-
 Ruling: visual project and its server (port 4174, fixed fake Supabase URL) load only when visual is named in --project, so bare test:e2e and CI e2e keep their old scope; Task 6 must pass --project=visual - medium: argv parsing in playwright.config.ts
 Ruling: Google Fonts (fonts.googleapis.com, fonts.gstatic.com) pass through to the network in visual; everything else is blocked - self-hosting fonts changes the app and is out of P0 scope - medium: font CDN drift can move baselines
 Deferred: tests/AGENTS.md still describes tests/visual as .gitkeep-only; typecheck does not cover tests/visual/** - Task 24
-Task 3: pending
-Task 4: pending
+Task 3: done - (subagent sonnet) controller rerun: playwright test --project=visual public -> 72 passed against local baselines; lint 0; local PNGs stay untracked until Task 6
+Task 4: in progress - started after Task 3 commit
 Task 5: pending
 Task 6: pending
 Task 7: pending
