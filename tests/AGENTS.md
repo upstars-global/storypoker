@@ -13,7 +13,7 @@ i18n; дії stores мокай `vi.spyOn` на інстансах активно
 character class.
 E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`, якого локально нема - job `e2e` у CI пропускається без
 секретів, тож реально біжить лише проєкт `page-load`. Без `E2E_BASE_URL` Playwright сам збирає і запускає
-`npm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується); задай
+`pnpm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується); задай
 `E2E_BASE_URL`, щоб тестувати вже запущений сервер.
 
 ## Icon rendering harness (`tests/icon-rendering/`)
@@ -25,10 +25,10 @@ E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`, якого �
 `role`, `view=catalog|room`, `widget=slot`, `paused=1`, `countdown=N`. Всі гравці `is_online: false` за планом.
 
 ```bash
-npm run test:icons:harness    # сам збирає harness і піднімає preview на :4181
+pnpm run test:icons:harness    # сам збирає harness і піднімає preview на :4181
 ```
 
-`tests/icon-rendering/tsconfig.json` прогонить третім кроком `npm run typecheck`, тому job `Typecheck` бере
+`tests/icon-rendering/tsconfig.json` прогонить третім кроком `pnpm run typecheck`, тому job `Typecheck` бере
 harness без змін у `ci.yml`. Новий tsconfig-проєкт треба явно дописати в цей скрипт, інакше CI його не побачить.
 
 Історія A/B (варіант B з окремим `ICON_RENDERER=mask` і переплетені заміри) закрита разом із міграцією;

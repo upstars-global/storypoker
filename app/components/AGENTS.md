@@ -29,13 +29,13 @@ countdown «wet») змішує `currentColor` з `#0057B7`/`#FFD700`, і mask-�
 lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`.
 
 Джерело істини для subset - `app/utils/iconManifest.ts` (`inputNames` + `dynamicBindings` + чотири `flagCases`).
-Додав нову іконку - додай ім'я туди й перегенеруй: `npm run icons:generate` пише чотири артефакти в
+Додав нову іконку - додай ім'я туди й перегенеруй: `pnpm run icons:generate` пише чотири артефакти в
 `app/generated/` (`iconCollections.json`, `icons.css`, `iconClasses.json`, `coloredIcons.json`).
 Сканер звіряє `names` кожного binding-а з літералами, знайденими в джерелах, тож застарілий запис падає. Зворотний
 напрямок не покривається: літерал невідомої колекції, схований у змінній поза icon-контекстом, статично
 нерозрізненний з Tailwind-варіантом (`sm:hidden`), тож його ловить `throw` у dev/test, а не сканер.
-`npm run icons:check` (у job `Typecheck` і на початку `test:ci`) падає на дрейфі будь-якого з них,
-`npm run icons:audit-build` стежить за browser graph і бюджетом JS+CSS. У dev/test пропущена іконка кидає
+`pnpm run icons:check` (у job `Typecheck` і на початку `test:ci`) падає на дрейфі будь-якого з них,
+`pnpm run icons:audit-build` стежить за browser graph і бюджетом JS+CSS. У dev/test пропущена іконка кидає
 `Missing local icon: <name>`. Legacy `simple-icons:*`/`game-icons:*` лишилися тільки в `SHIELD_CATALOG` для
 лукапу і в UI не рендеряться. Рантайм читає три артефакти з чотирьох; `iconCollections.json` у бандл не йде -
 це fixture для unit-тестів, і `icons:audit-build` падає, якщо він потрапляє в production graph.
