@@ -196,7 +196,10 @@ jobs:
             Use only the severities Critical, Important, and Minor; the counts must match the findings, and zero
             findings means zeros. After the summary: the findings with severity, location, impact, evidence, and
             confidence, the set-aside list, open questions about intent, and strengths.
-            The body must end with the line `Reviewed with: cr-request ${{ steps.skill.outputs.version }} skill`.
+            In the skill's closing `Next step` line, write the skill name as inline code with a leading slash, for
+            example: Next step: `/cr-received` - 2 findings to rule on. Leave `none` as plain text.
+            The body must end with this line, backticks included:
+            Reviewed with: `/cr-request` ${{ steps.skill.outputs.version }} skill
           claude_args: >-
             --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git branch:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review ${{ needs.gate.outputs.number }} --comment --body-file /tmp/claude-review.md)"
 
@@ -207,7 +210,7 @@ jobs:
           NUMBER: ${{ needs.gate.outputs.number }}
           HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
           STARTED_AT: ${{ steps.start.outputs.at }}
-          SIGNATURE: 'Reviewed with: cr-request ${{ steps.skill.outputs.version }} skill'
+          SIGNATURE: 'Reviewed with: `/cr-request` ${{ steps.skill.outputs.version }} skill'
         run: |
           reviews=$(gh api --paginate "repos/$REPO/pulls/$NUMBER/reviews" \
             --jq '.[] | select(.user.login == "so-upstars" and .commit_id == env.HEAD_SHA
