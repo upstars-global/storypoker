@@ -156,7 +156,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
     </tr>
     <tr>
       <td><img src="https://cdn.simpleicons.org/typescript" width="16" height="16"> <a href="https://github.com/vuejs/language-tools">vue-tsc</a></td>
-      <td>SFC typecheck (<code>npm run typecheck</code>)</td>
+      <td>SFC typecheck (<code>pnpm run typecheck</code>)</td>
       <td><a href="https://github.com/vuejs/language-tools"><img src="https://img.shields.io/github/stars/vuejs/language-tools?style=flat&logo=github&logoColor=white&label=&color=555" alt="vue-tsc stars"></a></td>
     </tr>
     <tr>
@@ -187,7 +187,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 ### Install
 
 ```bash
-npm i
+pnpm install
 ```
 
 `preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) except in CI (`CI` set) - see [Skills](#skills). `setup.sh` also adds a Claude Code `SessionStart` hook that runs [scripts/session-start.sh](scripts/session-start.sh), so every new `claude` session starts with fresh skills.
@@ -197,21 +197,21 @@ npm i
 Fill `.env/.env` (shared: Supabase) following `.env/.env.example`; `.env/.env.local` is the per-user override.
 ```bash
 cp .env/.env.example .env/.env
-npm run dev
+pnpm run dev
 ```
 
 ### Quality checks
 
 ```bash
-npm run lint
-npm run typecheck
-npm run test
-npm run build
-npm run test:e2e:pages   # public pages smoke, no Supabase
-npm run test:e2e         # full Playwright suite, requires .env/.env.test
+pnpm run lint
+pnpm run typecheck
+pnpm run test
+pnpm run build
+pnpm run test:e2e:pages   # public pages smoke, no Supabase
+pnpm run test:e2e         # full Playwright suite, requires .env/.env.test
 ```
 
-`npm run test:ci` runs the first four in one go - the same gate as CI.
+`pnpm run test:ci` runs the first four in one go - the same gate as CI.
 
 ### CI/CD (GitHub Actions + Netlify)
 
@@ -223,8 +223,8 @@ npm run test:e2e         # full Playwright suite, requires .env/.env.test
 
 ### Ports
 
-- `5173` - `npm run dev`
-- `4173` - `npm run preview`; Playwright reuses a server already running there unless `E2E_BASE_URL` points elsewhere
+- `5173` - `pnpm run dev`
+- `4173` - `pnpm run preview`; Playwright reuses a server already running there unless `E2E_BASE_URL` points elsewhere
 
 ### Run Claude Code In Bypass Mode
 
@@ -234,7 +234,7 @@ claude --dangerously-skip-permissions
 
 ### Skills
 
-[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall` (skipped in CI, where `CI` is set), before `npm run dev` (a failure there does not stop `dev`), or on demand with `npm run skills`.
+[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall` (skipped in CI, where `CI` is set), before `pnpm run dev` (a failure there does not stop `dev`), or on demand with `pnpm run skills`.
 
 ### How to see which skills Claude Code used
 
