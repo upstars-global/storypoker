@@ -52,9 +52,11 @@ describe('initAppUpdate', () => {
       },
     })
     vi.stubGlobal('location', { ...window.location, reload })
+    vi.useFakeTimers()
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
   })
@@ -67,6 +69,17 @@ describe('initAppUpdate', () => {
     expect(updateServiceWorker).toHaveBeenCalledOnce()
     expect(reload).not.toHaveBeenCalled()
     fireSw('controllerchange')
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('reloads anyway when the new worker never takes control', async () => {
+    waiting = {}
+    await setup()
+    await needRefreshOnHiddenTab()
+
+    expect(updateServiceWorker).toHaveBeenCalledOnce()
+    expect(reload).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(10_000)
     expect(reload).toHaveBeenCalledOnce()
   })
 

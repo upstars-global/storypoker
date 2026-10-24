@@ -130,9 +130,12 @@ jobs:
           node-version: 24
 
       - name: Install cr-request skill
+        id: skill
         run: |
           npx -y --prefer-online skl-x@0.4.12 add sentimony/agentic-workflow -s cr-request -a claude-code -g -y -m sm
-          test -f ~/.claude/skills/cr-request/SKILL.md
+          version="$(sed -nE 's/^[[:space:]]+version:[[:space:]]*"?([0-9][0-9.]*)"?[[:space:]]*$/\1/p' ~/.claude/skills/cr-request/SKILL.md | head -n 1)"
+          test -n "$version" || { echo "::error::No version in the cr-request SKILL.md"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Check reviewer identity
         run: |
@@ -193,7 +196,7 @@ jobs:
             Use only the severities Critical, Important, and Minor; the counts must match the findings, and zero
             findings means zeros. After the summary: the findings with severity, location, impact, evidence, and
             confidence, the set-aside list, open questions about intent, and strengths.
-            The body must end with the line `Reviewed with: cr-request skill`.
+            The body must end with the line `Reviewed with: cr-request ${{ steps.skill.outputs.version }} skill`.
           claude_args: >-
             --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write,Bash(git branch:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review ${{ needs.gate.outputs.number }} --comment --body-file /tmp/claude-review.md)"
 
@@ -204,11 +207,12 @@ jobs:
           NUMBER: ${{ needs.gate.outputs.number }}
           HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
           STARTED_AT: ${{ steps.start.outputs.at }}
+          SIGNATURE: 'Reviewed with: cr-request ${{ steps.skill.outputs.version }} skill'
         run: |
           reviews=$(gh api --paginate "repos/$REPO/pulls/$NUMBER/reviews" \
             --jq '.[] | select(.user.login == "so-upstars" and .commit_id == env.HEAD_SHA
               and .submitted_at >= env.STARTED_AT) | .body')
-          grep -qF 'Reviewed with: cr-request skill' <<< "$reviews" \
+          grep -qF "$SIGNATURE" <<< "$reviews" \
             || { echo "No review on $HEAD_SHA since $STARTED_AT made with the cr-request skill"; exit 1; }
 
       - name: Report review status

@@ -2,6 +2,7 @@ import { registerSW } from 'virtual:pwa-register'
 import { useAppUpdate } from '~/composables/useAppUpdate'
 
 const UPDATE_CHECK_MS = 15 * 60_000
+const UPDATE_APPLY_TIMEOUT_MS = 10_000
 
 function watchForUpdates(swUrl: string, registration: ServiceWorkerRegistration) {
   const check = async () => {
@@ -30,6 +31,7 @@ async function applyUpdate(updateServiceWorker: () => Promise<void>) {
     return
   }
   navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true })
+  setTimeout(() => window.location.reload(), UPDATE_APPLY_TIMEOUT_MS)
   await updateServiceWorker()
 }
 

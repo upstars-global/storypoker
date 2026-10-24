@@ -93,6 +93,39 @@ describe('useAppUpdate', () => {
     expect(apply).toHaveBeenCalledOnce()
   })
 
+  it('hides the prompt once a reload on demand is queued behind a countdown', () => {
+    const apply = vi.fn()
+    const { scheduleUpdate, promptVisible, applyUpdateNow, holdUpdate } = useAppUpdate()
+    scheduleUpdate(apply)
+    for (let elapsed = 0; elapsed < UPDATE_PROMPT_MS; elapsed += UPDATE_IDLE_MS / 2) {
+      window.dispatchEvent(new Event('keydown'))
+      vi.advanceTimersByTime(UPDATE_IDLE_MS / 2)
+    }
+    expect(promptVisible.value).toBe(true)
+
+    holdUpdate(true)
+    applyUpdateNow()
+    expect(apply).not.toHaveBeenCalled()
+    expect(promptVisible.value).toBe(false)
+
+    holdUpdate(false)
+    expect(apply).toHaveBeenCalledOnce()
+  })
+
+  it('does not show the prompt while an update is queued behind a countdown', () => {
+    const apply = vi.fn()
+    const { scheduleUpdate, promptVisible, holdUpdate } = useAppUpdate()
+    holdUpdate(true)
+    scheduleUpdate(apply)
+
+    vi.advanceTimersByTime(UPDATE_PROMPT_MS)
+    expect(apply).not.toHaveBeenCalled()
+    expect(promptVisible.value).toBe(false)
+
+    holdUpdate(false)
+    expect(apply).toHaveBeenCalledOnce()
+  })
+
   it('applies right away on a hidden tab once a countdown ends', () => {
     visibility = 'hidden'
     const apply = vi.fn()

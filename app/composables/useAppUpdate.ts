@@ -32,13 +32,13 @@ export function useAppUpdate() {
     let applied = false
     function run() {
       if (applied) return
+      stopWatching()
+      promptVisible.value = false
       if (updateHeld) {
         heldRun = run
         return
       }
       applied = true
-      stopWatching()
-      promptVisible.value = false
       apply()
     }
 
