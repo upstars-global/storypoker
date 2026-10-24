@@ -11,6 +11,7 @@ import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
 import { useProfilesStore } from '~/stores/profiles'
 import { useCountdown, type CountdownMode } from '~/composables/useCountdown'
+import { useAppUpdate } from '~/composables/useAppUpdate'
 import { getSupabase } from '~/lib/supabase-instance'
 import type { Player, RoomState } from '~/stores/types'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
@@ -219,6 +220,15 @@ const isConsensus = computed(() => {
 })
 
 const { countdownTimerCounter, countdownTimerTotal, countdownActive, countdownRunning, startCountdown, playDecision } = useCountdown()
+const { holdUpdate } = useAppUpdate()
+const revealInFlight = ref(false)
+watch([countdownActive, revealInFlight], ([active, revealing]) => holdUpdate(active || revealing))
+onUnmounted(() => holdUpdate(false))
+
+function revealAfterCountdown() {
+  revealInFlight.value = true
+  void roomStore.reveal().finally(() => { revealInFlight.value = false })
+}
 
 function broadcastCountdownStart(mode: CountdownMode) {
   countdownChannel?.send({ type: 'broadcast', event: 'start', payload: { initiatorId: currentPlayerId.value, mode } })
@@ -443,7 +453,7 @@ function subscribeRealtime() {
       const mode: CountdownMode = payload?.mode === 'wet' || payload?.mode === 'silent' ? payload.mode : 'dry'
       startCountdown(
         mode,
-        isInitiator ? () => roomStore.reveal() : undefined,
+        isInitiator ? revealAfterCountdown : undefined,
         () => isConsensus.value,
       )
     })

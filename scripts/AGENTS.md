@@ -8,7 +8,7 @@ pnpm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) те�
 | --- | --- | --- |
 | `setup.sh` | `preinstall`, `pnpm run setup` | створює `.agents/skills`, `.claude/skills`, `.env/` з порожніми `.env` і `.env.local`; пише або доповнює через `jq` `.claude/settings.json` (`attribution` вимкнена, хук `SessionStart` на `session-start.sh` додається один раз); наприкінці викликає `migrate-test-artifacts.sh` |
 | `migrate-test-artifacts.sh` | із `setup.sh` | переносить legacy `coverage/`, `playwright-report/` з кореня в `test-results/`; тимчасовий, прибрати разом із рядками в `.gitignore` |
-| `skills.sh` | `postinstall` (крім CI), `predev` (збій не зупиняє `dev`), `pnpm run skills` | спершу `skl-x rm .` знімає всі skills проєкту, далі ставить skills через `skl-x add` для Codex і Claude Code; мережевий |
+| `skills.sh` | `postinstall` (крім CI), `predev` (збій не зупиняє `dev`), `pnpm run skills` | спершу `skl-x update` і `skl-x rm .` (знімає всі skills проєкту), далі ставить skills через `skl-x add` для Codex і Claude Code; мережевий |
 | `session-start.sh` | хук Claude Code `SessionStart` (`startup`) | тихо запускає `pnpm run skills` і повертає `reloadSkills`, щоб нова сесія бачила свіжі skills; stdout хука йде в контекст моделі, тож друкує лише JSON |
 | `clean.sh` | `pnpm run clean` | видаляє skills, `node_modules/`, `pnpm-lock.yaml`, `dist/`, `.nuxt/` - повне перевстановлення з нуля |
 | `generate-icons.ts` | `icons:generate`, `icons:check` (у `test:ci`) | сканує `app/`, збирає підмножину Iconify-сетів у `app/generated/`; `--check` падає, якщо згенероване розійшлось із кодом. Модулі - `icons/` |
@@ -20,6 +20,8 @@ pnpm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) те�
 - Вимкнений skill позначено `\ <name>` у списку, а не видалено й не закоментовано: аргумент стає
   `" <name>"` з пробілом попереду й нічого не знаходить. Це не баг - не «виправляй» такі рядки.
   Закоментований рядок продовження обірвав би команду.
+- Вимикаючи skill, прибери його назву з `AGENTS.md` (Workflow sequences) і вкладених `AGENTS.md`:
+  агент не має кликати skill, якого немає в `.claude/skills/`.
 - Версія `skl-x` запінена (`skl-x@0.4.12`) у `clean.sh`, `.github/workflows/ci.yml` і
   `.github/workflows/claude-review.yml` - оновлюй усі разом. `skills.sh` і `skills.local.sh` беруть останній `skl-x`: `sln` у local-скрипті
   знімає опубліковану копію сам лише з 0.4.9.

@@ -25,15 +25,15 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
 CI check = `pnpm run test:ci` - обов'язково перед завершенням будь-якої задачі.
-- **New feature:** `scope-triage` → `plan-crafting` → `inline-plan-dev`; за потреби `typescript` · `echarts` ·
+- **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
   `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
-  `verification-gate` → CI check
-- **Bug / regression:** `debugging` → `tdd` → `verification-gate` → CI check
+  `verify` → CI check
+- **Bug / regression:** `debugging` → `tdd` → `verify` → CI check
 - **Supabase (DB / Auth / RLS / Storage):** `tdd` → `/security-review` → CI check
-- **Refactoring:** `scope-triage` → `tdd` → CI check
-- **Received code review:** `cr-received` → (fixes) → `verification-gate` → CI check
+- **Refactoring:** `specify` → `tdd` → CI check
+- **Received code review:** `cr-received` → (fixes) → `verify` → CI check
 - **Prose (docs, README, UI copy, commits):** `dashfix` · `negafix`
-- **Закриття гілки:** `branch-finish`
+- **Закриття гілки:** `finalize`
 
 ## Project Overview
 **Story Poker** - Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 8 пресетів або
@@ -69,8 +69,12 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
 - **Routing:** `vue-router@5`; **State:** Pinia 4; **i18n:** `vue-i18n@11`, локалі `app/i18n/locales/{uk,en}.json`
 - **Styling:** Tailwind v4 через `@tailwindcss/vite`, CSS-first config - `app/assets/css/main.css`
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
-- **PWA:** `vite-plugin-pwa` (Workbox, `autoUpdate`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
-  файл); splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
+- **PWA:** `vite-plugin-pwa` (Workbox, `prompt`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
+  файл); нову версію застосовує `app/pwa.ts` за правилами `useAppUpdate` (прихована вкладка, простій, тост);
+  `skipWaiting: true` і `importScripts: ['sw-reload-clients.js']` (`public/`: новий worker при активації
+  перезавантажує вкладки, бо старий `autoUpdate`-бандл сам не перезавантажується) - тимчасово, прибрати
+  наступним релізом разом із винятком у `scripts/audit-icon-build.ts`;
+  splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
 - **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300-700;
   **Charts:** `echarts` + `vue-echarts`
 - **Node/pnpm:** Node >=24.15.0, pnpm >=12.14.0 (`packageManager` у `package.json`)
@@ -97,6 +101,7 @@ Supabase-кредами) на кожен run; `e2e` - тільки коли за
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
 `cr-request` і один раз лишає PR review від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
+скіл ставиться в `~/.claude/skills` (`-g`): на подіях `pull_request` дія відновлює `.claude` з `main`;
 хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `review_requested` - одразу з гілки PR.

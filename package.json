@@ -49,7 +49,7 @@
     "@vue/compiler-sfc": "^3.5.44",
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/test-utils": "^2.5.1",
-    "dotenv": "^18.0.8",
+    "dotenv": "^18.0.9",
     "eslint": "^10.13.0",
     "eslint-plugin-vue": "^10.11.1",
     "happy-dom": "^21.0.4",
@@ -59,7 +59,8 @@
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.5",
     "vue-eslint-parser": "^10.4.1",
-    "vue-tsc": "^3.3.13"
+    "vue-tsc": "^3.3.13",
+    "workbox-window": "^7.4.1"
   },
   "dependencies": {
     "@dicebear/core": "^10.7.0",

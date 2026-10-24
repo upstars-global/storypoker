@@ -7,6 +7,7 @@ Unit tests: Vitest + happy-dom, конфіг - окремий `vitest.config.ts`
 `playwright-report/` лишаються в `.gitignore` навмисно, `scripts/migrate-test-artifacts.sh` (preinstall) переносить їх
 зі старих кореневих шляхів. Фейковий Supabase-клієнт і Realtime-payload для `setSupabase()` /
 `applyChange()` - `tests/support/helpers/fakeSupabase.ts` (`asSupabase`, `changePayload`), без `as any`.
+`virtual:pwa-register` у vitest веде alias на заглушку `tests/support/stubs/pwaRegister.ts`; поведінку задавай `vi.mock`.
 Тест сторінки (`tests/unit/pages/`) - `shallowMount` з реальним `vue-router` (`createMemoryHistory`) і
 i18n; дії stores мокай `vi.spyOn` на інстансах активної pinia до mount, другу pinia в `global.plugins`
 не став - шпигуни опиняться на іншому store. Файл не називай `[slug].spec.ts`: у фільтрі vitest дужки -

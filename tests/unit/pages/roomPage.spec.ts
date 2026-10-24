@@ -16,6 +16,7 @@ import { useRoomStore, type ResolvedRoom } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import { usePresenceStore } from '~/stores/presence'
 import { useProfilesStore } from '~/stores/profiles'
+import { useAppUpdate } from '~/composables/useAppUpdate'
 import type { Player, RoomState } from '~/stores/types'
 import { asSupabase } from '../../support/helpers/fakeSupabase'
 
@@ -88,7 +89,10 @@ function fakeClient(players: Player[], state: RoomState) {
     return builder
   }
   const channel = {
-    on: () => channel,
+    on: (type: string, filter: { event?: string }, handler: BroadcastHandler) => {
+      if (type === 'broadcast' && filter.event) broadcastHandlers.set(filter.event, handler)
+      return channel
+    },
     subscribe: () => channel,
     unsubscribe: vi.fn(),
     send: vi.fn(),
@@ -98,6 +102,9 @@ function fakeClient(players: Player[], state: RoomState) {
     channel: () => channel,
   })
 }
+
+type BroadcastHandler = (message: { payload?: Record<string, unknown> }) => void
+const broadcastHandlers = new Map<string, BroadcastHandler>()
 
 let wrapper: VueWrapper | null = null
 
@@ -292,5 +299,32 @@ describe('room page not found', () => {
     const page = await mountRoom({ room: null })
     expect(page.find('[data-testid="room-root"]').exists()).toBe(false)
     expect(page.text()).toContain('room.notFoundTitle')
+  })
+})
+
+describe('room page update hold', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  it('applies a pending update only after the countdown reveal is saved', async () => {
+    const page = await mountRoom({ state: fakeState() })
+    let finishReveal = () => {}
+    vi.spyOn(useRoomStore(), 'reveal').mockReturnValue(new Promise<void>((resolve) => { finishReveal = resolve }))
+    vi.useFakeTimers()
+    broadcastHandlers.get('start')?.({ payload: { initiatorId: me.id, mode: 'silent' } })
+    await page.vm.$nextTick()
+
+    const apply = vi.fn()
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    useAppUpdate().scheduleUpdate(apply)
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(useRoomStore().reveal).toHaveBeenCalledOnce()
+    expect(apply).not.toHaveBeenCalled()
+
+    finishReveal()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(apply).toHaveBeenCalledOnce()
   })
 })

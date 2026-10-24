@@ -171,7 +171,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/openai/codex"><img src="https://img.shields.io/github/stars/openai/codex?style=flat&logo=github&logoColor=white&label=&color=555" alt="Codex stars"></a></td>
     </tr>
     <tr>
-      <td rowspan="2"><strong>Skills</strong></td>
+      <td rowspan="3"><strong>Skills</strong></td>
       <td><a href="https://github.com/sentimony/skl-x">sentimony/skl-x</a></td>
       <td><a href="https://www.npmjs.com/package/skl-x"><img src="https://img.shields.io/npm/dt/skl-x?style=flat&logo=npm&logoColor=white&label=&color=555" alt="skl-x downloads"></a> Skills installer and usage stats</td>
       <td><a href="https://github.com/sentimony/skl-x"><img src="https://img.shields.io/github/stars/sentimony/skl-x?style=flat&logo=github&logoColor=white&label=&color=555" alt="skl-x stars"></a></td>
@@ -180,6 +180,11 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/sentimony/skills">sentimony/skills</a></td>
       <td><a href="https://skills.sh/sentimony/skills"><img src="https://skills.sh/b/sentimony/skills" alt="skills.sh"></a> Agent skills collection</td>
       <td><a href="https://github.com/sentimony/skills"><img src="https://img.shields.io/github/stars/sentimony/skills?style=flat&logo=github&logoColor=white&label=&color=555" alt="sentimony/skills stars"></a></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/sentimony/agentic-workflow">sentimony/agentic-workflow</a></td>
+      <td><a href="https://skills.sh/sentimony/agentic-workflow"><img src="https://skills.sh/b/sentimony/agentic-workflow" alt="skills.sh"></a> Agent workflow chain: specify, plan, implement, review, verify, finalize</td>
+      <td><a href="https://github.com/sentimony/agentic-workflow"><img src="https://img.shields.io/github/stars/sentimony/agentic-workflow?style=flat&logo=github&logoColor=white&label=&color=555" alt="sentimony/agentic-workflow stars"></a></td>
     </tr>
   </tbody>
 </table>
@@ -234,7 +239,7 @@ claude --dangerously-skip-permissions
 
 ### Skills
 
-[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall` (skipped in CI, where `CI` is set), before `pnpm run dev` (a failure there does not stop `dev`), or on demand with `pnpm run skills`.
+[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall` (skipped in CI, where `CI` is set), before `pnpm run dev` (a failure there does not stop `dev`), or on demand with `pnpm run skills`. It installs the [agentic-workflow](https://github.com/sentimony/agentic-workflow) chain (`specify` → `plan-craft` → `implement` → `cr-request` → `cr-received` → `verify` → `finalize`), then the rest of [sentimony/skills](https://github.com/sentimony/skills) minus the skills the chain replaces.
 
 ### How to see which skills Claude Code used
 

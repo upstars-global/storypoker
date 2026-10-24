@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import ConnectionBanner from '~/components/ConnectionBanner.vue'
+import UpdateBanner from '~/components/UpdateBanner.vue'
 import { useSoundVolume } from '~/composables/useSoundVolume'
 import { useTheme } from '~/composables/useTheme'
 
@@ -18,6 +19,7 @@ onMounted(() => init())
       {{ $t('common.skipToContent') }}
     </a>
     <ConnectionBanner />
+    <UpdateBanner />
     <RouterView />
   </div>
 </template>

@@ -45,7 +45,7 @@ for (const file of artifacts) {
   if (!file.endsWith('.js')) continue
   const mapPath = `${file}.map`
   if (!existsSync(mapPath)) {
-    if (relative(distDir, file) === 'registerSW.js') continue
+    if (['registerSW.js', 'sw-reload-clients.js'].includes(relative(distDir, file))) continue
     console.error(`missing sourcemap for ${relative(distDir, file)}`)
     process.exit(1)
   }
