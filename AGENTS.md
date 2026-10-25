@@ -103,8 +103,10 @@ job `build` збирає `dist` лише для `icons:audit-build` і з placeh
 `cr-request` і один раз лишає PR review від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
 скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
 воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`: на подіях `pull_request` дія
-відновлює `.claude` з `main`. Агент має лише read-only `GITHUB_TOKEN` і пише тіло у файл; job `publish` перевіряє
-його й свіжість head, а PAT має тільки крок `post` (звіряє, що токен належить `so-upstars`) - гарантія лише для
+відновлює `.claude` з `main`. Агент має лише read-only `GITHUB_TOKEN` і пише тіло у файл; лог, дифф і base-копії
+йому готує крок `Prepare review target` в `auto-review-target/`, бо `git diff`/`log`/`show` з `--output=` пишуть
+файли раннера (`$GITHUB_ENV`) - їх в `--allowedTools` немає; PR, що трекає цю теку чи `auto-review-out/`, валить
+job. Job `publish` перевіряє тіло й свіжість head, а PAT має тільки крок `post` (звіряє, що токен належить `so-upstars`) - гарантія лише для
 копії з `main`, прогони `pull_request` беруть воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер,
 підпис, лічильники, токеноподібні рядки), а не його зміст: це прийнятий компроміс, а не дефект для рев'ю - статус
 дорадчий, рев'ю читає людина;
