@@ -2,7 +2,8 @@
 # CI run; how often it runs on its own is the claude-review.yml paragraph in AGENTS.md. The agent
 # reviews with a read-only GITHUB_TOKEN and no shell and writes the body to a file; the publish job
 # validates it and only its `post` step gets the so-upstars PAT. That holds for the main copy of this
-# file: pull_request runs use the PR branch's copy, so anyone who can push a branch can reach the PAT.
+# file: pull_request runs use the PR branch's copy and workflow_dispatch the copy on the ref it is
+# dispatched on, so anyone who can push a branch can reach the PAT.
 # Accepted trade-off (AGENTS.md): the checks cover the body's structure and token-like strings, not its
 # prose; a prompt-injected body can still mislead, and the status is advisory, not a required check.
 name: Claude review
@@ -21,14 +22,16 @@ on:
         required: true
 
 # One group per PR branch, so the gate that posts the latest `pending` status is also the run whose
-# review survives. A review request for someone else gets its own group and cancels nothing. A
+# review survives. A review request for someone else, and a CI run that was not a pull_request
+# event (the gate skips it), get their own group and cancel nothing. A
 # workflow_dispatch run knows only the PR number, so it gets its own group and may review alongside
 # an event-driven run; status ownership in publish then decides which result is reported.
 concurrency:
   group: >-
     claude-review-${{ github.event.pull_request.head.repo.full_name || github.event.workflow_run.head_repository.full_name || github.repository }}-${{
     github.event.pull_request.head.ref || github.event.workflow_run.head_branch || format('pr-{0}', inputs.pr_number) }}${{
-    github.event.action == 'review_requested' && github.event.requested_reviewer.login != 'so-upstars'
+    ((github.event.action == 'review_requested' && github.event.requested_reviewer.login != 'so-upstars') ||
+    (github.event_name == 'workflow_run' && github.event.workflow_run.event != 'pull_request'))
     && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
@@ -234,6 +237,8 @@ jobs:
           # Claude Code loads skills, settings, hooks, and MCP servers from any .claude/ under the working
           # directory, nested ones included, so the PR's copies must not reach the agent. The action restores
           # .claude/ from the base branch only on pull_request events, not on workflow_run or dispatch.
+          # Accepted trade-off (AGENTS.md): the base copies under auto-review-target/base/ go too, since a
+          # nested .claude/ loads as well; diff.patch keeps both sides of every changed hunk.
           find . -path ./.git -prune -o -name .claude -prune -exec rm -rf {} +
           rm -f .mcp.json .claude.json CLAUDE.local.md
 
@@ -482,7 +487,8 @@ jobs:
           if [ "$critical" -gt 0 ] || [ "$readiness" = "not ready" ]; then state=failure; fi
           {
             echo "ready_to_post=true"
-            echo "validated_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            # Back-dated, so runner clock skew against GitHub's submitted_at cannot hide a posted review
+            echo "validated_at=$(date -u -d '-2 minutes' +%Y-%m-%dT%H:%M:%SZ)"
             echo "signature=Reviewed with: \`/cr-request\` $VERSION skill"
             echo "summary=$summary"
             echo "state=$state"
@@ -516,7 +522,9 @@ jobs:
             gh api "repos/$REPO/statuses/$HEAD_SHA" -f state="$1" -f description="$2" \
               -f context="$CONTEXT" -f target_url="$RUN_URL" > /dev/null
           }
-          # A run cancelled by a newer one keeps its hands off the status the newer gate set
+          # A run cancelled by a newer one keeps its hands off the status the newer gate set. Accepted
+          # trade-off (AGENTS.md): a gate that posts `pending` between this read and the post below loses
+          # its status to this run and skips publishing; Re-request review recovers it.
           latest=$(gh api "repos/$REPO/commits/$HEAD_SHA/status?per_page=100" \
             --jq '[.statuses[] | select(.context == env.CONTEXT)][0].target_url // ""') \
             || { post_status error "Could not read the Claude review status"; exit 1; }
