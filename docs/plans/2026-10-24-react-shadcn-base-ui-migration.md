@@ -708,7 +708,7 @@ Task 13: done - 6324620 + 6ff3ed7 (opus): test:ci exit 0 (281 unit), page-load +
 Task 14: done - 9152423 (opus): test:ci exit 0 (290 unit), page-load + icon-delivery 17 passed, main.css diff additions only + @source {ts,tsx}, tsc 7.0.2, Button computed styles = .mui-btn* in 6 palettes x 2 widths
 Task 15: done - 9f287b8 (opus): test:unit components 21 passed, test:ci exit 0 (311 unit), page-load + icon-delivery 17 passed, header menu checked in built preview
 Task 16: done - 707c57e; controller rerun: pnpm run test:ci -> exit 0 (329 tests); page-load + icon-delivery -> 17 passed; CI Visual on PR #46 pending
-Task 17: pending
+Task 17: in progress
 Task 18: pending
 Task 19: pending
 Task 20: pending
