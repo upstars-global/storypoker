@@ -707,7 +707,7 @@ Task 12: done - (subagent opus) commit b8d878a; hook specs 28 old cases kept, 36
 Task 13: done - 6324620 + 6ff3ed7 (opus): test:ci exit 0 (281 unit), page-load + icon-delivery 17 passed, no composables in excludes, app/pwa.ts override gone
 Task 14: done - 9152423 (opus): test:ci exit 0 (290 unit), page-load + icon-delivery 17 passed, main.css diff additions only + @source {ts,tsx}, tsc 7.0.2, Button computed styles = .mui-btn* in 6 palettes x 2 widths
 Task 15: done - 9f287b8 (opus): test:unit components 21 passed, test:ci exit 0 (311 unit), page-load + icon-delivery 17 passed, header menu checked in built preview
-Task 16: in progress
+Task 16: done - 707c57e; controller rerun: pnpm run test:ci -> exit 0 (329 tests); page-load + icon-delivery -> 17 passed; CI Visual on PR #46 pending
 Task 17: pending
 Task 18: pending
 Task 19: pending
@@ -771,4 +771,11 @@ Deferred: AppModalPaper onPointerDown stopPropagation may stop Base UI outside-c
 Deferred: always-mounted tooltips per PlayerRow - watch resize performance - Task 18
 Deferred: useClickOutside, useMenuKeyboard used only by their specs; unused dropdown-menu submenu/checkbox/radio parts - Task 23
 Deferred: header menu placement at 375 px under Base UI collision avoidance - Task 22 Visual run
+Ruling: app/pages/AuthPageLayout.tsx added outside Task 16 Files - shared header + paper shell of the four auth pages - low
+Ruling: signup skips the user redirect while signUp is in flight; page forms submit only via form submit (Vue also fired keyup.enter, double submit) - low
+Ruling: auth pages keep native inputs with .mui-input; ui/input.tsx not bridged (its utilities override the floating label) - low
+Deferred: forgot-password classic light/dark at 1280 differs 0.02 locally on macOS (caption wraps) - confirm in CI Visual - Task 22
+Deferred: Sign in / Sign up / Sign out items in the AppHeader account menu - Task 18
+Deferred: AuthModal not mounted yet; modal-auth-* baselines - Task 18
+Deferred: ripple may vanish when the submit label text changes; wrap the label in a span - Task 20
 ```
