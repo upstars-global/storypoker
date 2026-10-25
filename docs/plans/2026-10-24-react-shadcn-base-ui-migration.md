@@ -711,8 +711,8 @@ Task 16: done - 707c57e; controller rerun: pnpm run test:ci -> exit 0 (329 tests
 Task 17: done - 0be53b7; controller rerun: pnpm run test:ci -> exit 0 (336 tests); page-load + icon-delivery -> 17 passed
 Task 18: done - 7c74a63; controller rerun: pnpm run test:ci -> exit 0 (375 passed, 1 todo); page-load + icon-delivery -> 17 passed; room-* baselines wait for Task 19 (Timer in every room shot)
 Task 19: done - a6f7669; controller rerun: pnpm run test:ci -> exit 0 (407 passed, 1 todo); page-load + icon-delivery -> 17 passed; CI Visual run 40213360416 pending
-Task 20: in progress
-Task 21: pending
+Task 20: done - 3ae6d5d, e3e0e5a; controller rerun: pnpm run test:ci -> exit 0 (445 tests); page-load + icon-delivery -> 17 passed; CI Visual run 40215942021 pending
+Task 21: in progress
 Task 22: pending
 Task 23: pending
 Task 24: pending
@@ -795,4 +795,11 @@ Deferred: PO/SM get 5 slot spins per round in Vue code, docs (AGENTS.md, app/com
 Deferred: authPages.spec flaky "document is not defined" from a useRipple timer after env teardown (1 of 5 runs) - Task 23
 Deferred: SlotMachine reel animation unchecked in a real browser - Task 21 harness widget=slot
 Ruling: CI Visual run 40213360416 on a6f7669: 204 passed (all public, room.spec and scene self-checks), 132 failed only in modals.spec - modals are Task 20 - low
+Ruling: Task 20 extra paths - app/hooks/useShieldsMap.ts (shared by History/Trends), AppModal initialFocus, RolePicker className, ui/select.tsx positioner z-[1400] (above .mui-modal-overlay 1300), wiring in [slug].tsx/index.tsx/App.tsx, .room-background-frame CSS, trend icon binding, ripple label spans in the auth pages and AuthModal, modals.spec selectors (page.getByRole('menuitem'), canvas instead of x-vue-echarts) - low
+Ruling: AlignmentTrendsModal loads lazily - eager load put the entry 108 KB gzip over the icons:audit-build budget; first Trends open fetches ~188 KB gzip - medium
+Ruling: RoundSnapshotModal renders nested inside History/Trends - siblings let Tab escape the snapshot; UpdateBanner without fade; deck preset list opens below the field (alignItemWithTrigger=false) - low
+Ruling: AppModalPaper onPointerDown stopPropagation kept - Select outside press closes the list, not the modal (test + browser) - low
+Deferred: deck Select chevron 1 px shorter with rounded ends vs native - owner approval of the modal-configure-deck baselines - Task 22
+Deferred: configure-deck classic light 375 chip rows wrap differently (chips ~1 px wider than the Vue light baseline; Vue dark agrees with React) - Task 22
+Deferred: skip link text read from uk.json directly, not via i18n - Task 23
 ```
