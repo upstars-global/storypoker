@@ -19,6 +19,7 @@ if (!process.env.CI) {
 
 const VISUAL_PORT = 4174
 const VISUAL_DIST = 'test-results/visual-dist'
+const VISUAL_BASE_DIST = process.env.STORYPOKER_VISUAL_DIST
 
 function selectedProjects(argv: string[]): string[] {
   return argv.flatMap((arg, index) => {
@@ -50,7 +51,9 @@ const appServer = {
 }
 
 const visualServer = {
-  command: `pnpm exec vite build --outDir ${VISUAL_DIST} --emptyOutDir && pnpm exec vite preview --outDir ${VISUAL_DIST} --port ${VISUAL_PORT} --strictPort`,
+  command: VISUAL_BASE_DIST
+    ? `pnpm exec vite preview --outDir ${VISUAL_BASE_DIST} --port ${VISUAL_PORT} --strictPort`
+    : `pnpm exec vite build --outDir ${VISUAL_DIST} --emptyOutDir && pnpm exec vite preview --outDir ${VISUAL_DIST} --port ${VISUAL_PORT} --strictPort`,
   cwd: __cfgDir,
   url: `http://localhost:${VISUAL_PORT}`,
   timeout: 180_000,
@@ -67,7 +70,7 @@ const visualProject: Project = {
   testDir: resolve(__cfgDir, 'tests/visual'),
   testMatch: ['**/*.spec.ts'],
   retries: 0,
-  snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',
+  snapshotPathTemplate: resolve(__cfgDir, 'test-results/visual-baselines/{arg}{ext}'),
   use: {
     ...devices['Desktop Chrome'],
     baseURL: `http://localhost:${VISUAL_PORT}`,

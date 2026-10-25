@@ -32,12 +32,13 @@ pnpm run test:e2e:pages`. Тест init-script палітри в `page-load.spec
 (`:4174`, збірка в `test-results/visual-dist` з фіксованим фейковим Supabase URL) лише коли `visual` названо в
 `--project`: пиши `--project=visual <filter>`, бо `--project visual <path>` Playwright читає як кілька назв проєктів.
 Мережу Supabase підміняє `tests/visual/support/fakeSupabase.ts`, сцени - `support/scene.ts`; назовні пропускаються
-лише Google Fonts. Еталони `tests/visual/__screenshots__/` - Linux-рендери з образу
-`mcr.microsoft.com/playwright:v1.64.1-noble` (тег = версія `@playwright/test`): на macOS локальний прогін
-розходиться, звіряй у тому самому контейнері (Docker). PNG еталонів лежать у Git LFS (`.gitattributes`): без
-`git-lfs` і `git lfs install --local` у checkout лишаються pointer-файли, і весь набір падає. Еталон оновлюється поштучно, з причиною й дифом у PR і після
-«так» власника: label `update-visual-baselines` на PR запускає `.github/workflows/visual-baselines.yml`, артефакт
-`visual-baselines` - нові PNG.
+лише Google Fonts. Еталонних PNG у репо немає: `pnpm run test:visual [<ref>]` (`scripts/visual-compare.sh`, дефолт
+`origin/main`) збирає `<ref>` через `git archive` у `test-results/visual-base-*`, знімає його з
+`--update-snapshots=all` у `test-results/visual-baselines/` (`STORYPOKER_VISUAL_DIST` - preview готового dist без
+збірки) і порівнює з робочим деревом. Екран, що впав на `<ref>`, лишається без еталона й падає при порівнянні.
+Знімай у образі `mcr.microsoft.com/playwright:v1.64.1-noble` (тег = версія `@playwright/test`), як CI-job:
+на macOS рендер розходиться з Linux. Навмисна зміна дизайну дає червоний `Visual` на своєму PR; після злиття
+еталоном стає новий `main`.
 
 ## Icon rendering harness (`tests/icon-rendering/`)
 

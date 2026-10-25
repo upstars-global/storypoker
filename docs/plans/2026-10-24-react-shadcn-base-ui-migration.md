@@ -888,3 +888,4 @@ Verify: INCOMPLETE compact tree 91eee5b5652792c583628176f3935657d39f0805 2026-10
 Review R1: code reviewer codex gpt-6.1-sol effort low, range 5ed0b18..10cd0d9, tree 77a7509ba2e86d8e5e17b1e68e18564ea29c35ea, Intent FINDINGS / System PASS / Craft PASS, ~$0.49 (Codex 5h window 100% -> 86%, weekly 86% -> 84%)
 Finding R1-codex-F1: Important README.md:253 - clean-Mac e2e path never installs the Playwright browser
 Received R1: R1-codex-F1 ACCEPT - README Local Supabase adds pnpm exec playwright install chromium; Re-review: not needed (one-line docs fix)
+Ruling: owner 2026-10-26 - CI e2e against a local Supabase on the runner, Detect secrets dropped from required checks; visual baselines no longer stored (348 PNG, Git LFS and visual-baselines.yml removed), Visual compares the PR base render with the head via scripts/visual-compare.sh

@@ -173,36 +173,40 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # Baselines are Linux renders from the pinned Playwright image, so the image tag must match
-  # @playwright/test in package.json. Not a required check. Baselines live in Git LFS; without git and
-  # git-lfs in the image, checkout falls back to the REST API and leaves pointer files instead of PNGs.
+  # Renders the base revision and this one in the same pinned Playwright image (tag = @playwright/test)
+  # and compares them; no baseline PNGs are stored. Not a required check. git must be in the image,
+  # otherwise checkout falls back to the REST API and leaves no history for git archive.
   visual:
     name: Visual
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
       options: --user root
     env:
       HOME: /root
     steps:
-      - run: apt-get update && apt-get install -y --no-install-recommends git git-lfs
+      - run: apt-get update && apt-get install -y --no-install-recommends git
       - uses: actions/checkout@v4
         with:
-          lfs: true
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright test --project=visual
+      - run: pnpm run test:visual "$BASE_REF"
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: test-results-visual
-          path: test-results/
+          path: |
+            test-results/playwright/
+            test-results/playwright-report/
           if-no-files-found: ignore
           retention-days: 7
 

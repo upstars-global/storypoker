@@ -202,9 +202,8 @@ xcode-select --install
 echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-# 3. Tools: Git LFS (visual baselines), GitHub CLI, Node version manager
-brew install git-lfs gh fnm
-git lfs install
+# 3. Tools: GitHub CLI, Node version manager
+brew install gh fnm
 
 # 4. Node 24 and pnpm (corepack picks the pnpm version from package.json)
 echo 'eval "$(fnm env --use-on-cd --shell zsh)"' >> ~/.zshrc
@@ -218,8 +217,6 @@ gh repo clone upstars-global/storypoker
 cd storypoker
 pnpm install
 ```
-
-Install Git LFS before cloning: without it the PNG baselines in `tests/visual/__screenshots__/` arrive as text pointers and the `visual` project fails.
 
 `preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) except in CI (`CI` set) - see [Skills](#skills). `setup.sh` also adds a Claude Code `SessionStart` hook that runs [scripts/session-start.sh](scripts/session-start.sh), so every new `claude` session starts with fresh skills.
 
@@ -239,7 +236,7 @@ pnpm run typecheck
 pnpm run test
 pnpm run build
 pnpm run test:e2e:pages   # public pages smoke; set dummy VITE_SUPABASE_* first (see tests/AGENTS.md)
-pnpm exec playwright test --project=visual   # screenshot parity, Linux baselines (Playwright container)
+pnpm run test:visual      # screenshots of origin/main vs the working tree (Playwright container)
 pnpm run test:e2e         # full Playwright suite, requires .env/.env.test (see Local Supabase)
 ```
 
@@ -268,7 +265,7 @@ pnpm run test:e2e -- --project=chromium
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests, pushes to `main` and manual dispatch:
 
 - `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
-- `visual` (not required) runs the `visual` Playwright project in the `mcr.microsoft.com/playwright` container against the committed baselines; `visual-baselines.yml` regenerates them on the `update-visual-baselines` PR label.
+- `visual` (not required) runs `pnpm run test:visual` in the `mcr.microsoft.com/playwright` container: it renders the PR base and the PR head and compares them, so no baseline images are stored. On a difference the `test-results-visual` artifact holds the expected, actual and diff images for 7 days.
 - `e2e` (not required; Chromium + WebKit) starts a throwaway local Supabase on the runner with `pnpm run supabase:local` and never touches the shared project.
 - There is no deploy job: Netlify builds `main` itself from the repo (`netlify.toml`), and the CI `dist` is built with placeholder credentials for the icon audit only.
 
