@@ -706,8 +706,8 @@ Task 11: done - (subagent sonnet) commit e252dcf; i18n spec 3 -> 5 cases incl. s
 Task 12: done - (subagent opus) commit b8d878a; hook specs 28 old cases kept, 36 total; controller rerun: test:ci exit 0 (269 unit tests), page-load + icon-delivery 17 passed incl. new init-script palette test; index.html unchanged
 Task 13: done - 6324620 + 6ff3ed7 (opus): test:ci exit 0 (281 unit), page-load + icon-delivery 17 passed, no composables in excludes, app/pwa.ts override gone
 Task 14: done - 9152423 (opus): test:ci exit 0 (290 unit), page-load + icon-delivery 17 passed, main.css diff additions only + @source {ts,tsx}, tsc 7.0.2, Button computed styles = .mui-btn* in 6 palettes x 2 widths
-Task 15: in progress
-Task 16: pending
+Task 15: done - 9f287b8 (opus): test:unit components 21 passed, test:ci exit 0 (311 unit), page-load + icon-delivery 17 passed, header menu checked in built preview
+Task 16: in progress
 Task 17: pending
 Task 18: pending
 Task 19: pending
@@ -762,4 +762,13 @@ Deferred: app/lib/utils.ts re-exports cn, unused (components import "cn") - Task
 Deferred: switch thumb --bg-app vs Vue #fafafa; dialog footer "Close" untranslated - Task 15/20
 Deferred: app/assets/AGENTS.md lacks the token bridge description - Task 24
 Ruling: owner 2026-10-25 - lucide-react icons inside app/components/ui stay as shadcn generates them; supersedes the lucide Deferred above; rule updated in app/components/AGENTS.md - low
+Ruling: PlayerRow.spec ports the keyboard/menu cases against AppMenu/AppMenuItem (PlayerRow comes in Task 18); RoleBadge is-excluded cases owed by Task 18 - low
+Ruling: AppModal renders the Base UI popup as <dialog open class="app-modal"> with .mui-modal-overlay inside, modal="trap-focus" (no scroll lock); AppModalPaper close calls onClose directly so it works under lockDismiss - low
+Ruling: AppTooltip adds role="tooltip" + aria-describedby itself and keeps the popup mounted (Base UI sets neither) - low
+Deferred: tests/visual/room.spec.ts:65 row.getByRole('menu') breaks with the portaled menu - selector fix, not a baseline - Task 18
+Deferred: RoleBadge is-excluded cases from the Vue PlayerRow spec - Task 18
+Deferred: AppModalPaper onPointerDown stopPropagation may stop Base UI outside-click close for a Select inside a modal - Task 20
+Deferred: always-mounted tooltips per PlayerRow - watch resize performance - Task 18
+Deferred: useClickOutside, useMenuKeyboard used only by their specs; unused dropdown-menu submenu/checkbox/radio parts - Task 23
+Deferred: header menu placement at 375 px under Base UI collision avoidance - Task 22 Visual run
 ```
