@@ -710,8 +710,8 @@ Task 15: done - 9f287b8 (opus): test:unit components 21 passed, test:ci exit 0 (
 Task 16: done - 707c57e; controller rerun: pnpm run test:ci -> exit 0 (329 tests); page-load + icon-delivery -> 17 passed; CI Visual on PR #46 pending
 Task 17: done - 0be53b7; controller rerun: pnpm run test:ci -> exit 0 (336 tests); page-load + icon-delivery -> 17 passed
 Task 18: done - 7c74a63; controller rerun: pnpm run test:ci -> exit 0 (375 passed, 1 todo); page-load + icon-delivery -> 17 passed; room-* baselines wait for Task 19 (Timer in every room shot)
-Task 19: in progress
-Task 20: pending
+Task 19: done - a6f7669; controller rerun: pnpm run test:ci -> exit 0 (407 passed, 1 todo); page-load + icon-delivery -> 17 passed; CI Visual run 40213360416 pending
+Task 20: in progress
 Task 21: pending
 Task 22: pending
 Task 23: pending
@@ -789,4 +789,9 @@ Deferred: PlayerRow Edit, header History/Trends/Configure deck/Room background/A
 Deferred: tests/visual/modals.spec.ts:135 row.getByRole('menuitem') portal selector - Task 20
 Deferred: home.spec "creates a room" flaked once (lastVisitedAt off 40 ms under advancing fake time) - Task 23
 Deferred: build warns about chunks > 500 kB - Task 23
+Ruling: useCountdown mount() reuses Audio objects via ??= instead of lazy creation - countdown needs audio.duration early; StrictMode test added - low
+Ruling: Timer reveal duration uses the last 1 s tick (react purity forbids Date.now() in render); alarm firing computed in render, chime from an effect; alarm minutes input uncontrolled, commits on blur/Enter - lint rules; behavior covered by specs - low
+Deferred: PO/SM get 5 slot spins per round in Vue code, docs (AGENTS.md, app/components/AGENTS.md, DESIGN.md 11.8) say 3 - kept Vue behavior; fix docs - Task 24
+Deferred: authPages.spec flaky "document is not defined" from a useRipple timer after env teardown (1 of 5 runs) - Task 23
+Deferred: SlotMachine reel animation unchecked in a real browser - Task 21 harness widget=slot
 ```
