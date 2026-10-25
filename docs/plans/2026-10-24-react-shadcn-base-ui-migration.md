@@ -761,4 +761,5 @@ Deferred: shadcn CLI in dependencies only for shadcn/tailwind.css import; consid
 Deferred: app/lib/utils.ts re-exports cn, unused (components import "cn") - Task 23
 Deferred: switch thumb --bg-app vs Vue #fafafa; dialog footer "Close" untranslated - Task 15/20
 Deferred: app/assets/AGENTS.md lacks the token bridge description - Task 24
+Ruling: owner 2026-10-25 - lucide-react icons inside app/components/ui stay as shadcn generates them; supersedes the lucide Deferred above; rule updated in app/components/AGENTS.md - low
 ```

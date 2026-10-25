@@ -23,7 +23,8 @@ countdown «wet») змішує `currentColor` з `#0057B7`/`#FFD700`, і mask-�
 
 Набір іконок - Material (`ic:*`); Lucide вмикається лише прапором `iconsLucide`, нові `lucide:*` хардкодити в
 компонентах не можна. Наявні винятки: `lucide:id-card` і volume-тріо `lucide:volume-x`/`volume-1`/`volume-2`
-(AppHeader) та `lucide:undo` (CardsArea).
+(AppHeader) та `lucide:undo` (CardsArea). Shadcn-компоненти в `app/components/ui/` лишають свої іконки з
+`lucide-react`, як їх генерує shadcn; правило вище стосується іконок застосунку поза `ui/`.
 Рендер проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts` читає флаги і делегує чистому
 `resolveIconName()` в `app/utils/iconResolver.ts`): `iconsLucide` ремапить `ic:baseline-*`→`lucide:*` (нову
 lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`.
