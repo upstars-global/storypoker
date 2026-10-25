@@ -135,6 +135,8 @@ jobs:
       # The agent gets no git diff, log, or show: they accept --output=<path>, which can write runner
       # file commands such as $GITHUB_ENV. The target is prepared here and handed over as files instead.
       - name: Prepare review target
+        # bash adds pipefail, so a failing git diff before the base-copy loop fails the step
+        shell: bash
         env:
           NUMBER: ${{ needs.gate.outputs.number }}
           BASE_SHA: ${{ needs.gate.outputs.base_sha }}
@@ -256,7 +258,7 @@ jobs:
             Never copy a token or secret into the body. The body must end with this line, backticks included:
             Reviewed with: `/cr-request` ${{ steps.skill.outputs.version }} skill
           claude_args: >-
-            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Edit(./auto-review-out/**),Bash(git status:*),Bash(git ls-files:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*)"
+            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write(./auto-review-out/**),Edit(./auto-review-out/**),Bash(git status:*),Bash(git ls-files:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*)"
 
       # The action hides the agent's output, so a run that ends without a body would leave no reason
       - name: Show why no review was written
