@@ -15,7 +15,6 @@ export default defineConfig({
       'tests/unit/composables/useSoundVolume.spec.ts',
       'tests/unit/composables/useTheme.spec.ts',
       'tests/unit/utils/useClickOutside.spec.ts',
-      'tests/unit/i18n.spec.ts',
     ],
     passWithNoTests: true,
     coverage: {
