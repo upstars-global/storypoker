@@ -714,8 +714,8 @@ Task 19: done - a6f7669; controller rerun: pnpm run test:ci -> exit 0 (407 passe
 Task 20: done - 3ae6d5d, e3e0e5a; controller rerun: pnpm run test:ci -> exit 0 (445 tests); page-load + icon-delivery -> 17 passed; CI run 40215942021 all green incl. Visual (full set: public, room, modals, scenes)
 Task 21: done - 5ef37b3; controller rerun: pnpm run test:icons:harness -> 63 passed; pnpm run test:ci -> exit 0 (445 tests)
 Task 22: done - 90428d8 (opus) + 59e8bc4 (controller: AppIcon spec port, dice faces from PlayerRow.tsx); controller rerun: pnpm run test:ci -> exit 0 (449 tests); page-load + icon-delivery -> 26 passed (9 new AC22 console cases); AC20 unverified - missing credentials: .env/.env.test for critical-flows (CI E2E skipped without secrets); no baselines updated
-Task 23: in progress
-Task 24: pending
+Task 23: done - dbf7c8f, 85c8cf5, c11cf11 (opus); controller rerun: pnpm run test:ci -> exit 0 (440 tests: -11 with removed hooks, +2 new); page-load + icon-delivery -> 26 passed; every remaining .mui-* in main.css has a use in app/**/*.tsx; CI Visual on c11cf11 pending
+Task 24: in progress
 Task 25: pending
 Ruling: owner decision 2026-10-25 - P0-P4 stay on 2610242233-dev-session in the main checkout, no worktrees, no P0 squash into main, one PR #46 at parity; spec Decisions 2-3 and AC13/20/23/25 updated to match - main fixes during migration get ported into this branch - low
 Ruling: Vue-based stores/composables and their specs are excluded in tsconfig.json and vitest.config.ts instead of ported - Tasks 10-13 own the ports - high if forgotten: each of Tasks 10-13 must drop its exclude entries or its RED/GREEN proves nothing
@@ -811,6 +811,13 @@ Ruling: AC22 RED evidence - injected console.error on /ffc and a setTimeout thro
 Deferred: AC20 critical-flows and smoke against the test Supabase - needs .env/.env.test or CI E2E secrets; realtime sync between two browsers and AuthPage.login unchecked - owner
 Deferred: no tsconfig covers tests/e2e/** and tests/page-objects/** (checked once with a temporary tsconfig, tsc 7.0.2 exit 0) - Task 25
 Deferred: AppIcon sets aria-hidden together with aria-label, so the label is never announced - Task 23
+Ruling: Task 23 extra paths - useClickOutside/useMenuKeyboard deleted with specs (no consumer), useRipple tracks and cancels pending waves on unmount (authPages flake root cause, 10/10 runs), skip link via t('common.skipToContent'), AppIcon with aria-label renders role=img without aria-hidden, shadcn moved to devDependencies; ui/dropdown-menu.tsx unused parts kept as generated - low
+Ruling: build chunk > 500 kB warning kept - icons:audit-build requires a single assets/index-*.js and measures the entry with CSS; manualChunks breaks that contract - medium
+Deferred: docs/audits/icon-bundle-baseline.json measured on Vue, delta -78880 B gzip makes the 25 KB budget slack - re-measure with real credentials - owner
+Deferred: PlayerRow status icons now carry aria-label and sit in an AppTooltip trigger with aria-describedby - likely announced twice (Vue never announced it) - Task 25
+Deferred: tw-animate-css is build-time only but in dependencies - Task 25
+Deferred: harness room screenshots - recommend toHaveScreenshot with container baselines or moving room view to tests/visual - owner
+Deferred: app/assets/AGENTS.md:15-16 lists removed .mui-btn-sm/.mui-btn-text/.mui-btn-secondary; app/components/AGENTS.md:8 mentions useClickOutside - Task 24
 ```
 
 ### Task 22: стара Vue-спека → React-тест
