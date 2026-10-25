@@ -6,15 +6,10 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'happy-dom',
-    include: ['tests/unit/**/*.spec.ts', 'tests/components/**/*.spec.ts', 'tests/integration/**/*.spec.ts'],
+    include: ['tests/unit/**/*.spec.ts', 'tests/unit/**/*.spec.tsx', 'tests/components/**/*.spec.ts', 'tests/integration/**/*.spec.ts'],
     exclude: [
       '**/node_modules/**',
       'tests/unit/composables/useCountdown.spec.ts',
-      'tests/unit/composables/useDylanAvatar.spec.ts',
-      'tests/unit/composables/useMenuKeyboard.spec.ts',
-      'tests/unit/composables/useSoundVolume.spec.ts',
-      'tests/unit/composables/useTheme.spec.ts',
-      'tests/unit/utils/useClickOutside.spec.ts',
     ],
     passWithNoTests: true,
     coverage: {

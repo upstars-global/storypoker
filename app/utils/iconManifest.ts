@@ -30,6 +30,16 @@ export const dynamicBindings: readonly { file: string; expression: string; names
     expression: 'volumeIcon',
     names: ['lucide:volume-x', 'lucide:volume-1', 'lucide:volume-2'],
   },
+  {
+    file: 'app/components/AppHeader.tsx',
+    expression: "isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'",
+    names: ['ic:baseline-light-mode', 'ic:baseline-dark-mode'],
+  },
+  {
+    file: 'app/components/AppHeader.tsx',
+    expression: "i18n.language === code ? 'ic:baseline-check' : 'ic:baseline-language'",
+    names: ['ic:baseline-check', 'ic:baseline-language'],
+  },
 ]
 
 const literalNames: readonly string[] = [

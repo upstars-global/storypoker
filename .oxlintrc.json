@@ -61,18 +61,7 @@
     "test-results/**",
     "node_modules/**",
     ".agents/**",
-    "app/composables/useCardLabel.ts",
-    "app/composables/useClickOutside.ts",
     "app/composables/useCountdown.ts",
-    "app/composables/useDylanAvatar.ts",
-    "app/composables/useMenuKeyboard.ts",
-    "app/composables/useSoundVolume.ts",
-    "app/composables/useTheme.ts",
-    "tests/unit/composables/useCountdown.spec.ts",
-    "tests/unit/composables/useDylanAvatar.spec.ts",
-    "tests/unit/composables/useMenuKeyboard.spec.ts",
-    "tests/unit/composables/useSoundVolume.spec.ts",
-    "tests/unit/composables/useTheme.spec.ts",
-    "tests/unit/utils/useClickOutside.spec.ts"
+    "tests/unit/composables/useCountdown.spec.ts"
   ]
 }

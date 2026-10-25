@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { getSupabase } from '~/lib/supabase-instance'
-import type { AvatarStyle } from '~/composables/useDylanAvatar'
+import type { AvatarStyle } from '~/hooks/useDylanAvatar'
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 export interface UserProfile {

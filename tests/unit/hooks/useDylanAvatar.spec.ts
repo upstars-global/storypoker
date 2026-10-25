@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest'
+import { renderHook } from '@testing-library/react'
 import { setSupabase, resetSupabase } from '~/lib/supabase-instance'
-import { useDylanAvatar } from '~/composables/useDylanAvatar'
+import { useDylanAvatar } from '~/hooks/useDylanAvatar'
 import type { UserProfile } from '~/stores/profiles'
 
-const { avatarDataUri, avatarSrcFor } = useDylanAvatar()
+function avatarHook() {
+  return renderHook(() => useDylanAvatar()).result.current
+}
 
 function profile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
@@ -29,12 +32,13 @@ beforeEach(() => {
 
 describe('avatarSrcFor - custom avatars', () => {
   it('resolves the stored path to a public URL with updated_at as a cache buster', () => {
-    const result = avatarSrcFor(profile(), 'fallback', false)
+    const result = avatarHook().avatarSrcFor(profile(), 'fallback', false)
     expect(result.src).toBe('https://cdn.test/avatars/u1/avatar.webp?v=2026-08-02T10%3A00%3A00.000Z')
     expect(result.cssGrayscale).toBe(false)
   })
 
   it('keeps an empty version when updated_at is missing', () => {
+    const { avatarSrcFor } = avatarHook()
     expect(avatarSrcFor(profile({ updated_at: null }), 'fallback', false).src)
       .toBe('https://cdn.test/avatars/u1/avatar.webp?v=')
     expect(avatarSrcFor(profile({ updated_at: undefined }), 'fallback', false).src)
@@ -42,7 +46,7 @@ describe('avatarSrcFor - custom avatars', () => {
   })
 
   it('asks for CSS grayscale when the player is offline', () => {
-    const result = avatarSrcFor(profile(), 'fallback', true)
+    const result = avatarHook().avatarSrcFor(profile(), 'fallback', true)
     expect(result.src).toContain('?v=')
     expect(result.cssGrayscale).toBe(true)
   })
@@ -50,18 +54,21 @@ describe('avatarSrcFor - custom avatars', () => {
 
 describe('avatarSrcFor - DiceBear fallbacks', () => {
   it('renders the stored DiceBear style by avatar_seed when there is no url', () => {
+    const { avatarDataUri, avatarSrcFor } = avatarHook()
     const result = avatarSrcFor(profile({ avatar_url: null }), 'fallback', false)
     expect(result.src).toBe(avatarDataUri('seed-1', false, 'bottts'))
     expect(result.cssGrayscale).toBe(false)
   })
 
   it('renders the stored DiceBear style with the DiceBear grayscale variant', () => {
+    const { avatarDataUri, avatarSrcFor } = avatarHook()
     const result = avatarSrcFor(profile({ avatar_style: 'miniavs', avatar_url: null }), 'fallback', true)
     expect(result.src).toBe(avatarDataUri('seed-1', true, 'miniavs'))
     expect(result.cssGrayscale).toBe(false)
   })
 
   it('uses the fallback seed when there is no profile', () => {
+    const { avatarDataUri, avatarSrcFor } = avatarHook()
     const result = avatarSrcFor(null, 'Alice', false)
     expect(result.src).toBe(avatarDataUri('Alice', false, 'bottts'))
     expect(result.cssGrayscale).toBe(false)

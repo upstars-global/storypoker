@@ -1,17 +1,15 @@
 import { describe, it, expect, vi } from 'vitest'
-import { ref, defineComponent, h } from 'vue'
-import { mount } from '@vue/test-utils'
-import { useClickOutside } from '~/composables/useClickOutside'
+import { useRef } from 'react'
+import { render } from '@testing-library/react'
+import { useClickOutside } from '~/hooks/useClickOutside'
 
 function makeWrapper(handler: () => void) {
-  const target = ref<HTMLElement | null>(null)
-  const Comp = defineComponent({
-    setup() {
-      useClickOutside(target, handler)
-      return () => h('div', { ref: (el) => { target.value = el as HTMLElement } })
-    },
-  })
-  return mount(Comp)
+  function Comp() {
+    const target = useRef<HTMLDivElement | null>(null)
+    useClickOutside(target, handler)
+    return <div ref={target} data-testid="target" />
+  }
+  return render(<Comp />)
 }
 
 describe('useClickOutside', () => {
@@ -29,7 +27,7 @@ describe('useClickOutside', () => {
   it('does not call handler when clicking inside the target', () => {
     const handler = vi.fn()
     const wrapper = makeWrapper(handler)
-    wrapper.element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    wrapper.getByTestId('target').dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
     expect(handler).not.toHaveBeenCalled()
     wrapper.unmount()
   })
