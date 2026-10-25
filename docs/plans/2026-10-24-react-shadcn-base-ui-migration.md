@@ -698,7 +698,7 @@ Ruling: Visual project runs with retries 0 so a flaky screenshot cannot pass on 
 Ruling: baselines = artifact visual-baselines of run 40140558827 (PR #46, label update-visual-baselines), 348 PNGs, replace local macOS captures - owner approved push and draft PR - low
 Ruling: visual-baselines also runs on pull_request labeled update-visual-baselines (job-level if, no concurrency) - workflow_dispatch needs the file on main - low
 Ruling: Visual and baselines jobs run in playwright:v1.64.1-noble with --user root, HOME=/root - container defaults to HOME=/github/home - low: confirmed only by a real run
-Task 7: pending
+Task 7: done - (subagent opus) commit 3034743; controller rerun with CI dummy VITE_SUPABASE_* : icons:check, typecheck (3 projects), lint 0, test:unit 158 passed, build, icons:audit-build (delta -275849 B gzip), playwright page-load + icon-delivery 16 passed; git ls-files *.vue -> empty
 Task 8: pending
 Task 9: pending
 Task 10: pending
@@ -718,4 +718,11 @@ Task 23: pending
 Task 24: pending
 Task 25: pending
 Ruling: owner decision 2026-10-25 - P0-P4 stay on 2610242233-dev-session in the main checkout, no worktrees, no P0 squash into main, one PR #46 at parity; spec Decisions 2-3 and AC13/20/23/25 updated to match - main fixes during migration get ported into this branch - low
+Ruling: Vue-based stores/composables and their specs are excluded in tsconfig.json and vitest.config.ts instead of ported - Tasks 10-13 own the ports - high if forgotten: each of Tasks 10-13 must drop its exclude entries or its RED/GREEN proves nothing
+Ruling: AppIcon prop is name (Vue used icon); scanner and iconManifest bindings follow; inputNames unchanged - low
+Ruling: eslint-plugin-vue stack kept until Task 8 deletes eslint.config.js - low
+Ruling: tests/icon-rendering vite.config.ts and tsconfig.json moved to plugin-react/tsx in Task 7 to keep typecheck green - Task 9 still owns the harness - low
+Deferred: @testing-library/dom peer of @testing-library/react not installed - Task 15
+Deferred: docs/audits/icon-bundle-baseline.json is stale after the Vue removal (delta -275 KiB) - Task 23
+Deferred: playwright.config.ts sets VITE_SUPABASE_* to '' without shell env, so local page-load needs the CI dummy values (pre-existing) - Task 24 docs
 ```
