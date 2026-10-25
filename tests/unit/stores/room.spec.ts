@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
 import { setSupabase, resetSupabase } from '~/lib/supabase-instance'
 import { useRoomStore, backgroundDisplayUrl } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
@@ -7,6 +6,9 @@ import { useAuthStore } from '~/stores/auth'
 import type { Player, RoomState } from '~/stores/types'
 import type { User } from '@supabase/supabase-js'
 import { asSupabase, changePayload } from '../../support/helpers/fakeSupabase'
+import { resetStores } from '../../support/helpers/resetStores'
+
+const state = () => useRoomStore.getState()
 
 function fakeRoomState(overrides: Partial<RoomState> = {}): RoomState {
   return {
@@ -38,30 +40,28 @@ function fakePlayer(overrides: Partial<Player> = {}): Player {
 }
 
 describe('roomStore.applyChange', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
+  beforeEach(async () => {
     resetSupabase()
+    await resetStores()
   })
 
   it('applies UPDATE to roomState', () => {
-    const store = useRoomStore()
-    store.roomState = fakeRoomState({ phase: 'voting' })
-    store.applyChange(changePayload<RoomState>('UPDATE', { new: fakeRoomState({ phase: 'revealed' }) }))
-    expect(store.roomState?.phase).toBe('revealed')
+    useRoomStore.setState({ roomState: fakeRoomState({ phase: 'voting' }) })
+    state().applyChange(changePayload<RoomState>('UPDATE', { new: fakeRoomState({ phase: 'revealed' }) }))
+    expect(state().roomState?.phase).toBe('revealed')
   })
 
   it('ignores INSERT/DELETE on room_state (singleton row)', () => {
-    const store = useRoomStore()
-    store.roomState = fakeRoomState()
-    store.applyChange(changePayload<RoomState>('INSERT', { new: fakeRoomState({ phase: 'revealed' }) }))
-    expect(store.roomState.phase).toBe('voting')
+    useRoomStore.setState({ roomState: fakeRoomState() })
+    state().applyChange(changePayload<RoomState>('INSERT', { new: fakeRoomState({ phase: 'revealed' }) }))
+    expect(state().roomState?.phase).toBe('voting')
   })
 })
 
 describe('roomStore actions', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
+  beforeEach(async () => {
     resetSupabase()
+    await resetStores()
   })
 
   it('reveal() sends update with phase=revealed (and skips history with <2 votes)', async () => {
@@ -78,12 +78,10 @@ describe('roomStore actions', () => {
         },
       }),
     }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState()
-    const players = usePlayersStore()
-    players.players = [fakePlayer({ id: 'p1', vote: '5' })]
-    await store.reveal()
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState() })
+    usePlayersStore.setState({ players: [fakePlayer({ id: 'p1', vote: '5' })] })
+    await state().reveal()
     expect(calls.find(c => c.table === 'room_state' && c.op === 'update')?.arg).toEqual({ phase: 'revealed' })
     expect(calls.find(c => c.table === 'round_history')).toBeUndefined()
   })
@@ -102,16 +100,14 @@ describe('roomStore actions', () => {
         },
       }),
     }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState()
-    const players = usePlayersStore()
-    players.players = [
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState() })
+    usePlayersStore.setState({ players: [
       fakePlayer({ id: 'p1', name: 'Alice', vote: '5' }),
       fakePlayer({ id: 'p2', name: 'Bob', vote: '8' }),
       fakePlayer({ id: 'p3', name: 'Empty', vote: null }),
-    ]
-    await store.reveal()
+    ] })
+    await state().reveal()
     const hist = calls.find(c => c.table === 'round_history' && c.op === 'insert')
     expect(hist?.arg).toMatchObject({
       room_id: 'r1',
@@ -141,15 +137,13 @@ describe('roomStore actions', () => {
           },
         }),
       }))
-      const store = useRoomStore()
-      store.roomId = 'r1'
-      store.roomState = fakeRoomState({
+      useRoomStore.setState({ roomId: 'r1' })
+      useRoomStore.setState({ roomState: fakeRoomState({
         paused_at: '2026-05-04T00:00:30Z',
         paused_elapsed_ms: 2000,
-      })
-      const players = usePlayersStore()
-      players.players = [fakePlayer({ id: 'p1', vote: '5' })]
-      await store.reveal()
+      }) })
+      usePlayersStore.setState({ players: [fakePlayer({ id: 'p1', vote: '5' })] })
+      await state().reveal()
       expect(calls.find(c => c.table === 'room_state' && c.op === 'update')?.arg).toEqual({
         phase: 'revealed',
         paused_at: null,
@@ -170,9 +164,8 @@ describe('roomStore actions', () => {
         },
       }),
     }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    await store.startNewRound()
+    useRoomStore.setState({ roomId: 'r1' })
+    await state().startNewRound()
     const playersCall = calls.find(c => c.table === 'players')
     const stateCall = calls.find(c => c.table === 'room_state')
     expect(playersCall?.arg).toEqual({ vote: null })
@@ -185,18 +178,16 @@ describe('roomStore actions', () => {
   it('saveCardDeck(cards) sends update with active_cards', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    await store.saveCardDeck(['1', '5'])
+    useRoomStore.setState({ roomId: 'r1' })
+    await state().saveCardDeck(['1', '5'])
     expect(update).toHaveBeenCalledWith({ active_cards: ['1', '5'] })
   })
 
   it('setDeckPreset(id) sends deck_preset + defaultActive', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    await store.setDeckPreset('boolean')
+    useRoomStore.setState({ roomId: 'r1' })
+    await state().setDeckPreset('boolean')
     expect(update).toHaveBeenCalledWith({
       deck_preset: 'boolean',
       active_cards: ['True', 'False', '?', '☕'],
@@ -207,9 +198,8 @@ describe('roomStore actions', () => {
   it('setDeckPreset(id) writes the preset defaultQuestion into poll_question when it has one', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    await store.setDeckPreset('goal_clarity')
+    useRoomStore.setState({ roomId: 'r1' })
+    await state().setDeckPreset('goal_clarity')
     expect(update).toHaveBeenCalledWith({
       deck_preset: 'goal_clarity',
       active_cards: ['1', '2', '3', '4', '5'],
@@ -219,18 +209,17 @@ describe('roomStore actions', () => {
 })
 
 describe('roomStore timer actions', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
+  beforeEach(async () => {
     resetSupabase()
+    await resetStores()
   })
 
   it('resetTimer() zeroes paused state and updates round_started_at', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState({ paused_at: '2026-05-04T00:00:30Z', paused_elapsed_ms: 5000 })
-    await store.resetTimer()
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState({ paused_at: '2026-05-04T00:00:30Z', paused_elapsed_ms: 5000 }) })
+    await state().resetTimer()
     const arg = update.mock.calls[0]![0]
     expect(arg.paused_at).toBeNull()
     expect(arg.paused_elapsed_ms).toBe(0)
@@ -239,15 +228,14 @@ describe('roomStore timer actions', () => {
 
   it('resetTimer(expectedStartedAt) only resets the voting round it was asked about', async () => {
     const filters: [string, unknown][] = []
-    const builder = {
-      eq: vi.fn((column: string, value: unknown) => { filters.push([column, value]); return builder }),
-      then: (resolve: (value: { error: null }) => void) => resolve({ error: null }),
-    }
+    type FilterBuilder = Promise<{ error: null }> & { eq: (column: string, value: unknown) => FilterBuilder }
+    const builder: FilterBuilder = Object.assign(Promise.resolve({ error: null as null }), {
+      eq: (column: string, value: unknown) => { filters.push([column, value]); return builder },
+    })
     setSupabase(asSupabase({ from: () => ({ update: () => builder }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState()
-    await store.resetTimer('2026-10-21T00:00:00+00:00')
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState() })
+    await state().resetTimer('2026-10-21T00:00:00+00:00')
     expect(filters).toEqual([['room_id', 'r1'], ['round_started_at', '2026-10-21T00:00:00+00:00'], ['phase', 'voting']])
   })
 
@@ -255,19 +243,17 @@ describe('roomStore timer actions', () => {
     const failure = { message: 'denied' }
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: failure }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState()
-    await expect(store.resetTimer()).rejects.toBe(failure)
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState() })
+    await expect(state().resetTimer()).rejects.toBe(failure)
   })
 
   it('pauseTimer() sets paused_at when not paused', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState({ paused_at: null })
-    await store.pauseTimer()
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState({ paused_at: null }) })
+    await state().pauseTimer()
     expect(update).toHaveBeenCalledOnce()
     expect(typeof update.mock.calls[0]![0].paused_at).toBe('string')
   })
@@ -275,10 +261,9 @@ describe('roomStore timer actions', () => {
   it('pauseTimer() is no-op when already paused', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState({ paused_at: '2026-05-04T00:00:30Z' })
-    await store.pauseTimer()
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState({ paused_at: '2026-05-04T00:00:30Z' }) })
+    await state().pauseTimer()
     expect(update).not.toHaveBeenCalled()
   })
 
@@ -288,10 +273,9 @@ describe('roomStore timer actions', () => {
     try {
       const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
       setSupabase(asSupabase({ from: () => ({ update }) }))
-      const store = useRoomStore()
-      store.roomId = 'r1'
-      store.roomState = fakeRoomState({ paused_at: '2026-05-04T00:00:30Z', paused_elapsed_ms: 2000 })
-      await store.resumeTimer()
+      useRoomStore.setState({ roomId: 'r1' })
+      useRoomStore.setState({ roomState: fakeRoomState({ paused_at: '2026-05-04T00:00:30Z', paused_elapsed_ms: 2000 }) })
+      await state().resumeTimer()
       expect(update).toHaveBeenCalledWith({ paused_at: null, paused_elapsed_ms: 32000 })
     } finally {
       vi.useRealTimers()
@@ -301,50 +285,46 @@ describe('roomStore timer actions', () => {
   it('resumeTimer() is no-op when not paused', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState({ paused_at: null })
-    await store.resumeTimer()
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState({ paused_at: null }) })
+    await state().resumeTimer()
     expect(update).not.toHaveBeenCalled()
   })
 
   it('adjustTimer(+10000) shifts round_started_at 10s back', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState({
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState({
       round_started_at: '2026-05-04T00:00:00.000Z',
       paused_at: '2026-05-04T00:00:30.000Z',
-    })
-    await store.adjustTimer(10000)
+    }) })
+    await state().adjustTimer(10000)
     expect(update).toHaveBeenCalledWith({ round_started_at: '2026-05-03T23:59:50.000Z' })
   })
 
   it('adjustTimer(-10000) caps round_started_at at pivot to avoid negative elapsed', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState({
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState({
       round_started_at: '2026-05-04T00:00:00.000Z',
       paused_at: '2026-05-04T00:00:05.000Z',
-    })
-    await store.adjustTimer(-10000)
+    }) })
+    await state().adjustTimer(-10000)
     expect(update).toHaveBeenCalledWith({ round_started_at: '2026-05-04T00:00:05.000Z' })
   })
 
   it('adjustTimer(-10000) caps at pivot minus accumulated pause time', async () => {
     const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
     setSupabase(asSupabase({ from: () => ({ update }) }))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    store.roomState = fakeRoomState({
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState({
       round_started_at: '2026-05-04T00:00:00.000Z',
       paused_at: '2026-05-04T00:00:05.000Z',
       paused_elapsed_ms: 2000,
-    })
-    await store.adjustTimer(-10000)
+    }) })
+    await state().adjustTimer(-10000)
     expect(update).toHaveBeenCalledWith({ round_started_at: '2026-05-04T00:00:03.000Z' })
   })
 
@@ -352,37 +332,35 @@ describe('roomStore timer actions', () => {
     vi.useFakeTimers()
     try {
       const updates: Partial<RoomState>[] = []
-      const store = useRoomStore()
       setSupabase(asSupabase({
         from: () => ({
           update: (arg: Partial<RoomState>) => {
             updates.push(arg)
-            store.roomState = { ...store.roomState!, ...arg }
+            useRoomStore.setState(s => ({ roomState: { ...s.roomState!, ...arg } }))
             return { eq: vi.fn().mockResolvedValue({ error: null }) }
           },
           insert: vi.fn().mockResolvedValue({ error: null }),
         }),
       }))
-      store.roomId = 'r1'
-      store.roomState = fakeRoomState({ round_started_at: '2026-05-04T00:00:00.000Z' })
-      const players = usePlayersStore()
-      players.players = [fakePlayer({ id: 'p1', vote: '5' })]
+      useRoomStore.setState({ roomId: 'r1' })
+      useRoomStore.setState({ roomState: fakeRoomState({ round_started_at: '2026-05-04T00:00:00.000Z' }) })
+      usePlayersStore.setState({ players: [fakePlayer({ id: 'p1', vote: '5' })] })
 
       vi.setSystemTime(new Date('2026-05-04T00:00:10.000Z'))
-      await store.pauseTimer()
-      await store.adjustTimer(30000)
-      expect(store.roomState.round_started_at).toBe('2026-05-03T23:59:30.000Z')
+      await state().pauseTimer()
+      await state().adjustTimer(30000)
+      expect(state().roomState?.round_started_at).toBe('2026-05-03T23:59:30.000Z')
 
       vi.setSystemTime(new Date('2026-05-04T00:00:20.000Z'))
-      await store.resumeTimer()
-      expect(store.roomState.paused_at).toBeNull()
-      expect(store.roomState.paused_elapsed_ms).toBe(10000)
+      await state().resumeTimer()
+      expect(state().roomState?.paused_at).toBeNull()
+      expect(state().roomState?.paused_elapsed_ms).toBe(10000)
 
       vi.setSystemTime(new Date('2026-05-04T00:01:00.000Z'))
-      await store.reveal()
+      await state().reveal()
       expect(updates.at(-1)).toEqual({ phase: 'revealed' })
-      expect(store.roomState.round_started_at).toBe('2026-05-03T23:59:30.000Z')
-      expect(store.roomState.paused_elapsed_ms).toBe(10000)
+      expect(state().roomState?.round_started_at).toBe('2026-05-03T23:59:30.000Z')
+      expect(state().roomState?.paused_elapsed_ms).toBe(10000)
     } finally {
       vi.useRealTimers()
     }
@@ -390,10 +368,10 @@ describe('roomStore timer actions', () => {
 })
 
 describe('roomStore background', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
+  beforeEach(async () => {
     resetSupabase()
-    useAuthStore().user = { id: 'u1' } as User
+    await resetStores()
+    useAuthStore.setState({ user: { id: 'u1' } as User })
   })
 
   function fakeClient() {
@@ -414,9 +392,8 @@ describe('roomStore background', () => {
   it('replaces a background without claiming ownership of it', async () => {
     const { update, is, client } = fakeClient()
     setSupabase(asSupabase(client))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    const result = await store.uploadBackground(new Blob(['x'], { type: 'image/webp' }), 0.5)
+    useRoomStore.setState({ roomId: 'r1' })
+    const result = await state().uploadBackground(new Blob(['x'], { type: 'image/webp' }), 0.5)
     expect(update.mock.calls.map(([row]) => Object.keys(row))).toEqual([['background_url', 'background_updated_at', 'background_opacity']])
     expect(is).not.toHaveBeenCalled()
     expect(result).not.toHaveProperty('background_owner_id')
@@ -425,20 +402,18 @@ describe('roomStore background', () => {
   it('refuses to upload without a signed-in user', async () => {
     const { bucket, client } = fakeClient()
     setSupabase(asSupabase(client))
-    useAuthStore().user = null
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    await expect(store.uploadBackground(new Blob(), 0.5)).rejects.toThrow()
+    useAuthStore.setState({ user: null })
+    useRoomStore.setState({ roomId: 'r1' })
+    await expect(state().uploadBackground(new Blob(), 0.5)).rejects.toThrow()
     expect(bucket.upload).not.toHaveBeenCalled()
   })
 
   it('uploads to the fixed room path, then points the room row at it', async () => {
     const { bucket, update, eq, client } = fakeClient()
     setSupabase(asSupabase(client))
-    const store = useRoomStore()
-    store.roomId = 'r1'
+    useRoomStore.setState({ roomId: 'r1' })
     const blob = new Blob(['x'], { type: 'image/webp' })
-    const result = await store.uploadBackground(blob, 0.5)
+    const result = await state().uploadBackground(blob, 0.5)
     expect(client.storage.from).toHaveBeenCalledWith('room-backgrounds')
     expect(bucket.upload).toHaveBeenCalledWith('r1/background.webp', blob, { upsert: true, contentType: 'image/webp' })
     expect(client.from).toHaveBeenCalledWith('rooms')
@@ -453,18 +428,16 @@ describe('roomStore background', () => {
     const { bucket, update, client } = fakeClient()
     bucket.upload.mockResolvedValue({ error: new Error('denied') })
     setSupabase(asSupabase(client))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    await expect(store.uploadBackground(new Blob(), 0.65)).rejects.toThrow('denied')
+    useRoomStore.setState({ roomId: 'r1' })
+    await expect(state().uploadBackground(new Blob(), 0.65)).rejects.toThrow('denied')
     expect(update).not.toHaveBeenCalled()
   })
 
   it('updates only the opacity', async () => {
     const { bucket, update, client } = fakeClient()
     setSupabase(asSupabase(client))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    expect(await store.setBackgroundOpacity(0.3)).toEqual({ background_opacity: 0.3 })
+    useRoomStore.setState({ roomId: 'r1' })
+    expect(await state().setBackgroundOpacity(0.3)).toEqual({ background_opacity: 0.3 })
     expect(update).toHaveBeenCalledWith({ background_opacity: 0.3 })
     expect(bucket.upload).not.toHaveBeenCalled()
   })
@@ -473,9 +446,8 @@ describe('roomStore background', () => {
     const { bucket, update, client } = fakeClient()
     bucket.remove.mockRejectedValue(new Error('gone'))
     setSupabase(asSupabase(client))
-    const store = useRoomStore()
-    store.roomId = 'r1'
-    const result = await store.removeBackground()
+    useRoomStore.setState({ roomId: 'r1' })
+    const result = await state().removeBackground()
     expect(update.mock.calls[0]![0].background_url).toBeNull()
     expect(update.mock.invocationCallOrder[0]!).toBeLessThan(bucket.remove.mock.invocationCallOrder[0]!)
     expect(bucket.remove).toHaveBeenCalledWith(['r1/background.webp'])
@@ -501,9 +473,9 @@ describe('backgroundDisplayUrl', () => {
 })
 
 describe('roomStore.resolveRoom', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
+  beforeEach(async () => {
     resetSupabase()
+    await resetStores()
   })
 
   function clientReturning(row: unknown) {
@@ -516,7 +488,7 @@ describe('roomStore.resolveRoom', () => {
   it('defaults background fields to null for rows from before the background migration', async () => {
     const { client } = clientReturning({ id: 'r1', slug: null, name: 'Team', created_at: null })
     setSupabase(asSupabase(client))
-    expect(await useRoomStore().resolveRoom('r1')).toEqual({
+    expect(await useRoomStore.getState().resolveRoom('r1')).toEqual({
       id: 'r1', slug: null, name: 'Team', background_url: null, background_updated_at: null, background_opacity: null,
     })
   })
@@ -524,6 +496,6 @@ describe('roomStore.resolveRoom', () => {
   it('returns null for an unknown room', async () => {
     const { client } = clientReturning(null)
     setSupabase(asSupabase(client))
-    expect(await useRoomStore().resolveRoom('nope')).toBeNull()
+    expect(await useRoomStore.getState().resolveRoom('nope')).toBeNull()
   })
 })

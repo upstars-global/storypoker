@@ -9,7 +9,6 @@ export default defineConfig({
     include: ['tests/unit/**/*.spec.ts', 'tests/components/**/*.spec.ts', 'tests/integration/**/*.spec.ts'],
     exclude: [
       '**/node_modules/**',
-      'tests/unit/stores/**',
       'tests/unit/composables/useCountdown.spec.ts',
       'tests/unit/composables/useDylanAvatar.spec.ts',
       'tests/unit/composables/useMenuKeyboard.spec.ts',

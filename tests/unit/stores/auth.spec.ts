@@ -3,9 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetSupabase, setSupabase } from '~/lib/supabase-instance'
 import { useAuthStore } from '~/stores/auth'
 import { asSupabase } from '../../support/helpers/fakeSupabase'
+import { resetStores } from '../../support/helpers/resetStores'
 
 describe('auth store', () => {
-  beforeEach(() => resetSupabase())
+  beforeEach(async () => {
+    resetSupabase()
+    await resetStores()
+  })
 
   it('requests a password reset email with the provided redirect URL', async () => {
     const resetPasswordForEmail = vi.fn().mockResolvedValue({ error: null })
@@ -13,7 +17,7 @@ describe('auth store', () => {
       auth: { resetPasswordForEmail },
     }))
 
-    const store = useAuthStore()
+    const store = useAuthStore.getState()
     await store.requestPasswordReset('user@example.com', 'https://app.example/reset-password')
 
     expect(resetPasswordForEmail).toHaveBeenCalledWith('user@example.com', {
@@ -27,7 +31,7 @@ describe('auth store', () => {
       auth: { updateUser },
     }))
 
-    const store = useAuthStore()
+    const store = useAuthStore.getState()
     await store.updatePassword('new-secret')
 
     expect(updateUser).toHaveBeenCalledWith({ password: 'new-secret' })
@@ -42,7 +46,7 @@ describe('auth store', () => {
       },
     }))
 
-    const store = useAuthStore()
+    const store = useAuthStore.getState()
     await expect(store.requestPasswordReset('user@example.com', 'https://app.example/reset-password')).rejects.toThrow('Reset failed')
     await expect(store.updatePassword('new-secret')).rejects.toThrow('Reset failed')
   })

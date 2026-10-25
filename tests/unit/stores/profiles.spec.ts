@@ -1,7 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setSupabase, resetSupabase } from '~/lib/supabase-instance'
 import { useProfilesStore } from '~/stores/profiles'
-import { asSupabase } from '../../support/helpers/fakeSupabase'
+import { asSupabase, changePayload } from '../../support/helpers/fakeSupabase'
+import type { UserProfile } from '~/stores/profiles'
+import { resetStores } from '../../support/helpers/resetStores'
+
+const state = () => useProfilesStore.getState()
+
+async function resetAll() {
+  resetSupabase()
+  await resetStores()
+}
 
 function fakeStorage() {
   const bucket = {
@@ -20,14 +29,13 @@ function fakeSelect(rows: unknown[]) {
 }
 
 describe('profilesStore - avatar storage', () => {
-  beforeEach(() => resetSupabase())
+  beforeEach(resetAll)
 
   it('uploadAvatar uploads webp with upsert and returns the object path', async () => {
     const { bucket, storage } = fakeStorage()
     setSupabase(asSupabase({ storage }))
-    const store = useProfilesStore()
     const blob = new Blob(['x'], { type: 'image/webp' })
-    const path = await store.uploadAvatar('u1', blob)
+    const path = await state().uploadAvatar('u1', blob)
     expect(storage.from).toHaveBeenCalledWith('avatars')
     expect(bucket.upload).toHaveBeenCalledWith('u1/avatar.webp', blob, {
       upsert: true,
@@ -40,15 +48,13 @@ describe('profilesStore - avatar storage', () => {
     const { bucket, storage } = fakeStorage()
     bucket.upload.mockResolvedValue({ error: new Error('denied') })
     setSupabase(asSupabase({ storage }))
-    const store = useProfilesStore()
-    await expect(store.uploadAvatar('u1', new Blob())).rejects.toThrow('denied')
+    await expect(state().uploadAvatar('u1', new Blob())).rejects.toThrow('denied')
   })
 
   it('removeAvatar removes the fixed path', async () => {
     const { bucket, storage } = fakeStorage()
     setSupabase(asSupabase({ storage }))
-    const store = useProfilesStore()
-    await store.removeAvatar('u1')
+    await state().removeAvatar('u1')
     expect(bucket.remove).toHaveBeenCalledWith(['u1/avatar.webp'])
   })
 
@@ -56,19 +62,17 @@ describe('profilesStore - avatar storage', () => {
     const { bucket, storage } = fakeStorage()
     bucket.remove.mockResolvedValue({ data: null, error: new Error('denied') })
     setSupabase(asSupabase({ storage }))
-    const store = useProfilesStore()
-    await expect(store.removeAvatar('u1')).rejects.toThrow('denied')
+    await expect(state().removeAvatar('u1')).rejects.toThrow('denied')
   })
 })
 
 describe('profilesStore - upsert', () => {
-  beforeEach(() => resetSupabase())
+  beforeEach(resetAll)
 
   it('caches exactly the row it wrote, including updated_at', async () => {
     const upsert = vi.fn().mockResolvedValue({ error: null })
     setSupabase(asSupabase({ from: vi.fn().mockReturnValue({ upsert }) }))
-    const store = useProfilesStore()
-    await store.upsert({
+    await state().upsert({
       user_id: 'u1',
       avatar_style: 'dylan',
       avatar_seed: 'seed',
@@ -76,12 +80,12 @@ describe('profilesStore - upsert', () => {
     })
     const written = upsert.mock.calls[0]![0]
     expect(written.updated_at).toBeTruthy()
-    expect(store.get('u1')).toEqual(written)
+    expect(state().get('u1')).toEqual(written)
   })
 })
 
 describe('profilesStore - fetch', () => {
-  beforeEach(() => resetSupabase())
+  beforeEach(resetAll)
 
   it('fetchOne selects avatar_url and caches the profile', async () => {
     const row = {
@@ -93,10 +97,35 @@ describe('profilesStore - fetch', () => {
     }
     const { select } = fakeSelect([row])
     setSupabase(asSupabase({ from: vi.fn().mockReturnValue({ select }) }))
-    const store = useProfilesStore()
-    const profile = await store.fetchOne('u1')
+    const profile = await state().fetchOne('u1')
     expect(select).toHaveBeenCalledWith('user_id, avatar_style, avatar_seed, avatar_url, updated_at')
     expect(profile?.avatar_url).toBe(row.avatar_url)
-    expect(store.get('u1')).toEqual(row)
+    expect(state().get('u1')).toEqual(row)
+  })
+})
+
+describe('profilesStore.applyChange', () => {
+  beforeEach(resetAll)
+
+  const profile: UserProfile = {
+    user_id: 'u1',
+    avatar_style: 'dylan',
+    avatar_seed: 'seed',
+    avatar_url: null,
+    updated_at: '2026-08-02T00:00:00Z',
+  }
+
+  it('INSERT and UPDATE cache the new row', () => {
+    state().applyChange(changePayload<UserProfile>('INSERT', { new: profile }))
+    expect(state().get('u1')).toEqual(profile)
+    state().applyChange(changePayload<UserProfile>('UPDATE', { new: { ...profile, avatar_seed: 'next' } }))
+    expect(state().get('u1')?.avatar_seed).toBe('next')
+  })
+
+  it('DELETE drops the cached row', () => {
+    useProfilesStore.setState({ profiles: { u1: profile } })
+    state().applyChange(changePayload<UserProfile>('DELETE', { old: { user_id: 'u1' } }))
+    expect(state().get('u1')).toBeNull()
+    expect(state().profiles).toEqual({})
   })
 })

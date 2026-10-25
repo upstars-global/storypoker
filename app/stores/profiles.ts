@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { create } from 'zustand'
 import { getSupabase } from '~/lib/supabase-instance'
 import type { AvatarStyle } from '~/composables/useDylanAvatar'
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 export interface UserProfile {
   user_id: string
@@ -11,82 +11,108 @@ export interface UserProfile {
   updated_at?: string | null
 }
 
-import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+interface ProfilesState {
+  profiles: Record<string, UserProfile>
+  get: (userId: string | null | undefined) => UserProfile | null
+  fetchOne: (userId: string) => Promise<UserProfile | null>
+  fetchMany: (userIds: string[]) => Promise<void>
+  upsert: (profile: UserProfile) => Promise<void>
+  uploadAvatar: (userId: string, blob: Blob) => Promise<string>
+  removeAvatar: (userId: string) => Promise<void>
+  applyChange: (payload: RealtimePostgresChangesPayload<UserProfile>) => void
+}
 
-export const useProfilesStore = defineStore('profiles', () => {
-  const profiles = ref<Record<string, UserProfile>>({})
-  const inflight = new Map<string, Promise<UserProfile | null>>()
+const PROFILE_COLUMNS = 'user_id, avatar_style, avatar_seed, avatar_url, updated_at'
 
-  function get(userId: string | null | undefined): UserProfile | null {
-    if (!userId) return null
-    return profiles.value[userId] ?? null
+const inflight = new Map<string, Promise<UserProfile | null>>()
+
+export const useProfilesStore = create<ProfilesState>()((set, get) => {
+  function cache(rows: UserProfile[]) {
+    if (rows.length === 0) return
+    set(s => {
+      const profiles = { ...s.profiles }
+      for (const row of rows) profiles[row.user_id] = row
+      return { profiles }
+    })
   }
 
-  async function fetchOne(userId: string): Promise<UserProfile | null> {
-    if (profiles.value[userId]) return profiles.value[userId]
-    const existing = inflight.get(userId)
-    if (existing) return existing
-    const promise = (async () => {
+  return {
+    profiles: {},
+
+    get(userId) {
+      if (!userId) return null
+      return get().profiles[userId] ?? null
+    },
+
+    async fetchOne(userId) {
+      const cached = get().profiles[userId]
+      if (cached) return cached
+      const existing = inflight.get(userId)
+      if (existing) return existing
+      const promise = (async () => {
+        const { data } = await getSupabase()
+          .from('user_profiles')
+          .select(PROFILE_COLUMNS)
+          .eq('user_id', userId)
+          .maybeSingle()
+        if (data) cache([data as UserProfile])
+        inflight.delete(userId)
+        return (data as UserProfile | null) ?? null
+      })()
+      inflight.set(userId, promise)
+      return promise
+    },
+
+    async fetchMany(userIds) {
+      const profiles = get().profiles
+      const missing = Array.from(new Set(userIds.filter(id => id && !profiles[id])))
+      if (missing.length === 0) return
       const { data } = await getSupabase()
         .from('user_profiles')
-        .select('user_id, avatar_style, avatar_seed, avatar_url, updated_at')
-        .eq('user_id', userId)
-        .maybeSingle()
-      if (data) profiles.value[userId] = data as UserProfile
-      inflight.delete(userId)
-      return (data as UserProfile | null) ?? null
-    })()
-    inflight.set(userId, promise)
-    return promise
-  }
+        .select(PROFILE_COLUMNS)
+        .in('user_id', missing)
+      cache((data ?? []) as UserProfile[])
+    },
 
-  async function fetchMany(userIds: string[]): Promise<void> {
-    const missing = Array.from(new Set(userIds.filter(id => id && !profiles.value[id])))
-    if (missing.length === 0) return
-    const { data } = await getSupabase()
-      .from('user_profiles')
-      .select('user_id, avatar_style, avatar_seed, avatar_url, updated_at')
-      .in('user_id', missing)
-    for (const row of (data ?? []) as UserProfile[]) {
-      profiles.value[row.user_id] = row
-    }
-  }
+    async upsert(profile) {
+      const row: UserProfile = { ...profile, updated_at: new Date().toISOString() }
+      const { error } = await getSupabase()
+        .from('user_profiles')
+        .upsert(row, { onConflict: 'user_id' })
+      if (error) throw error
+      cache([row])
+    },
 
-  async function upsert(profile: UserProfile): Promise<void> {
-    const supabase = getSupabase()
-    const row: UserProfile = { ...profile, updated_at: new Date().toISOString() }
-    const { error } = await supabase
-      .from('user_profiles')
-      .upsert(row, { onConflict: 'user_id' })
-    if (error) throw error
-    profiles.value[row.user_id] = row
-  }
+    async uploadAvatar(userId, blob) {
+      const path = `${userId}/avatar.webp`
+      const { error } = await getSupabase().storage
+        .from('avatars')
+        .upload(path, blob, { upsert: true, contentType: 'image/webp' })
+      if (error) throw error
+      return path
+    },
 
-  async function uploadAvatar(userId: string, blob: Blob): Promise<string> {
-    const path = `${userId}/avatar.webp`
-    const { error } = await getSupabase().storage
-      .from('avatars')
-      .upload(path, blob, { upsert: true, contentType: 'image/webp' })
-    if (error) throw error
-    return path
-  }
+    async removeAvatar(userId) {
+      const { error } = await getSupabase().storage
+        .from('avatars')
+        .remove([`${userId}/avatar.webp`])
+      if (error) throw error
+    },
 
-  async function removeAvatar(userId: string): Promise<void> {
-    const { error } = await getSupabase().storage
-      .from('avatars')
-      .remove([`${userId}/avatar.webp`])
-    if (error) throw error
+    applyChange(payload) {
+      if (payload.eventType === 'DELETE') {
+        const id = payload.old.user_id
+        if (id) {
+          set(s => {
+            const profiles = { ...s.profiles }
+            delete profiles[id]
+            return { profiles }
+          })
+        }
+        return
+      }
+      const row = payload.new
+      if (row.user_id) cache([row])
+    },
   }
-
-  function applyChange(payload: RealtimePostgresChangesPayload<UserProfile>) {
-    if (payload.eventType === 'DELETE') {
-      const id = payload.old.user_id
-      if (id) delete profiles.value[id]
-      return
-    }
-    const row = payload.new
-    if (row.user_id) profiles.value[row.user_id] = row
-  }
-
-  return { profiles, get, fetchOne, fetchMany, upsert, uploadAvatar, removeAvatar, applyChange }
 })
