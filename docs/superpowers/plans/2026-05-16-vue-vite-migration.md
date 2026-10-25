@@ -1110,7 +1110,7 @@ git commit -m "chore: netlify spa + ci update"
 - **State:** Pinia 3 (без auto-imports - явні `from 'pinia'`)
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **i18n:** `vue-i18n@10` (runtime compilation), `legacy: false`, локалі `app/i18n/locales/{uk,en}.json`
-- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`); custom collection `app:` для `moderator`, `deciding`, `offline`, `leave-room` - зареєстровано через `addCollection` у `app/lib/registerAppIcons.ts`; `v-wave`, DiceBear, Roboto 300–700
+- **UI:** `@iconify/vue` + `@iconify-json/ic` (`ic:baseline-*`); custom collection `app:` для `moderator`, `deciding`, `offline`, `leave-room` - зареєстровано через `addCollection` у `app/lib/registerAppIcons.ts`; `v-wave`, DiceBear, Roboto 300-700
 - **Node/npm:** Node >=24.15.0, npm >=11.12.0
 ```
 

@@ -111,7 +111,7 @@ export default function ResultsArea({
             className="rounded-full flex items-center justify-center text-white font-bold"
             style={{ width: '96px', height: '96px', fontSize: '2rem', backgroundColor: goalClarityScoreColor }}
           >
-            {goalClarityAverage ?? '—'}
+            {goalClarityAverage ?? '-'}
           </div>
           {showGoalClarityHint && (
             <p className="text-mui-body text-center text-muted max-w-md">

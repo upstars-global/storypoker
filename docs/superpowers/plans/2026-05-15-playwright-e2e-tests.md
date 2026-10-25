@@ -1432,8 +1432,8 @@ git commit -m "docs: note lockfile requirement and e2e scripts"
 - P3 persistent user → Task 3 (manual)
 - P4 deploy `if:` fix → Task 24 (detect-secrets pattern)
 - P5 realtime publication → Task 2
-- DOM contract (testids) → Tasks 4–10
-- File structure (`e2e/...`) → Tasks 14–23
+- DOM contract (testids) → Tasks 4-10
+- File structure (`e2e/...`) → Tasks 14-23
 - `playwright.config.ts` ключові поля → Task 14
 - Service-role isolation → Task 15 + grep step
 - Custom fixtures `room` / `auth` → Tasks 16, 17
