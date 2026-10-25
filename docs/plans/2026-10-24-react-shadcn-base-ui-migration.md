@@ -715,8 +715,8 @@ Task 20: done - 3ae6d5d, e3e0e5a; controller rerun: pnpm run test:ci -> exit 0 (
 Task 21: done - 5ef37b3; controller rerun: pnpm run test:icons:harness -> 63 passed; pnpm run test:ci -> exit 0 (445 tests)
 Task 22: done - 90428d8 (opus) + 59e8bc4 (controller: AppIcon spec port, dice faces from PlayerRow.tsx); controller rerun: pnpm run test:ci -> exit 0 (449 tests); page-load + icon-delivery -> 26 passed (9 new AC22 console cases); AC20 unverified - missing credentials: .env/.env.test for critical-flows (CI E2E skipped without secrets); no baselines updated
 Task 23: done - dbf7c8f, 85c8cf5, c11cf11 (opus); controller rerun: pnpm run test:ci -> exit 0 (440 tests: -11 with removed hooks, +2 new); page-load + icon-delivery -> 26 passed; every remaining .mui-* in main.css has a use in app/**/*.tsx; CI Visual on c11cf11 pending
-Task 24: in progress
-Task 25: pending
+Task 24: done - 890a2c2, 07bff8e (opus); controller rerun: stale-stack grep over AGENTS.md files -> 0; wc -c AGENTS.md -> 17621 (<= 28672), heaviest chain app/components 27303 B; pnpm run test:ci -> exit 0 (440 tests); CI run on c11cf11 all green incl. Visual (Task 23 CSS cleanup)
+Task 25: in progress
 Ruling: owner decision 2026-10-25 - P0-P4 stay on 2610242233-dev-session in the main checkout, no worktrees, no P0 squash into main, one PR #46 at parity; spec Decisions 2-3 and AC13/20/23/25 updated to match - main fixes during migration get ported into this branch - low
 Ruling: Vue-based stores/composables and their specs are excluded in tsconfig.json and vitest.config.ts instead of ported - Tasks 10-13 own the ports - high if forgotten: each of Tasks 10-13 must drop its exclude entries or its RED/GREEN proves nothing
 Ruling: AppIcon prop is name (Vue used icon); scanner and iconManifest bindings follow; inputNames unchanged - low
@@ -818,6 +818,9 @@ Deferred: PlayerRow status icons now carry aria-label and sit in an AppTooltip t
 Deferred: tw-animate-css is build-time only but in dependencies - Task 25
 Deferred: harness room screenshots - recommend toHaveScreenshot with container baselines or moving room view to tests/visual - owner
 Deferred: app/assets/AGENTS.md:15-16 lists removed .mui-btn-sm/.mui-btn-text/.mui-btn-secondary; app/components/AGENTS.md:8 mentions useClickOutside - Task 24
+Ruling: Task 24 closes the docs deferrals (tests/visual, dummy env, resetStores module state, init-script preview, composables, token bridge, PO/SM 5 spins, removed mui classes); DESIGN.md §1-§10 audit notes left as dated history; netlify/AGENTS.md TeamConsistencyTrends.vue names the neighbouring Nuxt repo, correct - low
+Deferred: vitest.config.ts __dirname warning (code) - Task 25
+Deferred: root AGENTS.md Workflow still recommends git-worktree-isolation vs the 2026-10-25 one-branch learning - session-learnings triage
 ```
 
 ### Task 22: стара Vue-спека → React-тест
