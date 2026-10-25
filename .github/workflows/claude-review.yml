@@ -120,6 +120,9 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+    # The agent can write auto-review-out/, so publish takes the version from here, not the artifact
+    outputs:
+      version: ${{ steps.skill.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -146,7 +149,6 @@ jobs:
           version="$(sed -nE 's/^[[:space:]]+version:[[:space:]]*"?([0-9][0-9.]*)"?[[:space:]]*$/\1/p' ~/.claude/skills/cr-request/SKILL.md | head -n 1)"
           test -n "$version" || { echo "::error::No version in the cr-request SKILL.md"; exit 1; }
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "$version" > auto-review-out/version
 
       - uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         env:
@@ -242,6 +244,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REVIEW_RESULT: ${{ needs.review.result }}
+          VERSION: ${{ needs.review.outputs.version }}
         run: |
           post_status() {
             gh api "repos/$REPO/statuses/$HEAD_SHA" -f state="$1" -f description="$2" \
@@ -269,10 +272,10 @@ jobs:
           [ "$head" = "$HEAD_SHA" ] || { post_status error "Superseded by a newer head"; exit 0; }
 
           fail() { post_status failure "$1"; exit 1; }
-          version=$(cat auto-review-out/version)
+          [[ "$VERSION" =~ ^[0-9][0-9.]*$ ]] || fail "No cr-request version from the review job"
           [ "$(head -n 1 "$BODY_FILE")" = "$MARKER" ] || fail "The review body does not start with the marker"
-          grep -qxF "Reviewed with: \`/cr-request\` $version skill" "$BODY_FILE" || fail "The review body has no signature line"
-          if grep -qE '(ghp_|ghs_|gho_|github_pat_|sk-ant-)[A-Za-z0-9]' "$BODY_FILE"; then
+          grep -qxF "Reviewed with: \`/cr-request\` $VERSION skill" "$BODY_FILE" || fail "The review body has no signature line"
+          if grep -qE '(ghp_|ghs_|gho_|github_pat_|sk-ant-|sb_secret_)[A-Za-z0-9]' "$BODY_FILE"; then
             fail "Review body contains a token-like string"
           fi
           critical=$(count Critical)
@@ -289,7 +292,7 @@ jobs:
           if [ "$critical" -gt 0 ] || [ "$readiness" = "not ready" ]; then state=failure; fi
           {
             echo "ready_to_post=true"
-            echo "signature=Reviewed with: \`/cr-request\` $version skill"
+            echo "signature=Reviewed with: \`/cr-request\` $VERSION skill"
             echo "summary=$summary"
             echo "state=$state"
           } >> "$GITHUB_OUTPUT"
