@@ -884,3 +884,4 @@ Ruling: owner decision 2026-10-25 - deviation from Vue parity in this PR: the ro
 
 Нові React-спеки без Vue-попередника: AppHeader, AuthModal, HistoryModal, PasswordInput, PlayerEditModal,
 useCardLabel, useRipple, authPages, home. Оновлених еталонів: немає.
+Verify: INCOMPLETE compact tree 91eee5b5652792c583628176f3935657d39f0805 2026-10-25 23:58 (README Install + supabase:local; clean-Mac sequence not run here)

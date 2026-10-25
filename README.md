@@ -191,9 +191,35 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 
 ### Install
 
+From a clean Mac with Apple Silicon (M1 or newer), in Terminal:
+
 ```bash
+# 1. Command Line Tools (git, compilers)
+xcode-select --install
+
+# 2. Homebrew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# 3. Tools: Git LFS (visual baselines), GitHub CLI, Node version manager
+brew install git-lfs gh fnm
+git lfs install
+
+# 4. Node 24 and pnpm (corepack picks the pnpm version from package.json)
+echo 'eval "$(fnm env --use-on-cd --shell zsh)"' >> ~/.zshrc
+eval "$(fnm env --use-on-cd --shell zsh)"
+fnm install 24 && fnm default 24
+corepack enable
+
+# 5. Clone and install
+gh auth login
+gh repo clone upstars-global/storypoker
+cd storypoker
 pnpm install
 ```
+
+Install Git LFS before cloning: without it the PNG baselines in `tests/visual/__screenshots__/` arrive as text pointers and the `visual` project fails.
 
 `preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) except in CI (`CI` set) - see [Skills](#skills). `setup.sh` also adds a Claude Code `SessionStart` hook that runs [scripts/session-start.sh](scripts/session-start.sh), so every new `claude` session starts with fresh skills.
 
@@ -214,10 +240,27 @@ pnpm run test
 pnpm run build
 pnpm run test:e2e:pages   # public pages smoke; set dummy VITE_SUPABASE_* first (see tests/AGENTS.md)
 pnpm exec playwright test --project=visual   # screenshot parity, Linux baselines (Playwright container)
-pnpm run test:e2e         # full Playwright suite, requires .env/.env.test
+pnpm run test:e2e         # full Playwright suite, requires .env/.env.test (see Local Supabase)
 ```
 
 `pnpm run test:ci` runs `icons:check` and the first four in one go - the same gate as CI.
+
+### Local Supabase (colima)
+
+The full e2e suite (`chromium`, `webkit`) needs a Supabase project. Run one locally in Docker instead of using the shared production database:
+
+```bash
+brew install colima docker supabase/tap/supabase
+colima start --cpu 4 --memory 6
+pnpm run supabase:local
+pnpm run test:e2e -- --project=chromium
+```
+
+[scripts/supabase-local.sh](scripts/supabase-local.sh) starts the stack with the migrations and [supabase/seed.sql](supabase/seed.sql) (table grants for `anon` and `authenticated`), writes `.env/.env.test` with the local keys if it is missing, and recreates the e2e test user. The CLI runs from `~/.cache/storypoker-supabase`, because the repo's `.env` is a directory the CLI cannot read. Signup emails land in Mailpit at http://127.0.0.1:54324.
+
+- Supabase images take about 7 GB: check free space with `df -h` before the first `colima start`.
+- Playwright WebKit does not run on macOS 14; run the `webkit` project on macOS 15+ or in the `mcr.microsoft.com/playwright` container with `--network host`.
+- Stop everything with `supabase stop --workdir ~/.cache/storypoker-supabase && colima stop`.
 
 ### CI/CD (GitHub Actions + Netlify)
 

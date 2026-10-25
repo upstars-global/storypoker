@@ -6,7 +6,9 @@ read-only API поверх них - `netlify/AGENTS.md`.
 ## Database
 Міграції в `supabase/migrations/` - нумеровані послідовно, накатуються вручну через Supabase SQL
 Editor або Management API (`POST /v1/projects/<ref>/database/query` з особистим `sbp_`-токеном з
-`.env/.env.local`; локальний `supabase` CLI цього проєкту не бачить). Історії міграцій у базі немає:
+`.env/.env.local`). Локальний стек для e2e - `pnpm run supabase:local` (`scripts/supabase-local.sh`): CLI з кореня
+падає, бо `.env` - тека, тож скрипт запускає його з `~/.cache/storypoker-supabase` через symlink; GRANT-и для
+`anon`/`authenticated` - лише в `seed.sql` (локально), у міграціях їх немає. Історії міграцій у базі немає:
 перед накатом звір стан через `information_schema`, кілька файлів - однією транзакцією, після DDL -
 `notify pgrst, 'reload schema';`.
 RLS перевіряй живою пробою, що нічого не лишає: міграцію й перевірки - в один `do`-блок, який закінчується

@@ -25,6 +25,7 @@
     "icons:audit-build": "node scripts/audit-icon-build.ts dist",
     "icons:generate": "node scripts/generate-icons.ts",
     "icons:check": "node scripts/generate-icons.ts --check",
+    "supabase:local": "sh scripts/supabase-local.sh",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test tests/e2e/smoke.spec.ts",
     "test:e2e:pages": "playwright test --project page-load",

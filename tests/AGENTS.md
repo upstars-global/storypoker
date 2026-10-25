@@ -15,8 +15,9 @@ Realtime-payload для `setSupabase()` / `applyChange()` - `tests/support/helpe
 character class. Точний час після `vi.setSystemTime` звіряй з `vi.useFakeTimers({ toFake: ['Date'] })`: з
 `shouldAdvanceTime: true` годинник іде під час `await`, і тест періодично падає в CI.
 `pnpm run typecheck` бере `app/**`, `tests/unit/**`, harness і `tests/{e2e,page-objects,visual}/**` (`tests/e2e/tsconfig.json`).
-E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`, якого локально нема - job `e2e` у CI пропускається без
-секретів, тож реально біжать лише проєкти `page-load` і `icon-delivery`. Без `E2E_BASE_URL` Playwright сам збирає і
+E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test` - локально його пише `pnpm run supabase:local` (локальний
+Supabase у colima, README «Local Supabase»); job `e2e` у CI пропускається без секретів, тож у CI біжать лише
+`page-load` і `icon-delivery`. Без `E2E_BASE_URL` Playwright сам збирає і
 запускає `pnpm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується);
 задай `E2E_BASE_URL`, щоб тестувати вже запущений сервер. `playwright.config.ts` передає серверу `VITE_SUPABASE_*`
 лише з shell (інакше `''`, і це перебиває `.env/.env`), тож локальний `page-load` запускай із dummy-значеннями з
