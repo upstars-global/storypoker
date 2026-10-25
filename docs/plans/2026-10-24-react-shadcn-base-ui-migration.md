@@ -703,8 +703,8 @@ Task 8: done - (subagent opus) commit 31dbdd8; controller rerun: tsc -v -> Versi
 Task 9: done - (subagent opus) commit 88f2d29; controller rerun: test:icons:harness -> 30 passed (24 catalog screenshots), 33 skipped (room view fixme -> Task 21); typecheck 0; lint 0
 Task 10: done - (subagent opus) commit c97094c; store specs 65 -> 69 cases, all 65 titles kept; controller rerun: test:ci exit 0, 228 unit tests
 Task 11: done - (subagent sonnet) commit e252dcf; i18n spec 3 -> 5 cases incl. sp-lang=en before init; git diff --stat main -- app/i18n/locales empty; controller rerun: test:ci exit 0, 233 unit tests
-Task 12: in progress
-Task 13: pending
+Task 12: done - (subagent opus) commit b8d878a; hook specs 28 old cases kept, 36 total; controller rerun: test:ci exit 0 (269 unit tests), page-load + icon-delivery 17 passed incl. new init-script palette test; index.html unchanged
+Task 13: in progress
 Task 14: pending
 Task 15: pending
 Task 16: pending
@@ -739,4 +739,11 @@ Deferred: tests/AGENTS.md still names deleted tests/support/setup/vitest.ts; aut
 Ruling: fallbackLng uk per plan (Vue had fallbackLocale en) - uk.json and en.json have identical key sets, so no visible difference - low
 Ruling: persistLocale also calls i18n.changeLanguage (Vue switched locale at the call site) - callers in Tasks 12/16-19 must not switch twice - low
 Ruling: app/main.tsx imports ~/i18n so html lang and i18next init before render - low
+Ruling: theme and volume state in Zustand vanilla stores (themeStore, soundVolumeStore) exported for non-component code; stores read localStorage on creation - low
+Ruling: header menus share one plain HeaderMenu component (button + list) for Task 15 to swap to Base UI Menu; account menu holds only language items until Tasks 16-18 - low
+Ruling: useClickOutside/useMenuKeyboard specs are .spec.tsx (oxlint react(refs)); vitest include and tsconfig include extended to tests/unit/**/*.tsx - low
+Ruling: profiles.ts type import moved to ~/hooks/useDylanAvatar; iconManifest gets the header's two dynamic bindings - forced by the composable deletion - low
+Deferred: correction - the app/pwa.ts rules-of-hooks override belongs to Task 13 (useAppUpdate), not Task 12 - Task 13
+Deferred: App.tsx does not call useTheme init() / initVolume() as App.vue did (inline script covers html attrs today) - Task 13 wires them
+Deferred: page-load init-script test reads attrs at the first module script; only valid on the built preview, not the dev server - Task 24 docs
 ```
