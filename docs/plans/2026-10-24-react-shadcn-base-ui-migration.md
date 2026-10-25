@@ -787,11 +787,12 @@ Ruling: ConnectionBanner mounts in the room page, not App.tsx, without fade - Pr
 Deferred: Timer/SlotMachine, side-widget setting, spin counts and outgoing slot broadcasts - Task 19
 Deferred: PlayerRow Edit, header History/Trends/Configure deck/Room background/Account settings handlers, save handlers for player edit/deck/alarm/background, roomPage HistoryModal todo - Task 20
 Deferred: tests/visual/modals.spec.ts:135 row.getByRole('menuitem') portal selector - Task 20
-Deferred: home.spec "creates a room" flaked once (lastVisitedAt off 40 ms under advancing fake time) - Task 23
+Deferred: home.spec "creates a room" flaked once (lastVisitedAt off 40 ms under advancing fake time) - failed CI Unit tests on a6f7669; fixed in a97d1e5 (fake only Date) - closed
 Deferred: build warns about chunks > 500 kB - Task 23
 Ruling: useCountdown mount() reuses Audio objects via ??= instead of lazy creation - countdown needs audio.duration early; StrictMode test added - low
 Ruling: Timer reveal duration uses the last 1 s tick (react purity forbids Date.now() in render); alarm firing computed in render, chime from an effect; alarm minutes input uncontrolled, commits on blur/Enter - lint rules; behavior covered by specs - low
 Deferred: PO/SM get 5 slot spins per round in Vue code, docs (AGENTS.md, app/components/AGENTS.md, DESIGN.md 11.8) say 3 - kept Vue behavior; fix docs - Task 24
 Deferred: authPages.spec flaky "document is not defined" from a useRipple timer after env teardown (1 of 5 runs) - Task 23
 Deferred: SlotMachine reel animation unchecked in a real browser - Task 21 harness widget=slot
+Ruling: CI Visual run 40213360416 on a6f7669: 204 passed (all public, room.spec and scene self-checks), 132 failed only in modals.spec - modals are Task 20 - low
 ```
