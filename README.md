@@ -253,6 +253,7 @@ The full e2e suite (`chromium`, `webkit`) needs a Supabase project. Run one loca
 brew install colima docker supabase/tap/supabase
 colima start --cpu 4 --memory 6
 pnpm run supabase:local
+pnpm exec playwright install chromium
 pnpm run test:e2e -- --project=chromium
 ```
 
