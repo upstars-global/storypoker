@@ -10,6 +10,8 @@ import CardsArea from '~/components/CardsArea'
 import JoinOverlay from '~/components/JoinOverlay'
 import PlayersList from '~/components/PlayersList'
 import ResultsArea from '~/components/ResultsArea'
+import SlotMachine from '~/components/SlotMachine'
+import Timer from '~/components/Timer'
 import { resetSupabase, setSupabase } from '~/lib/supabase-instance'
 import { appUpdateStore } from '~/hooks/useAppUpdate'
 import { useAuthStore } from '~/stores/auth'
@@ -28,6 +30,8 @@ vi.mock('~/components/CardsArea', () => ({ default: vi.fn(() => <div data-testid
 vi.mock('~/components/JoinOverlay', () => ({ default: vi.fn(() => <div data-testid="join-overlay" />) }))
 vi.mock('~/components/PlayersList', () => ({ default: vi.fn(() => <div data-testid="players-list" />) }))
 vi.mock('~/components/ResultsArea', () => ({ default: vi.fn(() => <div data-testid="results-area" />) }))
+vi.mock('~/components/Timer', () => ({ default: vi.fn(() => <div data-testid="timer-widget" />) }))
+vi.mock('~/components/SlotMachine', () => ({ default: vi.fn(() => <div data-testid="slot-machine" />) }))
 
 function fakeRoom(overrides: Partial<ResolvedRoom> = {}): ResolvedRoom {
   return {
@@ -102,7 +106,7 @@ function fakeClient(players: Player[], state: RoomState) {
     send: vi.fn(),
   }
   const from = vi.fn((table: string) => query(table === 'players' ? players : state))
-  return { client: asSupabase({ from, channel: () => channel }), from }
+  return { client: asSupabase({ from, channel: () => channel }), from, send: channel.send }
 }
 
 function LocationProbe() {
@@ -118,6 +122,7 @@ const mocks = {
   fetchMany: vi.fn(),
   resolveRoom: vi.fn(),
   from: vi.fn(),
+  send: vi.fn(),
 }
 
 async function flush() {
@@ -138,9 +143,10 @@ async function mountRoom(options: {
   const players = options.players ?? estimators
   const state = options.state ?? fakeState({ phase: 'revealed' })
   const user = options.user === undefined ? ({ id: 'u1' } as User) : options.user
-  const { client, from } = fakeClient(players, state)
+  const { client, from, send } = fakeClient(players, state)
   setSupabase(client)
   mocks.from = from
+  mocks.send = send
 
   mocks.resolveRoom = vi.fn().mockResolvedValue(options.room === undefined ? fakeRoom() : options.room)
   mocks.rejoin = vi.fn(options.rejoin ?? (async () => me))
@@ -292,6 +298,116 @@ describe('room page timer', () => {
     useRoomStore.setState({ resetTimer })
     await setOnline(['me', 'alice'])
     expect(resetTimer).not.toHaveBeenCalled()
+  })
+})
+
+describe('room page side widget', () => {
+  const voting = fakeState({ phase: 'voting' })
+
+  function slotEvents() {
+    return mocks.send.mock.calls.map(([message]) => message).filter(message => String(message.event).startsWith('slot-'))
+  }
+
+  it('shows the timer by default with the room timer state and moderator controls', async () => {
+    await mountRoom({ state: fakeState({ phase: 'voting', paused_at: '2026-10-21T00:05:00Z', paused_elapsed_ms: 1000, alarm_minutes: 7, alarm_muted: true }) })
+    expect(screen.queryByTestId('slot-machine')).toBeNull()
+    expect(lastProps(Timer)).toMatchObject({
+      roundStartedAt: '2026-10-21T00:00:00Z',
+      phase: 'voting',
+      pausedAt: '2026-10-21T00:05:00Z',
+      pausedElapsedMs: 1000,
+      canControl: true,
+      alarmMinutes: 7,
+      alarmMuted: true,
+    })
+  })
+
+  it('routes timer controls and alarm changes to the room store', async () => {
+    await mountRoom({ state: voting })
+    const room = {
+      resetTimer: vi.fn().mockResolvedValue(undefined),
+      pauseTimer: vi.fn().mockResolvedValue(undefined),
+      resumeTimer: vi.fn().mockResolvedValue(undefined),
+      adjustTimer: vi.fn().mockResolvedValue(undefined),
+      setAlarm: vi.fn().mockResolvedValue(undefined),
+    }
+    useRoomStore.setState(room)
+    const timer = lastProps(Timer)
+    timer.onReset()
+    timer.onPause()
+    timer.onResume()
+    timer.onAdjust(-30000)
+    timer.onUpdateAlarm({ minutes: 10 })
+    expect(room.resetTimer).toHaveBeenCalledWith()
+    expect(room.pauseTimer).toHaveBeenCalledOnce()
+    expect(room.resumeTimer).toHaveBeenCalledOnce()
+    expect(room.adjustTimer).toHaveBeenCalledWith(-30000)
+    expect(room.setAlarm).toHaveBeenCalledWith({ minutes: 10 })
+  })
+
+  it('switches to the slot machine, remembers it and opens with it next time', async () => {
+    await mountRoom({ state: voting })
+    await act(async () => {
+      lastProps(Timer).onSwitchWidget()
+    })
+    expect(screen.queryByTestId('timer-widget')).toBeNull()
+    expect(screen.getByTestId('slot-machine')).toBeTruthy()
+    expect(localStorage.getItem('sp-side-widget')).toBe('slot')
+    cleanup()
+
+    await mountRoom({ state: voting })
+    expect(screen.getByTestId('slot-machine')).toBeTruthy()
+    await act(async () => {
+      lastProps(SlotMachine).onSwitchWidget()
+    })
+    expect(screen.getByTestId('timer-widget')).toBeTruthy()
+    expect(localStorage.getItem('sp-side-widget')).toBe('timer')
+  })
+
+  it('counts spins down per round, broadcasts them and resets on a new round', async () => {
+    localStorage.setItem('sp-side-widget', 'slot')
+    await mountRoom({ state: voting })
+    expect(lastProps(SlotMachine).spinsLeft).toBe(3)
+    await act(async () => {
+      lastProps(SlotMachine).onSpin()
+    })
+    expect(lastProps(SlotMachine).spinsLeft).toBe(2)
+    lastProps(SlotMachine).onSpinEnd()
+    lastProps(SlotMachine).onWin()
+    expect(slotEvents()).toEqual([
+      { type: 'broadcast', event: 'slot-spin-start', payload: { playerId: 'me' } },
+      { type: 'broadcast', event: 'slot-spin-end', payload: { playerId: 'me' } },
+      { type: 'broadcast', event: 'slot-win', payload: { playerId: 'me' } },
+    ])
+    await act(async () => {
+      useRoomStore.setState({ roomState: fakeState({ phase: 'voting', round_started_at: '2026-10-21T01:00:00Z' }) })
+    })
+    expect(lastProps(SlotMachine).spinsLeft).toBe(3)
+  })
+
+  it('gives PO and SM five spins and lets them spin regardless of votes', async () => {
+    localStorage.setItem('sp-side-widget', 'slot')
+    const po = fakePlayer('me', ['po'], null, { is_moderator: true })
+    await mountRoom({ state: fakeState({ phase: 'revealed' }), players: [po, fakePlayer('alice', ['dev'], null)], rejoin: async () => po, existing: po })
+    expect(lastProps(SlotMachine)).toMatchObject({ spinsLeft: 5, canSpin: true })
+  })
+
+  it('lets other players spin only after their own vote while someone has not voted', async () => {
+    localStorage.setItem('sp-side-widget', 'slot')
+    await mountRoom({ state: voting })
+    expect(lastProps(SlotMachine).canSpin).toBe(false)
+    await act(async () => {
+      usePlayersStore.setState({ players: estimators.map(p => (p.id === 'me' ? { ...p, vote: '3' } : p.id === 'bob' ? { ...p, vote: null } : p)) })
+    })
+    expect(lastProps(SlotMachine).canSpin).toBe(true)
+    await act(async () => {
+      usePlayersStore.setState({ players: estimators.map(p => (p.id === 'me' ? { ...p, vote: '3' } : p)) })
+    })
+    expect(lastProps(SlotMachine).canSpin).toBe(false)
+    await act(async () => {
+      useRoomStore.setState({ roomState: fakeState({ phase: 'revealed' }) })
+    })
+    expect(lastProps(SlotMachine).canSpin).toBe(false)
   })
 })
 

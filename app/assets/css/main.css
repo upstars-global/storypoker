@@ -1256,6 +1256,65 @@ dialog.app-modal::backdrop {
   50% { opacity: 0.15; }
 }
 
+.timer-alarm-blink {
+  animation: timer-alarm-blink 0.6s ease-in-out var(--alarm-blinks);
+}
+
+@keyframes timer-alarm-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+.slot-window {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--radius-card, 8px);
+  border: 2px solid var(--border-input);
+  background-color: var(--bg-elevated);
+  transition: box-shadow 300ms, border-color 300ms;
+}
+.slot-window.is-jammed .slot-strip {
+  animation: slot-jam 400ms ease-in-out;
+}
+.slot-window.is-jammed .slot-reel:nth-child(2) .slot-strip {
+  animation-delay: 40ms;
+}
+.slot-window.is-jammed .slot-reel:nth-child(3) .slot-strip {
+  animation-delay: 80ms;
+}
+
+@keyframes slot-jam {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(3px); }
+  45% { transform: translateY(-2px); }
+  70% { transform: translateY(2px); }
+  90% { transform: translateY(-1px); }
+}
+
+.slot-reel {
+  width: 52px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: calc(var(--radius-card, 8px) / 2);
+  background-color: var(--bg-paper);
+  border: 1px solid var(--border);
+}
+.slot-strip {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+.slot-cell {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  line-height: 1;
+  user-select: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

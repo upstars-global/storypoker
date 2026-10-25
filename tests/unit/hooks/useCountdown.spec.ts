@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { StrictMode } from 'react'
 import { act, renderHook } from '@testing-library/react'
 import { useCountdown } from '~/hooks/useCountdown'
 import { soundVolumeStore } from '~/hooks/useSoundVolume'
@@ -36,6 +37,11 @@ describe('useCountdown volume', () => {
     renderHook(() => useCountdown())
     expect(created).toHaveLength(5)
     expect(created.every(a => a.volume === 0.5)).toBe(true)
+  })
+
+  it('reuses its audio elements when StrictMode mounts the hook twice', () => {
+    renderHook(() => useCountdown(), { wrapper: StrictMode })
+    expect(created).toHaveLength(5)
   })
 
   it('applies a later volume change to already created elements', () => {

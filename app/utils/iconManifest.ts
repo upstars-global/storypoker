@@ -46,6 +46,22 @@ export const dynamicBindings: readonly { file: string; expression: string; names
     names: ['ic:baseline-volume-off', 'app:timer', 'app:town-hall'],
   },
   {
+    file: 'app/components/Timer.tsx',
+    expression: 'icon',
+    names: [
+      'ic:baseline-fast-forward',
+      'ic:baseline-fast-rewind',
+      'ic:baseline-pause',
+      'ic:baseline-play-arrow',
+      'ic:baseline-stop',
+    ],
+  },
+  {
+    file: 'app/components/Timer.tsx',
+    expression: "alarmMuted ? 'ic:baseline-notifications-off' : 'ic:baseline-notifications-active'",
+    names: ['ic:baseline-notifications-off', 'ic:baseline-notifications-active'],
+  },
+  {
     file: 'app/components/PlayerRow.tsx',
     expression: 'diceIcon',
     names: [
@@ -55,6 +71,19 @@ export const dynamicBindings: readonly { file: string; expression: string; names
       'tabler:dice-4',
       'tabler:dice-5',
       'tabler:dice-6',
+    ],
+  },
+  {
+    file: 'app/components/SlotMachine.tsx',
+    expression: 'symbol',
+    names: [
+      'tabler:apple',
+      'tabler:bell',
+      'tabler:cherry',
+      'tabler:grape',
+      'tabler:lemon-2',
+      'tabler:play-card-7',
+      'tabler:star',
     ],
   },
 ]

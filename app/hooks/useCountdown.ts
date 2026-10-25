@@ -130,11 +130,11 @@ function createCountdown() {
   }
 
   function mount() {
-    pleaseVoteAudio = new Audio(pleaseVoteSound)
-    countdownDryAudio = new Audio(countdownDrySound)
-    countdownWetAudio = new Audio(countdownWetSound)
-    ambienceAudio = new Audio(ambienceSound)
-    decisionAudio = new Audio(decisionSound)
+    pleaseVoteAudio ??= new Audio(pleaseVoteSound)
+    countdownDryAudio ??= new Audio(countdownDrySound)
+    countdownWetAudio ??= new Audio(countdownWetSound)
+    ambienceAudio ??= new Audio(ambienceSound)
+    decisionAudio ??= new Audio(decisionSound)
     applyVolume(soundVolumeStore.getState().volume)
     const unsubscribe = soundVolumeStore.subscribe((state, previous) => {
       if (state.volume !== previous.volume) applyVolume(state.volume)

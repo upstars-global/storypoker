@@ -12,6 +12,8 @@ import ConnectionBanner from '~/components/ConnectionBanner'
 import JoinOverlay from '~/components/JoinOverlay'
 import PlayersList from '~/components/PlayersList'
 import ResultsArea from '~/components/ResultsArea'
+import SlotMachine from '~/components/SlotMachine'
+import Timer from '~/components/Timer'
 import { Button, buttonVariants } from '~/components/ui/button'
 import { appUpdateStore } from '~/hooks/useAppUpdate'
 import { useCountdown, type CountdownMode } from '~/hooks/useCountdown'
@@ -31,7 +33,7 @@ import { shouldCelebrate } from '~/utils/resultCelebration'
 import { cohortForShields, groupVotesByCohort, normalizeCohorts, resultCohortFor, type ResultGroup } from '~/utils/resultCohorts'
 import { isValidRoomSlug, normalizeRoomSlug } from '~/utils/roomId'
 import { roleTagForShields, roleTagOrder } from '~/utils/shields'
-import { isRoundTimerStale } from '~/utils/timerAlarm'
+import { isRoundTimerStale, type AlarmSettings } from '~/utils/timerAlarm'
 
 interface LastRoundSnapshot {
   votes: Record<string, number>
@@ -50,6 +52,14 @@ interface HeaderSeed {
 
 interface SlotPayload {
   playerId?: string
+}
+
+type SideWidget = 'timer' | 'slot'
+
+const SIDE_WIDGET_KEY = 'sp-side-widget'
+
+function readSideWidget(): SideWidget {
+  try { return localStorage.getItem(SIDE_WIDGET_KEY) === 'slot' ? 'slot' : 'timer' } catch { return 'timer' }
 }
 
 const EMPTY_BACKGROUND: RoomBackground = { background_url: null, background_updated_at: null, background_opacity: null }
@@ -142,6 +152,9 @@ export default function RoomPage() {
   const [revealInFlight, setRevealInFlight] = useState(false)
   const [spinningPlayerIds, setSpinningPlayerIds] = useState<Set<string>>(() => new Set())
   const [slotWinnerId, setSlotWinnerId] = useState<string | null>(null)
+  const [sideWidget, setSideWidget] = useState<SideWidget>(readSideWidget)
+  const [spinsUsed, setSpinsUsed] = useState(0)
+  const [spinsRoundStartedAt, setSpinsRoundStartedAt] = useState(roomState?.round_started_at)
 
   function setCurrentPlayerId(id: string | null) {
     currentPlayerIdRef.current = id
@@ -191,6 +204,21 @@ export default function RoomPage() {
     })
 
   const hasVotes = playersForUi.filter(p => p.vote !== null).length >= 2
+
+  const currentRoleTag = roleTagForShields(currentPlayer?.shields)
+  const isProductRole = currentRoleTag === 'PO' || currentRoleTag === 'SM'
+  const spinsPerRound = isProductRole ? 5 : 3
+  const canSpinSlot = isProductRole || (
+    roomState?.phase === 'voting'
+    && !!currentPlayer
+    && voteOf(currentPlayer.id) !== null
+    && visiblePlayers.some(p => voteOf(p.id) === null)
+  )
+
+  if (spinsRoundStartedAt !== roomState?.round_started_at) {
+    setSpinsRoundStartedAt(roomState?.round_started_at)
+    setSpinsUsed(0)
+  }
 
   const votedCount = visiblePlayers.filter(p => voteOf(p.id) !== null).length
   const canReset = !showLastRound && votedCount > 0 && votedCount < visiblePlayers.length
@@ -584,6 +612,27 @@ export default function RoomPage() {
     void countdownChannel.current?.send({ type: 'broadcast', event: 'start', payload: { initiatorId: currentPlayerIdRef.current, mode } })
   }
 
+  function switchSideWidget() {
+    const next: SideWidget = sideWidget === 'timer' ? 'slot' : 'timer'
+    setSideWidget(next)
+    try { localStorage.setItem(SIDE_WIDGET_KEY, next) } catch {}
+  }
+
+  function broadcastSlotEvent(event: 'slot-spin-start' | 'slot-spin-end' | 'slot-win') {
+    const playerId = currentPlayerIdRef.current
+    if (!playerId) return
+    void countdownChannel.current?.send({ type: 'broadcast', event, payload: { playerId } })
+  }
+
+  function handleSlotSpin() {
+    setSpinsUsed(used => used + 1)
+    broadcastSlotEvent('slot-spin-start')
+  }
+
+  async function handleUpdateAlarm(settings: Partial<AlarmSettings>) {
+    await useRoomStore.getState().setAlarm(settings).catch(error => console.error('[timer] alarm settings save failed:', error))
+  }
+
   async function handleStartVoteQuestion(question: string, answers: string[]) {
     const room = useRoomStore.getState()
     await Promise.all([
@@ -704,6 +753,33 @@ export default function RoomPage() {
             onKick={handleKick}
           />
           {alignmentBlocks && <AlignmentCard blocks={alignmentBlocks} />}
+          {roomState && sideWidget === 'timer' && (
+            <Timer
+              roundStartedAt={roomState.round_started_at}
+              phase={roomState.phase ?? 'voting'}
+              pausedAt={roomState.paused_at ?? null}
+              pausedElapsedMs={roomState.paused_elapsed_ms ?? 0}
+              canControl={isModerator}
+              alarmMinutes={roomState.alarm_minutes ?? null}
+              alarmMuted={roomState.alarm_muted ?? null}
+              onReset={() => void useRoomStore.getState().resetTimer()}
+              onPause={() => void useRoomStore.getState().pauseTimer()}
+              onResume={() => void useRoomStore.getState().resumeTimer()}
+              onAdjust={ms => void useRoomStore.getState().adjustTimer(ms)}
+              onSwitchWidget={switchSideWidget}
+              onUpdateAlarm={settings => void handleUpdateAlarm(settings)}
+            />
+          )}
+          {roomState && sideWidget === 'slot' && (
+            <SlotMachine
+              spinsLeft={spinsPerRound - spinsUsed}
+              canSpin={canSpinSlot}
+              onSpin={handleSlotSpin}
+              onSpinEnd={() => broadcastSlotEvent('slot-spin-end')}
+              onWin={() => broadcastSlotEvent('slot-win')}
+              onSwitchWidget={switchSideWidget}
+            />
+          )}
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-start">
