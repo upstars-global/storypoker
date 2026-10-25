@@ -156,7 +156,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
     </tr>
     <tr>
       <td><img src="https://cdn.simpleicons.org/typescript" width="16" height="16"> <a href="https://github.com/vuejs/language-tools">vue-tsc</a></td>
-      <td>SFC typecheck (<code>npm run typecheck</code>)</td>
+      <td>SFC typecheck (<code>pnpm run typecheck</code>)</td>
       <td><a href="https://github.com/vuejs/language-tools"><img src="https://img.shields.io/github/stars/vuejs/language-tools?style=flat&logo=github&logoColor=white&label=&color=555" alt="vue-tsc stars"></a></td>
     </tr>
     <tr>
@@ -172,9 +172,9 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
     </tr>
     <tr>
       <td rowspan="3"><strong>Skills</strong></td>
-      <td><img src="https://cdn.simpleicons.org/vercel" width="16" height="16"> <a href="https://github.com/vercel-labs/skills">vercel-labs/skills</a></td>
-      <td><a href="https://www.npmjs.com/package/skills"><img src="https://img.shields.io/npm/dt/skills?style=flat&logo=npm&logoColor=white&label=&color=555" alt="skills downloads"></a> Skills installer for agents</td>
-      <td><a href="https://github.com/vercel-labs/skills"><img src="https://img.shields.io/github/stars/vercel-labs/skills?style=flat&logo=github&logoColor=white&label=&color=555" alt="skills stars"></a></td>
+      <td><a href="https://github.com/sentimony/skl-x">sentimony/skl-x</a></td>
+      <td><a href="https://www.npmjs.com/package/skl-x"><img src="https://img.shields.io/npm/dt/skl-x?style=flat&logo=npm&logoColor=white&label=&color=555" alt="skl-x downloads"></a> Skills installer and usage stats</td>
+      <td><a href="https://github.com/sentimony/skl-x"><img src="https://img.shields.io/github/stars/sentimony/skl-x?style=flat&logo=github&logoColor=white&label=&color=555" alt="skl-x stars"></a></td>
     </tr>
     <tr>
       <td><a href="https://github.com/sentimony/skills">sentimony/skills</a></td>
@@ -182,9 +182,9 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/sentimony/skills"><img src="https://img.shields.io/github/stars/sentimony/skills?style=flat&logo=github&logoColor=white&label=&color=555" alt="sentimony/skills stars"></a></td>
     </tr>
     <tr>
-      <td><a href="https://github.com/ihororlovskyi/skillio">ihororlovskyi/skillio</a></td>
-      <td><a href="https://www.npmjs.com/package/skillio"><img src="https://img.shields.io/npm/dt/skillio?style=flat&logo=npm&logoColor=white&label=&color=555" alt="skillio downloads"></a> Skills usage stats</td>
-      <td><a href="https://github.com/ihororlovskyi/skillio"><img src="https://img.shields.io/github/stars/ihororlovskyi/skillio?style=flat&logo=github&logoColor=white&label=&color=555" alt="skillio stars"></a></td>
+      <td><a href="https://github.com/sentimony/agentic-workflow">sentimony/agentic-workflow</a></td>
+      <td><a href="https://skills.sh/sentimony/agentic-workflow"><img src="https://skills.sh/b/sentimony/agentic-workflow" alt="skills.sh"></a> Agent workflow chain: specify, plan, implement, review, verify, finalize</td>
+      <td><a href="https://github.com/sentimony/agentic-workflow"><img src="https://img.shields.io/github/stars/sentimony/agentic-workflow?style=flat&logo=github&logoColor=white&label=&color=555" alt="sentimony/agentic-workflow stars"></a></td>
     </tr>
   </tbody>
 </table>
@@ -192,35 +192,35 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
 ### Install
 
 ```bash
-npm i
+pnpm install
 ```
 
-`preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) - see [Skills](#skills).
+`preinstall` runs [scripts/setup.sh](scripts/setup.sh): it creates `.agents/`, `.claude/settings.json` and empty `.env/.env` + `.env/.env.local`. `postinstall` runs [scripts/skills.sh](scripts/skills.sh) except in CI (`CI` set) - see [Skills](#skills). `setup.sh` also adds a Claude Code `SessionStart` hook that runs [scripts/session-start.sh](scripts/session-start.sh), so every new `claude` session starts with fresh skills.
 
 ### Run
 
 Fill `.env/.env` (shared: Supabase) following `.env/.env.example`; `.env/.env.local` is the per-user override.
 ```bash
 cp .env/.env.example .env/.env
-npm run dev
+pnpm run dev
 ```
 
 ### Quality checks
 
 ```bash
-npm run lint
-npm run typecheck
-npm run test
-npm run build
-npm run test:e2e:pages   # public pages smoke, no Supabase
-npm run test:e2e         # full Playwright suite, requires .env/.env.test
+pnpm run lint
+pnpm run typecheck
+pnpm run test
+pnpm run build
+pnpm run test:e2e:pages   # public pages smoke, no Supabase
+pnpm run test:e2e         # full Playwright suite, requires .env/.env.test
 ```
 
-`npm run test:ci` runs the first four in one go - the same gate as CI.
+`pnpm run test:ci` runs the first four in one go - the same gate as CI.
 
 ### CI/CD (GitHub Actions + Netlify)
 
-[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on PRs and pushes to `main`:
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests, pushes to `main` and manual dispatch:
 
 - `detect-secrets`, `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
 - `e2e` (Chromium + WebKit against the test Supabase project) runs only when the `E2E_*` secrets are set.
@@ -228,8 +228,8 @@ npm run test:e2e         # full Playwright suite, requires .env/.env.test
 
 ### Ports
 
-- `5173` - `npm run dev`
-- `4173` - `npm run preview`; Playwright reuses a server already running there unless `E2E_BASE_URL` points elsewhere
+- `5173` - `pnpm run dev`
+- `4173` - `pnpm run preview`; Playwright reuses a server already running there unless `E2E_BASE_URL` points elsewhere
 
 ### Run Claude Code In Bypass Mode
 
@@ -239,12 +239,12 @@ claude --dangerously-skip-permissions
 
 ### Skills
 
-[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall`, or on demand with `npm run skills`.
+[scripts/skills.sh](scripts/skills.sh) - runs as `postinstall` (skipped in CI, where `CI` is set), before `pnpm run dev` (a failure there does not stop `dev`), or on demand with `pnpm run skills`. It installs the [agentic-workflow](https://github.com/sentimony/agentic-workflow) chain (`specify` → `plan-craft` → `implement` → `cr-request` → `cr-received` → `verify` → `finalize`), then the rest of [sentimony/skills](https://github.com/sentimony/skills) minus the skills the chain replaces.
 
 ### How to see which skills Claude Code used
 
 ```bash
-npm i -g skillio
+npm i -g skl-x
 skl usg -p 3h
 ```
 

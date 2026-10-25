@@ -61,31 +61,40 @@ export type Database = {
       room_state: {
         Row: {
           active_cards: string[]
+          alarm_minutes: number | null
+          alarm_muted: boolean | null
           deck_preset: string
           paused_at: string | null
           paused_elapsed_ms: number
           phase: string
           poll_question: string | null
+          result_cohorts: string[] | null
           room_id: string
           round_started_at: string | null
         }
         Insert: {
           active_cards?: string[]
+          alarm_minutes?: number | null
+          alarm_muted?: boolean | null
           deck_preset?: string
           paused_at?: string | null
           paused_elapsed_ms?: number
           phase?: string
           poll_question?: string | null
+          result_cohorts?: string[] | null
           room_id: string
           round_started_at?: string | null
         }
         Update: {
           active_cards?: string[]
+          alarm_minutes?: number | null
+          alarm_muted?: boolean | null
           deck_preset?: string
           paused_at?: string | null
           paused_elapsed_ms?: number
           phase?: string
           poll_question?: string | null
+          result_cohorts?: string[] | null
           room_id?: string
           round_started_at?: string | null
         }
@@ -101,18 +110,30 @@ export type Database = {
       }
       rooms: {
         Row: {
+          background_opacity: number | null
+          background_owner_id: string | null
+          background_updated_at: string | null
+          background_url: string | null
           created_at: string | null
           id: string
           name: string | null
           slug: string | null
         }
         Insert: {
+          background_opacity?: number | null
+          background_owner_id?: string | null
+          background_updated_at?: string | null
+          background_url?: string | null
           created_at?: string | null
           id: string
           name?: string | null
           slug?: string | null
         }
         Update: {
+          background_opacity?: number | null
+          background_owner_id?: string | null
+          background_updated_at?: string | null
+          background_url?: string | null
           created_at?: string | null
           id?: string
           name?: string | null

@@ -6,10 +6,11 @@ import { useI18n } from 'vue-i18n'
 import { useCardLabel } from '~/composables/useCardLabel'
 import { averageOf } from '~/utils/roundStats'
 import { GOAL_CLARITY_THRESHOLDS } from '~/utils/cardDecks'
+import type { ResultGroup } from '~/utils/resultCohorts'
 
 const props = defineProps<{
   votes: Record<string, number>
-  groupedVotes?: { general: Record<string, number>; qa: Record<string, number> } | null
+  groups?: ResultGroup[] | null
   showNewRound: boolean
   pollQuestion?: string | null
   disableCelebration?: boolean
@@ -62,17 +63,11 @@ const showGoalClarityHint = computed(() => {
 })
 
 const groups = computed(() => {
-  const out: { label: string; votes: Record<string, number>; average: string | null }[] = []
-  const devVotes = props.groupedVotes ? props.groupedVotes.general : props.votes
-  out.push({ label: t('results.general'), votes: devVotes, average: averageOf(devVotes) })
-  if (props.groupedVotes) {
-    const qaTotal = Object.values(props.groupedVotes.qa).reduce((a, b) => a + b, 0)
-    if (qaTotal) out.push({ label: 'QA', votes: props.groupedVotes.qa, average: averageOf(props.groupedVotes.qa) })
-  }
-  return out
+  if (!props.groups) return [{ label: t('results.general'), votes: props.votes, average: averageOf(props.votes) }]
+  return props.groups.map(group => ({ ...group, average: averageOf(group.votes) }))
 })
 
-const celebrate = computed(() => !props.disableCelebration && shouldCelebrate(props.votes, props.groupedVotes))
+const celebrate = computed(() => !props.disableCelebration && shouldCelebrate(props.votes, props.groups?.map(group => group.votes)))
 
 const celebrationParticles = ref(createCelebrationParticles(0))
 const chartsEl = ref<HTMLElement | null>(null)

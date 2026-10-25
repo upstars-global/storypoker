@@ -30,7 +30,8 @@
     "history": "Історія раундів",
     "alignmentTrends": "Тренди узгодженості",
     "themePalette": "Кольорова тема",
-    "volume": "Гучність звуку"
+    "volume": "Гучність звуку",
+    "roomBackground": "Фон кімнати"
   },
   "theme": {
     "classic": "Classic",
@@ -99,11 +100,16 @@
     "title": "Таймер",
     "roundStartedAgo": "Раунд розпочато {duration} тому",
     "roundDuration": "Тривалість раунду: {duration}",
+    "roundStopped": "Таймер зупинено після {duration}",
     "reset": "Скинути",
     "pause": "Пауза",
     "continue": "Продовжити",
     "minus30": "-30с",
-    "plus30": "+30с"
+    "plus30": "+30с",
+    "alarmSettings": "Налаштування сигналу",
+    "alarmAfter": "Сигнал через",
+    "minutesShort": "хв",
+    "alarmSound": "Звук сигналу"
   },
   "slot": {
     "title": "Слот 777",
@@ -122,7 +128,9 @@
       "no": "Ні"
     },
     "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні",
-    "alwaysIncluded": "Завжди включено"
+    "alwaysIncluded": "Завжди включено",
+    "resultCohorts": "Показувати результати",
+    "qaCohortHint": "QA, GQA і AQA завжди показуються одним колом"
   },
   "poll": {
     "thirdCard": "Третя картка",
@@ -160,11 +168,13 @@
       "PO": "Product Owner",
       "BE": "Backend",
       "FE": "Frontend",
+      "SRE": "Site Reliability Engineering",
       "DEV": "Developer",
       "QA": "Quality Assurance",
       "AQA": "Automated Quality Assurance",
       "GQA": "General Quality Assurance"
-    }
+    },
+    "voteHiddenInResults": "голос не показується в результатах"
   },
   "results": {
     "general": "DEV",
@@ -254,6 +264,10 @@
   "connection": {
     "reconnecting": "Перепідключення…"
   },
+  "appUpdate": {
+    "available": "Доступна нова версія",
+    "reload": "Оновити"
+  },
   "userSettings": {
     "title": "Налаштування акаунту",
     "styleRobots": "Роботи",
@@ -337,5 +351,19 @@
         "description": "Просто щоб показати, як додавати нові фіче-флаги"
       }
     }
+  },
+  "roomBackground": {
+    "title": "Фон кімнати",
+    "chooseFile": "Вибрати файл",
+    "remove": "Прибрати фон",
+    "preview": "Прев'ю фону",
+    "hint": "JPG, PNG або WebP до 10 МБ. Фон бачать усі учасники кімнати",
+    "errorFileTooLarge": "Файл завеликий (максимум 10 МБ)",
+    "errorUnsupportedType": "Підтримуються лише JPG, PNG і WebP",
+    "errorDecodeFailed": "Не вдалося прочитати зображення",
+    "saveError": "Не вдалося зберегти фон",
+    "zoom": "Масштаб",
+    "adjustHint": "Перетягніть, щоб посунути фон, масштабуйте повзунком або колесом миші",
+    "opacity": "Непрозорість"
   }
 }

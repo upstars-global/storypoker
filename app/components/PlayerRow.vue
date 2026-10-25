@@ -35,6 +35,7 @@ const props = defineProps<{
   truncateVotes?: boolean
   isSpinningSlot?: boolean
   isSlotWinner?: boolean
+  voteHidden?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -110,6 +111,7 @@ const playerAvatar = computed(() => {
       <RoleBadge
         v-if="roleTag"
         :tag="roleTag"
+        :excluded="voteHidden"
         class="flex-none"
       />
       <span

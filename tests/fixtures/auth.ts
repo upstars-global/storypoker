@@ -43,10 +43,10 @@ export const test = base.extend<AuthFixtures>({
         const msg = `deleteUser failed for ${email}: ${error.message}`
         if (testInfo.status === 'passed') throw new Error(msg)
         await testInfo.attach('cleanup-error', { body: msg, contentType: 'text/plain' })
-      } catch (err: any) {
+      } catch (err) {
         if (testInfo.status === 'passed') throw err
         await testInfo.attach('cleanup-error', {
-          body: String(err?.message ?? err),
+          body: err instanceof Error ? err.message : String(err),
           contentType: 'text/plain',
         })
       }

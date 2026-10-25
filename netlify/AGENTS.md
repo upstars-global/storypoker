@@ -12,8 +12,8 @@ Read-only API поверх Supabase. Схема таблиць, з яких чи
   rounds:[{id,date,week,deck,average,devAlignment,qaAlignment,voters,votes:[{name,vote,cohort}]}]}` для однієї кімнати
 - `GET /api/teams.json` → `{teams:[{room,rounds:[...]}]}` по **всіх** кімнатах у базі
 
-`votes` - per-player знімок раунду (`name`+`vote`+`cohort: 'DEV'|'QA'`, той самий `isQaPlayer` спліт, що й
-`devAlignment`/`qaAlignment`) - додано для round-snapshot drill-down в agilecharts (клік по точці графіка → хто як
+`votes` - per-player знімок раунду (`name`+`vote`+`cohort: 'DEV'|'QA'`, той самий `trendCohorts` спліт, що й
+`devAlignment`/`qaAlignment`; голоси PO/SM/кастомних ролей відсутні, якщо в раунді є DEV/QA-голоси; без ролі й ті, хто вийшов, - DEV; `voters` і `average` рахуються з тих самих голосів) - додано для round-snapshot drill-down в agilecharts (клік по точці графіка → хто як
 голосував). Імена гравців тут не ширші за те, що й так видно будь-кому, хто заходить у кімнату; ендпоінт і так
 token-gated.
 
@@ -31,3 +31,5 @@ legacy `deck_preset=null`), poll-колоди (`voting`/`vote_question`) і не
 синхронізувати вручну в обох місцях. Споживач - `agilecharts` (сусідній репо, Nuxt), вкладка "Estimation Trends"
 (`app/components/team/TeamConsistencyTrends.vue`).
 
+Функція виходить разом із prod-білдом Netlify з `main`, окремого деплою не треба. Перевірка -
+`netlify api listSiteDeploys` (`commit_ref`, `available_functions`) і живий запит із Bearer-токеном.
