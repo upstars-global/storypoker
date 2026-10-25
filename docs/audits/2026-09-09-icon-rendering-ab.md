@@ -80,7 +80,7 @@ viewport на 1440×900 цих чисел не змінило — обидві �
 
 ## Час
 
-| | cold median | cold min–max | warm median | warm min–max |
+| | cold median | cold min-max | warm median | warm min-max |
 | --- | --- | --- | --- | --- |
 | A | 124.0 мс | 122.8–173.3 | 90.1 мс | 89.3–92.9 |
 | B | 123.5 мс | 122.6–158.8 | 90.1 мс | 89.2–92.6 |
@@ -95,7 +95,7 @@ worker в обох варіантах; cold — 1/20 (A) і 0/20 (B). Але `na
 те, що сторінку контролює service worker; джерело кожного окремого ресурсу (SW-кеш, HTTP-кеш чи мережа) він
 не визначає. Для цього потрібен CDP або per-resource Resource Timing, які не знімались.
 
-| | paired delta median | min–max |
+| | paired delta median | min-max |
 | --- | --- | --- |
 | cold | −0.2 мс | −50.7…+16.9 |
 | warm | −0.35 мс | −2.1…+2.8 |
