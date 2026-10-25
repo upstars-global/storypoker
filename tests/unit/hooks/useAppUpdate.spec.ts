@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { UPDATE_IDLE_MS, UPDATE_PROMPT_MS } from '~/composables/useAppUpdate'
+import { act, renderHook } from '@testing-library/react'
+import { UPDATE_IDLE_MS, UPDATE_PROMPT_MS } from '~/hooks/useAppUpdate'
 
-let useAppUpdate: typeof import('~/composables/useAppUpdate').useAppUpdate
+type AppUpdateModule = typeof import('~/hooks/useAppUpdate')
+
+let useAppUpdate: AppUpdateModule['useAppUpdate']
+let appUpdateStore: AppUpdateModule['appUpdateStore']
 
 let visibility: DocumentVisibilityState = 'visible'
 
@@ -10,10 +14,21 @@ function setVisibility(state: DocumentVisibilityState) {
   document.dispatchEvent(new Event('visibilitychange'))
 }
 
+function renderAppUpdate() {
+  return renderHook(() => useAppUpdate()).result
+}
+
+function keepTabBusyUntilPrompt() {
+  for (let elapsed = 0; elapsed < UPDATE_PROMPT_MS; elapsed += UPDATE_IDLE_MS / 2) {
+    window.dispatchEvent(new Event('keydown'))
+    act(() => vi.advanceTimersByTime(UPDATE_IDLE_MS / 2))
+  }
+}
+
 describe('useAppUpdate', () => {
   beforeEach(async () => {
     vi.resetModules()
-    ;({ useAppUpdate } = await import('~/composables/useAppUpdate'))
+    ;({ useAppUpdate, appUpdateStore } = await import('~/hooks/useAppUpdate'))
     vi.useFakeTimers()
     visibility = 'visible'
     vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibility)
@@ -27,13 +42,13 @@ describe('useAppUpdate', () => {
   it('applies the update right away when the tab is hidden', () => {
     visibility = 'hidden'
     const apply = vi.fn()
-    useAppUpdate().scheduleUpdate(apply)
+    appUpdateStore.getState().scheduleUpdate(apply)
     expect(apply).toHaveBeenCalledOnce()
   })
 
   it('waits while the tab is visible and applies once it becomes hidden', () => {
     const apply = vi.fn()
-    useAppUpdate().scheduleUpdate(apply)
+    appUpdateStore.getState().scheduleUpdate(apply)
     expect(apply).not.toHaveBeenCalled()
 
     setVisibility('hidden')
@@ -42,7 +57,7 @@ describe('useAppUpdate', () => {
 
   it('applies after the user stays idle on a visible tab', () => {
     const apply = vi.fn()
-    useAppUpdate().scheduleUpdate(apply)
+    appUpdateStore.getState().scheduleUpdate(apply)
 
     vi.advanceTimersByTime(UPDATE_IDLE_MS - 1000)
     expect(apply).not.toHaveBeenCalled()
@@ -52,7 +67,7 @@ describe('useAppUpdate', () => {
 
   it('restarts the idle wait on user activity', () => {
     const apply = vi.fn()
-    useAppUpdate().scheduleUpdate(apply)
+    appUpdateStore.getState().scheduleUpdate(apply)
 
     vi.advanceTimersByTime(UPDATE_IDLE_MS - 1000)
     window.dispatchEvent(new Event('pointerdown'))
@@ -64,24 +79,21 @@ describe('useAppUpdate', () => {
 
   it('shows the prompt when the user keeps the tab busy, and reloads on demand', () => {
     const apply = vi.fn()
-    const { scheduleUpdate, promptVisible, applyUpdateNow } = useAppUpdate()
-    scheduleUpdate(apply)
+    const result = renderAppUpdate()
+    act(() => result.current.scheduleUpdate(apply))
 
-    for (let elapsed = 0; elapsed < UPDATE_PROMPT_MS; elapsed += UPDATE_IDLE_MS / 2) {
-      window.dispatchEvent(new Event('keydown'))
-      vi.advanceTimersByTime(UPDATE_IDLE_MS / 2)
-    }
+    keepTabBusyUntilPrompt()
     expect(apply).not.toHaveBeenCalled()
-    expect(promptVisible.value).toBe(true)
+    expect(result.current.promptVisible).toBe(true)
 
-    applyUpdateNow()
+    act(() => result.current.applyUpdateNow())
     expect(apply).toHaveBeenCalledOnce()
-    expect(promptVisible.value).toBe(false)
+    expect(result.current.promptVisible).toBe(false)
   })
 
   it('holds the update during a countdown and applies it once the countdown ends', () => {
     const apply = vi.fn()
-    const { scheduleUpdate, holdUpdate } = useAppUpdate()
+    const { scheduleUpdate, holdUpdate } = appUpdateStore.getState()
     holdUpdate(true)
     scheduleUpdate(apply)
 
@@ -95,41 +107,42 @@ describe('useAppUpdate', () => {
 
   it('hides the prompt once a reload on demand is queued behind a countdown', () => {
     const apply = vi.fn()
-    const { scheduleUpdate, promptVisible, applyUpdateNow, holdUpdate } = useAppUpdate()
-    scheduleUpdate(apply)
-    for (let elapsed = 0; elapsed < UPDATE_PROMPT_MS; elapsed += UPDATE_IDLE_MS / 2) {
-      window.dispatchEvent(new Event('keydown'))
-      vi.advanceTimersByTime(UPDATE_IDLE_MS / 2)
-    }
-    expect(promptVisible.value).toBe(true)
+    const result = renderAppUpdate()
+    act(() => result.current.scheduleUpdate(apply))
+    keepTabBusyUntilPrompt()
+    expect(result.current.promptVisible).toBe(true)
 
-    holdUpdate(true)
-    applyUpdateNow()
+    act(() => {
+      result.current.holdUpdate(true)
+      result.current.applyUpdateNow()
+    })
     expect(apply).not.toHaveBeenCalled()
-    expect(promptVisible.value).toBe(false)
+    expect(result.current.promptVisible).toBe(false)
 
-    holdUpdate(false)
+    act(() => result.current.holdUpdate(false))
     expect(apply).toHaveBeenCalledOnce()
   })
 
   it('does not show the prompt while an update is queued behind a countdown', () => {
     const apply = vi.fn()
-    const { scheduleUpdate, promptVisible, holdUpdate } = useAppUpdate()
-    holdUpdate(true)
-    scheduleUpdate(apply)
+    const result = renderAppUpdate()
+    act(() => {
+      result.current.holdUpdate(true)
+      result.current.scheduleUpdate(apply)
+    })
 
-    vi.advanceTimersByTime(UPDATE_PROMPT_MS)
+    act(() => vi.advanceTimersByTime(UPDATE_PROMPT_MS))
     expect(apply).not.toHaveBeenCalled()
-    expect(promptVisible.value).toBe(false)
+    expect(result.current.promptVisible).toBe(false)
 
-    holdUpdate(false)
+    act(() => result.current.holdUpdate(false))
     expect(apply).toHaveBeenCalledOnce()
   })
 
   it('applies right away on a hidden tab once a countdown ends', () => {
     visibility = 'hidden'
     const apply = vi.fn()
-    const { scheduleUpdate, holdUpdate } = useAppUpdate()
+    const { scheduleUpdate, holdUpdate } = appUpdateStore.getState()
     holdUpdate(true)
     scheduleUpdate(apply)
     expect(apply).not.toHaveBeenCalled()
@@ -141,7 +154,7 @@ describe('useAppUpdate', () => {
   it('applies only once and ignores a second update while one is pending', () => {
     const first = vi.fn()
     const second = vi.fn()
-    const { scheduleUpdate } = useAppUpdate()
+    const { scheduleUpdate } = appUpdateStore.getState()
     scheduleUpdate(first)
     scheduleUpdate(second)
 
@@ -151,5 +164,14 @@ describe('useAppUpdate', () => {
     vi.advanceTimersByTime(UPDATE_PROMPT_MS)
     expect(first).toHaveBeenCalledOnce()
     expect(second).not.toHaveBeenCalled()
+  })
+
+  it('shares the prompt state between components', () => {
+    const first = renderAppUpdate()
+    const second = renderAppUpdate()
+    act(() => first.current.scheduleUpdate(vi.fn()))
+
+    act(() => vi.advanceTimersByTime(UPDATE_PROMPT_MS))
+    expect(second.current.promptVisible).toBe(true)
   })
 })

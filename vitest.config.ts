@@ -9,7 +9,6 @@ export default defineConfig({
     include: ['tests/unit/**/*.spec.ts', 'tests/unit/**/*.spec.tsx', 'tests/components/**/*.spec.ts', 'tests/integration/**/*.spec.ts'],
     exclude: [
       '**/node_modules/**',
-      'tests/unit/composables/useCountdown.spec.ts',
     ],
     passWithNoTests: true,
     coverage: {

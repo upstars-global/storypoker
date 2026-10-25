@@ -25,6 +25,7 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
 CI check = `pnpm run test:ci` - обов'язково перед завершенням будь-якої задачі.
+- Нерозібрані learnings з минулих сесій, прочитай перед початком роботи: @docs/session-learnings/AGENTS.md
 - **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
   `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verify` → CI check

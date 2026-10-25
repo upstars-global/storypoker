@@ -77,6 +77,12 @@ npx -y --prefer-online skl-x add netlify/context-and-tools -s \
   netlify-deploy \
   -a codex claude-code -y -m sm
 
+# SHADCN UI https://github.com/shadcn/ui
+npx -y --prefer-online skl-x add shadcn/ui -s \
+  migrate-radix-to-base \
+  shadcn \
+  -a codex claude-code -y -m sm
+
 # npx -y --prefer-online skl-x -v
 npx -y --prefer-online skl-x ls -g -m sm
 npx -y --prefer-online skl-x ls -m sm

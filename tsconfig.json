@@ -33,8 +33,6 @@
     "node_modules",
     "dist",
     ".nuxt",
-    ".output",
-    "app/composables/useCountdown.ts",
-    "tests/unit/composables/useCountdown.spec.ts"
+    ".output"
   ]
 }

@@ -33,12 +33,6 @@
       }
     },
     {
-      "files": ["app/pwa.ts"],
-      "rules": {
-        "react/rules-of-hooks": "off"
-      }
-    },
-    {
       "files": ["tests/unit/pwa.spec.ts"],
       "rules": {
         "typescript/no-misused-spread": "off"
@@ -60,8 +54,6 @@
     "playwright-report/**",
     "test-results/**",
     "node_modules/**",
-    ".agents/**",
-    "app/composables/useCountdown.ts",
-    "tests/unit/composables/useCountdown.spec.ts"
+    ".agents/**"
   ]
 }

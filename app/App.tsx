@@ -1,7 +1,18 @@
+import { useEffect } from 'react'
 import { AppRoutes } from '~/router'
+import { useSoundVolume } from '~/hooks/useSoundVolume'
+import { useTheme } from '~/hooks/useTheme'
 import uk from '~/i18n/locales/uk.json'
 
 export default function App() {
+  const { init } = useTheme()
+  const { initVolume } = useSoundVolume()
+
+  useEffect(() => {
+    init()
+    initVolume()
+  }, [init, initVolume])
+
   return (
     <div className="min-h-screen bg-app text-body">
       <a
