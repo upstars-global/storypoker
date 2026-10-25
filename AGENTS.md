@@ -51,23 +51,25 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
 
 | Scope | Що всередині | Інструкції |
 | --- | --- | --- |
-| `app/` | Vue SPA; хаб зі scope map і інваріантами | `app/AGENTS.md` |
-| `app/assets/` | Tailwind v4 CSS-first config, MUI-класи, 3 палітри | `app/assets/AGENTS.md` |
-| `app/components/` | AppModal/AppTooltip, іконки, ECharts, слот-віджет | `app/components/AGENTS.md` |
+| `app/` | React SPA; хаб зі scope map і інваріантами | `app/AGENTS.md` |
+| `app/assets/` | Tailwind v4 CSS-first config, міст токенів shadcn, MUI-класи, 3 палітри | `app/assets/AGENTS.md` |
+| `app/components/` | AppModal/AppTooltip/AppMenu, shadcn `ui/`, іконки, ECharts, слот | `app/components/AGENTS.md` |
 | `app/pages/` | маршрути, Realtime-підписки, reconciliation | `app/pages/AGENTS.md` |
-| `app/stores/` | Pinia: auth/room/players/presence/profiles | `app/stores/AGENTS.md` |
+| `app/stores/` | Zustand: auth/room/players/presence/profiles | `app/stores/AGENTS.md` |
 | `app/utils/` | колоди карт, shields, формули узгодженості | `app/utils/AGENTS.md` |
 | `supabase/` | схема таблиць, міграції, RLS, Storage-бакет | `supabase/AGENTS.md` |
 | `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
-| `tests/` | Vitest unit + Playwright e2e | `tests/AGENTS.md` |
+| `tests/` | Vitest unit + Playwright e2e і `visual` | `tests/AGENTS.md` |
 | `scripts/` | lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
 
 Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
 
 ## Tech Stack
-- **Framework:** Vue 3.5 + Vite 8 (Rolldown bundler) SPA, Composition API `<script setup>`; код у `app/`
-- **Routing:** `vue-router@5`; **State:** Pinia 4; **i18n:** `vue-i18n@11`, локалі `app/i18n/locales/{uk,en}.json`
+- **Framework:** React 19 + Vite 8 (Rolldown bundler, `@vitejs/plugin-react`) SPA, функціональні компоненти `.tsx`;
+  код у `app/`, хуки - `app/hooks/`
+- **Routing:** `react-router@8` (declarative, `app/router.tsx`); **State:** Zustand 5; **i18n:** `i18next` +
+  `react-i18next`, локалі `app/i18n/locales/{uk,en}.json`
 - **Styling:** Tailwind v4 через `@tailwindcss/vite`, CSS-first config - `app/assets/css/main.css`
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **PWA:** `vite-plugin-pwa` (Workbox, `prompt`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
@@ -76,11 +78,13 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
   перезавантажує вкладки, бо старий `autoUpdate`-бандл сам не перезавантажується) - тимчасово, прибрати
   наступним релізом разом із винятком у `scripts/audit-icon-build.ts`;
   splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
-- **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300-700;
-  **Charts:** `echarts` + `vue-echarts`
+- **UI:** shadcn/ui (style `base-nova` на `@base-ui/react`) у `app/components/ui/`, локальні іконки через CSS mask
+  (`app/components/AGENTS.md`), ripple - власний хук `useRipple`, DiceBear, Roboto 300-700;
+  **Charts:** `echarts` через `echarts/core` і хук `useEChart`
 - **Node/pnpm:** Node >=24.15.0, pnpm >=12.14.0 (`packageManager` у `package.json`)
-- **TypeScript лишається 6.x:** TS 7 (Go-порт) не має JS compiler API, на якому стоїть `scripts/icons/scan.ts`
-  (`ts.createSourceFile`, падає `icons:check`), а peer `typescript-eslint` - `<6.1.0`; мажор від `ncu` не бери
+- **TypeScript 7, пін точно `7.0.2`:** `scripts/icons/scan.ts` стоїть на нестабільному `typescript/unstable/*` - версію
+  піднімай лише з зеленим `icons:check`. Нативний `tsc` - optional-пакет `@typescript/typescript-<platform>`: install
+  без optional deps лишає без нього typecheck і сканер. Lint - `oxlint --type-aware` (`oxlint-tsgolint`), ESLint немає
 
 ## Common Commands
 `package.json` - джерело правди для повного списку скриптів. Тут лише неочевидне:
@@ -89,7 +93,9 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
 pnpm install         # preinstall → scripts/setup.sh (створює .env/, .agents/, .claude/settings.json)
                      # postinstall → scripts/skills.sh (мережевий skl-x add; skills-lock.json; у CI пропускається)
 pnpm run test:unit   # канонічний unit-run; `pnpm test` і `test:unit` - обидва `vitest run`
-pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery)
+pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery); локально - з
+                          # dummy VITE_SUPABASE_* з ci.yml, деталі `tests/AGENTS.md`
+pnpm exec playwright test --project=visual   # скріншоти проти Linux-еталонів; локально - у контейнері Playwright
 pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
 pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
                      # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
@@ -97,7 +103,8 @@ pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам зби�
 
 CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`lint`/`typecheck` (`icons:check` + `typecheck`)/
 `unit` (`test:unit:coverage`)/`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
-Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
+Supabase-кредами)/`visual` (не required, у контейнері `mcr.microsoft.com/playwright`) на кожен run; `e2e` - тільки
+коли задані E2E-секрети;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
@@ -131,7 +138,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - `/login`, `/signup`, `/forgot-password`, `/reset-password` - auth routes; `/ffc` - Feature Flags console
 
 `isValidRoomSlug()` приймає 1-32 символи `[a-z0-9-]`, без дефісу на початку/кінці; `normalizeRoomSlug()` чистить
-рядок, але довжину не перевіряє. Нові top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або
+рядок, але довжину не перевіряє. Нові top-level routes перетинаються з `[slug].tsx`; додавай явну сторінку або
 вводь префікс.
 
 ## LocalStorage
@@ -140,7 +147,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 | `storypoker_session_<roomId>` | `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms |
 | `sp-theme` / `sp-palette` | `light\|dark` / `classic\|cyberdeck\|matcha` - деталі `app/assets/AGENTS.md` |
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
-| `sp-lang` | `uk \| en`; читається в `app/i18n.ts`, пишеться `persistLocale()`. Дефолт - `uk` |
+| `sp-lang` | `uk \| en`; читається в `app/i18n.tsx`, пишеться `persistLocale()`. Дефолт - `uk` |
 | `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
 | `sp-volume` | `0`-`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
 | `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
@@ -150,12 +157,12 @@ VITE_SUPABASE_KEY=...        # publishable client key
   доступно будь-кому, не лише поточному модератору); history/trends/theme/language/widget/slot - без ролевих обмежень
 - **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
   start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s),
-  будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `v-if="isModerator"` в
-  `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
+  будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `isModerator` у
+  `CardsArea.tsx` і prop `canControl={isModerator}` у `Timer.tsx`, client-side only (RLS `using (true)`)
 - **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
   Детальна матриця - `DESIGN.md` §11.1-11.2
-- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.vue` (спільний селектор у
-  JoinOverlay+PlayerEditModal) на базі `RoleBadge.vue` (те саме відображення у PlayerRow) і пишеться як один shield у
+- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.tsx` (спільний селектор у
+  JoinOverlay+PlayerEditModal) на базі `RoleBadge.tsx` (те саме відображення у PlayerRow) і пишеться як один shield у
   `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи
   role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` дає DEV/QA-спліт
   для історії, трендів і API
@@ -169,7 +176,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 
 ## Code Style
 - Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline
-- TypeScript у composables/utils/stores; `<script setup lang="ts">` у Vue SFC
+- TypeScript скрізь: `.ts` у hooks/utils/stores, `.tsx` для компонентів і сторінок
 - Без wrapper-абстракцій, які тільки перейменовують функції
 - UI-тексти мають проходити через i18n, якщо компонент вже локалізований
 
