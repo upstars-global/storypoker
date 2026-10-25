@@ -125,7 +125,7 @@ export default function LoginPage() {
             disabled={loading}
             data-testid="login-submit"
           >
-            {loading ? t('auth.signingIn') : t('common.signIn')}
+            <span>{loading ? t('auth.signingIn') : t('common.signIn')}</span>
           </Button>
         </div>
 

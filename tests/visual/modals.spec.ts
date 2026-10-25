@@ -57,7 +57,7 @@ async function finishChartAnimations(page: Page, scene: Scene): Promise<void> {
 }
 
 async function trendsPlotRegion(modal: Locator): Promise<Region> {
-  const box = await modal.locator('x-vue-echarts').boundingBox()
+  const box = await modal.locator('canvas').first().boundingBox()
   if (!box) throw new Error('trends chart has no bounding box')
   return {
     x: box.x + TRENDS_PLOT_INSET.left,
@@ -133,7 +133,7 @@ const MODALS: readonly ModalState[] = [
       const button = row.locator('button[aria-expanded]')
       await button.click()
       await expect(button).toHaveAttribute('aria-expanded', 'true')
-      await row.getByRole('menuitem', { name: 'Редагувати', exact: true }).click()
+      await page.getByRole('menuitem', { name: 'Редагувати', exact: true }).click()
     },
   },
   {

@@ -1315,6 +1315,14 @@ dialog.app-modal::backdrop {
   user-select: none;
 }
 
+.room-background-frame {
+  cursor: grab;
+  touch-action: none;
+}
+.room-background-frame:active {
+  cursor: grabbing;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

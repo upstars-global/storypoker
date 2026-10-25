@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
                   type="submit"
                   disabled={loading}
                 >
-                  {loading ? t('forgotPassword.sending') : t('forgotPassword.sendResetLink')}
+                  <span>{loading ? t('forgotPassword.sending') : t('forgotPassword.sendResetLink')}</span>
                 </Button>
               </div>
 

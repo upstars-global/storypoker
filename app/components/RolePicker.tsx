@@ -6,13 +6,14 @@ const ROLE_TAG_GROUPS = PLAYER_ROLE_GROUPS.map(group => group.map(r => r.tag))
 
 type RolePickerProps = {
   value: string
+  className?: string
   onChange: (tag: string) => void
 }
 
-export default function RolePicker({ value, onChange }: RolePickerProps) {
+export default function RolePicker({ value, className, onChange }: RolePickerProps) {
   const { t } = useTranslation()
   return (
-    <section>
+    <section className={className}>
       <h3 className="text-mui-caption font-semibold uppercase tracking-wide text-muted mb-2">
         {t('players.roleLabel')}
       </h3>

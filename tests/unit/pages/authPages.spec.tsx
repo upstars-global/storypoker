@@ -98,6 +98,18 @@ describe('login page', () => {
     fireEvent.pointerDown(button, { clientX: 1, clientY: 1 })
     expect(button.querySelector('[data-ripple-container]')).not.toBeNull()
   })
+
+  it('keeps the ripple while the submit label switches to the loading text', async () => {
+    useAuthStore.setState({ signIn: vi.fn(() => new Promise<void>(() => {})) })
+    await mountAt('/login', <LoginPage />)
+    fireEvent.change(screen.getByTestId('login-email'), { target: { value: 'a@b.co' } })
+    fireEvent.change(screen.getByTestId('login-password'), { target: { value: 'secret1' } })
+    const button = screen.getByTestId('login-submit')
+    fireEvent.pointerDown(button, { clientX: 1, clientY: 1 })
+    await submit('login-submit')
+    expect(button.textContent).toBe(i18n.t('auth.signingIn'))
+    expect(button.querySelector('[data-ripple-container]')).not.toBeNull()
+  })
 })
 
 describe('signup page', () => {

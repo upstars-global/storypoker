@@ -1,4 +1,4 @@
-import { useRef, type MouseEvent, type ReactNode } from 'react'
+import { useRef, type MouseEvent, type ReactNode, type RefObject } from 'react'
 import { Dialog, DialogPopup, DialogPortal } from '~/components/ui/dialog'
 
 type AppModalProps = {
@@ -6,11 +6,12 @@ type AppModalProps = {
   lockDismiss?: boolean
   labelledby?: string
   describedby?: string
+  initialFocus?: RefObject<HTMLElement | null>
   onClose: () => void
   children: ReactNode
 }
 
-export default function AppModal({ open, lockDismiss = false, labelledby, describedby, onClose, children }: AppModalProps) {
+export default function AppModal({ open, lockDismiss = false, labelledby, describedby, initialFocus, onClose, children }: AppModalProps) {
   const popupRef = useRef<HTMLDivElement | null>(null)
 
   function onOpenChange(next: boolean) {
@@ -33,7 +34,7 @@ export default function AppModal({ open, lockDismiss = false, labelledby, descri
           ref={popupRef}
           render={<dialog open />}
           className="app-modal"
-          initialFocus={popupRef}
+          initialFocus={initialFocus ?? popupRef}
           aria-labelledby={labelledby}
           aria-describedby={describedby}
         >

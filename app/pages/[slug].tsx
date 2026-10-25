@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
@@ -8,12 +8,17 @@ import AppModal from '~/components/AppModal'
 import AppModalPaper from '~/components/AppModalPaper'
 import AuthModal from '~/components/AuthModal'
 import CardsArea from '~/components/CardsArea'
+import ConfigureCardDeckModal, { type CardDeckPayload } from '~/components/ConfigureCardDeckModal'
 import ConnectionBanner from '~/components/ConnectionBanner'
+import HistoryModal from '~/components/HistoryModal'
 import JoinOverlay from '~/components/JoinOverlay'
+import PlayerEditModal, { type PlayerEditPayload } from '~/components/PlayerEditModal'
 import PlayersList from '~/components/PlayersList'
 import ResultsArea from '~/components/ResultsArea'
+import RoomBackgroundModal from '~/components/RoomBackgroundModal'
 import SlotMachine from '~/components/SlotMachine'
 import Timer from '~/components/Timer'
+import UserSettingsModal from '~/components/UserSettingsModal'
 import { Button, buttonVariants } from '~/components/ui/button'
 import { appUpdateStore } from '~/hooks/useAppUpdate'
 import { useCountdown, type CountdownMode } from '~/hooks/useCountdown'
@@ -61,6 +66,8 @@ const SIDE_WIDGET_KEY = 'sp-side-widget'
 function readSideWidget(): SideWidget {
   try { return localStorage.getItem(SIDE_WIDGET_KEY) === 'slot' ? 'slot' : 'timer' } catch { return 'timer' }
 }
+
+const AlignmentTrendsModal = lazy(() => import('~/components/AlignmentTrendsModal'))
 
 const EMPTY_BACKGROUND: RoomBackground = { background_url: null, background_updated_at: null, background_opacity: null }
 
@@ -137,6 +144,12 @@ export default function RoomPage() {
   const [notFound, setNotFound] = useState(false)
   const [showJoin, setShowJoin] = useState(false)
   const [showAuth, setShowAuth] = useState<'signin' | 'signup' | null>(null)
+  const [showCardDeck, setShowCardDeck] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [showAlignmentTrends, setShowAlignmentTrends] = useState(false)
+  const [showAccountSettings, setShowAccountSettings] = useState(false)
+  const [showRoomBackground, setShowRoomBackground] = useState(false)
+  const [editTargetId, setEditTargetId] = useState<string | null>(null)
   const [showRenameRoom, setShowRenameRoom] = useState(false)
   const [roomNameInput, setRoomNameInput] = useState('')
   const [roomNameError, setRoomNameError] = useState<string | null>(null)
@@ -595,6 +608,37 @@ export default function RoomPage() {
     requestAnimationFrame(() => setKickTargetId(id))
   }
 
+  function handleEdit(id: string) {
+    requestAnimationFrame(() => setEditTargetId(id))
+  }
+
+  async function handleSaveEdit(payload: PlayerEditPayload) {
+    const target = usePlayersStore.getState().visiblePlayers.find(p => p.id === editTargetId)
+    if (!target) return
+    const players = usePlayersStore.getState()
+    try {
+      if (payload.name !== target.name) {
+        await players.rename(target.id, payload.name)
+      }
+      await players.setShields(target.id, payload.shields)
+    } catch {
+      await showActionNotice(t('room.saveFailed'))
+    }
+    setEditTargetId(null)
+  }
+
+  async function handleSaveCardDeck(payload: CardDeckPayload) {
+    const room = useRoomStore.getState()
+    if (payload.deckPreset !== room.roomState?.deck_preset) {
+      await room.setDeckPreset(payload.deckPreset)
+    }
+    await room.saveCardDeck(payload.cards)
+    if (payload.cohorts.join() !== resultCohorts.join()) {
+      await room.setResultCohorts(payload.cohorts).catch(error => console.error('[deck] result cohorts save failed:', error))
+    }
+    setShowCardDeck(false)
+  }
+
   async function confirmKick() {
     if (!kickTargetId) return
     await usePlayersStore.getState().kick(kickTargetId)
@@ -706,6 +750,7 @@ export default function RoomPage() {
     )
   }
 
+  const editTargetPlayer = visiblePlayers.find(p => p.id === editTargetId) ?? null
   const kickTargetName = visiblePlayers.find(p => p.id === kickTargetId)?.name ?? ''
 
   return (
@@ -727,7 +772,12 @@ export default function RoomPage() {
         countdownTotal={countdownTimerTotal}
         onOpenSignIn={() => setShowAuth('signin')}
         onOpenSignUp={() => setShowAuth('signup')}
+        onOpenCardDeck={() => setShowCardDeck(true)}
         onOpenRenameRoom={openRenameRoom}
+        onOpenRoomBackground={() => setShowRoomBackground(true)}
+        onOpenAccountSettings={() => setShowAccountSettings(true)}
+        onOpenHistory={() => setShowHistory(true)}
+        onOpenAlignmentTrends={() => setShowAlignmentTrends(true)}
         onSignOut={() => void useAuthStore.getState().signOut()}
       />
 
@@ -747,7 +797,7 @@ export default function RoomPage() {
             spinningPlayerIds={spinningPlayerIds}
             slotWinnerId={slotWinnerId}
             hiddenVotePlayerIds={hiddenVotePlayerIds}
-            onEdit={() => {}}
+            onEdit={handleEdit}
             onToggleModerator={(id, value) => void usePlayersStore.getState().toggleModerator(id, value)}
             onLeave={id => void handleLeave(id)}
             onKick={handleKick}
@@ -855,6 +905,49 @@ export default function RoomPage() {
           mode={showAuth}
           onClose={() => setShowAuth(null)}
           onSuccess={() => void handleAuthSuccess()}
+        />
+      )}
+
+      {showCardDeck && roomState && (
+        <ConfigureCardDeckModal
+          deckPreset={roomState.deck_preset ?? DEFAULT_PRESET_ID}
+          activeCards={activeCards}
+          resultCohorts={resultCohorts}
+          onClose={() => setShowCardDeck(false)}
+          onSave={payload => void handleSaveCardDeck(payload)}
+        />
+      )}
+
+      {showHistory && (
+        <HistoryModal onClose={() => setShowHistory(false)} />
+      )}
+      {showAlignmentTrends && (
+        <Suspense fallback={null}>
+          <AlignmentTrendsModal
+            roomName={currentRoomName ?? currentSlug ?? roomId}
+            onClose={() => setShowAlignmentTrends(false)}
+          />
+        </Suspense>
+      )}
+
+      {editTargetPlayer && (
+        <PlayerEditModal
+          name={editTargetPlayer.name}
+          shields={editTargetPlayer.shields ?? []}
+          onClose={() => setEditTargetId(null)}
+          onSave={payload => void handleSaveEdit(payload)}
+        />
+      )}
+
+      {showAccountSettings && user && (
+        <UserSettingsModal onClose={() => setShowAccountSettings(false)} />
+      )}
+      {showRoomBackground && isAuthorizedModerator && (
+        <RoomBackgroundModal
+          currentUrl={roomBackgroundUrl}
+          currentOpacity={roomBackground.background_opacity}
+          onSaved={background => setRoomBackground(current => ({ ...current, ...background }))}
+          onClose={() => setShowRoomBackground(false)}
         />
       )}
 

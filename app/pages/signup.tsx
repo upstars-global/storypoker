@@ -160,7 +160,7 @@ export default function SignupPage() {
                   disabled={loading}
                   data-testid="signup-submit"
                 >
-                  {loading ? t('auth.signingUp') : t('common.signUp')}
+                  <span>{loading ? t('auth.signingUp') : t('common.signUp')}</span>
                 </Button>
               </div>
 

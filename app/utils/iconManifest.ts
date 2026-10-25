@@ -41,6 +41,12 @@ export const dynamicBindings: readonly { file: string; expression: string; names
     names: ['ic:baseline-check', 'ic:baseline-language'],
   },
   {
+    file: 'app/components/AlignmentTrendsModal.tsx',
+    expression: "trend.dir === 'up' ? 'ic:baseline-trending-up' : trend.dir === 'down'"
+      + " ? 'ic:baseline-trending-down' : 'ic:baseline-trending-flat'",
+    names: ['ic:baseline-trending-up', 'ic:baseline-trending-down', 'ic:baseline-trending-flat'],
+  },
+  {
     file: 'app/components/CardsArea.tsx',
     expression: 'option.icon',
     names: ['ic:baseline-volume-off', 'app:timer', 'app:town-hall'],

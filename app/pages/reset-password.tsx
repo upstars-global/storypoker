@@ -159,7 +159,7 @@ export default function ResetPasswordPage() {
             type="submit"
             disabled={loading}
           >
-            {loading ? t('resetPassword.updating') : t('resetPassword.updatePassword')}
+            <span>{loading ? t('resetPassword.updating') : t('resetPassword.updatePassword')}</span>
           </Button>
         </div>
       </form>

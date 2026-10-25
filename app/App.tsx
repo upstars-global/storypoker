@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import UpdateBanner from '~/components/UpdateBanner'
 import { AppRoutes } from '~/router'
 import { soundVolumeStore } from '~/hooks/useSoundVolume'
 import { useTheme } from '~/hooks/useTheme'
@@ -20,6 +21,7 @@ export default function App() {
       >
         {uk.common.skipToContent}
       </a>
+      <UpdateBanner />
       <AppRoutes />
     </div>
   )

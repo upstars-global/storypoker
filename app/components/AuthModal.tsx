@@ -141,7 +141,7 @@ export default function AuthModal({ mode, onClose, onSuccess }: AuthModalProps) 
               disabled={loading}
               onClick={() => void submit()}
             >
-              {submitLabel}
+              <span>{submitLabel}</span>
             </Button>
           </div>
         </div>

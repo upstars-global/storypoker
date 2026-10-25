@@ -7,6 +7,8 @@ import RoomPage from '~/pages/[slug]'
 import AppHeader from '~/components/AppHeader'
 import AlignmentCard from '~/components/AlignmentCard'
 import CardsArea from '~/components/CardsArea'
+import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal'
+import PlayerEditModal from '~/components/PlayerEditModal'
 import JoinOverlay from '~/components/JoinOverlay'
 import PlayersList from '~/components/PlayersList'
 import ResultsArea from '~/components/ResultsArea'
@@ -30,6 +32,9 @@ vi.mock('~/components/CardsArea', () => ({ default: vi.fn(() => <div data-testid
 vi.mock('~/components/JoinOverlay', () => ({ default: vi.fn(() => <div data-testid="join-overlay" />) }))
 vi.mock('~/components/PlayersList', () => ({ default: vi.fn(() => <div data-testid="players-list" />) }))
 vi.mock('~/components/ResultsArea', () => ({ default: vi.fn(() => <div data-testid="results-area" />) }))
+vi.mock('~/components/ConfigureCardDeckModal', () => ({ default: vi.fn(() => <div data-testid="card-deck-modal" />) }))
+vi.mock('~/components/PlayerEditModal', () => ({ default: vi.fn(() => <div data-testid="player-edit-modal" />) }))
+vi.mock('~/components/HistoryModal', () => ({ default: vi.fn(() => <div data-testid="history-modal" />) }))
 vi.mock('~/components/Timer', () => ({ default: vi.fn(() => <div data-testid="timer-widget" />) }))
 vi.mock('~/components/SlotMachine', () => ({ default: vi.fn(() => <div data-testid="slot-machine" />) }))
 
@@ -483,7 +488,51 @@ describe('room page results', () => {
     expect(play).toHaveBeenCalledTimes(1)
   })
 
-  it.todo('opens HistoryModal from the header - HistoryModal is ported in Task 20')
+  it('opens HistoryModal from the header', async () => {
+    await mountRoom()
+    expect(screen.queryByTestId('history-modal')).toBeNull()
+    await act(async () => {
+      lastProps(AppHeader).onOpenHistory?.()
+    })
+    expect(screen.getByTestId('history-modal')).toBeTruthy()
+  })
+
+  it('saves a changed deck preset, cards and cohorts from the deck modal', async () => {
+    await mountRoom({ state: fakeState({ phase: 'voting' }) })
+    const setDeckPreset = vi.fn().mockResolvedValue(undefined)
+    const saveCardDeck = vi.fn().mockResolvedValue(undefined)
+    const setResultCohorts = vi.fn().mockResolvedValue(undefined)
+    useRoomStore.setState({ setDeckPreset, saveCardDeck, setResultCohorts })
+    await act(async () => {
+      lastProps(AppHeader).onOpenCardDeck?.()
+    })
+    expect(lastProps(ConfigureCardDeckModal)).toMatchObject({ deckPreset: 'scrum', activeCards: ['1', '2', '3', '5', '8'] })
+    await act(async () => {
+      lastProps(ConfigureCardDeckModal).onSave({ deckPreset: 'fibonacci', cards: ['1', '2'], cohorts: ['DEV', 'BE', 'QA'] })
+    })
+    expect(setDeckPreset).toHaveBeenCalledWith('fibonacci')
+    expect(saveCardDeck).toHaveBeenCalledWith(['1', '2'])
+    expect(setResultCohorts).toHaveBeenCalledWith(['DEV', 'BE', 'QA'])
+    expect(screen.queryByTestId('card-deck-modal')).toBeNull()
+  })
+
+  it('renames and re-roles a player from the edit modal', async () => {
+    await mountRoom()
+    const rename = vi.fn().mockResolvedValue(undefined)
+    const setShields = vi.fn().mockResolvedValue(undefined)
+    usePlayersStore.setState({ rename, setShields })
+    await act(async () => {
+      lastProps(PlayersList).onEdit('alice')
+      await new Promise(resolve => requestAnimationFrame(resolve))
+    })
+    expect(lastProps(PlayerEditModal)).toMatchObject({ name: 'alice', shields: ['dev'] })
+    await act(async () => {
+      lastProps(PlayerEditModal).onSave({ name: 'Alice', shields: ['qa'] })
+    })
+    expect(rename).toHaveBeenCalledWith('alice', 'Alice')
+    expect(setShields).toHaveBeenCalledWith('alice', ['qa'])
+    expect(screen.queryByTestId('player-edit-modal')).toBeNull()
+  })
 })
 
 describe('room page background permission', () => {

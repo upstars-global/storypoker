@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import AppHeader from '~/components/AppHeader'
 import AuthModal from '~/components/AuthModal'
+import UserSettingsModal from '~/components/UserSettingsModal'
 import { Button } from '~/components/ui/button'
 import { useRipple } from '~/hooks/useRipple'
 import { getSupabase } from '~/lib/supabase-instance'
@@ -102,6 +103,8 @@ export default function HomePage() {
   const [hasError, setHasError] = useState(false)
   const [recentRooms, setRecentRooms] = useState<RecentRoomDisplay[]>([])
   const [showAuth, setShowAuth] = useState<'signin' | 'signup' | null>(null)
+  const [showAccountSettings, setShowAccountSettings] = useState(false)
+  const user = useAuthStore(state => state.user)
   const headerPlayerName = recentRooms[0]?.playerName ?? ''
 
   useEffect(() => {
@@ -145,6 +148,7 @@ export default function HomePage() {
         playerName={headerPlayerName}
         onOpenSignIn={() => setShowAuth('signin')}
         onOpenSignUp={() => setShowAuth('signup')}
+        onOpenAccountSettings={() => setShowAccountSettings(true)}
         onSignOut={() => void useAuthStore.getState().signOut()}
       />
       {showAuth && (
@@ -152,6 +156,10 @@ export default function HomePage() {
           mode={showAuth}
           onClose={() => setShowAuth(null)}
         />
+      )}
+
+      {showAccountSettings && user && (
+        <UserSettingsModal onClose={() => setShowAccountSettings(false)} />
       )}
 
       <main
