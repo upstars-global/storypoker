@@ -126,11 +126,55 @@ jobs:
     outputs:
       version: ${{ steps.skill.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.gate.outputs.head_sha }}
           fetch-depth: 0
           persist-credentials: false
+
+      # The agent gets no git diff, log, or show: they accept --output=<path>, which can write runner
+      # file commands such as $GITHUB_ENV. The target is prepared here and handed over as files instead.
+      - name: Prepare review target
+        # bash adds pipefail, so a failing git diff before the base-copy loop fails the step
+        shell: bash
+        env:
+          NUMBER: ${{ needs.gate.outputs.number }}
+          BASE_SHA: ${{ needs.gate.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
+        run: |
+          out=auto-review-target
+          # Both paths are reserved: a PR that tracks anything under them, symlinks included, fails here,
+          # and rm -rf then clears only untracked leftovers.
+          if [ -n "$(git ls-files -- "$out" auto-review-out)" ]; then
+            echo "::error::$out/ and auto-review-out/ are reserved for the review job; remove them from the PR"
+            exit 1
+          fi
+          rm -rf "$out" auto-review-out
+          mkdir -p "$out/base"
+          merge_base="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
+          {
+            echo "Repository root: $GITHUB_WORKSPACE ($GITHUB_REPOSITORY)"
+            echo "Branch or worktree: detached checkout of PR #$NUMBER"
+            echo "Boundary: range"
+            echo "Base: $BASE_SHA"
+            echo "Effective base: $merge_base"
+            echo "Head: $HEAD_SHA"
+            echo "Tree: $(git rev-parse "$HEAD_SHA^{tree}")"
+            echo "Included paths: every path in stat.txt"
+            echo "Excluded paths and reason: none"
+            echo "Uncommitted state: none"
+            echo "Captured at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > "$out/identity.txt"
+          git log --format='%h %H %s' "$merge_base..$HEAD_SHA" > "$out/log.txt"
+          git diff --no-ext-diff --no-textconv --stat "$merge_base" "$HEAD_SHA" > "$out/stat.txt"
+          git diff --no-ext-diff --no-textconv "$merge_base" "$HEAD_SHA" > "$out/diff.patch"
+          # Base copies of modified, deleted, and type-changed files; the checkout holds the head side.
+          git diff -z --name-only --no-renames --diff-filter=MDT "$merge_base" "$HEAD_SHA" |
+            while IFS= read -r -d '' path; do
+              mkdir -p "$out/base/$(dirname -- "$path")"
+              git show "$merge_base:$path" > "$out/base/$path"
+            done
+          test -s "$out/diff.patch" || { echo "::error::empty diff for $merge_base..$HEAD_SHA"; exit 1; }
 
       - name: Install cr-request skill
         id: skill
@@ -153,6 +197,7 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
+        id: claude
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -164,8 +209,12 @@ jobs:
             BASE SHA: ${{ needs.gate.outputs.base_sha }}
             HEAD SHA: ${{ needs.gate.outputs.head_sha }}
 
-            Run the cr-request skill for this pull request. The review boundary is the committed range
-            BASE SHA...HEAD SHA (three dots, from their merge base); both commits are available locally.
+            Run the cr-request skill for this pull request on a prepared target. The review boundary is the
+            committed range BASE SHA...HEAD SHA (three dots, from their merge base), already captured in
+            auto-review-target/: identity.txt (the target identity, tree included), log.txt (`<short sha> <full sha>
+            <subject>` per commit), stat.txt, diff.patch, and base/ with the merge-base copies of modified, deleted,
+            and type-changed files. The checkout is HEAD SHA. git diff, git log, and git show are not available;
+            read these files instead, and pass the same instruction to any reviewer you dispatch.
             Read the PR title and description with `gh pr view` for requirements. CI is green on HEAD SHA.
             Do not run gh-switch or cr-received and do not modify repository files.
 
@@ -180,7 +229,8 @@ jobs:
 
             Write the reviewed range as a compare link with short SHAs, followed by the number of files and lines:
             [`<base7>...<head7>`](https://github.com/${{ github.repository }}/compare/<BASE SHA>...<HEAD SHA>)
-            List the commits from `git log --format='%h %H %s' BASE SHA..HEAD SHA`, one line each, as
+            Take the number of files and lines from the last line of auto-review-target/stat.txt.
+            List the commits from auto-review-target/log.txt, one line each, as
             - [`<short sha>`](https://github.com/${{ github.repository }}/commit/<full sha>) <subject>
             After 20 commits write `and <n> more`.
 
@@ -208,12 +258,24 @@ jobs:
             Never copy a token or secret into the body. The body must end with this line, backticks included:
             Reviewed with: `/cr-request` ${{ steps.skill.outputs.version }} skill
           claude_args: >-
-            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Edit(./auto-review-out/**),Bash(git branch:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*)"
+            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write(./auto-review-out/**),Edit(./auto-review-out/**),Bash(git status:*),Bash(git ls-files:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*)"
 
-      - uses: actions/upload-artifact@v4
+      # The action hides the agent's output, so a run that ends without a body would leave no reason
+      - name: Show why no review was written
+        if: always() && steps.claude.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          [ -f auto-review-out/review.md ] && exit 0
+          [ -f "$EXECUTION_FILE" ] || exit 0
+          echo "::warning::The agent finished without auto-review-out/review.md; its result follows"
+          jq -r '[if type == "array" then .[] else . end | select(.type? == "result")] | last | "subtype=\(.subtype // "none") turns=\(.num_turns // "none") is_error=\(.is_error | tostring)", (.result // "no result message")[0:4000]' "$EXECUTION_FILE" || true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: claude-review
-          path: auto-review-out/
+          # Only the file publish reads: anything else the agent writes stays on the runner
+          path: auto-review-out/review.md
           if-no-files-found: error
           retention-days: 1
 
@@ -235,7 +297,7 @@ jobs:
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       BODY_FILE: auto-review-out/review.md
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         continue-on-error: true
         with:
           name: claude-review
