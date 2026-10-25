@@ -1,4 +1,20 @@
-import ts from 'typescript'
+import { API } from 'typescript/unstable/sync'
+import { createVirtualFileSystem } from 'typescript/unstable/fs'
+import {
+  isIdentifier,
+  isJsxAttribute,
+  isJsxExpression,
+  isJsxOpeningElement,
+  isJsxSelfClosingElement,
+  isNoSubstitutionTemplateLiteral,
+  isStringLiteral,
+  isVariableDeclaration,
+  type JsxAttribute,
+  type Node,
+  type NoSubstitutionTemplateLiteral,
+  type SourceFile,
+  type StringLiteral,
+} from 'typescript/unstable/ast'
 
 export interface IconBinding {
   file: string
@@ -41,60 +57,96 @@ function normalizeExpression(expression: string): string {
 
 const EXCLUDED_DECLARATIONS = new Set(['SHIELD_CATALOG'])
 
-function isExcludedDeclaration(node: ts.Node): boolean {
-  return ts.isVariableDeclaration(node)
-    && ts.isIdentifier(node.name)
+function isExcludedDeclaration(node: Node): boolean {
+  return isVariableDeclaration(node)
+    && isIdentifier(node.name)
     && EXCLUDED_DECLARATIONS.has(node.name.text)
+}
+
+function isStringLiteralLike(node: Node): node is StringLiteral | NoSubstitutionTemplateLiteral {
+  return isStringLiteral(node) || isNoSubstitutionTemplateLiteral(node)
 }
 
 const ICON_COMPONENT = 'AppIcon'
 const ICON_PROP = 'name'
 
-function isIconProp(node: ts.Node): node is ts.JsxAttribute {
-  if (!ts.isJsxAttribute(node) || !ts.isIdentifier(node.name) || node.name.text !== ICON_PROP) return false
-  const element = node.parent.parent
-  return ts.isIdentifier(element.tagName) && element.tagName.text === ICON_COMPONENT
+function iconPropsOf(node: Node): JsxAttribute[] {
+  if (!isJsxSelfClosingElement(node) && !isJsxOpeningElement(node)) return []
+  if (!isIdentifier(node.tagName) || node.tagName.text !== ICON_COMPONENT) return []
+  return node.attributes.properties.filter((property): property is JsxAttribute =>
+    isJsxAttribute(property) && isIdentifier(property.name) && property.name.text === ICON_PROP)
 }
 
-function collectLiterals(root: ts.Node, usage: IconUsage, iconContext: boolean): void {
-  const visit = (node: ts.Node): void => {
+function collectLiterals(root: Node, usage: IconUsage, iconContext: boolean): void {
+  const visit = (node: Node): void => {
     if (isExcludedDeclaration(node)) return
-    if (ts.isStringLiteralLike(node) && isIconName(node.text)) {
+    if (isStringLiteralLike(node) && isIconName(node.text)) {
       if (iconContext || ICONIFY_PREFIXES.has(iconPrefix(node.text))) usage.literals.push(node.text)
       usage.allLiterals.push(node.text)
     }
-    ts.forEachChild(node, visit)
+    node.forEachChild(visit)
   }
   visit(root)
 }
 
-function collectFromSource(code: string, file: string, usage: IconUsage): void {
-  const kind = file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-  const source = ts.createSourceFile(file, code, ts.ScriptTarget.ES2022, true, kind)
-  const visit = (node: ts.Node): void => {
-    if (isExcludedDeclaration(node)) return
-    if (isIconProp(node) && node.initializer) {
-      const value = node.initializer
-      if (ts.isStringLiteral(value)) {
-        if (isIconName(value.text)) {
-          usage.literals.push(value.text)
-          usage.allLiterals.push(value.text)
-        }
-        return
-      }
-      if (ts.isJsxExpression(value) && value.expression) {
-        usage.bindings.push({ file, expression: normalizeExpression(value.expression.getText(source)) })
-        collectLiterals(value.expression, usage, true)
-        return
-      }
+function collectIconProp(prop: JsxAttribute, file: string, source: SourceFile, usage: IconUsage): boolean {
+  const value = prop.initializer
+  if (!value) return false
+  if (isStringLiteral(value)) {
+    if (isIconName(value.text)) {
+      usage.literals.push(value.text)
+      usage.allLiterals.push(value.text)
     }
-    if (ts.isStringLiteralLike(node) && isIconName(node.text)) {
+    return true
+  }
+  if (isJsxExpression(value) && value.expression) {
+    usage.bindings.push({ file, expression: normalizeExpression(value.expression.getText(source)) })
+    collectLiterals(value.expression, usage, true)
+    return true
+  }
+  return false
+}
+
+function collectFromSource(source: SourceFile, file: string, usage: IconUsage): void {
+  const handledProps = new Set<Node>()
+  const visit = (node: Node): void => {
+    if (isExcludedDeclaration(node)) return
+    if (handledProps.has(node)) return
+    for (const prop of iconPropsOf(node)) {
+      if (collectIconProp(prop, file, source, usage)) handledProps.add(prop)
+    }
+    if (isStringLiteralLike(node) && isIconName(node.text)) {
       if (ICONIFY_PREFIXES.has(iconPrefix(node.text))) usage.literals.push(node.text)
       usage.allLiterals.push(node.text)
     }
-    ts.forEachChild(node, visit)
+    node.forEachChild(visit)
   }
   visit(source)
+}
+
+const VIRTUAL_ROOT = '/icon-scan'
+const VIRTUAL_TSCONFIG = `${VIRTUAL_ROOT}/tsconfig.json`
+
+function parseSources(sources: Record<string, string>, onSource: (source: SourceFile, file: string) => void): void {
+  const files: Record<string, string> = {
+    [VIRTUAL_TSCONFIG]: JSON.stringify({
+      compilerOptions: { jsx: 'preserve', noLib: true, noResolve: true, types: [] },
+      include: ['**/*'],
+    }),
+  }
+  for (const [file, code] of Object.entries(sources)) files[`${VIRTUAL_ROOT}/${file}`] = code
+  const api = new API({ cwd: VIRTUAL_ROOT, fs: createVirtualFileSystem(files) })
+  try {
+    const project = api.updateSnapshot({ openProjects: [VIRTUAL_TSCONFIG] }).getProject(VIRTUAL_TSCONFIG)
+    if (!project) throw new Error('icon scan: TypeScript project did not open')
+    for (const file of Object.keys(sources)) {
+      const source = project.program.getSourceFile(`${VIRTUAL_ROOT}/${file}`)
+      if (!source) throw new Error(`icon scan: TypeScript did not load ${file}`)
+      onSource(source, file)
+    }
+  } finally {
+    api.close()
+  }
 }
 
 const NON_USAGE_SOURCES = new Set(['app/utils/iconResolver.ts', 'app/utils/iconManifest.ts'])
@@ -105,7 +157,7 @@ export function isIconUsageSource(file: string): boolean {
 
 export function scanIconUsage(sources: Record<string, string>): IconUsage {
   const usage: IconUsage = { literals: [], bindings: [], allLiterals: [] }
-  for (const [file, code] of Object.entries(sources)) collectFromSource(code, file, usage)
+  if (Object.keys(sources).length) parseSources(sources, (source, file) => collectFromSource(source, file, usage))
   usage.literals = [...new Set(usage.literals)].sort()
   usage.allLiterals = [...new Set(usage.allLiterals)].sort()
   return usage

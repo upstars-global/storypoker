@@ -93,6 +93,10 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # TypeScript 7 runs a native tsc from an optional platform package; an install
+      # that drops optional dependencies leaves typecheck and the icon scanner without it.
+      - name: Check native TypeScript 7 binary
+        run: pnpm exec tsc -v | grep 'Version 7\.'
       - run: pnpm run icons:check
       - run: pnpm run typecheck
 

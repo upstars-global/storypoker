@@ -1,0 +1,85 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "react"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-unsafe-function-type": "warn",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "typescript/no-floating-promises": "error"
+  },
+  "overrides": [
+    {
+      "files": ["tests/e2e/**", "tests/fixtures/**", "tests/visual/**", "tests/icon-rendering/**", "playwright.config.ts"],
+      "rules": {
+        "react/rules-of-hooks": "off",
+        "no-empty-pattern": "off"
+      }
+    },
+    {
+      "files": ["tests/visual/support/fakeSupabase.ts"],
+      "rules": {
+        "typescript/no-base-to-string": "off"
+      }
+    },
+    {
+      "files": ["app/lib/database.types.ts"],
+      "rules": {
+        "typescript/no-redundant-type-constituents": "off"
+      }
+    },
+    {
+      "files": ["app/pwa.ts"],
+      "rules": {
+        "react/rules-of-hooks": "off"
+      }
+    },
+    {
+      "files": ["tests/unit/pwa.spec.ts"],
+      "rules": {
+        "typescript/no-misused-spread": "off"
+      }
+    },
+    {
+      "files": ["tests/unit/swReloadClients.spec.ts"],
+      "rules": {
+        "typescript/no-implied-eval": "off"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "dist/**",
+    ".netlify/**",
+    ".nuxt/**",
+    ".output/**",
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
+    "node_modules/**",
+    ".agents/**",
+    "app/stores/auth.ts",
+    "app/stores/players.ts",
+    "app/stores/presence.ts",
+    "app/stores/profiles.ts",
+    "app/stores/room.ts",
+    "app/composables/useCardLabel.ts",
+    "app/composables/useClickOutside.ts",
+    "app/composables/useCountdown.ts",
+    "app/composables/useDylanAvatar.ts",
+    "app/composables/useMenuKeyboard.ts",
+    "app/composables/useSoundVolume.ts",
+    "app/composables/useTheme.ts",
+    "tests/unit/stores/**",
+    "tests/unit/composables/useCountdown.spec.ts",
+    "tests/unit/composables/useDylanAvatar.spec.ts",
+    "tests/unit/composables/useMenuKeyboard.spec.ts",
+    "tests/unit/composables/useSoundVolume.spec.ts",
+    "tests/unit/composables/useTheme.spec.ts",
+    "tests/unit/utils/useClickOutside.spec.ts",
+    "tests/unit/i18n.spec.ts"
+  ]
+}

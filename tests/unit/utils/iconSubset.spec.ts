@@ -68,3 +68,16 @@ it('reads generic arrows in .ts sources without treating them as JSX', () => {
   })
   expect(usage.literals).toEqual(['ic:baseline-add'])
 })
+
+it('collects both branches of a ternary name in a nested .tsx element', () => {
+  const usage = scanIconUsage({
+    'app/components/Toggle.tsx': 'export const Toggle = ({ on }: { on: boolean }) => (\n'
+      + '  <button><AppIcon name={on ? `ic:baseline-check` : "ic:baseline-close"} /></button>\n'
+      + ')\n',
+  })
+  expect(usage.literals).toEqual(['ic:baseline-check', 'ic:baseline-close'])
+  expect(usage.allLiterals).toEqual(['ic:baseline-check', 'ic:baseline-close'])
+  expect(usage.bindings).toEqual([
+    { file: 'app/components/Toggle.tsx', expression: 'on ? `ic:baseline-check` : "ic:baseline-close"' },
+  ])
+})
