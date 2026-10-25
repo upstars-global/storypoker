@@ -40,6 +40,23 @@ export const dynamicBindings: readonly { file: string; expression: string; names
     expression: "i18n.language === code ? 'ic:baseline-check' : 'ic:baseline-language'",
     names: ['ic:baseline-check', 'ic:baseline-language'],
   },
+  {
+    file: 'app/components/CardsArea.tsx',
+    expression: 'option.icon',
+    names: ['ic:baseline-volume-off', 'app:timer', 'app:town-hall'],
+  },
+  {
+    file: 'app/components/PlayerRow.tsx',
+    expression: 'diceIcon',
+    names: [
+      'tabler:dice-1',
+      'tabler:dice-2',
+      'tabler:dice-3',
+      'tabler:dice-4',
+      'tabler:dice-5',
+      'tabler:dice-6',
+    ],
+  },
 ]
 
 const literalNames: readonly string[] = [

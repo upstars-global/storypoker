@@ -1206,6 +1206,56 @@ dialog.app-modal::backdrop {
   transition: none !important;
 }
 
+.celebration-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  overflow: hidden;
+}
+
+.celebration-particle {
+  position: absolute;
+  left: var(--start-x);
+  top: var(--start-y);
+  width: var(--size);
+  height: calc(var(--size) * 0.4);
+  border-radius: 2px;
+  background: hsl(var(--hue) 90% 55%);
+  transform-origin: center;
+  opacity: 0;
+  animation: confetti-burst var(--duration) ease-out 1;
+  animation-delay: var(--delay);
+}
+
+@keyframes confetti-burst {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg) scale(0.3);
+  }
+  6% {
+    opacity: 1;
+    transform: translate(calc(var(--vx) * 0.06), calc(var(--vy) * 0.06)) rotate(calc(var(--spin) * 0.06)) scale(1);
+  }
+  45% {
+    opacity: 1;
+    transform: translate(calc(var(--vx) * 0.45), var(--vy)) rotate(calc(var(--spin) * 0.5)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--vx), calc(var(--vy) + var(--fall))) rotate(var(--spin)) scale(0.8);
+  }
+}
+
+.win-blink {
+  animation: win-blink 0.5s ease-in-out 3;
+}
+
+@keyframes win-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import AppHeader from '~/components/AppHeader'
+import AuthModal from '~/components/AuthModal'
 import { Button } from '~/components/ui/button'
 import { useRipple } from '~/hooks/useRipple'
 import { getSupabase } from '~/lib/supabase-instance'
@@ -100,6 +101,8 @@ export default function HomePage() {
   const [name, setName] = useState('')
   const [hasError, setHasError] = useState(false)
   const [recentRooms, setRecentRooms] = useState<RecentRoomDisplay[]>([])
+  const [showAuth, setShowAuth] = useState<'signin' | 'signup' | null>(null)
+  const headerPlayerName = recentRooms[0]?.playerName ?? ''
 
   useEffect(() => {
     let active = true
@@ -136,7 +139,20 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-app text-body">
-      <AppHeader />
+      <AppHeader
+        onlineCount={0}
+        isModerator={false}
+        playerName={headerPlayerName}
+        onOpenSignIn={() => setShowAuth('signin')}
+        onOpenSignUp={() => setShowAuth('signup')}
+        onSignOut={() => void useAuthStore.getState().signOut()}
+      />
+      {showAuth && (
+        <AuthModal
+          mode={showAuth}
+          onClose={() => setShowAuth(null)}
+        />
+      )}
 
       <main
         id="main"

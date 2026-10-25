@@ -13,11 +13,13 @@ type AppMenuProps = {
   triggerClassName: string
   triggerStyle?: CSSProperties
   minWidth: string
+  sideOffset?: number
+  alignOffset?: number
   trigger: ReactNode
   children: ReactNode
 }
 
-export function AppMenu({ label, testId, triggerClassName, triggerStyle, minWidth, trigger, children }: AppMenuProps) {
+export function AppMenu({ label, testId, triggerClassName, triggerStyle, minWidth, sideOffset = 4, alignOffset = 0, trigger, children }: AppMenuProps) {
   const ripple = useRipple<HTMLButtonElement>()
   return (
     <DropdownMenu modal={false}>
@@ -35,7 +37,8 @@ export function AppMenu({ label, testId, triggerClassName, triggerStyle, minWidt
       </div>
       <DropdownMenuContent
         align="end"
-        sideOffset={4}
+        sideOffset={sideOffset}
+        alignOffset={alignOffset}
         style={{ minWidth }}
       >
         {children}

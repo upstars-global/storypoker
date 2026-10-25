@@ -4,15 +4,19 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip
 type AppTooltipProps = {
   side?: 'top' | 'bottom' | 'left' | 'right'
   sideOffset?: number
+  className?: string
   trigger: ReactElement
   children: ReactNode
 }
 
-export default function AppTooltip({ side = 'top', sideOffset = 6, trigger, children }: AppTooltipProps) {
+export default function AppTooltip({ side = 'top', sideOffset = 6, className, trigger, children }: AppTooltipProps) {
   const tooltipId = useId()
   return (
     <Tooltip>
-      <span style={{ display: 'inline-flex', position: 'relative', alignItems: 'center' }}>
+      <span
+        className={className}
+        style={{ display: 'inline-flex', position: 'relative', alignItems: 'center' }}
+      >
         <TooltipTrigger
           render={trigger}
           delay={0}

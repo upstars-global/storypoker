@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { i18n } from '~/i18n'
 import { AppMenu, AppMenuItem } from '~/components/AppMenu'
+import PlayerRow from '~/components/PlayerRow'
 
 const onToggleModerator = vi.fn()
 const onEdit = vi.fn()
@@ -97,5 +99,106 @@ describe('PlayerRow menu button name', () => {
     expect(i18n.getFixedT('en')('players.menuFor', { name: 'Alice' })).toBe('Player menu: Alice')
     expect(trigger.getAttribute('aria-label')).toBe(i18n.t('players.menuFor', { name: 'Alice' }))
     expect(trigger.getAttribute('aria-label')).toContain('Alice')
+  })
+})
+
+type RowProps = ComponentProps<typeof PlayerRow>
+
+function renderRow(overrides: Partial<RowProps> & { shields?: string[]; isModeratorPlayer?: boolean } = {}) {
+  const { shields, isModeratorPlayer, ...rest } = overrides
+  const props: RowProps = {
+    player: {
+      id: 'p1',
+      name: 'Alice',
+      is_moderator: isModeratorPlayer ?? false,
+      vote: null,
+      is_online: true,
+      user_id: null,
+      shields: shields ?? [],
+      votePending: false,
+    },
+    phase: 'voting',
+    currentPlayerId: 'p1',
+    currentUserIsModerator: false,
+    currentUserIsAuthorizedModerator: false,
+    onEdit: vi.fn(),
+    onToggleModerator: vi.fn(),
+    onLeave: vi.fn(),
+    onKick: vi.fn(),
+    ...rest,
+  }
+  render(<PlayerRow {...props} />)
+  return props
+}
+
+async function openRowMenu() {
+  const trigger = screen.getByRole('button', { name: i18n.t('players.menuFor', { name: 'Alice' }) })
+  await act(async () => {
+    fireEvent.click(trigger)
+  })
+  await screen.findByRole('menu')
+  return screen.getAllByRole('menuitem')
+}
+
+describe('PlayerRow hidden vote marker', () => {
+  it('paints the role badge red when the role is hidden from results', () => {
+    renderRow({ shields: ['sre'], voteHidden: true })
+    const badge = document.querySelector('.mui-role-tag')!
+    expect(badge.classList.contains('is-excluded')).toBe(true)
+    expect(badge.getAttribute('data-excluded')).toBe('true')
+  })
+
+  it('keeps the role badge neutral otherwise', () => {
+    renderRow({ shields: ['sre'] })
+    const badge = document.querySelector('.mui-role-tag')!
+    expect(badge.textContent).toBe('SRE')
+    expect(badge.classList.contains('is-excluded')).toBe(false)
+    expect(badge.hasAttribute('data-excluded')).toBe(false)
+  })
+})
+
+describe('PlayerRow row', () => {
+  it('exposes the row data attributes and the own-row menu', async () => {
+    const props = renderRow()
+    const row = screen.getByTestId('player-row')
+    expect(row.getAttribute('data-player-name')).toBe('Alice')
+    expect(row.getAttribute('data-voted')).toBe('false')
+    expect(row.getAttribute('data-vote-pending')).toBe('false')
+    const items = await openRowMenu()
+    expect(items.map(item => item.textContent)).toEqual([
+      i18n.t('players.isModerator'),
+      i18n.t('players.edit'),
+      i18n.t('players.leaveRoom'),
+    ])
+    await act(async () => {
+      fireEvent.click(items[0]!)
+    })
+    expect(props.onToggleModerator).toHaveBeenCalledWith('p1', true)
+  })
+
+  it('gives a moderator kick, and an authorized moderator edit, on another row', async () => {
+    renderRow({ currentPlayerId: 'p2', currentUserIsModerator: true })
+    expect((await openRowMenu()).map(item => item.textContent)).toEqual([i18n.t('players.kickPlayer')])
+    cleanup()
+    const props = renderRow({ currentPlayerId: 'p2', currentUserIsModerator: true, currentUserIsAuthorizedModerator: true })
+    const items = await openRowMenu()
+    expect(items.map(item => item.textContent)).toEqual([i18n.t('players.edit'), i18n.t('players.kickPlayer')])
+    await act(async () => {
+      fireEvent.click(items[1]!)
+    })
+    expect(props.onKick).toHaveBeenCalledWith('p1')
+  })
+
+  it('shows no menu on another row for a plain player', () => {
+    renderRow({ currentPlayerId: 'p2' })
+    expect(screen.queryByRole('button', { name: i18n.t('players.menuFor', { name: 'Alice' }) })).toBeNull()
+  })
+
+  it('shows the vote after reveal and truncates long answers', () => {
+    renderRow({ phase: 'revealed', truncateVotes: true, player: {
+      id: 'p1', name: 'Alice', is_moderator: false, vote: 'Definitely yes', is_online: true,
+      user_id: null, shields: [], votePending: false,
+    } })
+    expect(screen.getByText('Definite')).toBeTruthy()
   })
 })

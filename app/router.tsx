@@ -24,7 +24,7 @@ export function AppRoutes() {
       <Route path="/forgot-password" element={<Titled title="Forgot password"><ForgotPasswordPage /></Titled>} />
       <Route path="/reset-password" element={<Titled title="Reset password"><ResetPasswordPage /></Titled>} />
       <Route path="/ffc" element={<Titled title="Feature flags"><FeatureFlagsPage /></Titled>} />
-      <Route path="/:slug" element={<Titled><RoomPage /></Titled>} />
+      <Route path="/:slug" element={<RoomPage />} />
     </Routes>
   )
 }

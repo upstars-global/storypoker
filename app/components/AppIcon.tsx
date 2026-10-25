@@ -7,6 +7,7 @@ type AppIconProps = {
   name: string
   className?: string
   style?: CSSProperties
+  'aria-label'?: string
 }
 
 function iconRootClass(resolved: string, markup: string): string {
@@ -18,7 +19,7 @@ function iconRootClass(resolved: string, markup: string): string {
   return `sp-icon-root sp-icon ${name ?? ''}`
 }
 
-export default function AppIcon({ name, className, style }: AppIconProps) {
+export default function AppIcon({ name, className, style, 'aria-label': ariaLabel }: AppIconProps) {
   const resolved = mapIconName(name)
   const markup = (colored as Record<string, string>)[resolved] ?? ''
   const rootClass = iconRootClass(resolved, markup)
@@ -27,6 +28,7 @@ export default function AppIcon({ name, className, style }: AppIconProps) {
       className={className ? `${rootClass} ${className}` : rootClass}
       style={style}
       aria-hidden="true"
+      aria-label={ariaLabel}
       dangerouslySetInnerHTML={markup ? { __html: markup } : undefined}
     />
   )

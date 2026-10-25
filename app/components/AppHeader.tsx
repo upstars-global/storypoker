@@ -1,12 +1,15 @@
-import type { ChangeEvent, CSSProperties } from 'react'
+import { useEffect, useState, type ChangeEvent, type CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import AppIcon from '~/components/AppIcon'
 import { AppMenu, AppMenuItem } from '~/components/AppMenu'
 import { persistLocale } from '~/i18n'
+import { useDylanAvatar } from '~/hooks/useDylanAvatar'
 import { useRipple } from '~/hooks/useRipple'
 import { useSoundVolume } from '~/hooks/useSoundVolume'
 import { PALETTES, useTheme } from '~/hooks/useTheme'
+import { useAuthStore } from '~/stores/auth'
+import { useProfilesStore } from '~/stores/profiles'
 
 const VOLUME_LEVEL_ICONS = [
   'tabler:number-0-small', 'tabler:number-1-small', 'tabler:number-2-small', 'tabler:number-3-small',
@@ -19,11 +22,82 @@ const ICON_BUTTON_HOVER = { '--hover-bg': 'rgba(255,255,255,0.08)' } as CSSPrope
 const LOCALES = ['uk', 'en'] as const
 
 type AppHeaderProps = {
+  onlineCount?: number
+  isModerator?: boolean
+  canEditRoomBackground?: boolean
+  playerName?: string
+  playerUserId?: string | null
+  roomName?: string
   title?: string
+  countdownActive?: boolean
+  countdownCounter?: number
+  countdownTotal?: number
+  onOpenSignIn?: () => void
+  onOpenSignUp?: () => void
+  onOpenCardDeck?: () => void
+  onOpenRenameRoom?: () => void
+  onOpenRoomBackground?: () => void
+  onOpenAccountSettings?: () => void
+  onOpenHistory?: () => void
+  onOpenAlignmentTrends?: () => void
+  onSignOut?: () => void
 }
 
-export default function AppHeader({ title = 'Story Poker' }: AppHeaderProps) {
+export default function AppHeader({
+  isModerator = false,
+  canEditRoomBackground = false,
+  playerName = '',
+  playerUserId = null,
+  roomName = '',
+  title = 'Story Poker',
+  countdownActive = false,
+  countdownCounter = 0,
+  countdownTotal = 0,
+  onOpenSignIn,
+  onOpenSignUp,
+  onOpenCardDeck,
+  onOpenRenameRoom,
+  onOpenRoomBackground,
+  onOpenAccountSettings,
+  onOpenHistory,
+  onOpenAlignmentTrends,
+  onSignOut,
+}: AppHeaderProps) {
   const { t, i18n } = useTranslation()
+  const user = useAuthStore(state => state.user)
+  const profileUserId = playerUserId ?? user?.id ?? null
+  const profile = useProfilesStore(state => (profileUserId ? state.profiles[profileUserId] ?? null : null))
+  const { avatarSrcFor } = useDylanAvatar()
+  const [fetchedUserId, setFetchedUserId] = useState<string | null>(null)
+  const [countdownBarWidth, setCountdownBarWidth] = useState(0)
+  const userId = user?.id ?? null
+  const profileFetched = !userId || fetchedUserId === userId
+  const fallbackSeed = playerName || user?.email || ''
+  const myAvatarUri = !profile && !fallbackSeed ? '' : avatarSrcFor(profile, fallbackSeed, false).src
+  const headerLabel = roomName ? playerName : (user?.email ?? '').split('@')[0]
+
+  useEffect(() => {
+    if (!userId) return
+    let active = true
+    void useProfilesStore.getState().fetchOne(userId).catch(() => null).then(() => {
+      if (active) setFetchedUserId(userId)
+    })
+    return () => {
+      active = false
+    }
+  }, [userId])
+
+  useEffect(() => {
+    if (!countdownActive) return
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => setCountdownBarWidth(100))
+    })
+    return () => {
+      cancelAnimationFrame(frame)
+      setCountdownBarWidth(0)
+    }
+  }, [countdownActive])
+
   const { volume, setVolume, toggleMute } = useSoundVolume()
   const { isLight, palette, toggle: toggleTheme, setPalette } = useTheme()
   const homeRipple = useRipple<HTMLAnchorElement>()
@@ -57,7 +131,9 @@ export default function AppHeader({ title = 'Story Poker' }: AppHeaderProps) {
         />
       </Link>
       <span className="mx-1.5 text-appbar-subtle">•</span>
-      <span className="mui-h6 text-lg px-2 text-white">{title}</span>
+      {roomName
+        ? <h1 className="mui-h6 text-lg text-appbar-emphasis">{roomName}</h1>
+        : <span className="mui-h6 text-lg px-2 text-white">{title}</span>}
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
@@ -162,20 +238,99 @@ export default function AppHeader({ title = 'Story Poker' }: AppHeaderProps) {
             style={{ fontSize: '1.5rem' }}
           />
         </button>
+        {headerLabel && (
+          <span className="text-sm text-appbar-emphasis">
+            {headerLabel}
+          </span>
+        )}
         <AppMenu
           label={t('header.currentUserAccount')}
           testId="account-menu-button"
           triggerClassName="mui-icon-btn text-white"
           triggerStyle={ICON_BUTTON_HOVER}
           minWidth="240px"
-          trigger={(
-            <AppIcon
-              className="mui-svg-icon"
-              name="ic:baseline-account-circle"
-              style={{ fontSize: '1.5rem' }}
-            />
-          )}
+          trigger={myAvatarUri
+            ? (
+                <img
+                  src={myAvatarUri}
+                  className="w-7 h-7 rounded-full"
+                  alt={playerName}
+                  style={{ opacity: profileFetched ? 1 : 0, transition: 'opacity 0.15s' }}
+                />
+              )
+            : (
+                <AppIcon
+                  className="mui-svg-icon"
+                  name="ic:baseline-account-circle"
+                  style={{ fontSize: '1.5rem' }}
+                />
+              )}
         >
+          {roomName && (
+            <>
+              <AppMenuItem
+                className="whitespace-nowrap"
+                onClick={onOpenHistory}
+              >
+                <AppIcon
+                  className="mui-menu-icon"
+                  name="ic:baseline-history"
+                />
+                {t('header.history')}
+              </AppMenuItem>
+              <AppMenuItem
+                className="whitespace-nowrap"
+                onClick={onOpenAlignmentTrends}
+              >
+                <AppIcon
+                  className="mui-menu-icon"
+                  name="ic:baseline-trending-up"
+                />
+                {t('header.alignmentTrends')}
+              </AppMenuItem>
+            </>
+          )}
+          {isModerator && (
+            <>
+              <hr className="mui-divider" />
+              {user && (
+                <AppMenuItem
+                  className="whitespace-nowrap"
+                  onClick={onOpenRenameRoom}
+                >
+                  <AppIcon
+                    className="mui-menu-icon"
+                    name="ic:baseline-edit"
+                  />
+                  {t('header.renameRoom')}
+                </AppMenuItem>
+              )}
+              {canEditRoomBackground && (
+                <AppMenuItem
+                  className="whitespace-nowrap"
+                  data-testid="room-background-menu-item"
+                  onClick={onOpenRoomBackground}
+                >
+                  <AppIcon
+                    className="mui-menu-icon"
+                    name="ic:baseline-wallpaper"
+                  />
+                  {t('header.roomBackground')}
+                </AppMenuItem>
+              )}
+              <AppMenuItem
+                className="whitespace-nowrap"
+                onClick={onOpenCardDeck}
+              >
+                <AppIcon
+                  className="mui-menu-icon"
+                  name="ic:baseline-settings"
+                />
+                {t('header.configureCardDeck')}
+              </AppMenuItem>
+            </>
+          )}
+          {(roomName || isModerator) && <hr className="mui-divider" />}
           {LOCALES.map(code => (
             <AppMenuItem
               key={code}
@@ -192,8 +347,85 @@ export default function AppHeader({ title = 'Story Poker' }: AppHeaderProps) {
               <span className="flex-1">{t(`header.languages.${code}`)}</span>
             </AppMenuItem>
           ))}
+          <hr className="mui-divider" />
+          {user
+            ? (
+                <>
+                  <AppMenuItem
+                    className="whitespace-nowrap"
+                    onClick={onOpenAccountSettings}
+                  >
+                    <AppIcon
+                      className="mui-menu-icon"
+                      name="lucide:id-card"
+                    />
+                    {t('header.accountSettings')}
+                  </AppMenuItem>
+                  <AppMenuItem
+                    className="whitespace-nowrap"
+                    data-testid="auth-sign-out-menu-item"
+                    onClick={onSignOut}
+                  >
+                    <AppIcon
+                      className="mui-menu-icon"
+                      name="ic:baseline-logout"
+                    />
+                    {t('common.signOut')}
+                  </AppMenuItem>
+                </>
+              )
+            : (
+                <>
+                  <AppMenuItem
+                    className="whitespace-nowrap"
+                    data-testid="auth-sign-in-menu-item"
+                    onClick={onOpenSignIn}
+                  >
+                    <AppIcon
+                      className="mui-menu-icon"
+                      name="ic:baseline-login"
+                    />
+                    {t('common.signIn')}
+                  </AppMenuItem>
+                  <AppMenuItem
+                    className="whitespace-nowrap"
+                    onClick={onOpenSignUp}
+                  >
+                    <AppIcon
+                      className="mui-menu-icon"
+                      name="ic:baseline-person-add"
+                    />
+                    {t('common.signUp')}
+                  </AppMenuItem>
+                </>
+              )}
         </AppMenu>
       </div>
+
+      {countdownActive && (
+        <>
+          <div
+            className="absolute inset-x-0 bottom-0 h-1.5"
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.16)' }}
+            data-testid="countdown-bar"
+          >
+            <div
+              className="h-full"
+              style={{
+                width: `${countdownBarWidth}%`,
+                backgroundColor: 'var(--success)',
+                transition: `width ${countdownTotal}s linear`,
+              }}
+            />
+          </div>
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-mui-h2 font-bold tabular-nums text-white pointer-events-none"
+            data-testid="countdown-number"
+          >
+            {countdownCounter}
+          </div>
+        </>
+      )}
     </header>
   )
 }

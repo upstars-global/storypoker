@@ -62,7 +62,7 @@ const STATES: readonly RoomState[] = [
       const button = row.locator('button[aria-expanded]')
       await button.click()
       await expect(button).toHaveAttribute('aria-expanded', 'true')
-      await expect(row.getByRole('menu')).toBeVisible()
+      await expect(page.getByRole('menu')).toBeVisible()
       await settleScene(page, scene)
     },
   },
