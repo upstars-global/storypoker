@@ -5,31 +5,42 @@ import AppModalPaper from '~/components/AppModalPaper.vue'
 import AppIcon from '~/components/AppIcon.vue'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
 import { useCardLabel } from '~/composables/useCardLabel'
+import { ALWAYS_SHOWN_COHORT, RESULT_COHORTS } from '~/utils/resultCohorts'
 
 const cardLabel = useCardLabel()
 
 const props = defineProps<{
   deckPreset: DeckPresetId
   activeCards: string[]
+  resultCohorts: string[]
 }>()
 
 const emit = defineEmits<{
-  save: [payload: { deckPreset: DeckPresetId; cards: string[] }]
+  save: [payload: { deckPreset: DeckPresetId; cards: string[]; cohorts: string[] }]
   close: []
 }>()
 
 const presetId = ref<DeckPresetId>(props.deckPreset)
 const selected = ref<string[]>([...props.activeCards])
+const cohorts = ref<string[]>([...props.resultCohorts])
 
 const currentDeck = computed(() => getDeck(presetId.value))
 const isVoting = computed(() => presetId.value === 'voting')
 const isVoteQuestion = computed(() => presetId.value === 'vote_question')
+const showsCohorts = computed(() => !isVoting.value && !isVoteQuestion.value && presetId.value !== 'goal_clarity')
 const votingThird = computed(() =>
   selected.value.find(c => VOTING_THIRD_CARDS.includes(c)) ?? VOTING_THIRD_CARDS[0]!
 )
 
 watch(() => props.deckPreset, (next) => { presetId.value = next })
 watch(() => props.activeCards, (next) => { selected.value = [...next] })
+watch(() => props.resultCohorts, (next) => { cohorts.value = [...next] })
+
+function toggleCohort(cohort: string) {
+  cohorts.value = cohorts.value.includes(cohort)
+    ? cohorts.value.filter(c => c !== cohort)
+    : RESULT_COHORTS.filter(c => c === cohort || cohorts.value.includes(c))
+}
 
 function setVotingThird(card: string) {
   selected.value = [...VOTING_BASE_CARDS, card]
@@ -52,7 +63,7 @@ function applyPreset(id: DeckPresetId) {
 }
 
 function save() {
-  emit('save', { deckPreset: presetId.value, cards: selected.value })
+  emit('save', { deckPreset: presetId.value, cards: selected.value, cohorts: cohorts.value })
 }
 </script>
 
@@ -170,6 +181,56 @@ function save() {
           />
           {{ card }}
         </label>
+      </div>
+
+      <div
+        v-if="showsCohorts"
+        class="flex flex-col items-center gap-2 mt-6"
+      >
+        <span class="text-mui-caption font-semibold uppercase tracking-wide text-muted">
+          {{ $t('deck.resultCohorts') }}
+        </span>
+        <div
+          class="flex flex-wrap justify-center gap-2"
+          data-testid="deck-result-cohorts"
+        >
+          <template
+            v-for="cohort in RESULT_COHORTS"
+            :key="cohort"
+          >
+            <span
+              v-if="cohort === ALWAYS_SHOWN_COHORT"
+              class="mui-chip is-selected is-disabled is-locked"
+              :title="$t('deck.qaCohortHint')"
+            >
+              <AppIcon
+                class="mui-chip-check"
+                icon="ic:baseline-check"
+              />
+              {{ cohort }}
+            </span>
+            <label
+              v-else
+              class="mui-chip"
+              :class="{ 'is-selected': cohorts.includes(cohort) }"
+            >
+              <input
+                :id="`deck-cohort-${cohort}`"
+                type="checkbox"
+                :name="`deck-cohort-${cohort}`"
+                :checked="cohorts.includes(cohort)"
+                class="sr-only"
+                @change="toggleCohort(cohort)"
+              >
+              <AppIcon
+                v-if="cohorts.includes(cohort)"
+                class="mui-chip-check"
+                icon="ic:baseline-check"
+              />
+              {{ cohort }}
+            </label>
+          </template>
+        </div>
       </div>
 
       <div class="flex justify-center mt-8">

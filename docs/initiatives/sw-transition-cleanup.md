@@ -1,0 +1,34 @@
+# Прибрати перехідний reload service worker-а
+
+- Status: Planned
+- Priority: P1
+- Ініційовано: 2026-10-24 (PR #37)
+- Last reviewed: 2026-10-24
+
+## Навіщо
+
+Реліз із PR #37 переводить PWA з `autoUpdate` на `prompt`. Старий бандл сам не
+перезавантажується, тому `vite.config.ts` тимчасово тримає `skipWaiting: true` і
+`importScripts: ['sw-reload-clients.js']`: новий worker при активації перезавантажує
+всі відкриті вкладки. Поки скрипт лишається, кожен деплой перезавантажує вкладки
+одразу, в обхід правил `useAppUpdate` (прихована вкладка, простій, відлік, reveal).
+
+## Очікуваний результат
+
+Нова версія застосовується лише за правилами `useAppUpdate`; worker чекає у `waiting`.
+
+## Обсяг
+
+- Прибрати `skipWaiting: true` і `importScripts` з `vite.config.ts`.
+- Видалити `public/sw-reload-clients.js` і `tests/unit/swReloadClients.spec.ts`.
+- Прибрати виняток `sw-reload-clients.js` у `scripts/audit-icon-build.ts`.
+- Оновити рядок PWA в `AGENTS.md`.
+
+## Критерії завершення
+
+- `dist/sw.js` не містить `skipWaiting` і `importScripts`.
+- На stage вкладка посеред відліку не перезавантажується до його завершення.
+
+## Наступний крок
+
+Наступний реліз після злиття PR #37 і деплою його на прод.

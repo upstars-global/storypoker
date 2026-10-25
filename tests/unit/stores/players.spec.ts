@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { resetSupabase, setSupabase } from '~/lib/supabase-instance'
 import { usePlayersStore } from '~/stores/players'
 import type { Player } from '~/stores/types'
+import { asSupabase, changePayload } from '../../support/helpers/fakeSupabase'
 
 function fakePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -23,7 +24,7 @@ describe('playersStore.applyChange', () => {
 
   it('INSERT adds a player', () => {
     const store = usePlayersStore()
-    store.applyChange({ eventType: 'INSERT', new: fakePlayer({ id: 'p1' }), old: {} } as any)
+    store.applyChange(changePayload<Player>('INSERT', { new: fakePlayer({ id: 'p1' }) }))
     expect(store.players).toHaveLength(1)
     expect(store.players[0]!.id).toBe('p1')
   })
@@ -31,37 +32,29 @@ describe('playersStore.applyChange', () => {
   it('INSERT is idempotent (no duplicates)', () => {
     const store = usePlayersStore()
     const p = fakePlayer({ id: 'p1' })
-    store.applyChange({ eventType: 'INSERT', new: p, old: {} } as any)
-    store.applyChange({ eventType: 'INSERT', new: p, old: {} } as any)
+    store.applyChange(changePayload<Player>('INSERT', { new: p }))
+    store.applyChange(changePayload<Player>('INSERT', { new: p }))
     expect(store.players).toHaveLength(1)
   })
 
   it('UPDATE replaces matching player', () => {
     const store = usePlayersStore()
     store.players = [fakePlayer({ id: 'p1', name: 'Alice' })]
-    store.applyChange({
-      eventType: 'UPDATE',
-      new: fakePlayer({ id: 'p1', name: 'Alice2' }),
-      old: {},
-    } as any)
+    store.applyChange(changePayload<Player>('UPDATE', { new: fakePlayer({ id: 'p1', name: 'Alice2' }) }))
     expect(store.players[0]!.name).toBe('Alice2')
   })
 
   it('DELETE removes player (used for kick)', () => {
     const store = usePlayersStore()
     store.players = [fakePlayer({ id: 'p1' }), fakePlayer({ id: 'p2' })]
-    store.applyChange({ eventType: 'DELETE', new: {}, old: { id: 'p1' } } as any)
+    store.applyChange(changePayload<Player>('DELETE', { old: { id: 'p1' } }))
     expect(store.players.map(p => p.id)).toEqual(['p2'])
   })
 
   it('soft-delete via UPDATE marks left_at and is filtered by visiblePlayers', () => {
     const store = usePlayersStore()
     store.players = [fakePlayer({ id: 'p1' })]
-    store.applyChange({
-      eventType: 'UPDATE',
-      new: fakePlayer({ id: 'p1', left_at: '2026-05-04T01:00:00Z' }),
-      old: {},
-    } as any)
+    store.applyChange(changePayload<Player>('UPDATE', { new: fakePlayer({ id: 'p1', left_at: '2026-05-04T01:00:00Z' }) }))
     expect(store.players).toHaveLength(1)
     expect(store.visiblePlayers).toHaveLength(0)
   })
@@ -73,7 +66,7 @@ describe('playersStore.castVote (optimistic)', () => {
   it('sets pendingVotes immediately and clears on success', async () => {
     const eq = vi.fn().mockResolvedValue({ error: null })
     const update = vi.fn().mockReturnValue({ eq })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = usePlayersStore()
     store.players = [fakePlayer({ id: 'p1', vote: null })]
     const promise = store.castVote('p1', '5')
@@ -87,7 +80,7 @@ describe('playersStore.castVote (optimistic)', () => {
   it('rolls back pendingVotes on error', async () => {
     const eq = vi.fn().mockResolvedValue({ error: new Error('fail') })
     const update = vi.fn().mockReturnValue({ eq })
-    setSupabase({ from: () => ({ update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update }) }))
     const store = usePlayersStore()
     store.players = [fakePlayer({ id: 'p1' })]
     await expect(store.castVote('p1', '5')).rejects.toThrow('fail')
@@ -111,11 +104,7 @@ describe('playersStore.castVote (optimistic)', () => {
     const store = usePlayersStore()
     store.players = [fakePlayer({ id: 'p1', vote: null })]
     store.pendingVotes['p1'] = '5'
-    store.applyChange({
-      eventType: 'UPDATE',
-      new: fakePlayer({ id: 'p1', vote: '5' }),
-      old: {},
-    } as any)
+    store.applyChange(changePayload<Player>('UPDATE', { new: fakePlayer({ id: 'p1', vote: '5' }) }))
     expect(store.pendingVotes['p1']).toBeUndefined()
   })
 
@@ -130,7 +119,7 @@ describe('playersStore.castVote (optimistic)', () => {
 describe('playersStore actions', () => {
   beforeEach(() => resetSupabase())
 
-  function makeBuilder(result: any = { error: null, data: null }) {
+  function makeBuilder(result: { error: unknown; data: unknown } = { error: null, data: null }) {
     const eq = vi.fn().mockResolvedValue(result)
     const update = vi.fn().mockReturnValue({ eq })
     const del = vi.fn().mockReturnValue({ eq })
@@ -142,21 +131,21 @@ describe('playersStore actions', () => {
 
   it('rename(id, name) sends update with name', async () => {
     const b = makeBuilder()
-    setSupabase({ from: () => ({ update: b.update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update: b.update }) }))
     await usePlayersStore().rename('p1', 'Bob')
     expect(b.update).toHaveBeenCalledWith({ name: 'Bob' })
   })
 
   it('toggleModerator(id, true) sends update', async () => {
     const b = makeBuilder()
-    setSupabase({ from: () => ({ update: b.update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update: b.update }) }))
     await usePlayersStore().toggleModerator('p1', true)
     expect(b.update).toHaveBeenCalledWith({ is_moderator: true })
   })
 
   it('kick(id) sets left_at (soft-delete)', async () => {
     const b = makeBuilder()
-    setSupabase({ from: () => ({ update: b.update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update: b.update }) }))
     await usePlayersStore().kick('p1')
     const arg = b.update.mock.calls[0]![0]
     expect(typeof arg.left_at).toBe('string')
@@ -165,7 +154,7 @@ describe('playersStore actions', () => {
   it('leave(id) sets left_at and clears localStorage session', async () => {
     localStorage.setItem('storypoker_session_r1', 'x')
     const b = makeBuilder()
-    setSupabase({ from: () => ({ update: b.update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update: b.update }) }))
     const store = usePlayersStore()
     store.roomId = 'r1'
     await store.leave('p1')
@@ -177,7 +166,7 @@ describe('playersStore actions', () => {
   it('join(name, userId?) inserts and returns new player', async () => {
     const newP = fakePlayer({ id: 'p9', name: 'Carol' })
     const b = makeBuilder({ error: null, data: newP })
-    setSupabase({ from: () => ({ insert: b.insert }) } as any)
+    setSupabase(asSupabase({ from: () => ({ insert: b.insert }) }))
     const store = usePlayersStore()
     store.roomId = 'r1'
     const result = await store.join('Carol')
@@ -187,7 +176,7 @@ describe('playersStore actions', () => {
 
   it('linkUser(playerId, userId) sends update with user_id', async () => {
     const b = makeBuilder()
-    setSupabase({ from: () => ({ update: b.update }) } as any)
+    setSupabase(asSupabase({ from: () => ({ update: b.update }) }))
     await usePlayersStore().linkUser('p1', 'u9')
     expect(b.update).toHaveBeenCalledWith({ user_id: 'u9' })
   })

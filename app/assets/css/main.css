@@ -667,6 +667,9 @@ body {
     opacity: 0.7;
     cursor: default;
   }
+  .mui-chip.is-locked {
+    opacity: 0.4;
+  }
   .mui-chip .mui-chip-check {
     font-size: 1rem;
     line-height: 1;
@@ -713,6 +716,10 @@ body {
   }
   .mui-role-tag.is-interactive {
     cursor: pointer;
+  }
+  .mui-role-tag.is-excluded {
+    border-color: var(--danger);
+    color: var(--danger);
   }
   .mui-role-tag.is-interactive:hover {
     border-color: var(--primary);
