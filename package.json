@@ -13,7 +13,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "oxlint --type-aware",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tests/icon-rendering/tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tests/icon-rendering/tsconfig.json && tsc --noEmit -p tests/e2e/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run",

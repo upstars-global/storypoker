@@ -14,7 +14,7 @@ Realtime-payload для `setSupabase()` / `applyChange()` - `tests/support/helpe
 `useXStore.setState({ action: vi.fn() })` до render. Файл не називай `[slug].spec.tsx`: у фільтрі vitest дужки -
 character class. Точний час після `vi.setSystemTime` звіряй з `vi.useFakeTimers({ toFake: ['Date'] })`: з
 `shouldAdvanceTime: true` годинник іде під час `await`, і тест періодично падає в CI.
-`pnpm run typecheck` бере `app/**`, `tests/unit/**` і harness; `tests/{visual,e2e,page-objects}/**` перевіряє лише lint.
+`pnpm run typecheck` бере `app/**`, `tests/unit/**`, harness і `tests/{e2e,page-objects,visual}/**` (`tests/e2e/tsconfig.json`).
 E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test`, якого локально нема - job `e2e` у CI пропускається без
 секретів, тож реально біжать лише проєкти `page-load` і `icon-delivery`. Без `E2E_BASE_URL` Playwright сам збирає і
 запускає `pnpm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується);
