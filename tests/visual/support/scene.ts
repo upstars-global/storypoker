@@ -3,7 +3,8 @@ import type { Page } from '@playwright/test'
 import { expect, test as consoleTest } from '../../fixtures/console'
 import {
   installFakeSupabase,
-  VISUAL_SUPABASE_AUTH_STORAGE_KEY,
+  supabaseAuthStorageKey,
+  VISUAL_SUPABASE_URL,
   type FakeAuthUser,
   type FakeSupabase,
   type FakeTables,
@@ -52,6 +53,7 @@ export interface SceneOptions {
   viewport: ViewportWidth
   tables?: (tables: FakeTables) => void
   storage?: Record<string, string>
+  supabaseUrl?: string
 }
 
 export interface Scene {
@@ -116,6 +118,7 @@ export async function openScene(page: Page, options: SceneOptions): Promise<Scen
     appOrigin: baseURL,
     authUser,
     onlinePlayerIds: visualRoom.meta.onlinePlayerIds,
+    supabaseUrl: options.supabaseUrl,
   })
 
   const storage: Record<string, string> = {
@@ -125,7 +128,7 @@ export async function openScene(page: Page, options: SceneOptions): Promise<Scen
     'sp-lang': 'uk',
     FEATURE_FLAGS: '{}',
     ...(currentPlayerId ? sessionSeed(tables, currentPlayerId) : {}),
-    ...(fake.session ? { [VISUAL_SUPABASE_AUTH_STORAGE_KEY]: JSON.stringify(fake.session) } : {}),
+    ...(fake.session ? { [supabaseAuthStorageKey(options.supabaseUrl ?? VISUAL_SUPABASE_URL)]: JSON.stringify(fake.session) } : {}),
     ...options.storage,
   }
   await page.addInitScript(({ entries, marker }) => {

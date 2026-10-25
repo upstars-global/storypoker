@@ -4,7 +4,11 @@ import type { Database } from '../../../app/lib/database.types'
 export const VISUAL_SUPABASE_URL = 'https://visual-fake.supabase.co'
 export const VISUAL_SUPABASE_KEY = 'sb_publishable_visual_fake_key'
 export const VISUAL_SUPABASE_HOST = new URL(VISUAL_SUPABASE_URL).host
-export const VISUAL_SUPABASE_AUTH_STORAGE_KEY = `sb-${new URL(VISUAL_SUPABASE_URL).hostname.split('.')[0]}-auth-token`
+export const VISUAL_SUPABASE_AUTH_STORAGE_KEY = supabaseAuthStorageKey(VISUAL_SUPABASE_URL)
+
+export function supabaseAuthStorageKey(supabaseUrl: string): string {
+  return `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`
+}
 
 const PASSTHROUGH_HOSTS = new Set(['fonts.googleapis.com', 'fonts.gstatic.com'])
 const TRANSPARENT_PNG = Buffer.from(
@@ -48,6 +52,7 @@ export interface FakeSupabaseOptions {
   appOrigin: string
   authUser: FakeAuthUser | null
   onlinePlayerIds: string[]
+  supabaseUrl?: string
 }
 
 export interface FakeSupabase {
@@ -283,6 +288,7 @@ export async function installFakeSupabase(page: Page, options: FakeSupabaseOptio
   const sockets = new Set<SocketState>()
   const trackedPlayerIds = new Set<string>()
   const appOrigin = new URL(options.appOrigin).origin
+  const supabaseHost = new URL(options.supabaseUrl ?? VISUAL_SUPABASE_URL).host
   let pending = 0
   let lastActivity = Date.now()
   let generatedIds = 0
@@ -506,7 +512,7 @@ export async function installFakeSupabase(page: Page, options: FakeSupabaseOptio
       return
     }
     const label = `${request.method()} ${url.origin}${url.pathname}${url.search}`
-    if (url.host !== VISUAL_SUPABASE_HOST) {
+    if (url.host !== supabaseHost) {
       unhandled.push(`external ${label}`)
       await route.abort('blockedbyclient')
       return
@@ -615,7 +621,7 @@ export async function installFakeSupabase(page: Page, options: FakeSupabaseOptio
 
   await page.routeWebSocket(() => true, ws => {
     const url = new URL(ws.url())
-    if (url.host !== VISUAL_SUPABASE_HOST || !url.pathname.startsWith('/realtime/v1/')) {
+    if (url.host !== supabaseHost || !url.pathname.startsWith('/realtime/v1/')) {
       unhandled.push(`websocket ${url.origin}${url.pathname}`)
       void ws.close({ code: 1008, reason: 'visual fake: unrouted websocket' })
       return

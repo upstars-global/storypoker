@@ -32,21 +32,34 @@ test('home → create room → joined as moderator with auto-rejoin', async ({ p
   ).toBeVisible()
 })
 
-test('moderator votes, reveals, starts new round', async ({ page, trackedRoomIds, consoleErrors: _consoleErrors }) => {
+test('moderator votes, reveals, starts new round', async ({ page, browser, trackedRoomIds, consoleErrors: _consoleErrors }) => {
   const home = new HomePage(page)
   const room = new RoomPage(page)
   const NAME = 'Moderator Solo'
+  const SECOND = 'Second Voter'
 
   await home.goto()
   const roomId = await home.createRoom(NAME)
   trackedRoomIds.push(roomId)
 
-  await room.castVote('5')
-  await room.waitVoteConfirmed(NAME)
+  const secondContext = await browser.newContext()
+  try {
+    const secondPage = await secondContext.newPage()
+    const second = new RoomPage(secondPage)
+    await secondPage.goto(`/${roomId}`)
+    await second.joinAs(SECOND)
+    await second.castVote('5')
+    await room.waitVoteConfirmed(SECOND)
 
-  await room.reveal()
-  await expect(room.resultsArea()).toContainText('5')
+    await room.castVote('5')
+    await room.waitVoteConfirmed(NAME)
 
-  await room.newRound()
-  await expect(room.voteCard('5')).toBeEnabled()
+    await room.reveal()
+    await expect(room.resultsArea()).toContainText('5')
+
+    await room.newRound()
+    await expect(room.voteCard('5')).toBeEnabled()
+  } finally {
+    await secondContext.close()
+  }
 })

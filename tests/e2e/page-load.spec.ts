@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/console'
+import { expect, openScene, ROOM_ID, ROOM_SLUG, settleScene, test, type SceneRole } from '../visual/support/scene'
 
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/forgot-password', '/ffc']
 
@@ -79,4 +79,35 @@ test('stored theme and palette are on html at the first DOMContentLoaded', async
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'cyberdeck')
   await expect(page.getByTestId('theme-toggle-button')).toHaveAccessibleName(/./)
+})
+
+const URL_SCHEMA_ROUTES: { path: string; role: SceneRole }[] = [
+  { path: '/', role: 'guest' },
+  { path: `/${ROOM_ID}`, role: 'player' },
+  { path: `/${ROOM_SLUG}`, role: 'authorized-moderator' },
+  { path: `/${ROOM_SLUG}`, role: 'guest' },
+  { path: '/login', role: 'guest' },
+  { path: '/signup', role: 'guest' },
+  { path: '/forgot-password', role: 'guest' },
+  { path: '/reset-password', role: 'guest' },
+  { path: '/ffc', role: 'guest' },
+]
+
+test.describe('URL Schema routes keep the console clean', () => {
+  test.use({ serviceWorkers: 'block' })
+
+  for (const { path, role } of URL_SCHEMA_ROUTES) {
+    test(`${path} as ${role} after load and 1280 -> 375`, async ({ page, consoleErrors }) => {
+      const supabaseUrl = process.env.VITE_SUPABASE_URL
+      if (!supabaseUrl) throw new Error('VITE_SUPABASE_URL must be set so the Supabase fake can route the build\'s requests')
+
+      const scene = await openScene(page, { palette: 'classic', theme: 'dark', role, path, viewport: 1280, supabaseUrl })
+      expect(consoleErrors, 'console errors after load at 1280').toEqual([])
+
+      await page.setViewportSize({ width: 375, height: 812 })
+      await settleScene(page, scene)
+      expect(consoleErrors, 'console errors after resize to 375').toEqual([])
+      expect(scene.fake.unhandled, 'requests the Supabase fake did not serve').toEqual([])
+    })
+  }
 })
