@@ -95,7 +95,7 @@ pnpm install         # preinstall → scripts/setup.sh (створює .env/, .a
 pnpm run test:unit   # канонічний unit-run; `pnpm test` і `test:unit` - обидва `vitest run`
 pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery); локально - з
                           # dummy VITE_SUPABASE_* з ci.yml, деталі `tests/AGENTS.md`
-pnpm exec playwright test --project=visual   # скріншоти проти Linux-еталонів; локально - у контейнері Playwright
+pnpm run test:visual [<ref>]   # рендер <ref> (дефолт origin/main) - еталон для дерева; локально - у контейнері Playwright
 pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
 pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
                      # контекст dev, збірка - production; deploy:prod пінить обидва через --context production

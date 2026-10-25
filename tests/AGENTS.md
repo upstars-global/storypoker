@@ -21,9 +21,12 @@ Supabase у colima, README «Local Supabase»); job `e2e` у CI запускає
 запускає `pnpm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується);
 задай `E2E_BASE_URL`, щоб тестувати вже запущений сервер. `playwright.config.ts` передає серверу `VITE_SUPABASE_*`
 лише з shell (інакше `''`, і це перебиває `.env/.env`), тож локальний `page-load` запускай із dummy-значеннями з
-CI-job: `VITE_SUPABASE_URL=https://dummy.supabase.co VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only
-pnpm run test:e2e:pages`. Тест init-script палітри в `page-load.spec.ts` коректний лише на зібраному preview
-(`E2E_BASE_URL` на `vite dev` дає недостовірний результат).
+CI-job і з `CI=1`: без нього конфіг читає `.env/.env.test` з `override`, і після `supabase:local` кейси кімнати
+йдуть у локальний Supabase повз фейк. `CI=1 VITE_SUPABASE_URL=https://dummy.supabase.co
+VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only pnpm run test:e2e:pages`. `CI=1` вимикає й
+`reuseExistingServer`: коли `:4173` зайнятий, збери dist із тими самими dummy-значеннями, підніми `vite preview`
+на іншому порту й передай його в `E2E_BASE_URL`. Тест init-script палітри в `page-load.spec.ts` коректний
+лише на зібраному preview (`E2E_BASE_URL` на `vite dev` дає недостовірний результат).
 
 ## Visual (`tests/visual/`)
 
