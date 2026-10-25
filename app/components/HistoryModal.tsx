@@ -280,78 +280,75 @@ export default function HistoryModal({ onClose }: HistoryModalProps) {
   }
 
   return (
-    <>
-      <AppModal
-        labelledby="history-modal-title"
-        open
+    <AppModal
+      labelledby="history-modal-title"
+      open
+      onClose={onClose}
+    >
+      <AppModalPaper
+        style={{ maxWidth: '640px', width: '92vw', maxHeight: '86vh', overflowY: 'auto', padding: '32px 36px 36px' }}
         onClose={onClose}
       >
-        <AppModalPaper
-          style={{ maxWidth: '640px', width: '92vw', maxHeight: '86vh', overflowY: 'auto', padding: '32px 36px 36px' }}
-          onClose={onClose}
+        <h2
+          id="history-modal-title"
+          className="text-center text-mui-h2 font-bold text-primary"
         >
-          <h2
-            id="history-modal-title"
-            className="text-center text-mui-h2 font-bold text-primary"
-          >
-            {t('history.title')}
-          </h2>
+          {t('history.title')}
+        </h2>
 
-          <div className="mt-4 flex flex-col items-center gap-2">
-            <div className="flex w-full items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <div className="flex gap-1">
-                  {availableYears.map(year => (
-                    <button
-                      key={year}
-                      className={filterClass(selectedYear === year)}
-                      onClick={() => {
-                        setSelectedYear(year)
-                        setSelectedQuarter(null)
-                      }}
-                    >
-                      {year}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4].map(q => (
-                    <button
-                      key={q}
-                      className={filterClass(selectedQuarter === q)}
-                      onClick={() => setSelectedQuarter(selectedQuarter === q ? null : q)}
-                    >
-                      {`Q${q}`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            {availableDecks.length > 1 && (
-              <div className="flex flex-wrap justify-center gap-1">
-                <button
-                  className={filterClass(deckFilter === null)}
-                  onClick={() => setDeckFilter(null)}
-                >
-                  {t('history.filter.allDecks')}
-                </button>
-                {availableDecks.map(deck => (
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <div className="flex w-full items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <div className="flex gap-1">
+                {availableYears.map(year => (
                   <button
-                    key={deck}
-                    className={filterClass(deckFilter === deck)}
-                    onClick={() => setDeckFilter(deck)}
+                    key={year}
+                    className={filterClass(selectedYear === year)}
+                    onClick={() => {
+                      setSelectedYear(year)
+                      setSelectedQuarter(null)
+                    }}
                   >
-                    {deckName(deck)}
+                    {year}
                   </button>
                 ))}
               </div>
-            )}
+              <div className="flex gap-1">
+                {[1, 2, 3, 4].map(q => (
+                  <button
+                    key={q}
+                    className={filterClass(selectedQuarter === q)}
+                    onClick={() => setSelectedQuarter(selectedQuarter === q ? null : q)}
+                  >
+                    {`Q${q}`}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+          {availableDecks.length > 1 && (
+            <div className="flex flex-wrap justify-center gap-1">
+              <button
+                className={filterClass(deckFilter === null)}
+                onClick={() => setDeckFilter(null)}
+              >
+                {t('history.filter.allDecks')}
+              </button>
+              {availableDecks.map(deck => (
+                <button
+                  key={deck}
+                  className={filterClass(deckFilter === deck)}
+                  onClick={() => setDeckFilter(deck)}
+                >
+                  {deckName(deck)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-          {body}
-        </AppModalPaper>
-      </AppModal>
-
+        {body}
+      </AppModalPaper>
       {selectedRound && (
         <RoundSnapshotModal
           round={selectedRound}
@@ -359,6 +356,6 @@ export default function HistoryModal({ onClose }: HistoryModalProps) {
           onClose={() => setSelectedRound(null)}
         />
       )}
-    </>
+    </AppModal>
   )
 }

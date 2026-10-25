@@ -373,205 +373,202 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
   }
 
   return (
-    <>
-      <AppModal
-        labelledby="alignment-trends-modal-title"
-        open
+    <AppModal
+      labelledby="alignment-trends-modal-title"
+      open
+      onClose={onClose}
+    >
+      <AppModalPaper
+        style={{ maxWidth: '680px', width: '95vw', maxHeight: '90vh', overflowY: 'auto', padding: '28px 32px 32px' }}
         onClose={onClose}
       >
-        <AppModalPaper
-          style={{ maxWidth: '680px', width: '95vw', maxHeight: '90vh', overflowY: 'auto', padding: '28px 32px 32px' }}
-          onClose={onClose}
+        <h2
+          id="alignment-trends-modal-title"
+          className="text-mui-h2 font-bold text-primary"
         >
-          <h2
-            id="alignment-trends-modal-title"
-            className="text-mui-h2 font-bold text-primary"
-          >
-            {roomName ? t('trends.titleWithTeam', { name: roomName }) : t('trends.title')}
-          </h2>
+          {roomName ? t('trends.titleWithTeam', { name: roomName }) : t('trends.title')}
+        </h2>
 
-          {loading
-            ? (
-                <p className="mt-8 text-center text-mui-body text-muted">
-                  {t('common.loading')}
-                </p>
-              )
-            : (
-                <>
-                  <div className="mt-5 grid grid-cols-4 gap-3">
-                    <div className="flex flex-col gap-1 rounded border p-3">
-                      <span className="text-mui-caption text-muted">{t('trends.currentScore')}</span>
-                      <div className="flex items-end gap-2">
+        {loading
+          ? (
+              <p className="mt-8 text-center text-mui-body text-muted">
+                {t('common.loading')}
+              </p>
+            )
+          : (
+              <>
+                <div className="mt-5 grid grid-cols-4 gap-3">
+                  <div className="flex flex-col gap-1 rounded border p-3">
+                    <span className="text-mui-caption text-muted">{t('trends.currentScore')}</span>
+                    <div className="flex items-end gap-2">
+                      <span
+                        className="text-2xl font-bold"
+                        style={{ color: '#26a69a' }}
+                      >
+                        {currentDevScore ?? '-'}
+                      </span>
+                      {hasQaData && (
                         <span
                           className="text-2xl font-bold"
-                          style={{ color: '#26a69a' }}
+                          style={{ color: '#ffa726' }}
                         >
-                          {currentDevScore ?? '-'}
-                        </span>
-                        {hasQaData && (
-                          <span
-                            className="text-2xl font-bold"
-                            style={{ color: '#ffa726' }}
-                          >
-                            {`/ ${currentQaScore ?? '-'}`}
-                          </span>
-                        )}
-                      </div>
-                      {currentDevScore !== null && (
-                        <span
-                          className="w-fit rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
-                          style={{ backgroundColor: levelColor(currentDevScore) }}
-                        >
-                          {alignmentLevel(currentDevScore)}
+                          {`/ ${currentQaScore ?? '-'}`}
                         </span>
                       )}
                     </div>
-
-                    <div className="flex flex-col gap-1 rounded border p-3">
-                      <span className="text-mui-caption text-muted">{t('trends.trend')}</span>
-                      {trend
-                        ? (
-                            <div className="flex items-center gap-1">
-                              <AppIcon
-                                name={trend.dir === 'up' ? 'ic:baseline-trending-up' : trend.dir === 'down' ? 'ic:baseline-trending-down' : 'ic:baseline-trending-flat'}
-                                style={{ fontSize: '1.4rem', color: trend.dir === 'up' ? '#43a047' : trend.dir === 'down' ? '#e64a19' : '#90a4ae' }}
-                              />
-                              <span className="text-lg font-bold text-primary">
-                                {trend.dir === 'up' ? t('trends.up') : trend.dir === 'down' ? t('trends.down') : t('trends.stable')}
-                              </span>
-                            </div>
-                          )
-                        : (
-                            <span className="text-lg font-bold text-primary">-</span>
-                          )}
-                      {trend && (
-                        <span className="text-mui-caption text-muted">
-                          {`${trend.pct}% ${t('trends.vsPrevious')}`}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-1 rounded border p-3">
-                      <span className="text-mui-caption text-muted">{t('trends.averageScore')}</span>
-                      <div className="flex items-end gap-2">
-                        <span
-                          className="text-2xl font-bold"
-                          style={{ color: '#26a69a' }}
-                        >
-                          {avgDev ?? '-'}
-                        </span>
-                        {hasQaData && (
-                          <span
-                            className="text-2xl font-bold"
-                            style={{ color: '#ffa726' }}
-                          >
-                            {`/ ${avgQa ?? '-'}`}
-                          </span>
-                        )}
-                      </div>
-                      {avgDev !== null && (
-                        <span
-                          className="w-fit rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
-                          style={{ backgroundColor: levelColor(avgDev) }}
-                        >
-                          {alignmentLevel(avgDev)}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-1 rounded border p-3">
-                      <span className="text-mui-caption text-muted">{t('trends.estimates')}</span>
-                      <span className="text-2xl font-bold text-primary">{estimatesCount}</span>
-                      <span className="text-mui-caption text-muted">{t('trends.currentPeriod')}</span>
-                    </div>
+                    {currentDevScore !== null && (
+                      <span
+                        className="w-fit rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
+                        style={{ backgroundColor: levelColor(currentDevScore) }}
+                      >
+                        {alignmentLevel(currentDevScore)}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="mt-5">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <span className="text-mui-caption font-semibold uppercase tracking-wide text-muted">
-                          {t('trends.chartTitle')}
+                  <div className="flex flex-col gap-1 rounded border p-3">
+                    <span className="text-mui-caption text-muted">{t('trends.trend')}</span>
+                    {trend
+                      ? (
+                          <div className="flex items-center gap-1">
+                            <AppIcon
+                              name={trend.dir === 'up' ? 'ic:baseline-trending-up' : trend.dir === 'down' ? 'ic:baseline-trending-down' : 'ic:baseline-trending-flat'}
+                              style={{ fontSize: '1.4rem', color: trend.dir === 'up' ? '#43a047' : trend.dir === 'down' ? '#e64a19' : '#90a4ae' }}
+                            />
+                            <span className="text-lg font-bold text-primary">
+                              {trend.dir === 'up' ? t('trends.up') : trend.dir === 'down' ? t('trends.down') : t('trends.stable')}
+                            </span>
+                          </div>
+                        )
+                      : (
+                          <span className="text-lg font-bold text-primary">-</span>
+                        )}
+                    {trend && (
+                      <span className="text-mui-caption text-muted">
+                        {`${trend.pct}% ${t('trends.vsPrevious')}`}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1 rounded border p-3">
+                    <span className="text-mui-caption text-muted">{t('trends.averageScore')}</span>
+                    <div className="flex items-end gap-2">
+                      <span
+                        className="text-2xl font-bold"
+                        style={{ color: '#26a69a' }}
+                      >
+                        {avgDev ?? '-'}
+                      </span>
+                      {hasQaData && (
+                        <span
+                          className="text-2xl font-bold"
+                          style={{ color: '#ffa726' }}
+                        >
+                          {`/ ${avgQa ?? '-'}`}
                         </span>
-                        <div className="flex items-center gap-3">
+                      )}
+                    </div>
+                    {avgDev !== null && (
+                      <span
+                        className="w-fit rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
+                        style={{ backgroundColor: levelColor(avgDev) }}
+                      >
+                        {alignmentLevel(avgDev)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1 rounded border p-3">
+                    <span className="text-mui-caption text-muted">{t('trends.estimates')}</span>
+                    <span className="text-2xl font-bold text-primary">{estimatesCount}</span>
+                    <span className="text-mui-caption text-muted">{t('trends.currentPeriod')}</span>
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-mui-caption font-semibold uppercase tracking-wide text-muted">
+                        {t('trends.chartTitle')}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          className={`flex items-center gap-1 text-mui-caption transition-opacity${showDevSeries ? '' : ' opacity-40'}`}
+                          aria-pressed={showDevSeries}
+                          onClick={() => setShowDevSeries(!showDevSeries)}
+                        >
+                          <span
+                            className="inline-block h-2 w-4 rounded"
+                            style={{ background: '#26a69a' }}
+                          />
+                          {DEV_COHORT_LABEL}
+                        </button>
+                        {hasQaData && (
                           <button
                             type="button"
-                            className={`flex items-center gap-1 text-mui-caption transition-opacity${showDevSeries ? '' : ' opacity-40'}`}
-                            aria-pressed={showDevSeries}
-                            onClick={() => setShowDevSeries(!showDevSeries)}
+                            className={`flex items-center gap-1 text-mui-caption transition-opacity${showQaSeries ? '' : ' opacity-40'}`}
+                            aria-pressed={showQaSeries}
+                            onClick={() => setShowQaSeries(!showQaSeries)}
                           >
                             <span
                               className="inline-block h-2 w-4 rounded"
-                              style={{ background: '#26a69a' }}
+                              style={{ background: '#ffa726' }}
                             />
-                            {DEV_COHORT_LABEL}
+                            QA
                           </button>
-                          {hasQaData && (
-                            <button
-                              type="button"
-                              className={`flex items-center gap-1 text-mui-caption transition-opacity${showQaSeries ? '' : ' opacity-40'}`}
-                              aria-pressed={showQaSeries}
-                              onClick={() => setShowQaSeries(!showQaSeries)}
-                            >
-                              <span
-                                className="inline-block h-2 w-4 rounded"
-                                style={{ background: '#ffa726' }}
-                              />
-                              QA
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        {TIME_RANGES.map(r => (
-                          <button
-                            key={r}
-                            className={rangeClass(timeRange === r, 'px-2')}
-                            onClick={() => selectRange(r)}
-                          >
-                            {r}
-                          </button>
-                        ))}
+                        )}
                       </div>
                     </div>
-
-                    {availableDecks.length > 1 && (
-                      <div className="mb-2 flex flex-wrap gap-1">
+                    <div className="flex gap-1">
+                      {TIME_RANGES.map(r => (
                         <button
-                          className={rangeClass(deckFilter === null, 'px-3')}
-                          onClick={() => setDeckFilter(null)}
+                          key={r}
+                          className={rangeClass(timeRange === r, 'px-2')}
+                          onClick={() => selectRange(r)}
                         >
-                          {t('history.filter.allDecks')}
+                          {r}
                         </button>
-                        {availableDecks.map(deck => (
-                          <button
-                            key={deck}
-                            className={rangeClass(deckFilter === deck, 'px-3')}
-                            onClick={() => setDeckFilter(deck)}
-                          >
-                            {deckName(deck)}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {hasEnoughData
-                      ? (
-                          <TrendsChart
-                            option={chartOption}
-                            onViewDetails={openRoundSnapshotAt}
-                          />
-                        )
-                      : (
-                          <div className="flex h-32 items-center justify-center">
-                            <span className="text-mui-body text-muted">{t('trends.noData')}</span>
-                          </div>
-                        )}
+                      ))}
+                    </div>
                   </div>
-                </>
-              )}
-        </AppModalPaper>
-      </AppModal>
 
+                  {availableDecks.length > 1 && (
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      <button
+                        className={rangeClass(deckFilter === null, 'px-3')}
+                        onClick={() => setDeckFilter(null)}
+                      >
+                        {t('history.filter.allDecks')}
+                      </button>
+                      {availableDecks.map(deck => (
+                        <button
+                          key={deck}
+                          className={rangeClass(deckFilter === deck, 'px-3')}
+                          onClick={() => setDeckFilter(deck)}
+                        >
+                          {deckName(deck)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {hasEnoughData
+                    ? (
+                        <TrendsChart
+                          option={chartOption}
+                          onViewDetails={openRoundSnapshotAt}
+                        />
+                      )
+                    : (
+                        <div className="flex h-32 items-center justify-center">
+                          <span className="text-mui-body text-muted">{t('trends.noData')}</span>
+                        </div>
+                      )}
+                </div>
+              </>
+            )}
+      </AppModalPaper>
       {selectedRound && (
         <RoundSnapshotModal
           round={selectedRound}
@@ -583,6 +580,6 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
           }}
         />
       )}
-    </>
+    </AppModal>
   )
 }
