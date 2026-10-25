@@ -196,6 +196,8 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The container runs as root, so git refuses the runner-owned checkout without this.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: pnpm run test:visual "$BASE_REF"
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
