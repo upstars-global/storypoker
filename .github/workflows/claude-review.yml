@@ -12,9 +12,10 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-  # A PR opened, reopened, or marked ready after its CI went green gets no new CI run.
+  # A PR marked ready after its CI went green gets no new CI run. Opened and reopened are left out:
+  # CI runs on both here (bare pull_request in ci.yml), and its workflow_run brings the review.
   pull_request:
-    types: [opened, reopened, ready_for_review, review_requested]
+    types: [ready_for_review, review_requested]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -129,6 +130,9 @@ jobs:
                 *)
                   post_status error "Review requested; CI is $ci, the review waits for a green run" ;;
               esac
+            elif [ "$EVENT" = workflow_dispatch ]; then
+              # A dispatch does not wait; say why nothing ran
+              post_status error "Dispatch skipped: CI is $ci; dispatch again after a green run"
             fi
             skip "CI on $head_sha is $ci"
           fi
@@ -153,7 +157,7 @@ jobs:
                     END {print (n == 2 ? s : 1)}')
               [ "$blocking" -gt 0 ] || skip_final "the latest review of PR #$number has no Critical or Important findings"
               [ "$reviewed_sha" != "$head_sha" ] || skip_final "PR #$number already has a review of $head_sha"
-              [ "$total" -lt "$AUTO_LIMIT" ] || skip_final "PR #$number has $total automatic reviews; request $REVIEWER for another"
+              [ "$total" -lt "$AUTO_LIMIT" ] || skip_final "PR #$number has $total reviews by $REVIEWER; request $REVIEWER for another"
             fi
           fi
 
@@ -530,8 +534,8 @@ jobs:
             || { post_status error "Could not read the Claude review status"; exit 1; }
           [ "$latest" = "$RUN_URL" ] || { echo "Status owned by a newer run"; exit 0; }
           # A cancel may cut the post step short after the POST landed. Only then look the review up, and
-          # only among reviews submitted after this run validated its body, so an earlier review of the
-          # same head never stands in for one this run failed to post.
+          # only among reviews submitted from two minutes before this run validated its body, so an earlier
+          # review of the same head stands in only when two runs on one head post within that window.
           if [ "$POST_OUTCOME" = cancelled ] && [ -z "$REVIEW_ID" ]; then
             ids=$(gh api --paginate "repos/$REPO/pulls/$NUMBER/reviews" \
               --jq '.[] | select(.user.login == env.REVIEWER and .commit_id == env.HEAD_SHA
