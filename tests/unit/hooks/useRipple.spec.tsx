@@ -129,6 +129,21 @@ describe('useRipple', () => {
     expect(wave(button)!.style.top).toBe('20px')
   })
 
+  it('clears pending wave timers when the element unmounts', () => {
+    const { getByRole, unmount } = render(<RippleButton />)
+    const button = getByRole('button')
+    stubBox(button)
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }))
+    pointerDown(button, 10, 20)
+    vi.advanceTimersByTime(75)
+    expect(vi.getTimerCount()).toBeGreaterThan(0)
+
+    unmount()
+
+    expect(vi.getTimerCount()).toBe(0)
+    expect(container(button)).toBeNull()
+  })
+
   it('skips disabled elements', () => {
     const button = setup(true)
     pointerDown(button, 10, 20)

@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import UpdateBanner from '~/components/UpdateBanner'
 import { AppRoutes } from '~/router'
 import { soundVolumeStore } from '~/hooks/useSoundVolume'
 import { useTheme } from '~/hooks/useTheme'
-import uk from '~/i18n/locales/uk.json'
 
 export default function App() {
+  const { t } = useTranslation()
   const { init } = useTheme()
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function App() {
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[2000] mui-btn mui-btn-md"
       >
-        {uk.common.skipToContent}
+        {t('common.skipToContent')}
       </a>
       <UpdateBanner />
       <AppRoutes />

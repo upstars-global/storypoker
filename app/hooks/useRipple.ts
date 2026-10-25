@@ -23,6 +23,7 @@ export const RIPPLE_OPTIONS: RippleOptions = {
 const SCALE_FACTOR = 2.05
 const activeWaves = new WeakMap<HTMLElement, number>()
 const savedPositions = new WeakMap<HTMLElement, string>()
+const pendingRipples = new WeakMap<HTMLElement, Set<() => void>>()
 
 interface Point {
   x: number
@@ -103,15 +104,39 @@ export function startRipple(el: HTMLElement, screen: Point, waitForRelease: bool
   container.appendChild(wave)
   if (!existing) el.appendChild(container)
 
+  const timers = new Set<ReturnType<typeof setTimeout>>()
+  let frame: number | undefined
+  let finished = false
   let shouldDissolve = !waitForRelease
+
+  const schedule = (callback: () => void, delay: number) => {
+    const timer = setTimeout(() => {
+      timers.delete(timer)
+      callback()
+    }, delay)
+    timers.add(timer)
+  }
+
+  const removeListeners = () => {
+    document.removeEventListener('pointerup', release)
+    document.removeEventListener('pointercancel', release)
+    document.removeEventListener('pointercancel', cancel)
+  }
+
+  const finish = () => {
+    if (finished) return
+    finished = true
+    pendingRipples.get(el)?.delete(dispose)
+    finishWave(el, container, wave)
+  }
 
   const dissolve = () => {
     wave.style.transition = `opacity ${options.dissolveDuration}s linear`
     wave.style.opacity = '0'
-    setTimeout(() => finishWave(el, container, wave), options.dissolveDuration * 1000)
+    schedule(finish, options.dissolveDuration * 1000)
   }
 
-  const release = (event?: Event) => {
+  function release(event?: Event) {
     if (event) {
       document.removeEventListener('pointerup', release)
       document.removeEventListener('pointercancel', release)
@@ -120,12 +145,17 @@ export function startRipple(el: HTMLElement, screen: Point, waitForRelease: bool
     else shouldDissolve = true
   }
 
-  const cancel = () => {
-    clearTimeout(token)
-    finishWave(el, container, wave)
-    document.removeEventListener('pointerup', release)
-    document.removeEventListener('pointercancel', release)
-    document.removeEventListener('pointercancel', cancel)
+  function cancel() {
+    dispose()
+  }
+
+  function dispose() {
+    for (const timer of timers) clearTimeout(timer)
+    timers.clear()
+    if (frame !== undefined) cancelAnimationFrame(frame)
+    frame = undefined
+    removeListeners()
+    finish()
   }
 
   if (waitForRelease) {
@@ -133,16 +163,28 @@ export function startRipple(el: HTMLElement, screen: Point, waitForRelease: bool
     document.addEventListener('pointercancel', release)
   }
 
-  const token: ReturnType<typeof setTimeout> = setTimeout(() => {
+  schedule(() => {
     document.removeEventListener('pointercancel', cancel)
-    requestAnimationFrame(() => {
+    frame = requestAnimationFrame(() => {
+      frame = undefined
       wave.style.transform = 'translate(-50%,-50%) scale(1)'
       wave.style.opacity = `${options.finalOpacity}`
-      setTimeout(() => release(), options.duration * 1000)
+      schedule(() => release(), options.duration * 1000)
     })
   }, options.cancellationPeriod)
 
   document.addEventListener('pointercancel', cancel)
+
+  const pending = pendingRipples.get(el) ?? new Set<() => void>()
+  pending.add(dispose)
+  pendingRipples.set(el, pending)
+}
+
+export function disposeRipples(el: HTMLElement): void {
+  const pending = pendingRipples.get(el)
+  if (!pending) return
+  for (const dispose of pending) dispose()
+  pendingRipples.delete(el)
 }
 
 function centerOf(el: HTMLElement): Point {
@@ -163,6 +205,7 @@ export function useRipple<T extends HTMLElement>(): (el: T | null) => (() => voi
     return () => {
       el.removeEventListener('pointerdown', onPointerDown)
       el.removeEventListener('click', onClick)
+      disposeRipples(el)
     }
   }, [])
 }

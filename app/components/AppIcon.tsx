@@ -27,7 +27,8 @@ export default function AppIcon({ name, className, style, 'aria-label': ariaLabe
     <span
       className={className ? `${rootClass} ${className}` : rootClass}
       style={style}
-      aria-hidden="true"
+      role={ariaLabel ? 'img' : undefined}
+      aria-hidden={ariaLabel ? undefined : 'true'}
       aria-label={ariaLabel}
       dangerouslySetInnerHTML={markup ? { __html: markup } : undefined}
     />

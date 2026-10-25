@@ -38,3 +38,14 @@ it('marks every icon root as decorative', () => {
     unmount()
   }
 })
+
+it('announces a labelled icon as an image instead of hiding it', () => {
+  for (const icon of ['lucide:id-card', 'app:town-hall']) {
+    const { container, unmount } = render(<AppIcon name={icon} aria-label="Moderator" />)
+    const root = container.querySelector('span')!
+    expect(root.getAttribute('role')).toBe('img')
+    expect(root.getAttribute('aria-label')).toBe('Moderator')
+    expect(root.hasAttribute('aria-hidden')).toBe(false)
+    unmount()
+  }
+})
