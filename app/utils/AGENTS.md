@@ -15,8 +15,8 @@
 | `vote_question` | кастомні опції; дефолт `Option A,Option B,Option C` |
 | `goal_clarity` | `1,2,3,4,5` |
 
-`0` є в усіх небулевих оцінювальних пресетах (не у `voting`/`vote_question`/`goal_clarity`), але деактивований за
-замовчуванням. `☕` - символ, не SVG. `setDeckPreset()` пише `deck_preset + defaultActive + poll_question`
+`scrum`/`fibonacci` не мають `0` і нічого понад 21; `tshirt`/`hours` мають `0`, деактивований за замовчуванням.
+Застарілі карти в `active_cards` (з часів ширших колод) відсікає `activeCardsForDeck()` перед рендером. `☕` - символ, не SVG. `setDeckPreset()` пише `deck_preset + defaultActive + poll_question`
 (`preset.defaultQuestion ?? null`); `saveCardDeck()` пише тільки `active_cards`.
 
 `goal_clarity` ("Goal Clarity Score") - фіксоване питання "Наскільки чітко я розумію Sprint Goals?" (`defaultQuestion`
@@ -37,7 +37,8 @@ legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і не�
 
 ## Consensus
 
-`resultCelebration.ts → shouldCelebrate(votes, grouped)` - єдиний предикат для салюту (`ResultsArea.vue`) і звуку
-(`isConsensus` у `pages/[slug].vue`). Одноголосною вважається група з рівно однією унікальною оцінкою **і** ≥ 2
-голосами. Без QA-розщеплення (`groupedVoteCounts === null`) те саме правило застосовується до всіх голосів.
+`resultCelebration.ts → shouldCelebrate(votes, groups)` - єдиний предикат для салюту (`ResultsArea.vue`) і звуку
+(`isConsensus` у `pages/[slug].vue`); `groups` - кола результатів з `groupVotesByCohort()` (`resultCohorts.ts`).
+Одноголосною вважається група з рівно однією унікальною оцінкою **і** ≥ 2 голосами. Без груп те саме правило
+застосовується до всіх голосів.
 Поріг ≥ 2 узгоджений з `DESIGN.md` §11: рядок `round_history` теж пишеться лише при `votes.length >= 2`.

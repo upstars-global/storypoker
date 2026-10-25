@@ -27,6 +27,7 @@
 
 - [Обробка помилок](initiatives/error-handling.md) - typed Supabase-result, toast з retry, rollback. `Planned`
 - [Декомпозиція `[slug].vue`](initiatives/room-page-decomposition.md) - винести realtime, session і actions у composables. `Planned`
+- [Прибрати перехідний reload service worker-а](initiatives/sw-transition-cleanup.md) - `skipWaiting` і `sw-reload-clients.js` наступним релізом. `Planned`
 - [Auth & Account](initiatives/auth-account.md) - зміна email / display name, серверний гейтинг критичних дій. `Partial`
 - [Estimation Scale](initiatives/estimation-scale.md) - deck picker при створенні кімнати, збережені кастомні шкали. `Partial`
 

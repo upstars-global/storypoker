@@ -1,0 +1,337 @@
+# The agent reviews with a read-only GITHUB_TOKEN and writes the body to a file; the publish job
+# validates it and only its `post` step gets the so-upstars PAT. That holds for the main copy of this
+# file: pull_request runs use the PR branch's copy, so anyone who can push a branch can reach the PAT.
+# Accepted trade-off (AGENTS.md): the checks cover the body's structure and token-like strings, not its
+# prose; a prompt-injected body can still mislead, and the status is advisory, not a required check.
+name: Claude review
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  pull_request:
+    types: [ready_for_review, review_requested]
+
+concurrency:
+  group: >-
+    claude-review-${{ github.event.pull_request.head.ref || github.event.workflow_run.head_branch }}${{
+    github.event.action == 'review_requested' && github.event.requested_reviewer.login != 'so-upstars'
+    && format('-{0}', github.run_id) || '' }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  gate:
+    name: Review gate
+    if: >-
+      (github.event_name == 'pull_request' &&
+        (github.event.action == 'ready_for_review' || github.event.requested_reviewer.login == 'so-upstars')) ||
+      github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+      statuses: write
+    outputs:
+      review: ${{ steps.gate.outputs.review }}
+      number: ${{ steps.gate.outputs.number }}
+      base_sha: ${{ steps.gate.outputs.base_sha }}
+      head_sha: ${{ steps.gate.outputs.head_sha }}
+    steps:
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          EVENT_PR: ${{ github.event.pull_request.number }}
+          RUN_HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          RUN_PRS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
+          MARKER: '<!-- claude-review -->'
+          CONTEXT: Claude review
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          post_status() {
+            gh api "repos/$REPO/statuses/$head_sha" -f state="$1" -f description="$2" \
+              -f context="$CONTEXT" -f target_url="$RUN_URL" > /dev/null
+          }
+
+          skip() {
+            echo "Skip: $1"
+            echo "review=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          if [ "$EVENT" = pull_request ]; then
+            number="$EVENT_PR"
+          else
+            [ "$RUN_HEAD_REPO" = "$REPO" ] || skip "fork PR"
+            number=$(jq -r '.[0].number // empty' <<< "$RUN_PRS")
+          fi
+          [ -n "$number" ] || skip "no pull request for this run"
+
+          pr=$(gh api "repos/$REPO/pulls/$number")
+          [ "$(jq -r .state <<< "$pr")" = open ] || skip "PR #$number is not open"
+          [ "$(jq -r .draft <<< "$pr")" = false ] || skip "PR #$number is a draft"
+          [ "$(jq -r .head.repo.full_name <<< "$pr")" = "$REPO" ] || skip "PR #$number is from a fork"
+          [ "$(jq -r .user.type <<< "$pr")" != Bot ] || skip "PR #$number is from a bot"
+          head_sha=$(jq -r .head.sha <<< "$pr")
+          base_sha=$(jq -r .base.sha <<< "$pr")
+          requested=$(jq '[.requested_reviewers[].login] | index("so-upstars") != null' <<< "$pr")
+
+          ci=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$head_sha&event=pull_request&per_page=1" \
+            --jq '.workflow_runs[0].conclusion // "none"')
+          if [ "$ci" != success ]; then
+            if [ "$requested" = true ] && [ "$ci" = none ]; then
+              post_status pending "Review requested; waiting for green CI"
+            elif [ "$requested" = true ]; then
+              post_status error "Review requested; CI is $ci, the review waits for a green run"
+            fi
+            skip "CI on $head_sha is $ci"
+          fi
+
+          bodies=""
+          if [ "$requested" != true ]; then
+            bodies=$(gh api --paginate "repos/$REPO/pulls/$number/reviews" \
+              --jq '.[] | select(.user.login == "so-upstars") | .body'
+            gh api --paginate "repos/$REPO/issues/$number/comments" \
+              --jq '.[] | select(.user.login == "so-upstars") | .body')
+          fi
+          if grep -qF "$MARKER" <<< "$bodies"; then
+            post_status success "Skipped: the PR already has a Claude review"
+            skip "PR #$number already has a Claude review"
+          fi
+
+          post_status pending "Claude review in progress"
+
+          {
+            echo "review=true"
+            echo "number=$number"
+            echo "base_sha=$base_sha"
+            echo "head_sha=$head_sha"
+          } >> "$GITHUB_OUTPUT"
+
+  review:
+    name: Claude review
+    needs: gate
+    if: needs.gate.outputs.review == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+    # The agent can write auto-review-out/, so publish takes the version from here, not the artifact
+    outputs:
+      version: ${{ steps.skill.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install cr-request skill
+        id: skill
+        env:
+          # sentimony/agentic-workflow v0.0.4; the repo variable overrides it
+          SKILLS_REF: ${{ vars.REVIEW_SKILLS_REF || 'a5cf04b2d5d72d6fa624bdb46223f1ada6a2047a' }}
+        run: |
+          [[ "$SKILLS_REF" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::REVIEW_SKILLS_REF must be a full commit SHA"; exit 1; }
+          # git clone --branch takes no SHA
+          src="$RUNNER_TEMP/agentic-workflow"
+          git init -q "$src"
+          git -C "$src" fetch -q --depth 1 https://github.com/sentimony/agentic-workflow.git "$SKILLS_REF"
+          git -C "$src" checkout -q FETCH_HEAD
+          skill="$src/plugins/awf/skills/cr-request"
+          test -f "$skill/SKILL.md" || { echo "::error::No cr-request SKILL.md at $SKILLS_REF"; exit 1; }
+          mkdir -p ~/.claude/skills auto-review-out
+          cp -R "$skill" ~/.claude/skills/
+          version="$(sed -nE 's/^[[:space:]]+version:[[:space:]]*"?([0-9][0-9.]*)"?[[:space:]]*$/\1/p' ~/.claude/skills/cr-request/SKILL.md | head -n 1)"
+          test -n "$version" || { echo "::error::No version in the cr-request SKILL.md"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ needs.gate.outputs.number }}
+            BASE SHA: ${{ needs.gate.outputs.base_sha }}
+            HEAD SHA: ${{ needs.gate.outputs.head_sha }}
+
+            Run the cr-request skill for this pull request. The review boundary is the committed range
+            BASE SHA...HEAD SHA (three dots, from their merge base); both commits are available locally.
+            Read the PR title and description with `gh pr view` for requirements. CI is green on HEAD SHA.
+            Do not run gh-switch or cr-received and do not modify repository files.
+
+            If the cr-request skill is not available to you, do not review and do not write the review file; stop
+            and report that the skill is missing.
+
+            Write exactly one pull request review body in English, with plain hyphens only, to
+            auto-review-out/review.md. Do not post it; a later step posts it as a review comment that neither
+            approves nor requests changes. The body must start with the line `<!-- claude-review -->`, then the
+            reviewed range, the commits in it, and the coverage (files read, what was skipped), then a
+            `### Summary` section with two Markdown tables and one line.
+
+            Write the reviewed range as a compare link with short SHAs, followed by the number of files and lines:
+            [`<base7>...<head7>`](https://github.com/${{ github.repository }}/compare/<BASE SHA>...<HEAD SHA>)
+            List the commits from `git log --format='%h %H %s' BASE SHA..HEAD SHA`, one line each, as
+            - [`<short sha>`](https://github.com/${{ github.repository }}/commit/<full sha>) <subject>
+            After 20 commits write `and <n> more`.
+
+            The Summary section:
+
+            | Axis | Verdict |
+            | --- | --- |
+            | Intent | PASS, FINDINGS, or UNASSESSED |
+            | System | PASS, FINDINGS, or UNASSESSED |
+            | Craft | PASS, FINDINGS, or UNASSESSED |
+
+            | Severity | Count |
+            | --- | --- |
+            | Critical | <n> |
+            | Important | <n> |
+            | Minor | <n> |
+
+            **Merge readiness:** ready, ready with fixes, or not ready - <one line>
+
+            Use only the severities Critical, Important, and Minor; the counts must match the findings, and zero
+            findings means zeros. After the summary: the findings with severity, location, impact, evidence, and
+            confidence, the set-aside list, open questions about intent, and strengths.
+            In the skill's closing `Next step` line, write the skill name as inline code with a leading slash, for
+            example: Next step: `/cr-received` - 2 findings to rule on. Leave `none` as plain text.
+            Never copy a token or secret into the body. The body must end with this line, backticks included:
+            Reviewed with: `/cr-request` ${{ steps.skill.outputs.version }} skill
+          claude_args: >-
+            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Edit(./auto-review-out/**),Bash(git branch:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: claude-review
+          path: auto-review-out/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish Claude review
+    needs: [gate, review]
+    if: always() && needs.gate.outputs.review == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+      statuses: write
+    env:
+      REPO: ${{ github.repository }}
+      NUMBER: ${{ needs.gate.outputs.number }}
+      HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
+      MARKER: '<!-- claude-review -->'
+      CONTEXT: Claude review
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      BODY_FILE: auto-review-out/review.md
+    steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: claude-review
+          path: auto-review-out
+
+      # Runs with GITHUB_TOKEN and owns the status; the artifact exists only when the review job succeeded
+      - id: validate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_RESULT: ${{ needs.review.result }}
+          VERSION: ${{ needs.review.outputs.version }}
+        run: |
+          post_status() {
+            gh api "repos/$REPO/statuses/$HEAD_SHA" -f state="$1" -f description="$2" \
+              -f context="$CONTEXT" -f target_url="$RUN_URL" > /dev/null
+          }
+          count() {
+            grep -oE "^\| *$1 *\| *[0-9]+ *\|" "$BODY_FILE" | grep -oE '[0-9]+' | head -n 1 || true
+          }
+
+          # An older run must not overwrite the status a newer gate set
+          latest=$(gh api "repos/$REPO/commits/$HEAD_SHA/statuses" \
+            --jq '[.[] | select(.context == env.CONTEXT)][0].target_url // ""')
+          [ "$latest" = "$RUN_URL" ] || { echo "Status owned by a newer run"; exit 0; }
+
+          if [ ! -f "$BODY_FILE" ]; then
+            if [ "$REVIEW_RESULT" = cancelled ]; then
+              post_status error "Claude review was cancelled"
+              exit 0
+            fi
+            post_status failure "Claude review failed before writing a review"
+            exit 1
+          fi
+
+          head=$(gh api "repos/$REPO/pulls/$NUMBER" --jq .head.sha)
+          [ "$head" = "$HEAD_SHA" ] || { post_status error "Superseded by a newer head"; exit 0; }
+
+          fail() { post_status failure "$1"; exit 1; }
+          [[ "$VERSION" =~ ^[0-9][0-9.]*$ ]] || fail "No cr-request version from the review job"
+          [ "$(head -n 1 "$BODY_FILE")" = "$MARKER" ] || fail "The review body does not start with the marker"
+          grep -qxF "Reviewed with: \`/cr-request\` $VERSION skill" "$BODY_FILE" || fail "The review body has no signature line"
+          if grep -qE '(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_)[A-Za-z0-9]' "$BODY_FILE"; then
+            fail "Review body contains a token-like string"
+          fi
+          critical=$(count Critical)
+          important=$(count Important)
+          minor=$(count Minor)
+          readiness=$(grep -oE '\*\*Merge readiness:\*\* *(ready with fixes|not ready|ready)' "$BODY_FILE" \
+            | sed -E 's/.*\*\* *//' | head -n 1 || true)
+          if [ -z "$critical" ] || [ -z "$important" ] || [ -z "$minor" ] || [ -z "$readiness" ]; then
+            fail "The review has no Summary counts or merge readiness"
+          fi
+
+          summary="Critical $critical, Important $important, Minor $minor; $readiness"
+          state=success
+          if [ "$critical" -gt 0 ] || [ "$readiness" = "not ready" ]; then state=failure; fi
+          {
+            echo "ready_to_post=true"
+            echo "signature=Reviewed with: \`/cr-request\` $VERSION skill"
+            echo "summary=$summary"
+            echo "state=$state"
+          } >> "$GITHUB_OUTPUT"
+
+      # The only step with the so-upstars PAT: it checks the token's owner and posts the body as is
+      - id: post
+        if: steps.validate.outputs.ready_to_post == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SO_UPSTARS_PR_TOKEN }}
+        run: |
+          test -n "$GH_TOKEN" || { echo "::error::SO_UPSTARS_PR_TOKEN is not set"; exit 1; }
+          login="$(gh api user --jq .login)"
+          test "$login" = so-upstars || { echo "::error::SO_UPSTARS_PR_TOKEN belongs to '$login', not so-upstars"; exit 1; }
+          id=$(gh api -X POST "repos/$REPO/pulls/$NUMBER/reviews" -f commit_id="$HEAD_SHA" -f event=COMMENT \
+            -F body=@"$BODY_FILE" --jq .id)
+          echo "review_id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Report review status
+        if: always() && steps.validate.outputs.ready_to_post == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          POST_OUTCOME: ${{ steps.post.outcome }}
+          REVIEW_ID: ${{ steps.post.outputs.review_id }}
+          SIGNATURE: ${{ steps.validate.outputs.signature }}
+          SUMMARY: ${{ steps.validate.outputs.summary }}
+          STATE: ${{ steps.validate.outputs.state }}
+        run: |
+          post_status() {
+            gh api "repos/$REPO/statuses/$HEAD_SHA" -f state="$1" -f description="$2" \
+              -f context="$CONTEXT" -f target_url="$RUN_URL" > /dev/null
+          }
+          if [ "$POST_OUTCOME" != success ] || [ -z "$REVIEW_ID" ]; then
+            post_status failure "Posting the review failed"
+            exit 1
+          fi
+          posted=$(gh api "repos/$REPO/pulls/$NUMBER/reviews/$REVIEW_ID" \
+            --jq '.user.login == "so-upstars" and .commit_id == env.HEAD_SHA
+              and (.body | contains(env.MARKER)) and (.body | contains(env.SIGNATURE))')
+          [ "$posted" = true ] || { post_status failure "Posted review not found"; exit 1; }
+          post_status "$STATE" "$SUMMARY"

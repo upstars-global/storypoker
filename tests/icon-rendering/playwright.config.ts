@@ -20,7 +20,7 @@ export default defineConfig({
   },
   projects: [{ name: 'icon-harness', use: { ...devices['Desktop Chrome'], viewport: VIEWPORT } }],
   webServer: {
-    command: 'npm run icons:harness:build && npm run icons:harness:preview',
+    command: 'pnpm run icons:harness:build && pnpm run icons:harness:preview',
     url: `http://localhost:${port}`,
     timeout: 180_000,
     reuseExistingServer: false,

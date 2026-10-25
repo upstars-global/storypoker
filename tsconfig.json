@@ -6,7 +6,7 @@
     "strict": true,
     "jsx": "preserve",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    "types": ["vite/client", "vite-plugin-pwa/vanillajs"],
     "esModuleInterop": true,
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,

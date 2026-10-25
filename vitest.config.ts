@@ -20,6 +20,7 @@ export default defineConfig({
     alias: {
       '~': resolve(__dirname, 'app'),
       '@': resolve(__dirname, 'app'),
+      'virtual:pwa-register': resolve(__dirname, 'tests/support/stubs/pwaRegister.ts'),
     },
   },
 })

@@ -13,7 +13,7 @@ const i18n = createI18n({
   messages: { en: { players: { menuFor: 'Player menu: {name}' } } },
 })
 
-function mountRow() {
+function mountRow(overrides: { shields?: string[]; voteHidden?: boolean } = {}) {
   return mount(PlayerRow, {
     props: {
       player: {
@@ -23,13 +23,14 @@ function mountRow() {
         vote: null,
         is_online: true,
         user_id: null,
-        shields: [],
+        shields: overrides.shields ?? [],
         votePending: false,
       },
       phase: 'voting' as const,
       currentPlayerId: 'p1',
       currentUserIsModerator: false,
       currentUserIsAuthorizedModerator: false,
+      voteHidden: overrides.voteHidden,
     },
     global: {
       plugins: [createPinia(), i18n],
@@ -87,5 +88,21 @@ describe('PlayerRow menu button name', () => {
   it('names the menu button after the player', () => {
     const wrapper = mountRow()
     expect(wrapper.get('button[aria-expanded]').attributes('aria-label')).toBe('Player menu: Alice')
+  })
+})
+
+describe('PlayerRow hidden vote marker', () => {
+  beforeEach(() => setActivePinia(createPinia()))
+
+  it('paints the role badge red when the role is hidden from results', () => {
+    const wrapper = mountRow({ shields: ['sre'], voteHidden: true })
+    expect(wrapper.get('.mui-role-tag').classes()).toContain('is-excluded')
+    wrapper.unmount()
+  })
+
+  it('keeps the role badge neutral otherwise', () => {
+    const wrapper = mountRow({ shields: ['sre'] })
+    expect(wrapper.get('.mui-role-tag').classes()).not.toContain('is-excluded')
+    wrapper.unmount()
   })
 })

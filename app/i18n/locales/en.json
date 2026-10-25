@@ -30,7 +30,8 @@
     "history": "Round History",
     "alignmentTrends": "Alignment Trends",
     "themePalette": "Color theme",
-    "volume": "Sound volume"
+    "volume": "Sound volume",
+    "roomBackground": "Room background"
   },
   "theme": {
     "classic": "Classic",
@@ -39,7 +40,7 @@
   },
   "trends": {
     "title": "Team Alignment Trends",
-    "titleWithTeam": "Team Alignment Trends — {name}",
+    "titleWithTeam": "Team Alignment Trends: {name}",
     "currentScore": "Current Score",
     "trend": "Trend",
     "averageScore": "Average Score",
@@ -99,11 +100,16 @@
     "title": "Timer",
     "roundStartedAgo": "Round started {duration} ago",
     "roundDuration": "Round duration: {duration}",
+    "roundStopped": "Timer stopped after {duration}",
     "reset": "Reset",
     "pause": "Pause",
     "continue": "Continue",
     "minus30": "-30s",
-    "plus30": "+30s"
+    "plus30": "+30s",
+    "alarmSettings": "Alarm settings",
+    "alarmAfter": "Alarm after",
+    "minutesShort": "min",
+    "alarmSound": "Alarm sound"
   },
   "slot": {
     "title": "Slot 777",
@@ -122,7 +128,9 @@
       "no": "No"
     },
     "voteQuestionInfo": "Question and answers are configured in the voting area",
-    "alwaysIncluded": "Always included"
+    "alwaysIncluded": "Always included",
+    "resultCohorts": "Show results",
+    "qaCohortHint": "QA, GQA and AQA are always shown as one circle"
   },
   "poll": {
     "thirdCard": "Third card",
@@ -160,11 +168,13 @@
       "PO": "Product Owner",
       "BE": "Backend",
       "FE": "Frontend",
+      "SRE": "Site Reliability Engineering",
       "DEV": "Developer",
       "QA": "Quality Assurance",
       "AQA": "Automated Quality Assurance",
       "GQA": "General Quality Assurance"
-    }
+    },
+    "voteHiddenInResults": "vote is hidden from results"
   },
   "results": {
     "general": "DEV",
@@ -240,7 +250,7 @@
     "renameTitle": "Rename Room",
     "renameLabel": "Room name",
     "renameHint": "Leave empty to remove the custom name.",
-    "slugError": "Use 2–32 chars: letters, numbers, dashes",
+    "slugError": "Use 2-32 chars: letters, numbers, dashes",
     "slugTaken": "This name is already taken",
     "kickTitle": "Kick Player",
     "kickConfirm": "Remove {name} from the room?",
@@ -253,6 +263,10 @@
   },
   "connection": {
     "reconnecting": "Reconnecting…"
+  },
+  "appUpdate": {
+    "available": "A new version is available",
+    "reload": "Reload"
   },
   "userSettings": {
     "title": "Account Settings",
@@ -337,5 +351,19 @@
         "description": "Just to show how to make more feature flags"
       }
     }
+  },
+  "roomBackground": {
+    "title": "Room background",
+    "chooseFile": "Choose file",
+    "remove": "Remove background",
+    "preview": "Background preview",
+    "hint": "JPG, PNG or WebP up to 10 MB. Everyone in the room sees it",
+    "errorFileTooLarge": "File is too large (max 10 MB)",
+    "errorUnsupportedType": "Only JPG, PNG and WebP are supported",
+    "errorDecodeFailed": "Couldn't read the image",
+    "saveError": "Couldn't save the background",
+    "zoom": "Zoom",
+    "adjustHint": "Drag to move the background, zoom with the slider or mouse wheel",
+    "opacity": "Opacity"
   }
 }
