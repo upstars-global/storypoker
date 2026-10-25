@@ -705,8 +705,8 @@ Task 10: done - (subagent opus) commit c97094c; store specs 65 -> 69 cases, all 
 Task 11: done - (subagent sonnet) commit e252dcf; i18n spec 3 -> 5 cases incl. sp-lang=en before init; git diff --stat main -- app/i18n/locales empty; controller rerun: test:ci exit 0, 233 unit tests
 Task 12: done - (subagent opus) commit b8d878a; hook specs 28 old cases kept, 36 total; controller rerun: test:ci exit 0 (269 unit tests), page-load + icon-delivery 17 passed incl. new init-script palette test; index.html unchanged
 Task 13: done - 6324620 + 6ff3ed7 (opus): test:ci exit 0 (281 unit), page-load + icon-delivery 17 passed, no composables in excludes, app/pwa.ts override gone
-Task 14: in progress
-Task 15: pending
+Task 14: done - 9152423 (opus): test:ci exit 0 (290 unit), page-load + icon-delivery 17 passed, main.css diff additions only + @source {ts,tsx}, tsc 7.0.2, Button computed styles = .mui-btn* in 6 palettes x 2 widths
+Task 15: in progress
 Task 16: pending
 Task 17: pending
 Task 18: pending
@@ -751,4 +751,14 @@ Ruling: App.tsx calls soundVolumeStore.getState().initVolume() instead of useSou
 Ruling: useAppUpdate rules live in exported appUpdateStore (pwa.ts calls getState().scheduleUpdate) - low
 Deferred: app/AGENTS.md, tests/AGENTS.md, app/components/AGENTS.md, app/pages/AGENTS.md still mention composables - Task 24
 Deferred: StrictMode double-mount in dev creates 5 unused Audio objects in useCountdown (cleanup correct) - Task 19
+Ruling: components.json has no `base` field; shadcn encodes Base UI as style "base-nova" (`shadcn info --json` -> base: "base") - AC8 checked that way - low
+Ruling: :root --radius-input: 4px is the classic palette default (existing var(--radius-input, 4px) fallbacks), not a shadcn token literal - low
+Ruling: palette --primary/--border and text utilities --color-primary/--color-muted are kept; shadcn code uses bg-(--primary), bg-(--muted) instead of bg-primary/bg-muted - later ui code must follow - medium
+Ruling: init output trimmed (Geist fontsource, base-layer outline-ring/border rules, oklch :root/.dark blocks, chart/sidebar/card tokens) to keep visuals identical - low
+Ruling: Button variants default/text/secondary, sizes default/sm/md; useRipple() is a callback ref not attached by Button - low
+Deferred: lucide-react icons in ui/dialog, dropdown-menu, select break the local-icon rule (icons:check misses React icons) - Task 15/20 swap to AppIcon
+Deferred: shadcn CLI in dependencies only for shadcn/tailwind.css import; consider devDependencies or inlining its variants - Task 23
+Deferred: app/lib/utils.ts re-exports cn, unused (components import "cn") - Task 23
+Deferred: switch thumb --bg-app vs Vue #fafafa; dialog footer "Close" untranslated - Task 15/20
+Deferred: app/assets/AGENTS.md lacks the token bridge description - Task 24
 ```
