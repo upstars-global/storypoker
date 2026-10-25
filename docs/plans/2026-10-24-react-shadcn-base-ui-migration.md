@@ -704,8 +704,8 @@ Task 9: done - (subagent opus) commit 88f2d29; controller rerun: test:icons:harn
 Task 10: done - (subagent opus) commit c97094c; store specs 65 -> 69 cases, all 65 titles kept; controller rerun: test:ci exit 0, 228 unit tests
 Task 11: done - (subagent sonnet) commit e252dcf; i18n spec 3 -> 5 cases incl. sp-lang=en before init; git diff --stat main -- app/i18n/locales empty; controller rerun: test:ci exit 0, 233 unit tests
 Task 12: done - (subagent opus) commit b8d878a; hook specs 28 old cases kept, 36 total; controller rerun: test:ci exit 0 (269 unit tests), page-load + icon-delivery 17 passed incl. new init-script palette test; index.html unchanged
-Task 13: in progress
-Task 14: pending
+Task 13: done - 6324620 + 6ff3ed7 (opus): test:ci exit 0 (281 unit), page-load + icon-delivery 17 passed, no composables in excludes, app/pwa.ts override gone
+Task 14: in progress
 Task 15: pending
 Task 16: pending
 Task 17: pending
@@ -746,4 +746,9 @@ Ruling: profiles.ts type import moved to ~/hooks/useDylanAvatar; iconManifest ge
 Deferred: correction - the app/pwa.ts rules-of-hooks override belongs to Task 13 (useAppUpdate), not Task 12 - Task 13
 Deferred: App.tsx does not call useTheme init() / initVolume() as App.vue did (inline script covers html attrs today) - Task 13 wires them
 Deferred: page-load init-script test reads attrs at the first module script; only valid on the built preview, not the dev server - Task 24 docs
+Ruling: Task 13 landed in two commits - the owner asked for periodic /commit-all checkpoints (6324620 also carries the owner's .gitignore, AGENTS.md, scripts/skills.sh edits) - low
+Ruling: App.tsx calls soundVolumeStore.getState().initVolume() instead of useSoundVolume() - avoids re-rendering the app on volume change - low
+Ruling: useAppUpdate rules live in exported appUpdateStore (pwa.ts calls getState().scheduleUpdate) - low
+Deferred: app/AGENTS.md, tests/AGENTS.md, app/components/AGENTS.md, app/pages/AGENTS.md still mention composables - Task 24
+Deferred: StrictMode double-mount in dev creates 5 unused Audio objects in useCountdown (cleanup correct) - Task 19
 ```
