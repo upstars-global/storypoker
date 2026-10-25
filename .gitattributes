@@ -1,0 +1,1 @@
+tests/visual/__screenshots__/**/*.png filter=lfs diff=lfs merge=lfs -text

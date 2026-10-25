@@ -823,6 +823,7 @@ Ruling: Task 24 closes the docs deferrals (tests/visual, dummy env, resetStores 
 Deferred: vitest.config.ts __dirname warning (code) - Task 25
 Ruling: owner decision 2026-10-25 - nothing is merged; one shared prod database must keep working until the merge, so no deploy:stage and every check runs locally; spec AC25 and Task 25 Check updated - low
 Ruling: Task 25 pre-gate fixes 851cf1f (tests/e2e/tsconfig.json covers e2e, page-objects, visual; 4th typecheck step), 2f05045 (AppTooltip describeTrigger=false for PlayerRow status/moderator/dice icons, labelled once), ad9e347 (tw-animate-css to devDependencies, vitest.config.ts without __dirname); controller rerun: pnpm run test:ci -> exit 0 (446 tests, no __dirname warning), page-load + icon-delivery -> 26 passed - closes four Task 25 deferrals - low
+Ruling: owner decision 2026-10-25 - visual baselines move to Git LFS in this PR (.gitattributes, 348 PNG pointers; Visual job installs git git-lfs and checks out with lfs: true); squash merge keeps binary PNGs out of main history; reference screenshots of the inspiration service go to a separate private io-upstars repo, requested in skills-aiassist - low
 Deferred: RoleBadge, CardsArea, Timer, SlotMachine tooltips not checked for the same double announcement - follow-up
 Ruling: owner allows the local preview check to create one room in the shared prod database - low
 Deferred: root AGENTS.md Workflow still recommends git-worktree-isolation vs the 2026-10-25 one-branch learning - session-learnings triage

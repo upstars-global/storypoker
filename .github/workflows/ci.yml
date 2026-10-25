@@ -194,7 +194,8 @@ jobs:
           retention-days: 7
 
   # Baselines are Linux renders from the pinned Playwright image, so the image tag must match
-  # @playwright/test in package.json. Not a required check.
+  # @playwright/test in package.json. Not a required check. Baselines live in Git LFS; without git and
+  # git-lfs in the image, checkout falls back to the REST API and leaves pointer files instead of PNGs.
   visual:
     name: Visual
     runs-on: ubuntu-latest
@@ -205,7 +206,10 @@ jobs:
     env:
       HOME: /root
     steps:
+      - run: apt-get update && apt-get install -y --no-install-recommends git git-lfs
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
