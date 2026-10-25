@@ -712,8 +712,8 @@ Task 17: done - 0be53b7; controller rerun: pnpm run test:ci -> exit 0 (336 tests
 Task 18: done - 7c74a63; controller rerun: pnpm run test:ci -> exit 0 (375 passed, 1 todo); page-load + icon-delivery -> 17 passed; room-* baselines wait for Task 19 (Timer in every room shot)
 Task 19: done - a6f7669; controller rerun: pnpm run test:ci -> exit 0 (407 passed, 1 todo); page-load + icon-delivery -> 17 passed; CI Visual run 40213360416 pending
 Task 20: done - 3ae6d5d, e3e0e5a; controller rerun: pnpm run test:ci -> exit 0 (445 tests); page-load + icon-delivery -> 17 passed; CI run 40215942021 all green incl. Visual (full set: public, room, modals, scenes)
-Task 21: in progress
-Task 22: pending
+Task 21: done - 5ef37b3; controller rerun: pnpm run test:icons:harness -> 63 passed; pnpm run test:ci -> exit 0 (445 tests)
+Task 22: in progress
 Task 23: pending
 Task 24: pending
 Task 25: pending
@@ -802,4 +802,8 @@ Ruling: AppModalPaper onPointerDown stopPropagation kept - Select outside press 
 Deferred: deck Select chevron 1 px shorter with rounded ends vs native - owner approval of the modal-configure-deck baselines - CI Visual 40215942021 passes at 1% threshold, no baseline update - closed
 Deferred: configure-deck classic light 375 chip rows wrap differently (chips ~1 px wider than the Vue light baseline; Vue dark agrees with React) - CI Visual 40215942021 passes at 1% threshold, no baseline update - closed
 Deferred: skip link text read from uk.json directly, not via i18n - Task 23
+Ruling: harness side-column icon count 36 -> 37 - the moderator alarm toggle (c88391c, #32) never updated the count because the harness does not run in CI; Vue Timer had the same button - low
+Ruling: harness renders the ready marker immediately, showJoin starts from role === 'guest' (react set-state-in-effect); theme/volume init inside RoomHarness - low
+Ruling: SlotMachine checked in Chromium via the harness (widget=slot): 3 reels spin 1100/1700/2300 ms, settle on result symbols, no console errors - closes the Task 19 deferral - low
+Deferred: harness room screenshots are saved but never compared to a reference - Task 23 or a separate task
 ```
