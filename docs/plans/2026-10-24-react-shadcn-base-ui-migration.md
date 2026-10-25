@@ -700,7 +700,7 @@ Ruling: visual-baselines also runs on pull_request labeled update-visual-baselin
 Ruling: Visual and baselines jobs run in playwright:v1.64.1-noble with --user root, HOME=/root - container defaults to HOME=/github/home - low: confirmed only by a real run
 Task 7: done - (subagent opus) commit 3034743; controller rerun with CI dummy VITE_SUPABASE_* : icons:check, typecheck (3 projects), lint 0, test:unit 158 passed, build, icons:audit-build (delta -275849 B gzip), playwright page-load + icon-delivery 16 passed; git ls-files *.vue -> empty
 Task 8: done - (subagent opus) commit 31dbdd8; controller rerun: tsc -v -> Version 7.0.2; test:ci exit 0 (oxlint --type-aware 0 errors, 159 unit tests); icons:audit-build passed; page-load + icon-delivery 16 passed; no eslint/@vue packages in package.json
-Task 9: pending
+Task 9: done - (subagent opus) commit 88f2d29; controller rerun: test:icons:harness -> 30 passed (24 catalog screenshots), 33 skipped (room view fixme -> Task 21); typecheck 0; lint 0
 Task 10: pending
 Task 11: pending
 Task 12: pending
@@ -730,4 +730,6 @@ Ruling: oxlint = correctness at error + react/rules-of-hooks, react/exhaustive-d
 Ruling: per-file overrides for Playwright fixtures ({}, use), generated database.types.ts, deliberate stubs in pwa.spec.ts and swReloadClients.spec.ts, String(unknown) in tests/visual fakeSupabase - test or generated code only - low
 Deferred: .oxlintrc.json rules-of-hooks off for app/pwa.ts (useAppUpdate is not a hook yet) - Task 12 removes the override when porting
 Deferred: AGENTS.md "TypeScript лишається 6.x", README ESLint mentions, vitest.config.ts __dirname warning - Task 24
+Ruling: delivery.spec.ts room-view tests also fixme until Task 21 (they load view=room) - outside Task 9 Files but same cause - low
+Deferred: app/assets/css/main.css @source still globs {vue,ts}, not tsx (Tailwind auto-detection covers it today) - Task 14
 ```
