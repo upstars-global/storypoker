@@ -126,7 +126,7 @@ jobs:
     outputs:
       version: ${{ steps.skill.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.gate.outputs.head_sha }}
           fetch-depth: 0
@@ -153,6 +153,7 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
+        id: claude
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -210,10 +211,22 @@ jobs:
           claude_args: >-
             --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Edit(./auto-review-out/**),Bash(git branch:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*)"
 
-      - uses: actions/upload-artifact@v4
+      # The action hides the agent's output, so a run that ends without a body would leave no reason
+      - name: Show why no review was written
+        if: always() && steps.claude.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          [ -f auto-review-out/review.md ] && exit 0
+          [ -f "$EXECUTION_FILE" ] || exit 0
+          echo "::warning::The agent finished without auto-review-out/review.md; its result follows"
+          jq -r '[if type == "array" then .[] else . end | select(.type? == "result")] | last | "subtype=\(.subtype // "none") turns=\(.num_turns // "none") is_error=\(.is_error | tostring)", (.result // "no result message")[0:4000]' "$EXECUTION_FILE" || true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: claude-review
-          path: auto-review-out/
+          # Only the file publish reads: anything else the agent writes stays on the runner
+          path: auto-review-out/review.md
           if-no-files-found: error
           retention-days: 1
 
@@ -235,7 +248,7 @@ jobs:
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       BODY_FILE: auto-review-out/review.md
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         continue-on-error: true
         with:
           name: claude-review
