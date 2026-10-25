@@ -663,8 +663,9 @@ Supabase -> passed; кожна з 42 спек має рядок у таблиц�
 
 **Depends on:** Task 24
 
-**Check:** `pnpm run test:ci` -> зелений; `pnpm run deploy:stage` з голови гілки, дві вкладки на stage-URL: вхід у
-кімнату, голос в одній з'являється в другій -> так; CI на PR у `main` -> усі required і `Visual` зелені
+**Check:** `pnpm run test:ci` -> зелений; локальний `pnpm run build && pnpm run preview` з голови гілки, дві вкладки на
+`localhost`: вхід у кімнату, голос в одній з'являється в другій -> так; CI на PR -> усі required і `Visual` зелені;
+без `deploy:stage` і без злиття
 
 **Commit:** none (злиття через `finalize`)
 
@@ -820,6 +821,7 @@ Deferred: harness room screenshots - recommend toHaveScreenshot with container b
 Deferred: app/assets/AGENTS.md:15-16 lists removed .mui-btn-sm/.mui-btn-text/.mui-btn-secondary; app/components/AGENTS.md:8 mentions useClickOutside - Task 24
 Ruling: Task 24 closes the docs deferrals (tests/visual, dummy env, resetStores module state, init-script preview, composables, token bridge, PO/SM 5 spins, removed mui classes); DESIGN.md §1-§10 audit notes left as dated history; netlify/AGENTS.md TeamConsistencyTrends.vue names the neighbouring Nuxt repo, correct - low
 Deferred: vitest.config.ts __dirname warning (code) - Task 25
+Ruling: owner decision 2026-10-25 - nothing is merged; one shared prod database must keep working until the merge, so no deploy:stage and every check runs locally; spec AC25 and Task 25 Check updated - low
 Deferred: root AGENTS.md Workflow still recommends git-worktree-isolation vs the 2026-10-25 one-branch learning - session-learnings triage
 ```
 
