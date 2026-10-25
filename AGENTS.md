@@ -116,7 +116,7 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 Агент не має shell (`--disallowedTools "Bash"`: вбудовані read-only команди на кшталт `printenv` читають його env)
 і `gh`, читає лише workspace і `~/.claude/skills` (`blockReadsOutsideWorkingDirectories`), `.git/` йому закритий
 (`Read(./.git/**)`: в `.git/config` лежить токен дії), а пише лише тіло у файл. Лог, дифф, base-копії, tree і
-`pr.json` (опис, рев'ю, коментарі) йому готує `Prepare review target` в `auto-review-target/`; PR, що трекає цю
+`pr.json` (опис; рев'ю й коментарі лише OWNER/MEMBER/COLLABORATOR) йому готує `Prepare review target` в `auto-review-target/`; PR, що трекає цю
 теку чи `auto-review-out/`, валить job. Job `publish` перевіряє тіло й свіжість head, а PAT має тільки крок `post`
 (звіряє, що токен належить `so-upstars`) - гарантія лише для копії з `main`, прогони `pull_request` беруть
 воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер, підпис останнім рядком, вердикти й лічильники з

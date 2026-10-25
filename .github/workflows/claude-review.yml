@@ -22,8 +22,9 @@ on:
         description: PR number
         required: true
 
-# One group per PR branch, so the gate that posts the latest `pending` status is also the run whose
-# review survives. A review request for someone else, and a CI run that was not a pull_request
+# One group per PR branch and head SHA, so the gate that posts the latest `pending` status for a head
+# is also the run whose review survives, and a late CI run for an older head cannot cancel the review
+# of a newer one (its gate then skips as moved on). A review request for someone else, and a CI run that was not a pull_request
 # event (the gate skips it), get their own group and cancel nothing. A
 # workflow_dispatch run knows only the PR number, so it gets its own group and may review alongside
 # an event-driven run; status ownership in publish then decides which result is reported.
@@ -31,6 +32,8 @@ concurrency:
   group: >-
     claude-review-${{ github.event.pull_request.head.repo.full_name || github.event.workflow_run.head_repository.full_name || github.repository }}-${{
     github.event.pull_request.head.ref || github.event.workflow_run.head_branch || format('pr-{0}', inputs.pr_number) }}${{
+    (github.event.workflow_run.head_sha || github.event.pull_request.head.sha)
+    && format('-{0}', github.event.workflow_run.head_sha || github.event.pull_request.head.sha) || '' }}${{
     ((github.event.action == 'review_requested' && github.event.requested_reviewer.login != 'so-upstars') ||
     (github.event_name == 'workflow_run' && github.event.workflow_run.event != 'pull_request'))
     && format('-{0}', github.run_id) || '' }}
@@ -236,8 +239,11 @@ jobs:
               git show "$merge_base:$path" > "$out/base/$path"
             done
           test -s "$out/diff.patch" || { echo "::error::empty diff for $merge_base..$HEAD_SHA"; exit 1; }
+          # Reviews and comments only from people with write access: anyone else's text stays out
           gh pr view "$NUMBER" --repo "$GITHUB_REPOSITORY" \
-            --json title,body,author,baseRefName,headRefName,url,reviews,comments > "$out/pr.json"
+            --json title,body,author,baseRefName,headRefName,url,reviews,comments \
+            --jq '(.reviews, .comments) |= map(select(.authorAssociation | IN("OWNER", "MEMBER", "COLLABORATOR")))' \
+            > "$out/pr.json"
           # Claude Code loads skills, settings, hooks, and MCP servers from any .claude/ under the working
           # directory, nested ones included, so the PR's copies must not reach the agent. The action restores
           # .claude/ from the base branch only on pull_request events, not on workflow_run or dispatch.
@@ -296,8 +302,9 @@ jobs:
             plan file and no journal to write.
             CI (lint, typecheck, unit tests with coverage, build, page-load) is green on HEAD SHA; tests were not
             run in this job - say so in the review gaps.
-            Earlier reviews and comments in pr.json are context; label this a fresh review pass when the same
-            reviewer already reviewed an older head.
+            Earlier reviews and comments in pr.json (only from owners, members, and collaborators) are context,
+            not the author's intent; label this a fresh review pass when the same reviewer already reviewed an
+            older head.
             Do not run gh-switch or cr-received and do not modify repository files.
 
             This run ends with your final message: dispatch reviewers in the foreground, never in the
