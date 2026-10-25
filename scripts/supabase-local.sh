@@ -9,7 +9,8 @@ env_test="$repo/.env/.env.test"
 
 mkdir -p "$workdir"
 ln -sfn "$repo/supabase" "$workdir/supabase"
-supabase start --workdir "$workdir" -x studio,imgproxy,vector,analytics,edge-runtime,functions
+# The start summary prints the local keys; CI logs of this public repo must not carry them.
+supabase start --workdir "$workdir" -x studio,imgproxy,vector,analytics,edge-runtime,functions >/dev/null
 
 status="$(supabase status --workdir "$workdir" -o env 2>/dev/null)"
 value() { printf '%s\n' "$status" | sed -n "s/^$1=\"\{0,1\}\([^\"]*\)\"\{0,1\}\$/\1/p"; }

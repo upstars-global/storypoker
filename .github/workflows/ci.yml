@@ -11,26 +11,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  detect-secrets:
-    name: Detect secrets
-    runs-on: ubuntu-latest
-    outputs:
-      has_e2e: ${{ steps.check.outputs.has_e2e }}
-    steps:
-      - id: check
-        env:
-          E2E_URL: ${{ secrets.E2E_SUPABASE_URL }}
-          E2E_ANON: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
-          E2E_SR: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-          E2E_USER: ${{ secrets.E2E_TEST_USER_EMAIL }}
-          E2E_PASS: ${{ secrets.E2E_TEST_USER_PASSWORD }}
-        run: |
-          if [[ -n "$E2E_URL" && -n "$E2E_ANON" && -n "$E2E_SR" && -n "$E2E_USER" && -n "$E2E_PASS" ]]; then
-            echo "has_e2e=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_e2e=false" >> "$GITHUB_OUTPUT"
-          fi
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -226,12 +206,13 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # Runs against a throwaway local Supabase on the runner (Docker is preinstalled), never the
+  # shared project. scripts/supabase-local.sh writes .env/.env.test, which playwright.config.ts
+  # skips under CI, so the next step exports it to the job env.
   e2e:
     name: E2E
-    needs: detect-secrets
-    if: ${{ needs.detect-secrets.outputs.has_e2e == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -255,15 +236,19 @@ jobs:
       - name: Install Playwright system deps
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium webkit
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.108.0
+      - run: pnpm run supabase:local
+      - name: Export local Supabase env
+        run: |
+          while IFS='=' read -r key value; do
+            case "$key" in
+              SUPABASE_TEST_SERVICE_ROLE_KEY|E2E_TEST_USER_PASSWORD) echo "::add-mask::$value" ;;
+            esac
+            echo "$key=$value" >> "$GITHUB_ENV"
+          done < .env/.env.test
       - run: pnpm run test:e2e
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
-          VITE_SUPABASE_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
-          SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
-          SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-          E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
-          E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4

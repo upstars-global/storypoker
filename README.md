@@ -267,9 +267,9 @@ pnpm run test:e2e -- --project=chromium
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests, pushes to `main` and manual dispatch:
 
-- `detect-secrets`, `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
+- `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
 - `visual` (not required) runs the `visual` Playwright project in the `mcr.microsoft.com/playwright` container against the committed baselines; `visual-baselines.yml` regenerates them on the `update-visual-baselines` PR label.
-- `e2e` (Chromium + WebKit against the test Supabase project) runs only when the `E2E_*` secrets are set.
+- `e2e` (not required; Chromium + WebKit) starts a throwaway local Supabase on the runner with `pnpm run supabase:local` and never touches the shared project.
 - There is no deploy job: Netlify builds `main` itself from the repo (`netlify.toml`), and the CI `dist` is built with placeholder credentials for the icon audit only.
 
 ### Ports
