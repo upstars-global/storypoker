@@ -15,6 +15,7 @@
   "git.openRepositoryInParentFolders": "never",
   "[markdown]": {
     "editor.wordWrap": "off",
+    "diffEditor.ignoreTrimWhitespace": true,
   },
   "workbench.editor.empty.hint": "hidden",
   "explorer.confirmPasteNative": false,
@@ -23,5 +24,16 @@
   "workbench.editor.openSideBySideDirection": "right",
   "extensions.ignoreRecommendations": true,
   "explorer.confirmDragAndDrop": false,
-  "explorer.confirmDelete": false
+  "explorer.confirmDelete": false,
+  "[yaml]": {
+    "diffEditor.ignoreTrimWhitespace": true
+  },
+  "workbench.editor.enablePreview": false,
+  "editor.accessibilitySupport": "off",
+  "window.restoreWindows": "all",
+  "terminal.integrated.enablePersistentSessions": true,
+  "terminal.integrated.persistentSessionReviveProcess": "onExitAndWindowClose",
+  "window.confirmBeforeClose": "keyboardOnly",
+  "editor.hover.enabled": "off",
+  "editor.parameterHints.enabled": false,
 }

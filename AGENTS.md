@@ -101,7 +101,13 @@ Supabase-кредами) на кожен run; `e2e` - тільки коли за
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
 `cr-request` і один раз лишає PR review від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
-скіл ставиться в `~/.claude/skills` (`-g`): на подіях `pull_request` дія відновлює `.claude` з `main`;
+скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
+воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`: на подіях `pull_request` дія
+відновлює `.claude` з `main`. Агент має лише read-only `GITHUB_TOKEN` і пише тіло у файл; job `publish` перевіряє
+його й свіжість head, а PAT має тільки крок `post` (звіряє, що токен належить `so-upstars`) - гарантія лише для
+копії з `main`, прогони `pull_request` беруть воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер,
+підпис, лічильники, токеноподібні рядки), а не його зміст: це прийнятий компроміс, а не дефект для рев'ю - статус
+дорадчий, рев'ю читає людина;
 хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `review_requested` - одразу з гілки PR.
@@ -171,6 +177,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - TypeScript у composables/utils/stores; `<script setup lang="ts">` у Vue SFC
 - Без wrapper-абстракцій, які тільки перейменовують функції
 - UI-тексти мають проходити через i18n, якщо компонент вже локалізований
+- `.vscode/settings.json` у репо навмисно: спільні налаштування VS Code для тіммейтів Scrum Office, щоб проєкт у всіх був налаштований однаково. Особисті на вигляд ключі в ньому - не дефект для рев'ю; змінювати лише за згодою команди
 
 ## Security
 - Не друкувати секрети або повні env values; у прикладах - placeholders
