@@ -565,6 +565,12 @@ export default function RoomPage() {
     if (playerUserIds) void useProfilesStore.getState().fetchMany(playerUserIds.split(','))
   }, [playerUserIds])
 
+  const userId = user?.id ?? null
+  const unlinkedPlayerId = currentPlayer && !currentPlayer.user_id ? currentPlayer.id : null
+  useEffect(() => {
+    if (userId && unlinkedPlayerId) void usePlayersStore.getState().linkUser(unlinkedPlayerId, userId)
+  }, [userId, unlinkedPlayerId])
+
   async function showActionNotice(message: string) {
     clearTimeout(actionNoticeTimer.current)
     setActionNotice(null)
@@ -643,13 +649,6 @@ export default function RoomPage() {
     if (!kickTargetId) return
     await usePlayersStore.getState().kick(kickTargetId)
     setKickTargetId(null)
-  }
-
-  async function handleAuthSuccess() {
-    const userId = useAuthStore.getState().user?.id
-    if (currentPlayerIdRef.current && userId) {
-      await usePlayersStore.getState().linkUser(currentPlayerIdRef.current, userId)
-    }
   }
 
   function broadcastCountdownStart(mode: CountdownMode) {
@@ -904,7 +903,6 @@ export default function RoomPage() {
         <AuthModal
           mode={showAuth}
           onClose={() => setShowAuth(null)}
-          onSuccess={() => void handleAuthSuccess()}
         />
       )}
 

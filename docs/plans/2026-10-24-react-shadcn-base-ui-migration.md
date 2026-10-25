@@ -830,6 +830,7 @@ Ruling: owner decision 2026-10-25 - visual baselines move to Git LFS in this PR 
 Deferred: RoleBadge, CardsArea, Timer, SlotMachine tooltips not checked for the same double announcement - follow-up
 Ruling: owner allows the local preview check to create one room in the shared prod database - low
 Deferred: root AGENTS.md Workflow still recommends git-worktree-isolation vs the 2026-10-25 one-branch learning - session-learnings triage
+Ruling: owner decision 2026-10-25 - deviation from Vue parity in this PR: the room page links the current player to the signed-in user whenever the player has no user_id (auto-rejoin after signing in outside the room AuthModal left players.user_id null, so the avatar never showed; Vue main had the same gap); replaces handleAuthSuccess; roomPage.spec 'room page account link' x3, test:ci 449 - low
 ```
 
 ### Task 22: стара Vue-спека → React-тест

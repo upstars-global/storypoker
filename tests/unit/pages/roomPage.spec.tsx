@@ -122,6 +122,7 @@ function LocationProbe() {
 const mocks = {
   rejoin: vi.fn(),
   findExistingPlayer: vi.fn(),
+  linkUser: vi.fn(),
   presenceStart: vi.fn(),
   presenceStop: vi.fn(),
   fetchMany: vi.fn(),
@@ -156,13 +157,14 @@ async function mountRoom(options: {
   mocks.resolveRoom = vi.fn().mockResolvedValue(options.room === undefined ? fakeRoom() : options.room)
   mocks.rejoin = vi.fn(options.rejoin ?? (async () => me))
   mocks.findExistingPlayer = vi.fn().mockResolvedValue(options.existing === undefined ? me : options.existing)
+  mocks.linkUser = vi.fn().mockResolvedValue(undefined)
   mocks.presenceStart = vi.fn().mockResolvedValue(undefined)
   mocks.presenceStop = vi.fn().mockResolvedValue(undefined)
   mocks.fetchMany = vi.fn().mockResolvedValue(undefined)
 
   useAuthStore.setState({ init: vi.fn(async () => { useAuthStore.setState({ user }) }) })
   useRoomStore.setState({ resolveRoom: mocks.resolveRoom })
-  usePlayersStore.setState({ rejoin: mocks.rejoin, findExistingPlayer: mocks.findExistingPlayer })
+  usePlayersStore.setState({ rejoin: mocks.rejoin, findExistingPlayer: mocks.findExistingPlayer, linkUser: mocks.linkUser })
   usePresenceStore.setState({ start: mocks.presenceStart, stop: mocks.presenceStop })
   useProfilesStore.setState({ fetchMany: mocks.fetchMany })
 
@@ -532,6 +534,26 @@ describe('room page results', () => {
     expect(rename).toHaveBeenCalledWith('alice', 'Alice')
     expect(setShields).toHaveBeenCalledWith('alice', ['qa'])
     expect(screen.queryByTestId('player-edit-modal')).toBeNull()
+  })
+})
+
+describe('room page account link', () => {
+  const anonymousMe = { ...me, user_id: null }
+
+  it('links a restored anonymous player to the signed-in user', async () => {
+    await mountRoom({ players: [anonymousMe], rejoin: async () => anonymousMe, existing: anonymousMe })
+    expect(mocks.linkUser).toHaveBeenCalledOnce()
+    expect(mocks.linkUser).toHaveBeenCalledWith('me', 'u1')
+  })
+
+  it('leaves a player that already has a user untouched', async () => {
+    await mountRoom()
+    expect(mocks.linkUser).not.toHaveBeenCalled()
+  })
+
+  it('does not link without a signed-in user', async () => {
+    await mountRoom({ user: null, players: [anonymousMe], rejoin: async () => anonymousMe, existing: anonymousMe })
+    expect(mocks.linkUser).not.toHaveBeenCalled()
   })
 })
 
