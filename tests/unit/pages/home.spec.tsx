@@ -102,7 +102,7 @@ describe('home page', () => {
   })
 
   it('lists recent rooms from storypoker_session_* entries, newest first', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-10-25T12:00:00.000Z'))
     seedSession('aaaaaaaa', 'Ann', '2026-10-25T09:00:00.000Z')
     seedSession('bbbbbbbb', 'Bob', '2026-10-25T11:58:00.000Z')
@@ -159,7 +159,7 @@ describe('home page', () => {
   })
 
   it('creates a room, joins as moderator, records the session and opens the room', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-10-25T12:00:00.000Z'))
     fakeTables({})
     const create = vi.fn().mockResolvedValue('abcd2345')
