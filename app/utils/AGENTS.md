@@ -30,7 +30,7 @@ PieChart, а кольорове коло з середнім балом (`goalCl
 `alignmentScore`/`averageOf` (`app/utils/alignment.ts`, `roundStats.ts`) і DEV/QA-спліт (`shields.ts`) навмисно
 продубльовані в `netlify/functions/room-json.mts` - Netlify bundler не резолвить Vite alias `~/*`. Зміну формули
 синхронізувати вручну в обох місцях. Pipeline графіка узгодженості (`AlignmentTrendsModal.vue`) - `DESIGN.md`
-§11.3–11.4.
+§11.3-11.4.
 
 `isNumericPreset` вирішує, які колоди потрапляють в узгодженість: `scrum`/`fibonacci`/`hours`/`goal_clarity` +
 legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і нечислові (`tshirt`/`boolean`) виключені.
