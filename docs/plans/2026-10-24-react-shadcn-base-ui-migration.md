@@ -702,8 +702,8 @@ Task 7: done - (subagent opus) commit 3034743; controller rerun with CI dummy VI
 Task 8: done - (subagent opus) commit 31dbdd8; controller rerun: tsc -v -> Version 7.0.2; test:ci exit 0 (oxlint --type-aware 0 errors, 159 unit tests); icons:audit-build passed; page-load + icon-delivery 16 passed; no eslint/@vue packages in package.json
 Task 9: done - (subagent opus) commit 88f2d29; controller rerun: test:icons:harness -> 30 passed (24 catalog screenshots), 33 skipped (room view fixme -> Task 21); typecheck 0; lint 0
 Task 10: done - (subagent opus) commit c97094c; store specs 65 -> 69 cases, all 65 titles kept; controller rerun: test:ci exit 0, 228 unit tests
-Task 11: in progress
-Task 12: pending
+Task 11: done - (subagent sonnet) commit e252dcf; i18n spec 3 -> 5 cases incl. sp-lang=en before init; git diff --stat main -- app/i18n/locales empty; controller rerun: test:ci exit 0, 233 unit tests
+Task 12: in progress
 Task 13: pending
 Task 14: pending
 Task 15: pending
@@ -736,4 +736,7 @@ Ruling: visiblePlayers is a stored field recomputed by usePlayersStore.subscribe
 Ruling: room actions snapshot roomId/roomState via get() at call start instead of re-reading after each await; reveal's history row uses round_started_at/active_cards/deck_preset that reveal itself does not change - low
 Ruling: app/stores/AGENTS.md heading and access/reset notes updated with the port - outside Files, belongs to the stores scope - low
 Deferred: tests/AGENTS.md still names deleted tests/support/setup/vitest.ts; auth initialized flag and profiles pending-fetch cache are module-level and not reset by resetStores() - Task 24 / when a test needs it
+Ruling: fallbackLng uk per plan (Vue had fallbackLocale en) - uk.json and en.json have identical key sets, so no visible difference - low
+Ruling: persistLocale also calls i18n.changeLanguage (Vue switched locale at the call site) - callers in Tasks 12/16-19 must not switch twice - low
+Ruling: app/main.tsx imports ~/i18n so html lang and i18next init before render - low
 ```
