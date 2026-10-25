@@ -708,8 +708,8 @@ Task 13: done - 6324620 + 6ff3ed7 (opus): test:ci exit 0 (281 unit), page-load +
 Task 14: done - 9152423 (opus): test:ci exit 0 (290 unit), page-load + icon-delivery 17 passed, main.css diff additions only + @source {ts,tsx}, tsc 7.0.2, Button computed styles = .mui-btn* in 6 palettes x 2 widths
 Task 15: done - 9f287b8 (opus): test:unit components 21 passed, test:ci exit 0 (311 unit), page-load + icon-delivery 17 passed, header menu checked in built preview
 Task 16: done - 707c57e; controller rerun: pnpm run test:ci -> exit 0 (329 tests); page-load + icon-delivery -> 17 passed; CI Visual on PR #46 pending
-Task 17: in progress
-Task 18: pending
+Task 17: done - 0be53b7; controller rerun: pnpm run test:ci -> exit 0 (336 tests); page-load + icon-delivery -> 17 passed
+Task 18: in progress
 Task 19: pending
 Task 20: pending
 Task 21: pending
@@ -774,9 +774,12 @@ Deferred: header menu placement at 375 px under Base UI collision avoidance - Ta
 Ruling: app/pages/AuthPageLayout.tsx added outside Task 16 Files - shared header + paper shell of the four auth pages - low
 Ruling: signup skips the user redirect while signUp is in flight; page forms submit only via form submit (Vue also fired keyup.enter, double submit) - low
 Ruling: auth pages keep native inputs with .mui-input; ui/input.tsx not bridged (its utilities override the floating label) - low
-Deferred: forgot-password classic light/dark at 1280 differs 0.02 locally on macOS (caption wraps) - confirm in CI Visual - Task 22
+Deferred: forgot-password classic light/dark at 1280 differs 0.02 locally on macOS (caption wraps) - CI Visual run 40208875784 on 0be53b7 passes it (macOS font metrics only) - closed
 Deferred: Sign in / Sign up / Sign out items in the AppHeader account menu - Task 18
 Deferred: AuthModal not mounted yet; modal-auth-* baselines - Task 18
 Deferred: ripple may vanish when the submit label text changes; wrap the label in a span - Task 20
 Ruling: react-router 7.18.4 -> 8.5.0 by owner decision 2026-10-25; spec decision 7 updated - v8 breaking changes hit only framework/data mode and react-router-dom, unused here; test:ci exit 0 (329), page-load + icon-delivery 17 passed - low
+Ruling: home mounts AppHeader without props; returning player's header avatar seed (headerPlayerName) dropped until the header gets auth/profile props - no baseline covers it - low
+Deferred: home headerPlayerName avatar seed, AuthModal and UserSettingsModal on home - Task 18 / Task 20
+Ruling: CI Visual run 40208875784 on 0be53b7: 79 passed (all public login/signup/forgot/reset/home, 1280 + 375), 257 failed only in room.spec, modals.spec and room scene self-checks - routes still stubs until Tasks 18-21 - low
 ```
