@@ -102,10 +102,12 @@ job `build` збирає `dist` лише для `icons:audit-build` і з placeh
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
 `cr-request` і один раз лишає PR review від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
 скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
-воркфлоу - `v0.0.4`) і копіюється в `~/.claude/skills`: на подіях `pull_request` дія відновлює `.claude` з `main`.
-Агент має лише read-only `GITHUB_TOKEN` і пише тіло у файл; job `publish` перевіряє його й свіжість head, а PAT
-має тільки крок `post` (звіряє, що токен належить `so-upstars`) - гарантія лише для копії з `main`, прогони
-`pull_request` беруть воркфлоу з гілки PR;
+воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`: на подіях `pull_request` дія
+відновлює `.claude` з `main`. Агент має лише read-only `GITHUB_TOKEN` і пише тіло у файл; job `publish` перевіряє
+його й свіжість head, а PAT має тільки крок `post` (звіряє, що токен належить `so-upstars`) - гарантія лише для
+копії з `main`, прогони `pull_request` беруть воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер,
+підпис, лічильники, токеноподібні рядки), а не його зміст: це прийнятий компроміс, а не дефект для рев'ю - статус
+дорадчий, рев'ю читає людина;
 хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `review_requested` - одразу з гілки PR.

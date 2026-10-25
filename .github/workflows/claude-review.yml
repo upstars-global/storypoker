@@ -1,6 +1,8 @@
 # The agent reviews with a read-only GITHUB_TOKEN and writes the body to a file; the publish job
 # validates it and only its `post` step gets the so-upstars PAT. That holds for the main copy of this
 # file: pull_request runs use the PR branch's copy, so anyone who can push a branch can reach the PAT.
+# Accepted trade-off (AGENTS.md): the checks cover the body's structure and token-like strings, not its
+# prose; a prompt-injected body can still mislead, and the status is advisory, not a required check.
 name: Claude review
 
 on:
@@ -275,7 +277,7 @@ jobs:
           [[ "$VERSION" =~ ^[0-9][0-9.]*$ ]] || fail "No cr-request version from the review job"
           [ "$(head -n 1 "$BODY_FILE")" = "$MARKER" ] || fail "The review body does not start with the marker"
           grep -qxF "Reviewed with: \`/cr-request\` $VERSION skill" "$BODY_FILE" || fail "The review body has no signature line"
-          if grep -qE '(ghp_|ghs_|gho_|github_pat_|sk-ant-|sb_secret_)[A-Za-z0-9]' "$BODY_FILE"; then
+          if grep -qE '(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_)[A-Za-z0-9]' "$BODY_FILE"; then
             fail "Review body contains a token-like string"
           fi
           critical=$(count Critical)
