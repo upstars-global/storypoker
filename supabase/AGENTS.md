@@ -22,7 +22,7 @@ allowed»), тож delete-політику так не перевірити - л
   background_owner_id, created_at)`
 - `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms,
   poll_question, result_cohorts[], alarm_minutes, alarm_muted)` - `result_cohorts` з `017`, check-констрейнт на
-  `DEV/BE/FE/SRE/QA`, `null` = DEV+QA; будильник таймера з `018` (`alarm_minutes` 3–20, `null` = 5 хв)
+  `DEV/BE/FE/SRE/QA`, `null` = DEV+QA; будильник таймера з `018` (`alarm_minutes` 3-20, `null` = 5 хв)
 - `players (id uuid PK, room_id, name, is_moderator, vote, user_id, shields text[], created_at, left_at)`
 - `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, deck_preset, created_at)`
 - `user_profiles (user_id uuid PK, avatar_style, avatar_seed, avatar_url, updated_at)`
@@ -53,7 +53,7 @@ bucket `room-backgrounds` (public read, 2 MB, лише `image/webp`), чотир
 `rooms_guard_background` блокує анонімам зміну `background_url`, `background_opacity`, `background_updated_at` і
 `background_owner_id`. `background_owner_id` клієнт більше не читає й не пише; колонка лишилась, бо старі клієнти
 ще роблять claim, - її можна дропнути окремою міграцією. `rooms.background_url` обмежений
-check-констрейнтом до `id || '/background.webp'`, `background_updated_at` - кеш-інвалідація `?v=`, `background_opacity` (0.1–1, `null` = 0.65) - непрозорість фону. Модалка дає кадрувати
+check-констрейнтом до `id || '/background.webp'`, `background_updated_at` - кеш-інвалідація `?v=`, `background_opacity` (0.1-1, `null` = 0.65) - непрозорість фону. Модалка дає кадрувати
 (drag/zoom у рамці 16:9), клієнт ріже кадр у WebP ≤ 1920×1080 (`app/utils/backgroundImage.ts`, спільне кодування з аватарками - `imageEncoding.ts`); UI лише для
 authorized moderator. Зняття фону, як і аватарки, спершу пише `background_url: null`, файл видаляється best-effort.
 `backgroundDisplayUrl()` (`stores/room.ts`) пропускає лише шлях за regex, бо значення йде в CSS `url()`, а `rooms.id`
