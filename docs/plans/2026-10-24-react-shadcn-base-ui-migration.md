@@ -889,3 +889,4 @@ Review R1: code reviewer codex gpt-6.1-sol effort low, range 5ed0b18..10cd0d9, t
 Finding R1-codex-F1: Important README.md:253 - clean-Mac e2e path never installs the Playwright browser
 Received R1: R1-codex-F1 ACCEPT - README Local Supabase adds pnpm exec playwright install chromium; Re-review: not needed (one-line docs fix)
 Ruling: owner 2026-10-26 - CI e2e against a local Supabase on the runner, Detect secrets dropped from required checks; visual baselines no longer stored (348 PNG, Git LFS and visual-baselines.yml removed), Visual compares the PR base render with the head via scripts/visual-compare.sh
+Verify: PASS full tree 9616cb761efc173b1a1c60bba056379b5353bc17 2026-10-26 00:52
