@@ -80,7 +80,7 @@ Story Poker переходить з Vue 3.5 на React 19 і UI-примітив
    `typescript/unstable/ast`.** Беремо це, а не TS 6 під alias для старих інструментів: один компілятор, але
    залежність від нестабільного API TS 7 і ще одна міграція (ESLint → oxlint). Правило «TypeScript лишається
    6.x» в `AGENTS.md` свідомо скасовується.
-7. **Стек замін:** react-router 7 (declarative mode, явні маршрути) замість vue-router, Zustand замість Pinia,
+7. **Стек замін:** react-router 8 (declarative mode, явні маршрути) замість vue-router, Zustand замість Pinia,
    react-i18next на тих самих `uk.json`/`en.json`, ECharts через власний хук замість vue-echarts,
    `@testing-library/react` замість `@vue/test-utils`, власний ripple у стилі Material Design замість `v-wave`.
    Відкинуто: TanStack Router + Jotai.

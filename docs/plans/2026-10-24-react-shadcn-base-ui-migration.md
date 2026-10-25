@@ -19,7 +19,7 @@ P3 Tasks 16-17 і 20 незалежні після Task 15, решта йде п
 Contract спеки. Паралельних агентів план не потребує.
 
 **Stack:** React 19.3, react-dom 19.3, `@base-ui/react` 1.9, shadcn CLI 4.22 (`init -b base`), Tailwind v4
-(`@tailwindcss/vite`), Vite 8 + `@vitejs/plugin-react`, vite-plugin-pwa, react-router 7 (declarative), Zustand 5,
+(`@tailwindcss/vite`), Vite 8 + `@vitejs/plugin-react`, vite-plugin-pwa, react-router 8 (declarative), Zustand 5,
 react-i18next + i18next, echarts 6 (без `vue-echarts`), Supabase JS 2, TypeScript 7 (`tsc`), oxlint +
 `oxlint-tsgolint` (type-aware), Vitest 5 + happy-dom + `@testing-library/react`, Playwright 1.64.1 (образ
 `mcr.microsoft.com/playwright:v1.64.1-noble` для `visual`), pnpm 12. Скіли за задачами: `shadcn`,
@@ -57,7 +57,7 @@ react-i18next + i18next, echarts 6 (без `vue-echarts`), Supabase JS 2, TypeSc
    `typescript/unstable/ast`.** Беремо це, а не TS 6 під alias для старих інструментів: один компілятор, але
    залежність від нестабільного API TS 7 і ще одна міграція (ESLint → oxlint). Правило «TypeScript лишається
    6.x» в `AGENTS.md` свідомо скасовується.
-7. **Стек замін:** react-router 7 (declarative mode, явні маршрути) замість vue-router, Zustand замість Pinia,
+7. **Стек замін:** react-router 8 (declarative mode, явні маршрути) замість vue-router, Zustand замість Pinia,
    react-i18next на тих самих `uk.json`/`en.json`, ECharts через власний хук замість vue-echarts,
    `@testing-library/react` замість `@vue/test-utils`, власний ripple у стилі Material Design замість `v-wave`.
    Відкинуто: TanStack Router + Jotai.
@@ -299,7 +299,7 @@ react-i18next + i18next, echarts 6 (без `vue-echarts`), Supabase JS 2, TypeSc
 `/forgot-password`, `/reset-password`, `/ffc`, `/:slug`; `/ffc` - повний порт (перемикачі `#ffc-<flag>`); решта -
 заглушка `main#main`. Сканер читає `.ts`/`.tsx` на TS 6 (`ScriptKind.TSX`) і не знає `.vue`. Залежності:
 -`vue`, `pinia`, `vue-router`, `vue-i18n`, `vue-echarts`, `v-wave`, `@vitejs/plugin-vue`, `@vue/*`, `vue-tsc`;
-+`react`, `react-dom`, `react-router@7`, `@vitejs/plugin-react`, `@types/react`, `@types/react-dom`,
++`react`, `react-dom`, `react-router@8`, `@vitejs/plugin-react`, `@types/react`, `@types/react-dom`,
 `@testing-library/react`. `pinia`/`vue-i18n` прибираються тут, бо сторі й i18n до Task 10-11 ніхто не імпортує.
 Unit-спеки утиліт лишаються без змін.
 
@@ -778,4 +778,5 @@ Deferred: forgot-password classic light/dark at 1280 differs 0.02 locally on mac
 Deferred: Sign in / Sign up / Sign out items in the AppHeader account menu - Task 18
 Deferred: AuthModal not mounted yet; modal-auth-* baselines - Task 18
 Deferred: ripple may vanish when the submit label text changes; wrap the label in a span - Task 20
+Ruling: react-router 7.18.4 -> 8.5.0 by owner decision 2026-10-25; spec decision 7 updated - v8 breaking changes hit only framework/data mode and react-router-dom, unused here; test:ci exit 0 (329), page-load + icon-delivery 17 passed - low
 ```
