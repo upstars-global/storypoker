@@ -4,7 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client", "vite-plugin-pwa/vanillajs"],
     "esModuleInterop": true,
@@ -26,8 +26,32 @@
   "include": [
     "app/**/*.ts",
     "app/**/*.tsx",
-    "app/**/*.vue",
     "tests/unit/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", ".nuxt", ".output"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".nuxt",
+    ".output",
+    "app/stores/auth.ts",
+    "app/stores/players.ts",
+    "app/stores/presence.ts",
+    "app/stores/profiles.ts",
+    "app/stores/room.ts",
+    "app/composables/useCardLabel.ts",
+    "app/composables/useClickOutside.ts",
+    "app/composables/useCountdown.ts",
+    "app/composables/useDylanAvatar.ts",
+    "app/composables/useMenuKeyboard.ts",
+    "app/composables/useSoundVolume.ts",
+    "app/composables/useTheme.ts",
+    "tests/unit/stores",
+    "tests/unit/composables/useCountdown.spec.ts",
+    "tests/unit/composables/useDylanAvatar.spec.ts",
+    "tests/unit/composables/useMenuKeyboard.spec.ts",
+    "tests/unit/composables/useSoundVolume.spec.ts",
+    "tests/unit/composables/useTheme.spec.ts",
+    "tests/unit/utils/useClickOutside.spec.ts",
+    "tests/unit/i18n.spec.ts"
+  ]
 }

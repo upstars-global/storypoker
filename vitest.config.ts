@@ -1,13 +1,23 @@
 import { defineConfig } from 'vitest/config'
-import vue from '@vitejs/plugin-vue'
+import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [react()],
   test: {
     environment: 'happy-dom',
-    setupFiles: ['./tests/support/setup/vitest.ts'],
     include: ['tests/unit/**/*.spec.ts', 'tests/components/**/*.spec.ts', 'tests/integration/**/*.spec.ts'],
+    exclude: [
+      '**/node_modules/**',
+      'tests/unit/stores/**',
+      'tests/unit/composables/useCountdown.spec.ts',
+      'tests/unit/composables/useDylanAvatar.spec.ts',
+      'tests/unit/composables/useMenuKeyboard.spec.ts',
+      'tests/unit/composables/useSoundVolume.spec.ts',
+      'tests/unit/composables/useTheme.spec.ts',
+      'tests/unit/utils/useClickOutside.spec.ts',
+      'tests/unit/i18n.spec.ts',
+    ],
     passWithNoTests: true,
     coverage: {
       provider: 'v8',

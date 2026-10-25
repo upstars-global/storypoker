@@ -27,7 +27,7 @@ function collectSources(dir: string, sources: Record<string, string>): void {
       collectSources(full, sources)
       continue
     }
-    if (!entry.endsWith('.vue') && !entry.endsWith('.ts')) continue
+    if (!entry.endsWith('.ts') && !entry.endsWith('.tsx')) continue
     const file = relative(root, full)
     if (!isIconUsageSource(file)) continue
     sources[file] = readFileSync(full, 'utf8')

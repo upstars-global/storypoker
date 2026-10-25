@@ -3,7 +3,7 @@ import { isIconUsageSource, scanIconUsage, validateIconUsage } from '../../../sc
 import { appIconNames, dynamicBindings, flagCases, inputNames } from '~/utils/iconManifest'
 import { SLOT_SYMBOLS } from '~/utils/slotMachine'
 
-const modules = import.meta.glob('../../../app/**/*.{vue,ts}', { query: '?raw', import: 'default', eager: true })
+const modules = import.meta.glob('../../../app/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true })
 
 function projectSources(): Record<string, string> {
   const sources: Record<string, string> = {}
@@ -17,7 +17,7 @@ function projectSources(): Record<string, string> {
 
 it('reports new literal and undeclared dynamic binding', () => {
   const usage = scanIconUsage({
-    'app/components/Probe.vue': '<template><AppIcon icon="lucide:id-card" /><AppIcon :icon="nextIcon" /></template>',
+    'app/components/Probe.tsx': 'export const Probe = () => <><AppIcon name="lucide:id-card" /><AppIcon name={nextIcon} /></>',
   })
   const issues = validateIconUsage(usage, ['lucide:undo'], [])
   expect(issues.join('\n')).toContain('lucide:id-card')
@@ -26,15 +26,15 @@ it('reports new literal and undeclared dynamic binding', () => {
 
 it('rejects a collection that local delivery cannot produce', () => {
   const usage = scanIconUsage({
-    'app/components/Probe.vue': '<template><AppIcon icon="mdi:account" /></template>',
+    'app/components/Probe.tsx': 'export const Probe = () => <AppIcon name="mdi:account" />',
   })
   expect(validateIconUsage(usage, [], []).join('\n')).toContain('not available locally: mdi:account')
 })
 
 it('ignores prefixed strings that are not icon names', () => {
   const usage = scanIconUsage({
-    'app/components/Probe.vue': '<script setup lang="ts">\nconst cls = on ? \'sm:hidden\' : \'md:block\'\n'
-      + '</script>\n<template><div :class="cls" /></template>',
+    'app/components/Probe.tsx': 'const cls = on ? \'sm:hidden\' : \'md:block\'\n'
+      + 'export const Probe = () => <div className={cls} />',
   })
   expect(usage.literals).toEqual([])
   expect(validateIconUsage(usage, [], [])).toEqual([])
@@ -42,7 +42,7 @@ it('ignores prefixed strings that are not icon names', () => {
 
 it('rejects a non-deliverable collection inside an icon binding', () => {
   const usage = scanIconUsage({
-    'app/components/Probe.vue': '<template><AppIcon :icon="on ? \'mdi:account\' : \'ic:baseline-add\'" /></template>',
+    'app/components/Probe.tsx': 'export const Probe = () => <AppIcon name={on ? \'mdi:account\' : \'ic:baseline-add\'} />',
   })
   expect(usage.literals).toContain('mdi:account')
   expect(validateIconUsage(usage, [], []).join('\n')).toContain('not available locally: mdi:account')
@@ -50,29 +50,29 @@ it('rejects a non-deliverable collection inside an icon binding', () => {
 
 it('catches an unlisted collection that reaches an icon binding', () => {
   const usage = scanIconUsage({
-    'app/components/Probe.vue': '<script setup lang="ts">\nconst icon = \'ph:house\'\n'
-      + '</script>\n<template><AppIcon :icon="icon" /></template>',
+    'app/components/Probe.tsx': 'const icon = \'ph:house\'\n'
+      + 'export const Probe = () => <AppIcon name={icon} />',
   })
   expect(validateIconUsage(usage, [], []).join('\n')).toContain('undeclared dynamic icon binding: icon')
 })
 
 it('rejects a binding declared with no names, so an unlisted literal cannot slip through', () => {
   const usage = scanIconUsage({
-    'app/components/Probe.vue': '<script setup lang="ts">\nconst icon = \'ph:house\'\n'
-      + '</script>\n<template><AppIcon :icon="icon" /></template>',
+    'app/components/Probe.tsx': 'const icon = \'ph:house\'\n'
+      + 'export const Probe = () => <AppIcon name={icon} />',
   })
   const issues = validateIconUsage(usage, [], [
-    { file: 'app/components/Probe.vue', expression: 'icon', names: [] },
+    { file: 'app/components/Probe.tsx', expression: 'icon', names: [] },
   ])
   expect(issues.join('\n')).toContain('dynamic icon binding declares no names: icon')
 })
 
 it('rejects a stale name that no source literal produces', () => {
   const usage = scanIconUsage({
-    'app/components/Probe.vue': '<template><AppIcon :icon="icon" /></template>',
+    'app/components/Probe.tsx': 'export const Probe = () => <AppIcon name={icon} />',
   })
   const issues = validateIconUsage(usage, [], [
-    { file: 'app/components/Probe.vue', expression: 'icon', names: ['ic:baseline-add'] },
+    { file: 'app/components/Probe.tsx', expression: 'icon', names: ['ic:baseline-add'] },
   ])
   expect(issues.join('\n')).toContain('declared icon name is absent from the sources: ic:baseline-add')
 })
@@ -80,17 +80,17 @@ it('rejects a stale name that no source literal produces', () => {
 it('accepts a name whose literal lives in another scanned file', () => {
   const usage = scanIconUsage({
     'app/utils/symbols.ts': "export const SYMBOLS = ['ic:baseline-add']\n",
-    'app/components/Probe.vue': '<template><AppIcon :icon="icon" /></template>',
+    'app/components/Probe.tsx': 'export const Probe = () => <AppIcon name={icon} />',
   })
   const issues = validateIconUsage(usage, ['ic:baseline-add'], [
-    { file: 'app/components/Probe.vue', expression: 'icon', names: ['ic:baseline-add'] },
+    { file: 'app/components/Probe.tsx', expression: 'icon', names: ['ic:baseline-add'] },
   ])
   expect(issues).toEqual([])
 })
 
 it('rejects a third-party collection declared in a binding', () => {
   const issues = validateIconUsage({ literals: [], bindings: [] }, [], [
-    { file: 'app/components/Probe.vue', expression: 'icon', names: ['material-symbols:home'] },
+    { file: 'app/components/Probe.tsx', expression: 'icon', names: ['material-symbols:home'] },
   ])
   expect(issues.join('\n')).toContain('not available locally: material-symbols:home')
 })
@@ -99,7 +99,7 @@ it('rejects a non-deliverable collection listed in the manifest or a binding', (
   const manifest = validateIconUsage({ literals: [], bindings: [] }, ['mdi:account'], [])
   expect(manifest.join('\n')).toContain('not available locally: mdi:account')
   const binding = validateIconUsage({ literals: [], bindings: [] }, [], [
-    { file: 'app/components/Probe.vue', expression: 'icon', names: ['mdi:account'] },
+    { file: 'app/components/Probe.tsx', expression: 'icon', names: ['mdi:account'] },
   ])
   expect(binding.join('\n')).toContain('not available locally: mdi:account')
 })
@@ -109,11 +109,8 @@ it('matches the icons actually used in the application sources', () => {
   expect(issues).toEqual([])
 })
 
-it('covers every dice face declared in PlayerRow', () => {
-  const source = projectSources()['app/components/PlayerRow.vue']!
-  const faces = [...source.matchAll(/'(tabler:dice-\d)'/g)].map(match => match[1]!)
-  expect(new Set(faces).size).toBe(6)
-  for (const name of faces) expect(inputNames).toContain(name)
+it('covers every dice face', () => {
+  for (const face of [1, 2, 3, 4, 5, 6]) expect(inputNames).toContain(`tabler:dice-${face}`)
 })
 
 it('covers every slot symbol', () => {

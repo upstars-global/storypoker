@@ -1,11 +1,9 @@
-import { ref } from 'vue'
-
 export const UPDATE_IDLE_MS = 2 * 60_000
 export const UPDATE_PROMPT_MS = 30 * 60_000
 
 const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const
 
-const promptVisible = ref(false)
+const promptVisible = { value: false }
 let pendingApply: (() => void) | null = null
 let updateHeld = false
 let heldRun: (() => void) | null = null

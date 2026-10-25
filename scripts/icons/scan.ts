@@ -1,5 +1,3 @@
-import { parse } from '@vue/compiler-sfc'
-import type { AttributeNode, DirectiveNode, ElementNode, TemplateChildNode } from '@vue/compiler-core'
 import ts from 'typescript'
 
 export interface IconBinding {
@@ -49,8 +47,16 @@ function isExcludedDeclaration(node: ts.Node): boolean {
     && EXCLUDED_DECLARATIONS.has(node.name.text)
 }
 
-function collectFromScript(code: string, file: string, usage: IconUsage, iconContext = false): void {
-  const source = ts.createSourceFile(file, code, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS)
+const ICON_COMPONENT = 'AppIcon'
+const ICON_PROP = 'name'
+
+function isIconProp(node: ts.Node): node is ts.JsxAttribute {
+  if (!ts.isJsxAttribute(node) || !ts.isIdentifier(node.name) || node.name.text !== ICON_PROP) return false
+  const element = node.parent.parent
+  return ts.isIdentifier(element.tagName) && element.tagName.text === ICON_COMPONENT
+}
+
+function collectLiterals(root: ts.Node, usage: IconUsage, iconContext: boolean): void {
   const visit = (node: ts.Node): void => {
     if (isExcludedDeclaration(node)) return
     if (ts.isStringLiteralLike(node) && isIconName(node.text)) {
@@ -59,36 +65,36 @@ function collectFromScript(code: string, file: string, usage: IconUsage, iconCon
     }
     ts.forEachChild(node, visit)
   }
-  visit(source)
+  visit(root)
 }
 
-function isElement(node: TemplateChildNode): node is ElementNode {
-  return node.type === 1
-}
-
-function collectFromTemplate(node: TemplateChildNode, file: string, usage: IconUsage): void {
-  if (isElement(node)) {
-    for (const prop of node.props) {
-      if (prop.type === 6) {
-        const attr = prop as AttributeNode
-        if (attr.name === 'icon' && attr.value && isIconName(attr.value.content)) {
-          usage.literals.push(attr.value.content)
-          usage.allLiterals.push(attr.value.content)
+function collectFromSource(code: string, file: string, usage: IconUsage): void {
+  const kind = file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+  const source = ts.createSourceFile(file, code, ts.ScriptTarget.ES2022, true, kind)
+  const visit = (node: ts.Node): void => {
+    if (isExcludedDeclaration(node)) return
+    if (isIconProp(node) && node.initializer) {
+      const value = node.initializer
+      if (ts.isStringLiteral(value)) {
+        if (isIconName(value.text)) {
+          usage.literals.push(value.text)
+          usage.allLiterals.push(value.text)
         }
-        continue
+        return
       }
-      const dir = prop as DirectiveNode
-      if (dir.name !== 'bind') continue
-      const arg = dir.arg
-      if (!arg || arg.type !== 4 || arg.content !== 'icon') continue
-      const exp = dir.exp
-      if (!exp || exp.type !== 4) continue
-      usage.bindings.push({ file, expression: normalizeExpression(exp.content) })
-      collectFromScript(`(${exp.content})`, file, usage, true)
+      if (ts.isJsxExpression(value) && value.expression) {
+        usage.bindings.push({ file, expression: normalizeExpression(value.expression.getText(source)) })
+        collectLiterals(value.expression, usage, true)
+        return
+      }
     }
-    for (const child of node.children) collectFromTemplate(child, file, usage)
-    return
+    if (ts.isStringLiteralLike(node) && isIconName(node.text)) {
+      if (ICONIFY_PREFIXES.has(iconPrefix(node.text))) usage.literals.push(node.text)
+      usage.allLiterals.push(node.text)
+    }
+    ts.forEachChild(node, visit)
   }
+  visit(source)
 }
 
 const NON_USAGE_SOURCES = new Set(['app/utils/iconResolver.ts', 'app/utils/iconManifest.ts'])
@@ -99,19 +105,7 @@ export function isIconUsageSource(file: string): boolean {
 
 export function scanIconUsage(sources: Record<string, string>): IconUsage {
   const usage: IconUsage = { literals: [], bindings: [], allLiterals: [] }
-  for (const [file, code] of Object.entries(sources)) {
-    if (file.endsWith('.vue')) {
-      const { descriptor } = parse(code, { filename: file })
-      if (descriptor.template?.ast) {
-        for (const child of descriptor.template.ast.children) collectFromTemplate(child, file, usage)
-      }
-      for (const block of [descriptor.script, descriptor.scriptSetup]) {
-        if (block) collectFromScript(block.content, file, usage)
-      }
-      continue
-    }
-    collectFromScript(code, file, usage)
-  }
+  for (const [file, code] of Object.entries(sources)) collectFromSource(code, file, usage)
   usage.literals = [...new Set(usage.literals)].sort()
   usage.allLiterals = [...new Set(usage.allLiterals)].sort()
   return usage
