@@ -315,49 +315,49 @@ boxShadow: {
 
 ### 11.1 Функціонал модератора
 
-Ролі визначаються в `app/pages/[slug].vue:90-91`:
-```js
-const isModerator = computed(() => currentPlayer.value?.is_moderator ?? false)
-const isAuthorizedModerator = computed(() => isModerator.value && !!user.value)
+Ролі визначаються в `app/pages/[slug].tsx`:
+```ts
+const isModerator = currentPlayer?.is_moderator ?? false
+const isAuthorizedModerator = isModerator && !!user
 ```
 
-**Модератор (`is_moderator`, авторизація не потрібна)** - увесь нижній блок кнопок у `CardsArea.vue` (рядок 274, `v-if="isModerator"`) плюс кілька контролів поза ним:
+**Модератор (`is_moderator`, авторизація не потрібна)** - увесь нижній блок кнопок у `CardsArea.tsx` (`{isModerator && ...}`) плюс кілька контролів поза ним:
 
 | Дія | Компонент / handler |
 |---|---|
-| Розкрити оцінки (reveal) | `CardsArea.vue` reveal-button → `roomStore.reveal()` |
-| Скинути голоси (reset) | `CardsArea.vue` reset-button → `roomStore.resetVotes()` |
-| Показати попередній раунд (undo) | `CardsArea.vue` undo-button → `showLastRound = !showLastRound` |
-| Запустити відлік розкриття | `CardsArea.vue` hold-to-start (силент/зі звуком/з атмосферою) → `broadcastCountdownStart` - деталі §11.6 |
-| Почати новий раунд | `ResultsArea.vue`, `:show-new-round="isModerator"` → `roomStore.startNewRound()` |
-| Налаштувати опитування (`voting`/`vote_question`) | `CardsArea.vue`, `v-else-if="... && isModerator"` → `setPollQuestion`/`startVoteQuestion` |
-| Налаштувати колоду карт і кола результатів | `AppHeader.vue` меню → `ConfigureCardDeckModal` (чіпи «Показувати результати», §11.9) |
-| Виключити гравця (kick) | `PlayerRow.vue`, `v-else-if="currentUserIsModerator"` → `playersStore.kick` |
-| Керування таймером (reset/pause/resume/±30s) | `Timer.vue`, `canControl = isModerator` (саме `isModerator`, **не** `isAuthorizedModerator`) |
+| Розкрити оцінки (reveal) | `CardsArea.tsx` reveal-button → `roomStore.reveal()` |
+| Скинути голоси (reset) | `CardsArea.tsx` reset-button → `roomStore.resetVotes()` |
+| Показати попередній раунд (undo) | `CardsArea.tsx` undo-button → `showLastRound = !showLastRound` |
+| Запустити відлік розкриття | `CardsArea.tsx` hold-to-start (силент/зі звуком/з атмосферою) → `broadcastCountdownStart` - деталі §11.6 |
+| Почати новий раунд | `ResultsArea.tsx`, `showNewRound={isModerator}` → `roomStore.startNewRound()` |
+| Налаштувати опитування (`voting`/`vote_question`) | `CardsArea.tsx`, умова `... && isModerator` → `setPollQuestion`/`startVoteQuestion` |
+| Налаштувати колоду карт і кола результатів | `AppHeader.tsx` меню → `ConfigureCardDeckModal` (чіпи «Показувати результати», §11.9) |
+| Виключити гравця (kick) | `PlayerRow.tsx`, гейт `currentUserIsModerator` → `playersStore.kick` |
+| Керування таймером (reset/pause/resume/±30s) | `Timer.tsx`, `canControl={isModerator}` (саме `isModerator`, **не** `isAuthorizedModerator`) |
 
 **Авторизований модератор (`isModerator && user`)** - додатково над списком вище:
 
 | Дія | Компонент / handler |
 |---|---|
-| Перейменувати кімнату / встановити slug | `AppHeader.vue`, вкладене `v-if="user"` усередині `v-if="isModerator"` → `roomStore.setRoomName(name, slug)` |
-| Фон кімнати (завантажити / кадрувати / прибрати) | `AppHeader.vue` → `RoomBackgroundModal` (лише `isAuthorizedModerator`, який є власником фону або фон ще нічий) → `roomStore.uploadBackground` / `removeBackground`, §11.10 |
-| Перейменувати іншого гравця + його shields | `PlayerRow.vue`, `v-if="currentUserIsAuthorizedModerator"` (вкладено в `currentUserIsModerator`-блок) → `PlayerEditModal` |
+| Перейменувати кімнату / встановити slug | `AppHeader.tsx`, вкладена умова `user` усередині `isModerator` → `roomStore.setRoomName(name, slug)` |
+| Фон кімнати (завантажити / кадрувати / прибрати) | `AppHeader.tsx` → `RoomBackgroundModal` (лише `isAuthorizedModerator`, який є власником фону або фон ще нічий) → `roomStore.uploadBackground` / `removeBackground`, §11.10 |
+| Перейменувати іншого гравця + його shields | `PlayerRow.tsx`, гейт `currentUserIsAuthorizedModerator` (вкладено в `currentUserIsModerator`-блок) → `PlayerEditModal` |
 
 ### 11.2 Функціонал гравця
 
 Доступно будь-якому учаснику кімнати, незалежно від `is_moderator`:
 
-- Голосувати за активну картку (`CardsArea.vue`, картки не гейтяться роллю - лише `canVote`)
-- Перейменувати себе / встановити власні shields (`PlayerRow.vue`, `v-if="isOwn"` → `PlayerEditModal`)
-- Вийти з кімнати (`PlayerRow.vue`, `v-if="isOwn"` → soft-delete `left_at`)
-- **Перемкнути власний прапорець модератора** (`PlayerRow.vue:273-297`, гейт тільки `isOwn`, без перевірки `currentUserIsModerator`) - самопризначення доступне будь-кому, не тільки поточному модератору; тогл ЧУЖОГО прапорця модератора в UI відсутній взагалі
-- Переглянути історію раундів / графік узгодженості (`AppHeader.vue`, гейт лише `v-if="roomName"` - тобто кімната має назву, роль не перевіряється)
+- Голосувати за активну картку (`CardsArea.tsx`, картки не гейтяться роллю - лише `canVote`)
+- Перейменувати себе / встановити власні shields (`PlayerRow.tsx`, гейт `isOwn` → `PlayerEditModal`)
+- Вийти з кімнати (`PlayerRow.tsx`, гейт `isOwn` → soft-delete `left_at`)
+- **Перемкнути власний прапорець модератора** (`PlayerRow.tsx`, гейт тільки `isOwn`, без перевірки `currentUserIsModerator`) - самопризначення доступне будь-кому, не тільки поточному модератору; тогл ЧУЖОГО прапорця модератора в UI відсутній взагалі
+- Переглянути історію раундів / графік узгодженості (`AppHeader.tsx`, гейт лише `roomName` - тобто кімната має назву, роль не перевіряється)
 - Перемкнути тему/палітру/мову, бічний віджет Timer ↔ SlotMachine
-- Грати в слот-машину (3 спіни за раунд, без ролевого обмеження)
+- Грати в слот-машину (3 спіни за раунд, у `PO`/`SM` - 5; гейтинг - §11.8)
 
-### 11.3 Графік узгодженості та тренди (`AlignmentTrendsModal.vue`)
+### 11.3 Графік узгодженості та тренди (`AlignmentTrendsModal.tsx`)
 
-**Джерело даних:** один запит `roomStore.fetchHistory()` при `onMounted` - увесь `round_history` кімнати (без пагінації/дат-фільтра на рівні БД). Раунди з нечисловою колодою (`voting`/`vote_question`, перевірка `isNumericPreset` + fallback "чи є хоч один числовий голос") відфільтровуються одразу.
+**Джерело даних:** один запит `roomStore.fetchHistory()` в `useEffect` при відкритті - увесь `round_history` кімнати (без пагінації/дат-фільтра на рівні БД). Раунди з нечисловою колодою (`voting`/`vote_question`, перевірка `isNumericPreset` + fallback "чи є хоч один числовий голос") відфільтровуються одразу.
 
 **Гранулярність - один раунд = одна точка графіка.** Жодного агрегування по днях/тижнях немає: кожен запис `round_history` мапиться 1:1 у `ChartPoint {date, devAlignment, qaAlignment, deckPreset}` через `splitRoundAlignment(round, shieldsMap)`.
 
@@ -387,7 +387,7 @@ DEV/QA рахуються окремо (`splitRoundAlignment` ділить го�
 
 > ⚠️ Горизонтальні пунктирні лінії-орієнтири на самому графіку (`REF_LINES`: 100/75/50/25, підписані як `100%`/`75%`/`50%`/`25%`) - це просто візуальні мітки сітки, їхні позиції **не збігаються точно** з порогами `alignmentLevel` (напр. лінія на 50 не збігається з текстовим порогом "Medium", який починається з 40).
 
-**Рушій графіка - ECharts** (`echarts` + `vue-echarts`, з 2026-07-25; до того - ручний SVG). Підключені лише потрібні модулі (`echarts/core` + `CanvasRenderer`/`LineChart`/`GridComponent`/`TooltipComponent`/`DataZoomComponent`/`MarkLineComponent`, `use([...])`) заради розміру бандла. `<VChart :option="chartOption" autoresize>` - `chartOption` computed, що будує `xAxis`/`yAxis`/`series`/`tooltip`/`dataZoom` з `points`.
+**Рушій графіка - ECharts** (`echarts`, з 2026-07-25; до того - ручний SVG). Підключені лише потрібні модулі (`echarts/core` + `CanvasRenderer`/`LineChart`/`GridComponent`/`TooltipComponent`/`DataZoomComponent`/`MarkLineComponent`, `use([...])`) заради розміру бандла. `useEChart(container, option)` (`app/hooks/useEChart.ts`, resize через `ResizeObserver`) - `chartOption` у `useMemo`, що будує `xAxis`/`yAxis`/`series`/`tooltip`/`dataZoom` з `points`.
 
 **Ось X** - `type: 'category'` з `boundaryGap: false`, дані - `weekLabel(date)` (ISO-тиждень, `w12`) для кожної точки; категорійна вісь сама розподіляє точки рівномірно за порядком (а не пропорційно реальному часу), тому близькі в часі раунди не накладаються, а перша/остання точка лежать точно на краях графіка. Лінія - `smooth: true` (вбудоване згладжування ECharts, без ручної Catmull-Rom).
 
@@ -397,9 +397,9 @@ DEV/QA рахуються окремо (`splitRoundAlignment` ділить го�
 
 **Tooltip** - `trigger: 'item'`, **`triggerOn: 'click'`** (клік на крапку показує і "пришпилює" tooltip; ховається лише повторним кліком чи по порожньому місцю графіка - на відміну від строгого hover, це дає час дотягнутись курсором до кнопки "Деталі", особливо на крайніх точках), `enterable: true` (можна навести на сам tooltip не закривши його). Контент - `formatter()` повертає HTML: лейбл серії + значення (`%`), дата, кнопка-закриття `×` (`data-close-tooltip`) і клікабельний рядок `trends.viewDetails` (`data-view-details`, `data-index`). Лейбл серії - `series.name`: `QA` лишається `QA`, DEV-когорта підписана `DEV/FE/BE/SRE`, щоб не читалось як "тільки роль DEV" (колір ліній не змінювався: жовта `#ffa726` - QA, бірюзова `#26a69a` - DEV/FE/BE).
 
-**Round snapshot** - клік на `data-view-details` у tooltip ловиться делегованим `document`-listener'ом (ECharts рендерить tooltip у `document.body`, не всередині компонента), звідти `points.value[dataIndex].round` → `selectedRound` → `RoundSnapshotModal.vue` (вкладена `<dialog>` поверх поточної модалки) зі списком `{ім'я, голос}` усіх гравців того раунду (`round_history.votes`, повний знімок, не лише агреговані `counts`). Поруч з іменем - `RoleBadge` з тегом ролі (`roleTagForShields(shieldsMap.get(player_id))`, той самий `shieldsMap` з **поточних** shields, що й для DEV/QA split вище - те саме застереження про неактуальність ролі на момент голосування).
+**Round snapshot** - клік на `data-view-details` у tooltip ловиться делегованим `document`-listener'ом (ECharts рендерить tooltip у `document.body`, не всередині компонента), звідти `points[dataIndex].round` → `selectedRound` → `RoundSnapshotModal.tsx` (рендериться всередині поточної модалки, щоб Tab не виходив зі знімка) зі списком `{ім'я, голос}` усіх гравців того раунду (`round_history.votes`, повний знімок, не лише агреговані `counts`). Поруч з іменем - `RoleBadge` з тегом ролі (`roleTagForShields(shieldsMap.get(player_id))`, той самий `shieldsMap` з **поточних** shields, що й для DEV/QA split вище - те саме застереження про неактуальність ролі на момент голосування).
 
-**Когорта в round snapshot** - `data-view-details` несе ще й `data-cohort` (`'DEV'`/`'QA'`, з `params.seriesName` серії, на якій клікнули); прокидається як `selectedCohort` у `RoundSnapshotModal :cohort`. Модалка фільтрує `round.votes` через `trendCohorts()` під обрану когорту (лише QA / лише DEV/BE/FE/SRE), у заголовку - кольоровий бейдж когорти (`QA` жовтий `#ffa726` / `DEV_COHORT_LABEL` бірюзовий `#26a69a`, константа винесена в `utils/shields.ts`, бо тепер спільна для `AlignmentTrendsModal` і `RoundSnapshotModal`). Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
+**Когорта в round snapshot** - `data-view-details` несе ще й `data-cohort` (`'DEV'`/`'QA'`, з `params.seriesName` серії, на якій клікнули); прокидається як `selectedCohort` у prop `cohort` `RoundSnapshotModal`. Модалка фільтрує `round.votes` через `trendCohorts()` під обрану когорту (лише QA / лише DEV/BE/FE/SRE), у заголовку - кольоровий бейдж когорти (`QA` жовтий `#ffa726` / `DEV_COHORT_LABEL` бірюзовий `#26a69a`, константа винесена в `utils/shields.ts`, бо тепер спільна для `AlignmentTrendsModal` і `RoundSnapshotModal`). Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
 
 ### 11.4 Історія раундів (`round_history`)
 
@@ -421,37 +421,37 @@ round_history (
 
 `?` і `☕` рахуються як повноцінні голоси для запису, але виключаються з `alignmentScore`/`averageOf` (нечислові). `name` у snapshot дублюється, щоб історія лишалась читабельною після rename/kick/leave гравця.
 
-**`HistoryModal.vue`** читає весь `fetchHistory()`, групує по рік/квартал, фільтрує по колоді; для кожного раунду показує `summarizeRound()` (`app/utils/roundStats.ts`): `average` (зважене середнє числових голосів, `.toFixed(1)`), `alignment` (`alignmentScore`), `counts` (кількість голосів по кожному значенню), `voterCount`. Для poll-колод (`voting`/`vote_question`) `average`/`alignment` - завжди `null`.
+**`HistoryModal.tsx`** читає весь `fetchHistory()`, групує по рік/квартал, фільтрує по колоді; для кожного раунду показує `summarizeRound()` (`app/utils/roundStats.ts`): `average` (зважене середнє числових голосів, `.toFixed(1)`), `alignment` (`alignmentScore`), `counts` (кількість голосів по кожному значенню), `voterCount`. Для poll-колод (`voting`/`vote_question`) `average`/`alignment` - завжди `null`.
 
 ### 11.5 Export (видалено)
 
-Ручний CSV-експорт з `HistoryModal.vue` (кнопка на колоду, обмежена `scrum`/`fibonacci`) видалено - його роль тепер виконує публічний JSON API `netlify/functions/room-json.mts` (`GET /api/<room>.json` і `GET /api/teams.json`), яким живиться `agilecharts`. Деталі - AGENTS.md, розділ "Зовнішні інтеграції".
+Ручний CSV-експорт з `HistoryModal` (кнопка на колоду, обмежена `scrum`/`fibonacci`) видалено - його роль тепер виконує публічний JSON API `netlify/functions/room-json.mts` (`GET /api/<room>.json` і `GET /api/teams.json`), яким живиться `agilecharts`. Деталі - AGENTS.md, розділ "Зовнішні інтеграції".
 
 ### 11.6 Механіка таймера і відліку розкриття
 
 Це дві незалежні фічі, обидві звані "таймер" у побуті:
 
-**А. Таймер раунду (`Timer.vue`)** - рахує, скільки триває поточний раунд голосування.
+**А. Таймер раунду (`Timer.tsx`)** - рахує, скільки триває поточний раунд голосування.
 
 - `room_state`: `round_started_at`, `paused_at` (nullable), `paused_elapsed_ms` (`supabase/migrations/006_room_state_timer.sql`)
 - `elapsedMs = max(0, pivot − round_started_at − paused_elapsed_ms)`, де `pivot` = момент `reveal` (заморожений `Date.now()` в момент переходу `phase → 'revealed'`), або `paused_at` якщо на паузі, або живий `now` (тік раз/сек)
-- **Контролі** (`reset`/`pause`/`resume`/`±30s`) - тільки `showControls = canControl && phase==='voting'`, `canControl = isModerator` (рядок 581 `[slug].vue`)
+- **Контролі** (`reset`/`pause`/`resume`/`±30s`) - тільки `showControls = canControl && phase==='voting'`, `canControl={isModerator}` у `[slug].tsx`
   - `reset` - повний рестарт (`round_started_at=now()`, скидає паузу)
   - `pause`/`resume` - `resume` додає тривалість паузи, що щойно закінчилась, до `paused_elapsed_ms`
   - `±30s` (`adjustTimer`) - зсуває `round_started_at`; для "+30s" зсув затиснутий (`min(cap, ...)`), щоб не пересунути старт у майбутнє
-- **Ліміт 1 година** (`ROUND_TIMER_CAP_MS` у `app/utils/timerAlarm.ts`) - показаний час не росте понад 1 год, під час `voting` текст стає «Таймер зупинено після 1h 0m 0s», сигнал далі не спрацьовує. За `round_history` (травень-жовтень 2026) 92% раундів коротші за 45 хв, а довші за годину - здебільшого кімнати, залишені на ніч чи дні після рефайнменту. Коли команда повертається, тобто `onlineCount` зростає й перевищує 1, `[slug].vue` при `isRoundTimerStale()` викликає `resetTimer(round_started_at)` і відлік починається з нуля; один учасник у кімнаті бачить зупинений таймер, а інші зміни `room_state` (Pause, ±30s, налаштування сигналу) скидання не запускають. Запис іде лише за незмінного `round_started_at` і `phase = 'voting'` (compare-and-set), тож кілька клієнтів одночасно, ручний Reset/±30s і reveal між перевіркою й записом не перезаписуються. Пауза в ліміт не рахується
-- Якщо `reveal()` стається під час паузи - `paused_elapsed_ms` домотується до моменту reveal, і показана тривалість коректно заморожується; `Timer.vue` у фазі `revealed` бере `min(revealedAt, paused_at)`, тож тривалість не стрибає на час простою
+- **Ліміт 1 година** (`ROUND_TIMER_CAP_MS` у `app/utils/timerAlarm.ts`) - показаний час не росте понад 1 год, під час `voting` текст стає «Таймер зупинено після 1h 0m 0s», сигнал далі не спрацьовує. За `round_history` (травень-жовтень 2026) 92% раундів коротші за 45 хв, а довші за годину - здебільшого кімнати, залишені на ніч чи дні після рефайнменту. Коли команда повертається, тобто `onlineCount` зростає й перевищує 1, `[slug].tsx` при `isRoundTimerStale()` викликає `resetTimer(round_started_at)` і відлік починається з нуля; один учасник у кімнаті бачить зупинений таймер, а інші зміни `room_state` (Pause, ±30s, налаштування сигналу) скидання не запускають. Запис іде лише за незмінного `round_started_at` і `phase = 'voting'` (compare-and-set), тож кілька клієнтів одночасно, ручний Reset/±30s і reveal між перевіркою й записом не перезаписуються. Пауза в ліміт не рахується
+- Якщо `reveal()` стається під час паузи - `paused_elapsed_ms` домотується до моменту reveal, і показана тривалість коректно заморожується; `Timer.tsx` у фазі `revealed` бере `min(revealedAt, paused_at)`, тож тривалість не стрибає на час простою
 - **Сигнал раунду (будильник)** - шестерня зліва в хедері віджета (лише для модератора, `canControl`) розгортає inline-налаштування: «Сигнал через N хв» (3–20, дефолт 5; Enter фіксує значення й знімає фокус) і дзвіночок mute (звук за замовчуванням увімкнений). Налаштування спільні для кімнати - `room_state.alarm_minutes` / `alarm_muted` (міграція `018`, `null` = 5 хв і звук увімкнено), пише `roomStore.setAlarm()`; хелпери й синтез дзвінка - `app/utils/timerAlarm.ts`. Сигнал бачать і чують усі учасники
   - Коли під час `voting` `elapsedMs` перетинає N, 2N чи 3N хвилин, увесь віджет блимає (`timer-alarm-blink`) і грає синтезований Web Audio дзвінок, не залежний від `sp-volume`: 1, 2 і 3 «дзеньки» відповідно, стільки ж блимань (`ALARM_MAX_BEEPS`). Від 4N сигналу немає. Таймер не зупиняється: він фіксує, скільки тривало обговорення задачі, тож сигнал лише нагадує про час
   - Ручна пауза зсуває наступний сигнал на свою тривалість; reveal і новий раунд працюють як звичайно, `round_history` пишеться так само
   - Спрацьовує лише на перетині порогу: після reload зі вже пройденим порогом сигналу немає; на паузі й після reveal не спрацьовує
 
-**Б. Відлік перед розкриттям (hold-to-start, `CardsArea.vue` + `useCountdown.ts`)** - опційний "хайп"-відлік із звуком перед тим, як модератор розкриє оцінки.
+**Б. Відлік перед розкриттям (hold-to-start, `CardsArea.tsx` + `app/hooks/useCountdown.ts`)** - опційний "хайп"-відлік із звуком перед тим, як модератор розкриє оцінки.
 
 - 3 режими (іконки в `.mui-icon-group`): **без звуку** (мовчазний фолбек 10с), **зі звуком** (`countdown-dry.mp3`, тривалість = довжина файлу), **з атмосферою** (спершу `please-vote.mp3`, після його завершення - `countdown-wet.mp3`)
 - **Активація - утримання 1.4с** (`pointerdown`/`keydown Enter-Space`), не коротке натискання (концепцію "коротким натисканням обрати режим за замовчуванням" прибрано в цій сесії). Скасовується на `pointerup`/`pointerleave`/`blur`, прив'язане до конкретного режиму, щоб втрата фокусу від сусідньої кнопки не скасовувала чуже утримання
 - Тонкий SVG-ореол навколо кнопки заповнюється синхронно з утриманням (`stroke-dashoffset`-transition = `HOLD_MS`)
-- По завершенню утримання: `emit('startCountdown', mode)` → `broadcastCountdownStart` шле `{initiatorId, mode}` у `countdown:<roomId>` broadcast (`self:true`) → **усі** клієнти (включно з ініціатором) запускають свій локальний `useCountdown().startCountdown(mode, ...)`, синхронізовано звуковим файлом/фолбек-таймером
+- По завершенню утримання: `onStartCountdown(mode)` → `broadcastCountdownStart` шле `{initiatorId, mode}` у `countdown:<roomId>` broadcast (`self:true`) → **усі** клієнти (включно з ініціатором) запускають свій локальний `useCountdown().startCountdown(mode, ...)`, синхронізовано звуковим файлом/фолбек-таймером
 - Лише колбек ініціатора викликає `roomStore.reveal()`, коли відлік природно завершується
 - Звук `decision-sound` грає при кожному reveal з консенсусом (перехід `voting → revealed`), незалежно від режиму countdown; у режимі "з атмосферою" по завершенню грає `ambience.mp3`, якщо консенсусу немає. Гучність усіх звуків керується слайдером у шапці (`sp-volume`)
 - Поки відлік триває, рамка `.mui-icon-group` не зникає - кнопки всередині заміняються центрованим лічильником; `revealPending`-прапорець ховає кнопки ще трохи довше, поки `phase` фактично не перейде в `'revealed'` (закриває гонку між локальним таймером і realtime round-trip)
@@ -463,11 +463,11 @@ round_history (
 
 **Картки** - фіксована шкала `1,2,3,4,5` (`cards === defaultActive`, без `?`/`☕`/toggle - як `boolean`).
 
-**Фіксоване питання** - `DeckPreset.defaultQuestion` (нове опційне поле в `app/utils/cardDecks.ts`, на відміну від moderator-typed `poll_question` у `voting`/`vote_question`). `setDeckPreset()` пише `poll_question: preset.defaultQuestion ?? null` - той самий `room_state.poll_question`/UI-шлях показу питання (`CardsArea.vue`/`ResultsArea.vue`), що й у poll-колод, але автоматично заповнений і не редагується голосуванням (лишається, доки моделятор не зміне пресет). `CardsArea.vue` показує заголовок питання за самим фактом `pollQuestion` (`!!pollQuestion`), не лише для `pollMode`/`voteQuestionMode`.
+**Фіксоване питання** - `DeckPreset.defaultQuestion` (нове опційне поле в `app/utils/cardDecks.ts`, на відміну від moderator-typed `poll_question` у `voting`/`vote_question`). `setDeckPreset()` пише `poll_question: preset.defaultQuestion ?? null` - той самий `room_state.poll_question`/UI-шлях показу питання (`CardsArea.tsx`/`ResultsArea.tsx`), що й у poll-колод, але автоматично заповнений і не редагується голосуванням (лишається, доки моделятор не зміне пресет). `CardsArea.vue` показує заголовок питання за самим фактом `pollQuestion` (`!!pollQuestion`), не лише для `pollMode`/`voteQuestionMode`.
 
 **Не poll-колода** - `isPollPreset()` (`roundStats.ts`) навмисно НЕ включає `goal_clarity`: голосування/reveal/celebration/consensus/alignment-badge (`AlignmentCard`) працюють як для звичайного числового пресету. `isNumericPreset()` - включає, тож раунди потрапляють у `HistoryModal`/`AlignmentTrendsModal`/`room-json.mts` API нарівні зі scrum/fibonacci/hours (той самий `alignmentScore` - 0-100 spread-consensus, шкало-агностичний).
 
-**Score circle після reveal** (`ResultsArea.vue`, prop `goalClarityScore`) - замість PieChart/per-card average (пиріг зі "1,2,3,4,5" не інформативний для Likert-шкали) - кольорове коло з "сирим" середнім (`averageOf(votes)`, той самий `(сума голосів)/(кількість)`, напр. 6 учасників `3,4,5,4,5,4` → `25/6 = 4.2`):
+**Score circle після reveal** (`ResultsArea.tsx`, prop `goalClarityScore`) - замість PieChart/per-card average (пиріг зі "1,2,3,4,5" не інформативний для Likert-шкали) - кольорове коло з "сирим" середнім (`averageOf(votes)`, той самий `(сума голосів)/(кількість)`, напр. 6 учасників `3,4,5,4,5,4` → `25/6 = 4.2`):
 - `> 3.5` - зелений `#43a047`
 - `2.5 ≤ x ≤ 3.5` - жовтий `#fbc02d`
 - `< 2.5` - червоний `#e64a19`
@@ -475,40 +475,40 @@ round_history (
 Пороги `3.5` / `2.5` - продуктове рішення власника, а не похідна з даних; у коді вони живуть як
 `GOAL_CLARITY_THRESHOLDS` (`app/utils/cardDecks.ts`) поруч із пресетом, і зсув межі означає зміну саме там.
 
-При результаті `≤ 3.5` - підказка `results.goalClarityHint` ("переформулювати Sprint Goal або критерії DoD"). Той самий кольоровий triplet, що й `alignmentLevel`/`levelColor` у `AlignmentTrendsModal.vue`.
+При результаті `≤ 3.5` - підказка `results.goalClarityHint` ("переформулювати Sprint Goal або критерії DoD"). Той самий кольоровий triplet, що й `alignmentLevel`/`levelColor` у `AlignmentTrendsModal.tsx`.
 
-### 11.8 Слот-машина (`SlotMachine.vue`)
+### 11.8 Слот-машина (`SlotMachine.tsx`)
 
 Лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine), вибір - у `sp-side-widget` (`timer | slot`).
 
-**Механіка** - 3 барабани, зважена випадковість (`utils/slotMachine.ts`; символи - tabler icon-id у `SLOT_SYMBOL_WEIGHTS`, рендеряться через `<AppIcon>`), 3 спіни на гравця за раунд (скидаються за `round_started_at`). Джекпот = 3 однакові символи.
+**Механіка** - 3 барабани, зважена випадковість (`utils/slotMachine.ts`; символи - tabler icon-id у `SLOT_SYMBOL_WEIGHTS`, рендеряться через `<AppIcon>`), 3 спіни на гравця за раунд, у `PO`/`SM` - 5 (`spinsPerRound`, скидаються за `round_started_at`). Джекпот = 3 однакові символи.
 
-**Гейтинг спіну** - `canSpinSlot` (`[slug].vue`, computed на основі `roleTagForShields`): для `PO`/`SM` завжди `true`; для решти ролей - лише коли `phase==='voting'`, гравець уже проголосував і є хоча б один, хто ще не проголосував. Слот - заняття "поки чекаєш інших", не альтернатива голосуванню. `SlotMachine.vue` приймає `can-spin` поруч зі `spins-left` і показує `slot.voteFirst` (1.5с, без власної анімації), коли `spinsLeft > 0`, але `canSpin === false`.
+**Гейтинг спіну** - `canSpinSlot` (`[slug].tsx`, рахується в рендері з `roleTagForShields`): для `PO`/`SM` завжди `true`; для решти ролей - лише коли `phase==='voting'`, гравець уже проголосував і є хоча б один, хто ще не проголосував. Слот - заняття "поки чекаєш інших", не альтернатива голосуванню. `SlotMachine.tsx` приймає `canSpin` поруч зі `spinsLeft` і показує `slot.voteFirst` (1.5с, без власної анімації), коли `spinsLeft > 0`, але `canSpin === false`.
 
-**Jam-анімація** - кнопка спіну лишається клікабельною при `canSpin === false` (`:disabled` реагує тільки на `spinning`/`spinsLeft<=0`): клік запускає `triggerJam()` замість спіну - `.slot-window.is-jammed` на 400мс, `@keyframes slot-jam` сіпає `.slot-strip` на кілька px (стагер `animation-delay` по барабанах), імітуючи заклинювання важеля.
+**Jam-анімація** - кнопка спіну лишається клікабельною при `canSpin === false` (`disabled` реагує тільки на `spinning`/`spinsLeft<=0`): клік запускає `triggerJam()` замість спіну - `.slot-window.is-jammed` на 400мс, `@keyframes slot-jam` сіпає `.slot-strip` на кілька px (стагер `animation-delay` по барабанах), імітуючи заклинювання важеля.
 
 **Трансляція стану** - хто крутить і хто виграв, видно всім через broadcast-канал `countdown:<roomId>` (не через `players`-таблицю):
-- `SlotMachine.vue` емітить `spin`/`spin-end` навколо анімації прокрутки (`REEL_DURATIONS_MS[2]+150` ≈ 2.45с)
-- `[slug].vue` шле `slot-spin-start`/`slot-spin-end` з `{playerId}` і тримає `spinningPlayerIds: Set<string>` (safety-таймер 2.8с на випадок втраченого `spin-end`)
+- `SlotMachine.tsx` кличе `onSpin`/`onSpinEnd` навколо анімації прокрутки (`REEL_DURATIONS_MS[2]+150` ≈ 2.45с)
+- `[slug].tsx` шле `slot-spin-start`/`slot-spin-end` з `{playerId}` і тримає `spinningPlayerIds: Set<string>` (safety-таймер 2.8с на випадок втраченого `spin-end`)
 - `slot-win` з `{playerId}` на 1.6с виставляє `slotWinnerId`
 
-**Індикація в `PlayerRow.vue`** (props `is-spinning-slot`/`is-slot-winner`) - єдиний видимий ефект джекпоту, без банера чи локального підсвічування самого слота. Кубик (`font-size: 1.125rem`, трохи менший за іконку модератора поруч) сидить у рядку з іменем за тим самим `AppTooltip`-патерном, що й `app:moderator` - колонка статусу голосу лишається незайманою. Кубик не обертається: поки триває спін, кожні 120мс перемикається грань (`tabler:dice-1`…`dice-6`, `DICE_FACES`/`diceFaceIndex`), імітуючи котіння в чашці; далі повертається дефолтна `dice-5`. Ці іконки резолвляться через Iconify API (не офлайн `ic:`-колекція), тому `loadIcons(DICE_FACES)` прогріває кеш при монтуванні `PlayerRow.vue` - інакше перше котіння блимає порожніми кадрами. При виграші ім'я і кубик разом блимають `.win-blink` (`@keyframes win-blink`, `animation-iteration-count: 3`).
+**Індикація в `PlayerRow.tsx`** (props `isSpinningSlot`/`isSlotWinner`) - єдиний видимий ефект джекпоту, без банера чи локального підсвічування самого слота. Кубик (`font-size: 1.125rem`, трохи менший за іконку модератора поруч) сидить у рядку з іменем за тим самим `AppTooltip`-патерном, що й `app:moderator` - колонка статусу голосу лишається незайманою. Кубик не обертається: поки триває спін, кожні 120мс перемикається грань (`tabler:dice-1`…`dice-6`, `DICE_FACES`/`diceFaceIndex`), імітуючи котіння в чашці; далі повертається дефолтна `dice-5`. При виграші ім'я і кубик разом блимають `.win-blink` (`@keyframes win-blink`, `animation-iteration-count: 3`).
 
 ### 11.9 Кола результатів і когорти (`resultCohorts.ts`)
 
-Після reveal `ResultsArea.vue` малює окреме коло (PieChart + середнє) на кожну когорту, що має голоси. Когорти - `RESULT_COHORTS = DEV, BE, FE, SRE, QA`; `cohortForShields()` бере тег ролі гравця (`roleTagForShields`) і зводить QA/GQA/AQA в одне коло `QA`.
+Після reveal `ResultsArea.tsx` малює окреме коло (PieChart + середнє) на кожну когорту, що має голоси. Когорти - `RESULT_COHORTS = DEV, BE, FE, SRE, QA`; `cohortForShields()` бере тег ролі гравця (`roleTagForShields`) і зводить QA/GQA/AQA в одне коло `QA`.
 
 - **Тренди** не залежать від чіпів: усі DEV/BE/FE/SRE завжди сумуються в загальну когорту DEV (§11.3)
 - **Хто не показується:** PO, SM і кастомні ролі - їхні голоси в колах, узгодженості й салюті не враховуються. Гравці без ролі йдуть у DEV. Якщо голосували лише PO/SM і кастомні ролі, `ResultsArea` показує одне загальне коло з усіх голосів; якщо ж усі голоси когорт приховані чіпами, кіл і салюту немає
 - **Налаштування:** модератор у `ConfigureCardDeckModal` вмикає/вимикає чіпи DEV/BE/FE/SRE у рядку «Показувати результати» (той самий Save, що й колода). QA - завжди увімкнений, неактивний і блідий чіп (`is-locked`). Для колод без PieChart (`voting`, `vote_question`, `goal_clarity`) чіпи не показуються
 - **DEV як загальне коло** (`resultCohortFor()`): якщо DEV увімкнено, увімкнені BE/FE/SRE мають окремі кола, а вимкнені зливаються в коло DEV (лише DEV увімкнено - усі розробники в одному колі). Якщо DEV вимкнено, показуються лише увімкнені ролі, а голоси гравців з роллю DEV і з вимкненими ролями не рахуються
 - **Збереження:** `room_state.result_cohorts text[]` (міграція `017`, check-констрейнт на `DEV/BE/FE/SRE/QA`); `null` (старі й нові кімнати, поки модератор нічого не змінив) = лише DEV і QA, тобто всі розробники в одному колі DEV. `normalizeCohorts()` завжди додає `QA` і впорядковує теги. До накату міграції вибір не зберігається (помилка лише в консоль), діє дефолт DEV + QA
-- **Підсвітка в списку гравців:** якщо голос гравця не потрапляє в жодне коло (DEV вимкнено, а його роль - DEV або вимкнена BE/FE/SRE), `RoleBadge` у `PlayerRow` стає червоним (`is-excluded`), tooltip додає «голос не показується в результатах» (`hiddenVotePlayerIds` у `[slug].vue`)
+- **Підсвітка в списку гравців:** якщо голос гравця не потрапляє в жодне коло (DEV вимкнено, а його роль - DEV або вимкнена BE/FE/SRE), `RoleBadge` у `PlayerRow` стає червоним (`is-excluded`), tooltip додає «голос не показується в результатах» (`hiddenVotePlayerIds` у `[slug].tsx`)
 - **Консенсус:** `shouldCelebrate(votes, groups)` - салют і decision-sound, якщо хоча б одне показане коло одноголосне з ≥ 2 голосами
 - **Узгодженість на екрані результатів** (`AlignmentCard`) рахується по тих самих колах
 - **Попередній раунд** (`lastRound` snapshot) зберігає вже підписані групи на момент reveal
 
-### 11.10 Фон кімнати (`RoomBackgroundModal.vue`)
+### 11.10 Фон кімнати (`RoomBackgroundModal.tsx`)
 
 Авторизований модератор задає фонове зображення кімнати; його бачать усі учасники, оновлення приходить через Realtime-канал `rooms:<roomId>`.
 

@@ -31,9 +31,9 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
     </tr>
     <tr>
       <td rowspan="6"><strong>Frontend</strong></td>
-      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"> <a href="https://vuejs.org">Vue</a></td>
-      <td>UI framework, Composition API</td>
-      <td><a href="https://github.com/vuejs/core"><img src="https://img.shields.io/github/stars/vuejs/core?style=flat&logo=github&logoColor=white&label=&color=555" alt="Vue stars"></a></td>
+      <td><img src="https://cdn.simpleicons.org/react" width="16" height="16"> <a href="https://react.dev">React</a></td>
+      <td>UI framework (React 19)</td>
+      <td><a href="https://github.com/facebook/react"><img src="https://img.shields.io/github/stars/facebook/react?style=flat&logo=github&logoColor=white&label=&color=555" alt="React stars"></a></td>
     </tr>
     <tr>
       <td><img src="https://cdn.simpleicons.org/vite" width="16" height="16"> <a href="https://vite.dev">Vite</a></td>
@@ -41,19 +41,19 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/vitejs/vite"><img src="https://img.shields.io/github/stars/vitejs/vite?style=flat&logo=github&logoColor=white&label=&color=555" alt="Vite stars"></a></td>
     </tr>
     <tr>
-      <td><img src="https://cdn.simpleicons.org/pinia" width="16" height="16"> <a href="https://pinia.vuejs.org">Pinia</a></td>
+      <td><a href="https://zustand.docs.pmnd.rs">Zustand</a></td>
       <td>State management</td>
-      <td><a href="https://github.com/vuejs/pinia"><img src="https://img.shields.io/github/stars/vuejs/pinia?style=flat&logo=github&logoColor=white&label=&color=555" alt="Pinia stars"></a></td>
+      <td><a href="https://github.com/pmndrs/zustand"><img src="https://img.shields.io/github/stars/pmndrs/zustand?style=flat&logo=github&logoColor=white&label=&color=555" alt="Zustand stars"></a></td>
     </tr>
     <tr>
-      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"> <a href="https://router.vuejs.org">Vue Router</a></td>
-      <td>SPA routing</td>
-      <td><a href="https://github.com/vuejs/router"><img src="https://img.shields.io/github/stars/vuejs/router?style=flat&logo=github&logoColor=white&label=&color=555" alt="Vue Router stars"></a></td>
+      <td><img src="https://cdn.simpleicons.org/reactrouter" width="16" height="16"> <a href="https://reactrouter.com">React Router</a></td>
+      <td>SPA routing (declarative mode)</td>
+      <td><a href="https://github.com/remix-run/react-router"><img src="https://img.shields.io/github/stars/remix-run/react-router?style=flat&logo=github&logoColor=white&label=&color=555" alt="React Router stars"></a></td>
     </tr>
     <tr>
-      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"> <a href="https://vue-i18n.intlify.dev">Vue I18n</a></td>
-      <td>Localization EN / UA</td>
-      <td><a href="https://github.com/intlify/vue-i18n"><img src="https://img.shields.io/github/stars/intlify/vue-i18n?style=flat&logo=github&logoColor=white&label=&color=555" alt="Vue I18n stars"></a></td>
+      <td><img src="https://cdn.simpleicons.org/i18next" width="16" height="16"> <a href="https://www.i18next.com">i18next</a></td>
+      <td>Localization EN / UA (<code>react-i18next</code>)</td>
+      <td><a href="https://github.com/i18next/react-i18next"><img src="https://img.shields.io/github/stars/i18next/react-i18next?style=flat&logo=github&logoColor=white&label=&color=555" alt="react-i18next stars"></a></td>
     </tr>
     <tr>
       <td><img src="https://cdn.simpleicons.org/pwa" width="16" height="16"> <a href="https://vite-pwa-org.netlify.app">Vite PWA</a></td>
@@ -61,7 +61,7 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/vite-pwa/vite-plugin-pwa"><img src="https://img.shields.io/github/stars/vite-pwa/vite-plugin-pwa?style=flat&logo=github&logoColor=white&label=&color=555" alt="Vite PWA stars"></a></td>
     </tr>
     <tr>
-      <td rowspan="8"><strong>UI</strong></td>
+      <td rowspan="9"><strong>UI</strong></td>
       <td><img src="https://cdn.simpleicons.org/tailwindcss" width="16" height="16"> <a href="https://tailwindcss.com">Tailwind CSS</a></td>
       <td>Styling, CSS-first config (v4)</td>
       <td><a href="https://github.com/tailwindlabs/tailwindcss"><img src="https://img.shields.io/github/stars/tailwindlabs/tailwindcss?style=flat&logo=github&logoColor=white&label=&color=555" alt="Tailwind CSS stars"></a></td>
@@ -97,20 +97,20 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/dicebear/dicebear"><img src="https://img.shields.io/github/stars/dicebear/dicebear?style=flat&logo=github&logoColor=white&label=&color=555" alt="DiceBear stars"></a></td>
     </tr>
     <tr>
-      <td><a href="https://www.npmjs.com/package/v-wave">v-wave</a></td>
-      <td>Ripple effect</td>
-      <td><a href="https://github.com/justintaddei/v-wave"><img src="https://img.shields.io/github/stars/justintaddei/v-wave?style=flat&logo=github&logoColor=white&label=&color=555" alt="v-wave stars"></a></td>
+      <td><img src="https://cdn.simpleicons.org/shadcnui" width="16" height="16"> <a href="https://ui.shadcn.com">shadcn/ui</a></td>
+      <td>UI primitives (<code>base-nova</code> style)</td>
+      <td><a href="https://github.com/shadcn-ui/ui"><img src="https://img.shields.io/github/stars/shadcn-ui/ui?style=flat&logo=github&logoColor=white&label=&color=555" alt="shadcn/ui stars"></a></td>
     </tr>
     <tr>
-      <td rowspan="2"><strong>Charts</strong></td>
+      <td><a href="https://base-ui.com">Base UI</a></td>
+      <td>Unstyled primitives under shadcn/ui</td>
+      <td><a href="https://github.com/mui/base-ui"><img src="https://img.shields.io/github/stars/mui/base-ui?style=flat&logo=github&logoColor=white&label=&color=555" alt="Base UI stars"></a></td>
+    </tr>
+    <tr>
+      <td rowspan="1"><strong>Charts</strong></td>
       <td><img src="https://cdn.simpleicons.org/apacheecharts" width="16" height="16"> <a href="https://echarts.apache.org">Apache ECharts</a></td>
       <td>Alignment charts</td>
       <td><a href="https://github.com/apache/echarts"><img src="https://img.shields.io/github/stars/apache/echarts?style=flat&logo=github&logoColor=white&label=&color=555" alt="Apache ECharts stars"></a></td>
-    </tr>
-    <tr>
-      <td><img src="https://cdn.simpleicons.org/apacheecharts" width="16" height="16"> <a href="https://vue-echarts.dev">Vue ECharts</a></td>
-      <td>Vue wrapper for ECharts</td>
-      <td><a href="https://github.com/ecomfe/vue-echarts"><img src="https://img.shields.io/github/stars/ecomfe/vue-echarts?style=flat&logo=github&logoColor=white&label=&color=555" alt="Vue ECharts stars"></a></td>
     </tr>
     <tr>
       <td rowspan="3"><strong>Backend &amp; Hosting</strong></td>
@@ -140,9 +140,9 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/microsoft/playwright"><img src="https://img.shields.io/github/stars/microsoft/playwright?style=flat&logo=github&logoColor=white&label=&color=555" alt="Playwright stars"></a></td>
     </tr>
     <tr>
-      <td><img src="https://cdn.simpleicons.org/vuedotjs" width="16" height="16"> <a href="https://test-utils.vuejs.org">Vue Test Utils</a></td>
-      <td>Component mounting</td>
-      <td><a href="https://github.com/vuejs/test-utils"><img src="https://img.shields.io/github/stars/vuejs/test-utils?style=flat&logo=github&logoColor=white&label=&color=555" alt="Vue Test Utils stars"></a></td>
+      <td><img src="https://cdn.simpleicons.org/testinglibrary" width="16" height="16"> <a href="https://testing-library.com/docs/react-testing-library/intro">React Testing Library</a></td>
+      <td>Component rendering</td>
+      <td><a href="https://github.com/testing-library/react-testing-library"><img src="https://img.shields.io/github/stars/testing-library/react-testing-library?style=flat&logo=github&logoColor=white&label=&color=555" alt="React Testing Library stars"></a></td>
     </tr>
     <tr>
       <td><a href="https://github.com/capricorn86/happy-dom">happy-dom</a></td>
@@ -150,14 +150,14 @@ A web-based planning poker tool that helps Scrum and Agile teams estimate tasks 
       <td><a href="https://github.com/capricorn86/happy-dom"><img src="https://img.shields.io/github/stars/capricorn86/happy-dom?style=flat&logo=github&logoColor=white&label=&color=555" alt="happy-dom stars"></a></td>
     </tr>
     <tr>
-      <td><img src="https://cdn.simpleicons.org/eslint" width="16" height="16"> <a href="https://eslint.org">ESLint</a></td>
-      <td>Linting (flat config)</td>
-      <td><a href="https://github.com/eslint/eslint"><img src="https://img.shields.io/github/stars/eslint/eslint?style=flat&logo=github&logoColor=white&label=&color=555" alt="ESLint stars"></a></td>
+      <td><a href="https://oxc.rs/docs/guide/usage/linter">oxlint</a></td>
+      <td>Linting, type-aware (<code>oxlint-tsgolint</code>)</td>
+      <td><a href="https://github.com/oxc-project/oxc"><img src="https://img.shields.io/github/stars/oxc-project/oxc?style=flat&logo=github&logoColor=white&label=&color=555" alt="oxc stars"></a></td>
     </tr>
     <tr>
-      <td><img src="https://cdn.simpleicons.org/typescript" width="16" height="16"> <a href="https://github.com/vuejs/language-tools">vue-tsc</a></td>
-      <td>SFC typecheck (<code>pnpm run typecheck</code>)</td>
-      <td><a href="https://github.com/vuejs/language-tools"><img src="https://img.shields.io/github/stars/vuejs/language-tools?style=flat&logo=github&logoColor=white&label=&color=555" alt="vue-tsc stars"></a></td>
+      <td><img src="https://cdn.simpleicons.org/typescript" width="16" height="16"> <a href="https://github.com/microsoft/typescript-go">tsc (TypeScript 7)</a></td>
+      <td>Native typecheck (<code>pnpm run typecheck</code>)</td>
+      <td><a href="https://github.com/microsoft/typescript-go"><img src="https://img.shields.io/github/stars/microsoft/typescript-go?style=flat&logo=github&logoColor=white&label=&color=555" alt="typescript-go stars"></a></td>
     </tr>
     <tr>
       <td rowspan="2"><strong>Agents</strong></td>
@@ -212,17 +212,19 @@ pnpm run lint
 pnpm run typecheck
 pnpm run test
 pnpm run build
-pnpm run test:e2e:pages   # public pages smoke, no Supabase
+pnpm run test:e2e:pages   # public pages smoke; set dummy VITE_SUPABASE_* first (see tests/AGENTS.md)
+pnpm exec playwright test --project=visual   # screenshot parity, Linux baselines (Playwright container)
 pnpm run test:e2e         # full Playwright suite, requires .env/.env.test
 ```
 
-`pnpm run test:ci` runs the first four in one go - the same gate as CI.
+`pnpm run test:ci` runs `icons:check` and the first four in one go - the same gate as CI.
 
 ### CI/CD (GitHub Actions + Netlify)
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests, pushes to `main` and manual dispatch:
 
 - `detect-secrets`, `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
+- `visual` (not required) runs the `visual` Playwright project in the `mcr.microsoft.com/playwright` container against the committed baselines; `visual-baselines.yml` regenerates them on the `update-visual-baselines` PR label.
 - `e2e` (Chromium + WebKit against the test Supabase project) runs only when the `E2E_*` secrets are set.
 - There is no deploy job: Netlify builds `main` itself from the repo (`netlify.toml`), and the CI `dist` is built with placeholder credentials for the icon audit only.
 
@@ -257,7 +259,7 @@ sequenceDiagram
   autonumber
   actor Mod as Moderator
   actor Player as Player
-  participant App as SPA (Vue + Pinia)
+  participant App as SPA (React + Zustand)
   participant DB as Supabase Postgres
   participant RT as Supabase Realtime + Presence
   participant API as Netlify Function /api/*.json
