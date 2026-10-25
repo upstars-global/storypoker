@@ -699,7 +699,7 @@ Ruling: baselines = artifact visual-baselines of run 40140558827 (PR #46, label 
 Ruling: visual-baselines also runs on pull_request labeled update-visual-baselines (job-level if, no concurrency) - workflow_dispatch needs the file on main - low
 Ruling: Visual and baselines jobs run in playwright:v1.64.1-noble with --user root, HOME=/root - container defaults to HOME=/github/home - low: confirmed only by a real run
 Task 7: done - (subagent opus) commit 3034743; controller rerun with CI dummy VITE_SUPABASE_* : icons:check, typecheck (3 projects), lint 0, test:unit 158 passed, build, icons:audit-build (delta -275849 B gzip), playwright page-load + icon-delivery 16 passed; git ls-files *.vue -> empty
-Task 8: pending
+Task 8: done - (subagent opus) commit 31dbdd8; controller rerun: tsc -v -> Version 7.0.2; test:ci exit 0 (oxlint --type-aware 0 errors, 159 unit tests); icons:audit-build passed; page-load + icon-delivery 16 passed; no eslint/@vue packages in package.json
 Task 9: pending
 Task 10: pending
 Task 11: pending
@@ -725,4 +725,9 @@ Ruling: tests/icon-rendering vite.config.ts and tsconfig.json moved to plugin-re
 Deferred: @testing-library/dom peer of @testing-library/react not installed - Task 15
 Deferred: docs/audits/icon-bundle-baseline.json is stale after the Vue removal (delta -275 KiB) - Task 23
 Deferred: playwright.config.ts sets VITE_SUPABASE_* to '' without shell env, so local page-load needs the CI dummy values (pre-existing) - Task 24 docs
+Ruling: RED failed with TypeError reading ts.ScriptKind.TSX (TS 7 main export is only lib/version.cjs), not Cannot find module - same cause, different text - low
+Ruling: oxlint = correctness at error + react/rules-of-hooks, react/exhaustive-deps warn, typescript/no-floating-promises error, no-explicit-any and no-unused-vars ^_ warn; Task 7 exclude list mirrored in ignorePatterns - Tasks 10-13 remove entries there too - medium
+Ruling: per-file overrides for Playwright fixtures ({}, use), generated database.types.ts, deliberate stubs in pwa.spec.ts and swReloadClients.spec.ts, String(unknown) in tests/visual fakeSupabase - test or generated code only - low
+Deferred: .oxlintrc.json rules-of-hooks off for app/pwa.ts (useAppUpdate is not a hook yet) - Task 12 removes the override when porting
+Deferred: AGENTS.md "TypeScript лишається 6.x", README ESLint mentions, vitest.config.ts __dirname warning - Task 24
 ```
