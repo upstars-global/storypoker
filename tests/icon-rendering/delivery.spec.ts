@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test'
 import { VIEWPORT, iconLocator, iconSelector } from './selectors'
 
 test('renders the room fixture without a backend', async ({ page }) => {
-  test.fixme(true, 'room view harness is ported in Task 21')
   const remote: string[] = []
   await page.route('**/*', async route => {
     const url = new URL(route.request().url())
@@ -109,7 +108,6 @@ const ROOM_STATES = [
 
 for (const state of ROOM_STATES) {
   test(`renders local icons in room state: ${state.label}`, async ({ browser }) => {
-    test.fixme(true, 'room view harness is ported in Task 21')
     const context = await browser.newContext({ viewport: VIEWPORT })
     const page = await context.newPage()
     const attempts: string[] = []
@@ -146,7 +144,6 @@ test.describe('forced colors', () => {
   test.use({ forcedColors: 'active' })
 
   test('keeps mask icons visible against the forced background', async ({ page }) => {
-    test.fixme(true, 'room view harness is ported in Task 21')
     await page.goto('/?role=moderator&view=room')
     await expect(page.getByTestId('icon-harness-ready')).toBeAttached()
     const icon = page.locator(`${iconSelector}.sp-icon`).first()
