@@ -75,10 +75,10 @@ describe('useCountdown modes', () => {
     expect(result.current.countdownTimerCounter).toBe(10)
     expect(created.every(a => a.paused)).toBe(true)
 
-    act(() => vi.advanceTimersByTime(3000))
+    act(() => { vi.advanceTimersByTime(3000) })
     expect(result.current.countdownTimerCounter).toBe(7)
 
-    act(() => vi.advanceTimersByTime(7000))
+    act(() => { vi.advanceTimersByTime(7000) })
     expect(onComplete).toHaveBeenCalledOnce()
     expect(result.current.countdownActive).toBe(false)
     expect(result.current.countdownRunning).toBe(false)
@@ -92,7 +92,7 @@ describe('useCountdown modes', () => {
     act(() => result.current.startCountdown('silent', first))
     act(() => result.current.startCountdown('silent', second))
 
-    act(() => vi.advanceTimersByTime(10_000))
+    act(() => { vi.advanceTimersByTime(10_000) })
     expect(first).toHaveBeenCalledOnce()
     expect(second).not.toHaveBeenCalled()
   })
@@ -121,7 +121,7 @@ describe('useCountdown modes', () => {
     expect(wet!.paused).toBe(false)
     expect(result.current.countdownActive).toBe(true)
 
-    act(() => vi.advanceTimersByTime(10_000))
+    act(() => { vi.advanceTimersByTime(10_000) })
     expect(onComplete).toHaveBeenCalledOnce()
     expect(ambience!.paused).toBe(false)
   })
@@ -131,7 +131,7 @@ describe('useCountdown modes', () => {
     const [votePrompt, , , ambience] = created
     act(() => result.current.startCountdown('wet', undefined, () => true))
     act(() => votePrompt!.onended?.())
-    act(() => vi.advanceTimersByTime(10_000))
+    act(() => { vi.advanceTimersByTime(10_000) })
     expect(ambience!.paused).toBe(true)
   })
 
@@ -141,7 +141,7 @@ describe('useCountdown modes', () => {
     act(() => result.current.startCountdown('dry', onComplete))
     act(() => result.current.stopCountdown())
 
-    act(() => vi.advanceTimersByTime(10_000))
+    act(() => { vi.advanceTimersByTime(10_000) })
     expect(onComplete).not.toHaveBeenCalled()
     expect(result.current.countdownRunning).toBe(false)
     expect(created.every(a => a.paused)).toBe(true)

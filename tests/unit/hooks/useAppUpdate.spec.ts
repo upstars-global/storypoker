@@ -21,7 +21,7 @@ function renderAppUpdate() {
 function keepTabBusyUntilPrompt() {
   for (let elapsed = 0; elapsed < UPDATE_PROMPT_MS; elapsed += UPDATE_IDLE_MS / 2) {
     window.dispatchEvent(new Event('keydown'))
-    act(() => vi.advanceTimersByTime(UPDATE_IDLE_MS / 2))
+    act(() => { vi.advanceTimersByTime(UPDATE_IDLE_MS / 2) })
   }
 }
 
@@ -131,7 +131,7 @@ describe('useAppUpdate', () => {
       result.current.scheduleUpdate(apply)
     })
 
-    act(() => vi.advanceTimersByTime(UPDATE_PROMPT_MS))
+    act(() => { vi.advanceTimersByTime(UPDATE_PROMPT_MS) })
     expect(apply).not.toHaveBeenCalled()
     expect(result.current.promptVisible).toBe(false)
 
@@ -171,7 +171,7 @@ describe('useAppUpdate', () => {
     const second = renderAppUpdate()
     act(() => first.current.scheduleUpdate(vi.fn()))
 
-    act(() => vi.advanceTimersByTime(UPDATE_PROMPT_MS))
+    keepTabBusyUntilPrompt()
     expect(second.current.promptVisible).toBe(true)
   })
 })
