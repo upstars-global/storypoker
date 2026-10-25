@@ -109,8 +109,11 @@ it('matches the icons actually used in the application sources', () => {
   expect(issues).toEqual([])
 })
 
-it('covers every dice face', () => {
-  for (const face of [1, 2, 3, 4, 5, 6]) expect(inputNames).toContain(`tabler:dice-${face}`)
+it('covers every dice face declared in PlayerRow', () => {
+  const source = projectSources()['app/components/PlayerRow.tsx']!
+  const faces = [...source.matchAll(/'(tabler:dice-\d)'/g)].map(match => match[1]!)
+  expect(new Set(faces).size).toBe(6)
+  for (const name of faces) expect(inputNames).toContain(name)
 })
 
 it('covers every slot symbol', () => {
