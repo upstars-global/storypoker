@@ -713,8 +713,8 @@ Task 18: done - 7c74a63; controller rerun: pnpm run test:ci -> exit 0 (375 passe
 Task 19: done - a6f7669; controller rerun: pnpm run test:ci -> exit 0 (407 passed, 1 todo); page-load + icon-delivery -> 17 passed; CI Visual run 40213360416 pending
 Task 20: done - 3ae6d5d, e3e0e5a; controller rerun: pnpm run test:ci -> exit 0 (445 tests); page-load + icon-delivery -> 17 passed; CI run 40215942021 all green incl. Visual (full set: public, room, modals, scenes)
 Task 21: done - 5ef37b3; controller rerun: pnpm run test:icons:harness -> 63 passed; pnpm run test:ci -> exit 0 (445 tests)
-Task 22: in progress
-Task 23: pending
+Task 22: done - 90428d8 (opus) + 59e8bc4 (controller: AppIcon spec port, dice faces from PlayerRow.tsx); controller rerun: pnpm run test:ci -> exit 0 (449 tests); page-load + icon-delivery -> 26 passed (9 new AC22 console cases); AC20 unverified - missing credentials: .env/.env.test for critical-flows (CI E2E skipped without secrets); no baselines updated
+Task 23: in progress
 Task 24: pending
 Task 25: pending
 Ruling: owner decision 2026-10-25 - P0-P4 stay on 2610242233-dev-session in the main checkout, no worktrees, no P0 squash into main, one PR #46 at parity; spec Decisions 2-3 and AC13/20/23/25 updated to match - main fixes during migration get ported into this branch - low
@@ -806,4 +806,61 @@ Ruling: harness side-column icon count 36 -> 37 - the moderator alarm toggle (c8
 Ruling: harness renders the ready marker immediately, showJoin starts from role === 'guest' (react set-state-in-effect); theme/volume init inside RoomHarness - low
 Ruling: SlotMachine checked in Chromium via the harness (widget=slot): 3 reels spin 1100/1700/2300 ms, settle on result symbols, no console errors - closes the Task 19 deferral - low
 Deferred: harness room screenshots are saved but never compared to a reference - Task 23 or a separate task
+Ruling: Task 22 extra paths - tests/e2e/smoke.spec.ts (reveal needs 2 votes since 2858fc3, second voter context), tests/visual/support/{fakeSupabase,scene}.ts optional supabaseUrl for the AC22 room cases - low
+Ruling: AC22 RED evidence - injected console.error on /ffc and a setTimeout throw on /login both failed the test, reverted - low
+Deferred: AC20 critical-flows and smoke against the test Supabase - needs .env/.env.test or CI E2E secrets; realtime sync between two browsers and AuthPage.login unchecked - owner
+Deferred: no tsconfig covers tests/e2e/** and tests/page-objects/** (checked once with a temporary tsconfig, tsc 7.0.2 exit 0) - Task 25
+Deferred: AppIcon sets aria-hidden together with aria-label, so the label is never announced - Task 23
 ```
+
+### Task 22: стара Vue-спека → React-тест
+
+Метод: назви `it`/`test` кожної спеки з `3034743^` звірено з `tests/unit/**`, розбіжності прочитано вручну.
+
+| # | Vue-спека | React-тест | Примітка |
+|---|---|---|---|
+| 1 | components/AppIcon.spec.ts | components/AppIcon.spec.tsx | 4/4, портовано в 59e8bc4 |
+| 2 | components/AppModal.spec.ts | components/AppModal.spec.tsx | 4/5 за назвою; cancel → Escape unless lockDismiss |
+| 3 | components/AppTooltip.spec.ts | components/AppTooltip.spec.tsx | focusin/focusout → focus/blur |
+| 4 | components/CardsArea.spec.ts | components/CardsArea.spec.tsx | 2/2, більше перевірок |
+| 5 | components/ConfigureCardDeckModal.spec.ts | components/ConfigureCardDeckModal.spec.tsx | 3/3 |
+| 6 | components/PlayerRow.spec.ts | components/PlayerRow.spec.tsx | 6/7; Escape + повернення фокуса |
+| 7 | components/ResultsArea.spec.ts | components/ResultsArea.spec.tsx | 7/7 |
+| 8 | components/RoomBackgroundModal.spec.ts | components/RoomBackgroundModal.spec.tsx | 9/9 |
+| 9 | components/SlotMachine.spec.ts | components/SlotMachine.spec.tsx | 2/2 |
+| 10 | components/Timer.spec.ts | components/Timer.spec.tsx | 14/14 |
+| 11 | components/UserSettingsModal.spec.ts | components/UserSettingsModal.spec.tsx | 12/12 |
+| 12 | composables/useAppUpdate.spec.ts | hooks/useAppUpdate.spec.ts | 10/10 |
+| 13 | composables/useCountdown.spec.ts | hooks/useCountdown.spec.ts | 2/2 |
+| 14 | composables/useDylanAvatar.spec.ts | hooks/useDylanAvatar.spec.ts | 6/6 |
+| 15 | composables/useMenuKeyboard.spec.ts | hooks/useMenuKeyboard.spec.tsx | 8/8; хук без споживача (Task 23) |
+| 16 | composables/useSoundVolume.spec.ts | hooks/useSoundVolume.spec.ts | 8/8 |
+| 17 | composables/useTheme.spec.ts | hooks/useTheme.spec.ts | 3/3 |
+| 18 | i18n.spec.ts | i18n.spec.ts | persistLocale оновлює ще й language |
+| 19 | pages/roomPage.spec.ts | pages/roomPage.spec.tsx | 14/14 |
+| 20 | pwa.spec.ts | pwa.spec.ts | 6/6 |
+| 21 | stores/auth.spec.ts | stores/auth.spec.ts | 3/3 |
+| 22 | stores/players.spec.ts | stores/players.spec.ts | 17/17 |
+| 23 | stores/presence.spec.ts | stores/presence.spec.ts | 9/9 |
+| 24 | stores/profiles.spec.ts | stores/profiles.spec.ts | 6/6 |
+| 25 | stores/room.spec.ts | stores/room.spec.ts | 30/30 |
+| 26 | swReloadClients.spec.ts | swReloadClients.spec.ts | 4/4 |
+| 27 | utils/alignment.spec.ts | utils/alignment.spec.ts | 7/7 |
+| 28 | utils/authValidation.spec.ts | utils/authValidation.spec.ts | 3/3 |
+| 29 | utils/avatarImage.spec.ts | utils/avatarImage.spec.ts | 5/5 |
+| 30 | utils/backgroundImage.spec.ts | utils/backgroundImage.spec.ts | 11/11 |
+| 31 | utils/cardDecks.spec.ts | utils/cardDecks.spec.ts | 5/5 |
+| 32 | utils/iconCss.spec.ts | utils/iconCss.spec.ts | 7/7 |
+| 33 | utils/iconManifest.spec.ts | utils/iconManifest.spec.ts | 18/18; грані кубика знову з PlayerRow.tsx (59e8bc4) |
+| 34 | utils/iconResolver.spec.ts | utils/iconResolver.spec.ts | 4/4 |
+| 35 | utils/iconSubset.spec.ts | utils/iconSubset.spec.ts | 4/4 |
+| 36 | utils/resultCelebration.spec.ts | utils/resultCelebration.spec.ts | 16/16 |
+| 37 | utils/resultCohorts.spec.ts | utils/resultCohorts.spec.ts | 13/13 |
+| 38 | utils/roundStats.spec.ts | utils/roundStats.spec.ts | 11/11 |
+| 39 | utils/shields.spec.ts | utils/shields.spec.ts | 11/11 |
+| 40 | utils/slotMachine.spec.ts | utils/slotMachine.spec.ts | 6/6 |
+| 41 | utils/timerAlarm.spec.ts | utils/timerAlarm.spec.ts | 8/8 |
+| 42 | utils/useClickOutside.spec.ts | hooks/useClickOutside.spec.tsx | 3/3; хук без споживача (Task 23) |
+
+Нові React-спеки без Vue-попередника: AppHeader, AuthModal, HistoryModal, PasswordInput, PlayerEditModal,
+useCardLabel, useRipple, authPages, home. Оновлених еталонів: немає.
