@@ -709,8 +709,8 @@ Task 14: done - 9152423 (opus): test:ci exit 0 (290 unit), page-load + icon-deli
 Task 15: done - 9f287b8 (opus): test:unit components 21 passed, test:ci exit 0 (311 unit), page-load + icon-delivery 17 passed, header menu checked in built preview
 Task 16: done - 707c57e; controller rerun: pnpm run test:ci -> exit 0 (329 tests); page-load + icon-delivery -> 17 passed; CI Visual on PR #46 pending
 Task 17: done - 0be53b7; controller rerun: pnpm run test:ci -> exit 0 (336 tests); page-load + icon-delivery -> 17 passed
-Task 18: in progress
-Task 19: pending
+Task 18: done - 7c74a63; controller rerun: pnpm run test:ci -> exit 0 (375 passed, 1 todo); page-load + icon-delivery -> 17 passed; room-* baselines wait for Task 19 (Timer in every room shot)
+Task 19: in progress
 Task 20: pending
 Task 21: pending
 Task 22: pending
@@ -782,4 +782,11 @@ Ruling: react-router 7.18.4 -> 8.5.0 by owner decision 2026-10-25; spec decision
 Ruling: home mounts AppHeader without props; returning player's header avatar seed (headerPlayerName) dropped until the header gets auth/profile props - no baseline covers it - low
 Deferred: home headerPlayerName avatar seed, AuthModal and UserSettingsModal on home - Task 18 / Task 20
 Ruling: CI Visual run 40208875784 on 0be53b7: 79 passed (all public login/signup/forgot/reset/home, 1280 + 375), 257 failed only in room.spec, modals.spec and room scene self-checks - routes still stubs until Tasks 18-21 - low
+Ruling: Task 18 touched AppIcon (aria-label), AppTooltip (className), AppMenu (sideOffset/alignOffset), AppHeader (room/auth/countdown items), router.tsx (no Titled on /:slug), index.tsx (header player name, AuthModal), main.css (confetti + slot-winner blink), iconManifest (2 dynamic entries), room.spec.ts:65 page.getByRole('menu'); PageStub.tsx deleted - deferred items and Vue scoped styles - low
+Ruling: ConnectionBanner mounts in the room page, not App.tsx, without fade - Presence runs only in the room; no baseline covers it - low
+Deferred: Timer/SlotMachine, side-widget setting, spin counts and outgoing slot broadcasts - Task 19
+Deferred: PlayerRow Edit, header History/Trends/Configure deck/Room background/Account settings handlers, save handlers for player edit/deck/alarm/background, roomPage HistoryModal todo - Task 20
+Deferred: tests/visual/modals.spec.ts:135 row.getByRole('menuitem') portal selector - Task 20
+Deferred: home.spec "creates a room" flaked once (lastVisitedAt off 40 ms under advancing fake time) - Task 23
+Deferred: build warns about chunks > 500 kB - Task 23
 ```
