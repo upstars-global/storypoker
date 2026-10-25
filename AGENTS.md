@@ -175,6 +175,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - TypeScript у composables/utils/stores; `<script setup lang="ts">` у Vue SFC
 - Без wrapper-абстракцій, які тільки перейменовують функції
 - UI-тексти мають проходити через i18n, якщо компонент вже локалізований
+- `.vscode/settings.json` у репо навмисно: спільні налаштування VS Code для тіммейтів Scrum Office, щоб проєкт у всіх був налаштований однаково. Особисті на вигляд ключі в ньому - не дефект для рев'ю; змінювати лише за згодою команди
 
 ## Security
 - Не друкувати секрети або повні env values; у прикладах - placeholders
