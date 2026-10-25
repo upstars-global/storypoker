@@ -202,3 +202,38 @@ describe('PlayerRow row', () => {
     expect(screen.getByText('Definite')).toBeTruthy()
   })
 })
+
+describe('PlayerRow status announcements', () => {
+  const basePlayer = {
+    id: 'p1', name: 'Alice', is_moderator: false, vote: null, is_online: true,
+    user_id: null, shields: [], votePending: false,
+  }
+
+  async function expectAnnouncedOnce(key: string) {
+    const icon = screen.getByRole('img', { name: i18n.t(key) })
+    expect(icon.closest('[aria-describedby]')).toBeNull()
+    const trigger = icon.parentElement!
+    const tooltip = Array.from(document.querySelectorAll<HTMLElement>('[role="tooltip"]'))
+      .find(node => node.textContent === i18n.t(key))
+    expect(tooltip?.closest('[hidden]')).not.toBeNull()
+    await act(async () => {
+      fireEvent.pointerEnter(trigger, { pointerType: 'mouse' })
+      fireEvent.mouseEnter(trigger)
+      fireEvent.mouseMove(trigger)
+    })
+    expect(icon.closest('[aria-describedby]')).toBeNull()
+    expect(tooltip?.closest('[hidden]')).toBeNull()
+  }
+
+  it.each([
+    ['players.playerDeciding', { phase: 'voting' as const, player: basePlayer }],
+    ['players.estimateGiven', { phase: 'voting' as const, player: { ...basePlayer, vote: '3' } }],
+    ['players.noVote', { phase: 'revealed' as const, player: basePlayer }],
+    ['players.inactive', { phase: 'voting' as const, player: { ...basePlayer, is_online: false } }],
+    ['players.moderator', { phase: 'voting' as const, player: { ...basePlayer, is_moderator: true } }],
+    ['players.slotWinner', { phase: 'voting' as const, player: basePlayer, isSlotWinner: true }],
+  ])('names the %s icon without a duplicate description', async (key, overrides) => {
+    renderRow(overrides)
+    await expectAnnouncedOnce(key)
+  })
+})

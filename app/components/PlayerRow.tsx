@@ -46,6 +46,7 @@ function StatusIcon({ label, children }: { label: string; children: ReactElement
     <AppTooltip
       side="top"
       sideOffset={6}
+      describeTrigger={false}
       trigger={<span className="inline-flex">{children}</span>}
     >
       {label}
@@ -207,6 +208,7 @@ export default function PlayerRow({
           <AppTooltip
             side="top"
             sideOffset={6}
+            describeTrigger={false}
             trigger={(
               <span className="inline-flex flex-none">
                 <AppIcon
@@ -225,6 +227,7 @@ export default function PlayerRow({
           <AppTooltip
             side="top"
             sideOffset={6}
+            describeTrigger={false}
             trigger={(
               <span className={isSlotWinner ? 'inline-flex flex-none win-blink' : 'inline-flex flex-none'}>
                 <AppIcon

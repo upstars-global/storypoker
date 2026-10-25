@@ -6,10 +6,11 @@ type AppTooltipProps = {
   sideOffset?: number
   className?: string
   trigger: ReactElement
+  describeTrigger?: boolean
   children: ReactNode
 }
 
-export default function AppTooltip({ side = 'top', sideOffset = 6, className, trigger, children }: AppTooltipProps) {
+export default function AppTooltip({ side = 'top', sideOffset = 6, className, trigger, describeTrigger = true, children }: AppTooltipProps) {
   const tooltipId = useId()
   return (
     <Tooltip>
@@ -21,7 +22,7 @@ export default function AppTooltip({ side = 'top', sideOffset = 6, className, tr
           render={trigger}
           delay={0}
           closeDelay={0}
-          aria-describedby={tooltipId}
+          aria-describedby={describeTrigger ? tooltipId : undefined}
         />
       </span>
       <TooltipContent
