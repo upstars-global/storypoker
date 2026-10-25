@@ -711,7 +711,7 @@ Task 16: done - 707c57e; controller rerun: pnpm run test:ci -> exit 0 (329 tests
 Task 17: done - 0be53b7; controller rerun: pnpm run test:ci -> exit 0 (336 tests); page-load + icon-delivery -> 17 passed
 Task 18: done - 7c74a63; controller rerun: pnpm run test:ci -> exit 0 (375 passed, 1 todo); page-load + icon-delivery -> 17 passed; room-* baselines wait for Task 19 (Timer in every room shot)
 Task 19: done - a6f7669; controller rerun: pnpm run test:ci -> exit 0 (407 passed, 1 todo); page-load + icon-delivery -> 17 passed; CI Visual run 40213360416 pending
-Task 20: done - 3ae6d5d, e3e0e5a; controller rerun: pnpm run test:ci -> exit 0 (445 tests); page-load + icon-delivery -> 17 passed; CI Visual run 40215942021 pending
+Task 20: done - 3ae6d5d, e3e0e5a; controller rerun: pnpm run test:ci -> exit 0 (445 tests); page-load + icon-delivery -> 17 passed; CI run 40215942021 all green incl. Visual (full set: public, room, modals, scenes)
 Task 21: in progress
 Task 22: pending
 Task 23: pending
@@ -799,7 +799,7 @@ Ruling: Task 20 extra paths - app/hooks/useShieldsMap.ts (shared by History/Tren
 Ruling: AlignmentTrendsModal loads lazily - eager load put the entry 108 KB gzip over the icons:audit-build budget; first Trends open fetches ~188 KB gzip - medium
 Ruling: RoundSnapshotModal renders nested inside History/Trends - siblings let Tab escape the snapshot; UpdateBanner without fade; deck preset list opens below the field (alignItemWithTrigger=false) - low
 Ruling: AppModalPaper onPointerDown stopPropagation kept - Select outside press closes the list, not the modal (test + browser) - low
-Deferred: deck Select chevron 1 px shorter with rounded ends vs native - owner approval of the modal-configure-deck baselines - Task 22
-Deferred: configure-deck classic light 375 chip rows wrap differently (chips ~1 px wider than the Vue light baseline; Vue dark agrees with React) - Task 22
+Deferred: deck Select chevron 1 px shorter with rounded ends vs native - owner approval of the modal-configure-deck baselines - CI Visual 40215942021 passes at 1% threshold, no baseline update - closed
+Deferred: configure-deck classic light 375 chip rows wrap differently (chips ~1 px wider than the Vue light baseline; Vue dark agrees with React) - CI Visual 40215942021 passes at 1% threshold, no baseline update - closed
 Deferred: skip link text read from uk.json directly, not via i18n - Task 23
 ```
