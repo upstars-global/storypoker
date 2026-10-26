@@ -109,7 +109,7 @@ CI - `.github/workflows/ci.yml`: паралельні job ids `lint`/`typecheck`
 `unit` (`test:unit:coverage`)/`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
 Supabase-кредами) і `e2e` (локальний Supabase на раннері, образи з `ghcr.io`: анонімні pull з `public.ecr.aws`
 падають з `toomanyrequests`) на кожен run; `visual` (контейнер Playwright) - лише на `workflow_dispatch`: рішення
-власника 2026-10-26, поки повільний, не дефект для рев'ю;
+власника 2026-10-26, поки нестабільний, не дефект для рев'ю;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й
