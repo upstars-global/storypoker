@@ -15,6 +15,8 @@ Realtime-payload для `setSupabase()` / `applyChange()` - `tests/support/helpe
 character class. Точний час після `vi.setSystemTime` звіряй з `vi.useFakeTimers({ toFake: ['Date'] })`: з
 `shouldAdvanceTime: true` годинник іде під час `await`, і тест періодично падає в CI.
 `pnpm run typecheck` бере `app/**`, `tests/unit/**`, harness і `tests/{e2e,page-objects,visual}/**` (`tests/e2e/tsconfig.json`).
+Unit-тест, що читає файли репо, бере їх через `import x from '<path>?raw'` або `import.meta.glob(..., { query: '?raw',
+import: 'default', eager: true })` (`agentsSkills.spec.ts`), а не `node:fs`: `types` у `tsconfig.json` без `node`.
 E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test` - локально його пише `pnpm run supabase:local` (локальний
 Supabase у colima, README «Local Supabase»); job `e2e` у CI (образи Supabase з `ghcr.io`) запускає той самий скрипт на раннері й передає
 `.env/.env.test` у `$GITHUB_ENV`, бо під `CI` конфіг файл не читає. Без `E2E_BASE_URL` Playwright сам збирає і
