@@ -415,8 +415,8 @@ round_history (
 **Запис** - `roomStore.reveal()` (`app/stores/room.ts`):
 1. No-op якщо кімнати/стану нема або `phase` вже `'revealed'` (захист від подвійного запису)
 2. Збирає `votes = {player_id, name, vote}[]` лише з гравців із непустим голосом
-3. Завжди виставляє `room_state.phase='revealed'`; якщо таймер був на паузі - заморожує `paused_elapsed_ms` (див. §11.6)
-4. **Рядок `round_history` пишеться, тільки коли `votes.length >= 2`** - одноголосні/безголосі reveal-и в історію не потрапляють
+3. Виставляє `room_state.phase='revealed'` умовним update (`phase <> 'revealed'`, `select('room_id')`); якщо таймер був на паузі - заморожує `paused_elapsed_ms` (див. §11.6)
+4. **Рядок `round_history` пишеться, тільки коли цей update змінив рядок і `votes.length >= 2`** - одноголосні/безголосі reveal-и в історію не потрапляють, а з двох одночасних reveal-ів пише лише той, що виграв update
 5. `active_cards`/`deck_preset` беруться зі стану кімнати на момент reveal - тому картка в історії лишається правильною, навіть якщо колоду згодом змінили
 
 `?` і `☕` рахуються як повноцінні голоси для запису, але виключаються з `alignmentScore`/`averageOf` (нечислові). `name` у snapshot дублюється, щоб історія лишалась читабельною після rename/kick/leave гравця.

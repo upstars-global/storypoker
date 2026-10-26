@@ -24,6 +24,21 @@ function fakeRoomState(overrides: Partial<RoomState> = {}): RoomState {
   }
 }
 
+type UpdateQuery = Promise<{ error: null }> & {
+  eq: (column: string, value: unknown) => UpdateQuery
+  neq: (column: string, value: unknown) => UpdateQuery
+  select: (columns: string) => Promise<{ data: { room_id: string }[]; error: null }>
+}
+
+function updateQuery(updatedRows = [{ room_id: 'r1' }], filters: [string, string, unknown][] = []): UpdateQuery {
+  const query: UpdateQuery = Object.assign(Promise.resolve({ error: null as null }), {
+    eq: (column: string, value: unknown) => { filters.push(['eq', column, value]); return query },
+    neq: (column: string, value: unknown) => { filters.push(['neq', column, value]); return query },
+    select: () => Promise.resolve({ data: updatedRows, error: null as null }),
+  })
+  return query
+}
+
 function fakePlayer(overrides: Partial<Player> = {}): Player {
   return {
     id: 'p1',
@@ -70,7 +85,7 @@ describe('roomStore actions', () => {
       from: (table: string) => ({
         update: (arg: Record<string, unknown>) => {
           calls.push({ table, op: 'update', arg })
-          return { eq: vi.fn().mockResolvedValue({ error: null }) }
+          return updateQuery()
         },
         insert: (arg: Record<string, unknown>) => {
           calls.push({ table, op: 'insert', arg })
@@ -92,7 +107,7 @@ describe('roomStore actions', () => {
       from: (table: string) => ({
         update: (arg: Record<string, unknown>) => {
           calls.push({ table, op: 'update', arg })
-          return { eq: vi.fn().mockResolvedValue({ error: null }) }
+          return updateQuery()
         },
         insert: (arg: Record<string, unknown>) => {
           calls.push({ table, op: 'insert', arg })
@@ -120,6 +135,23 @@ describe('roomStore actions', () => {
     expect(typeof hist?.arg.revealed_at).toBe('string')
   })
 
+  it('reveal() writes round_history only when its update moved the round out of voting', async () => {
+    const filters: [string, string, unknown][] = []
+    const insert = vi.fn().mockResolvedValue({ error: null })
+    setSupabase(asSupabase({
+      from: () => ({ update: () => updateQuery([], filters), insert }),
+    }))
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState() })
+    usePlayersStore.setState({ players: [
+      fakePlayer({ id: 'p1', name: 'Alice', vote: '5' }),
+      fakePlayer({ id: 'p2', name: 'Bob', vote: '8' }),
+    ] })
+    await state().reveal()
+    expect(filters).toEqual([['eq', 'room_id', 'r1'], ['neq', 'phase', 'revealed']])
+    expect(insert).not.toHaveBeenCalled()
+  })
+
   it('reveal() finalizes active pause duration before revealing', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-05-04T00:01:00Z'))
@@ -129,7 +161,7 @@ describe('roomStore actions', () => {
         from: (table: string) => ({
           update: (arg: Record<string, unknown>) => {
             calls.push({ table, op: 'update', arg })
-            return { eq: vi.fn().mockResolvedValue({ error: null }) }
+            return updateQuery()
           },
           insert: (arg: Record<string, unknown>) => {
             calls.push({ table, op: 'insert', arg })
@@ -337,7 +369,7 @@ describe('roomStore timer actions', () => {
           update: (arg: Partial<RoomState>) => {
             updates.push(arg)
             useRoomStore.setState(s => ({ roomState: { ...s.roomState!, ...arg } }))
-            return { eq: vi.fn().mockResolvedValue({ error: null }) }
+            return updateQuery()
           },
           insert: vi.fn().mockResolvedValue({ error: null }),
         }),

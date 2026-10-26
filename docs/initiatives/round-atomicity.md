@@ -27,6 +27,12 @@ optimistic concurrency, а інваріанти тримає сама БД.
 - Повторний `reveal` того самого раунду не створює другий запис у `round_history`.
 - Створення кімнати або повністю успішне, або не лишає осиротілих рядків.
 
+## Стан
+
+- 2026-10-26: подвійний snapshot закрито на клієнті без зміни схеми: `reveal()` пише `round_history`, лише
+  коли його `update ... where phase <> 'revealed'` змінив рядок. Лишаються: update і insert - не одна транзакція
+  (insert може впасти після reveal), reveal на застарілому `round_started_at`, create-room і `startNewRound()`.
+
 ## Наступний крок
 
 Описати сигнатури RPC і поведінку при конфлікті `expected_started_at`.

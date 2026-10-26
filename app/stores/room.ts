@@ -81,9 +81,14 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
       )
     }
 
-    await supabase.from('room_state').update(update).eq('room_id', roomId)
+    const { data: revealedRows } = await supabase
+      .from('room_state')
+      .update(update)
+      .eq('room_id', roomId)
+      .neq('phase', 'revealed')
+      .select('room_id')
 
-    if (votes.length >= 2) {
+    if (revealedRows?.length && votes.length >= 2) {
       const historyRow: TablesInsert<'round_history'> = {
         room_id: roomId,
         started_at: roomState.round_started_at,
