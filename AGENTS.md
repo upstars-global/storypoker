@@ -110,7 +110,7 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 Скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
 воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`. Дія відновлює `.claude` з
 `main` лише на подіях `pull_request`, а не на `workflow_run`/`workflow_dispatch`, тож крок `Prepare review target`
-сам прибирає з checkout усі `.claude/` (вкладені теж), `.mcp.json`, `.claude.json` і `CLAUDE.local.md`; base-копії
+сам прибирає з checkout усі `.claude/` і `CLAUDE.local.md` (вкладені теж), `.mcp.json` і `.claude.json`; base-копії
 `.claude/` теж (вкладена тека теж вантажиться), обидві сторони змін є в `diff.patch` - це прийнятий компроміс, а не
 дефект для рев'ю.
 Агент не має shell (`--disallowedTools "Bash"`: read-only команди, як `printenv`, читають env)
