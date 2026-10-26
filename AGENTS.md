@@ -8,9 +8,12 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 - **Language:** Ukrainian (українська мова)
 - **Тільки англійська:** `README.md`, commit messages, назви й описи PR, коментарі в PR та issues, коментарі в коді,
   CI-артефакти. Українською лишається спілкування в чаті й внутрішня документація (`AGENTS.md`, `DESIGN.md`, `docs/`).
-- **Constraint:** бюджет інструкцій Codex - `project_doc_max_bytes`, дефолт 32 KiB на весь ланцюг: файл із
-  домівки Codex, цей корінь і всі вкладені `AGENTS.md` від кореня до робочого каталогу. Орієнтир - 28 KiB на
-  ланцюг; понад межу збір обривається мовчки. `CLAUDE.md` інлайнить цей файл цілком, тож кожен корінний байт -
+- **Constraint:** `project_doc_max_bytes` обмежує проєктний ланцюг `AGENTS.md`
+  від кореня до стартового cwd; домашній файл Codex до цього бюджету не входить.
+  `.codex/config.toml` задає 64 KiB; стандарт Codex - 32 KiB.
+  Ланцюжки перевіряй проти `project_doc_max_bytes` з `.codex/config.toml`.
+  При перевищенні ліміту Codex обрізає текст.
+  `CLAUDE.md` інлайнить цей файл цілком, тож кожен корінний байт -
   always-loaded. Деталь, що стосується лише одного каталогу, живе у файлі того каталогу (див. Repository map),
   а не тут. Перед додаванням нової секції - винести наявну. Детальна продуктова специфікація - `DESIGN.md`.
 
@@ -25,8 +28,10 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
-CI check = `pnpm run test:ci` - обов'язково перед завершенням будь-якої задачі.
-- Нерозібрані learnings з минулих сесій, прочитай перед початком роботи: @docs/session-learnings/AGENTS.md
+CI check = `pnpm run test:ci` - обов'язково перед завершенням задачі зі змінами
+в репозиторії. Для read-only аудитів дотримуйся обмежень викликаного скіла.
+- Перед початком роботи прочитай `docs/session-learnings/AGENTS.md`, якщо файл існує:
+  це локальні gitignored нотатки попередніх сесій.
 - **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
   `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verify` → CI check
@@ -47,8 +52,9 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
 `README.md` там само).
 
 ## Repository map
-Вкладені `AGENTS.md` завантажуються за розташуванням файлу, який редагуєш (Claude Code - on-demand, Codex - лише
-якщо cwd усередині). Стартуючи з кореня, відкривай потрібний файл явно.
+Codex фіксує ланцюг `AGENTS.md` від кореня до стартового cwd на початку сесії.
+Claude Code підвантажує вкладені `CLAUDE.md`, які імпортують відповідні `AGENTS.md`,
+при читанні файлів каталогу. Перед редагуванням відкривай потрібні інструкції явно.
 
 | Scope | Що всередині | Інструкції |
 | --- | --- | --- |
