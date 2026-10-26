@@ -18,9 +18,10 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 - **`main` захищений:** тільки PR зі squash-merge, прямий push заборонено й адмінам (`enforce_admins`); розв'язані
   коментарі, strict-режим вимкнений (оновлювати гілку з `main` не обов'язково), approve не потрібен.
   Required checks - це `name:` job-ів, а не job ids: `Lint` / `Typecheck` / `Unit tests` /
-  `Build` / `Public pages load`. `E2E` і `Visual` - лише `workflow_dispatch`.
+  `Build` / `Public pages load`. `E2E` - не required; `Visual` - лише `workflow_dispatch`.
 - **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
-- **Git worktrees:** ізольована робота - через `git-worktree-isolation`; незакомічені зміни основного каталогу не чіпати
+- **Гілки:** план із сабагентами - одна гілка в основній теці, без git worktree і проміжних squash у `main`, один PR
+- **Темп:** у довгому плані комміть і пуш після кожної завершеної задачі, у паузі між сабагентами
 
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
@@ -61,6 +62,7 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
 | `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
 | `tests/` | Vitest unit + Playwright e2e і `visual` | `tests/AGENTS.md` |
 | `scripts/` | lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
+| `.github/` | CI-воркфлоу, авторев'ю `claude-review.yml` | `.github/AGENTS.md` |
 
 Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
@@ -96,55 +98,28 @@ pnpm run test:unit   # канонічний unit-run; `pnpm test` і `test:unit`
 pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery); локально - з
                           # dummy VITE_SUPABASE_* з ci.yml, деталі `tests/AGENTS.md`
 pnpm run test:visual [<ref>]   # рендер <ref> (дефолт origin/main) - еталон для дерева; локально - у контейнері Playwright
-pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
+pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build + icons:audit-build - як CI
 pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
                      # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
 ```
+Stage і локальний запуск ходять в одну прод-базу Supabase: до злиття не запускай `deploy:stage` без рішення
+власника й не міняй схему чи RLS; ручні перевірки - на локальному preview (тестову кімнату створювати можна).
 
 CI - `.github/workflows/ci.yml`: паралельні job ids `lint`/`typecheck` (`icons:check` + `typecheck`)/
 `unit` (`test:unit:coverage`)/`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
-Supabase-кредами) на кожен run; `visual` (контейнер Playwright) і `e2e` (локальний Supabase на раннері) - лише
-на `workflow_dispatch`: рішення власника 2026-10-26, поки нестабільні, не дефект для рев'ю;
+Supabase-кредами) і `e2e` (локальний Supabase на раннері, образи з `ghcr.io`: анонімні pull з `public.ecr.aws`
+падають з `toomanyrequests`) на кожен run; `visual` (контейнер Playwright) - лише на `workflow_dispatch`: рішення
+власника 2026-10-26, поки нестабільний, не дефект для рев'ю;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
-`.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` (а також на
-ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Claude проходить `cr-request` і лишає PR review
-від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`; модель - repo variable `CLAUDE_REVIEW_MODEL`).
-Автоматичний прогін рев'юїть head, коли на PR ще немає рев'ю бота з маркером `<!-- claude-review`, або коли в
-`### Summary` останнього такого рев'ю Critical чи Important > 0, воно було на іншому head і таких рев'ю менше 3;
-запит рев'ю в `so-upstars` і `workflow_dispatch` обходять цей ліміт, але зелений CI потрібен усім: запит чекає
-на нього, а dispatch на незеленому CI лише ставить статус `error`. Зелений тут - required jobs (`REQUIRED_JOBS`
-у гейті), `Visual` і `E2E` рев'ю не блокують. Мітка `skip-auto-review`
-вимикає будь-яке рев'ю PR (і на запит, і dispatch), PR від ботів і від `so-upstars` воркфлоу не рев'юїть.
-Скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
-воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`. Дія відновлює `.claude` з
-`main` лише на подіях `pull_request`, а не на `workflow_run`/`workflow_dispatch`, тож крок `Prepare review target`
-сам прибирає з checkout усі `.claude/` і `CLAUDE.local.md` (вкладені теж), `.mcp.json` і `.claude.json`; base-копії
-`.claude/` теж (вкладена тека теж вантажиться), обидві сторони змін є в `diff.patch` - це прийнятий компроміс, а не
-дефект для рев'ю.
-Агент не має shell (`--disallowedTools "Bash"`: read-only команди, як `printenv`, читають env)
-і `gh`, читає лише workspace і `~/.claude/skills` (`blockReadsOutsideWorkingDirectories`), `.git/` йому закритий
-(`Read(./.git/**)`: в `.git/config` лежить токен дії), а пише лише тіло у файл. Лог, дифф, base-копії, tree і
-`pr.json` (опис; рев'ю й коментарі лише OWNER/MEMBER/COLLABORATOR) йому готує `Prepare review target` в
-`auto-review-target/`; PR, що трекає цю теку чи `auto-review-out/`, валить job. Job `publish` перевіряє тіло й
-свіжість head, а PAT має тільки крок `post` (звіряє, що токен належить `so-upstars`) - гарантія лише для копії з
-`main`, прогони `pull_request` беруть воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер, підпис
-останнім рядком, вердикти й лічильники з `### Summary`, розмір, токеноподібні рядки), а не його зміст: це прийнятий
-компроміс, а не дефект для рев'ю - статус дорадчий, рев'ю читає людина;
-хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
-`so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
-(копія з `main`), для `pull_request`-подій - одразу з гілки PR, для `workflow_dispatch` - з ref, на якому його
-запущено. Job `review` має групу `concurrency` за номером PR: новіший прогін після гейту (і dispatch чи запит на
-тому ж head) скасовує поточне рев'ю, старий head дістає `error`. Постить лише власник статусу (чий URL у
-статусі), тож dispatch і авторев'ю одного head, як і новий гейт між перевіркою власника й фінальним статусом
-старого прогону, можуть лишити `error` без рев'ю - прийнятий компроміс, а не дефект для рев'ю: хибного рев'ю
-немає, Re-request review лікує.
-Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
-прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review sha=`. GitHub не дає запросити рев'ю в
-автора PR, а PR від `so-upstars` воркфлоу пропускає: шлях `review_requested` перевіряй на PR іншого акаунта.
+`.github/workflows/claude-review.yml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й
+прийняті компроміси - `.github/AGENTS.md`.
 
 ## Environment Setup
 `pnpm-lock.yaml` - committed (required for `pnpm install --frozen-lockfile`). Do NOT add it to `.gitignore`.
+Peer Vite-плагіна, який імпортує його віртуальний модуль (`virtual:pwa-register` → `workbox-window`), став прямою
+`devDependency`: pnpm peer-и не hoist-ить. Збірку як у CI відтворюй у чистому worktree з
+`pnpm install --frozen-lockfile --ignore-scripts`.
 
 Усі env-файли - у `/.env/` (gitignored, окрім `*.example`). Vite читає через `envDir: '.env'` у `vite.config.ts`:
 `/.env/.env.local` (персональні override), `/.env/.env` (командні defaults), `/.env/.env.test` (креди тестового

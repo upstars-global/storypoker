@@ -220,13 +220,14 @@ jobs:
   # Runs against a throwaway local Supabase on the runner (Docker is preinstalled), never the
   # shared project. scripts/supabase-local.sh writes .env/.env.test, which playwright.config.ts
   # skips under CI, so the next step exports it to the job env.
-  # Owner decision 2026-10-26: off on push and pull requests while image pulls hit registry rate
-  # limits; run it with a manual dispatch.
+  # Supabase images come from ghcr.io: anonymous pulls from the CLI default public.ecr.aws hit
+  # "toomanyrequests: Data limit exceeded" on shared runner IPs.
   e2e:
     name: E2E
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -253,6 +254,10 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.108.0
+      - name: Log in to ghcr.io
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
       - run: pnpm run supabase:local
       - name: Export local Supabase env
         run: |

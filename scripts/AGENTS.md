@@ -14,7 +14,7 @@ pnpm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) те�
 | `visual-compare.sh` | `pnpm run test:visual [<ref>]`, CI-job `visual` (лише `workflow_dispatch`) | знімає проєкт `visual` на `<ref>` (дефолт `origin/main`) як еталон у `test-results/visual-baselines/` і порівнює з робочим деревом; збірка `<ref>` - `git archive` у `test-results/visual-base-src` |
 | `clean.sh` | `pnpm run clean` | видаляє skills, `node_modules/`, `pnpm-lock.yaml`, `dist/`, `.nuxt/` - повне перевстановлення з нуля |
 | `generate-icons.ts` | `icons:generate`, `icons:check` (у `test:ci`) | сканує `app/` (`.ts`/`.tsx` парсить `icons/scan.ts` через нестабільний API TS 7 `typescript/unstable/{sync,fs,ast}` - звідси точний пін `typescript`), збирає підмножину Iconify-сетів у `app/generated/`; `--check` падає, якщо згенероване розійшлось із кодом. Модулі - `icons/` |
-| `audit-icon-build.ts` | `icons:audit-build` (CI-job `build`) | перевіряє `dist`: жодних повних Iconify-сетів чи генератора в бандлі, бюджет gzip 25 KiB, baseline - `docs/audits/icon-bundle-baseline.json` |
+| `audit-icon-build.ts` | `icons:audit-build` (у `test:ci`, CI-job `build`) | перевіряє `dist`: жодних повних Iconify-сетів чи генератора в бандлі, бюджет gzip 25 KiB, baseline - `docs/audits/icon-bundle-baseline.json` |
 
 ## `skills.sh` - свідомі рішення
 - Кожне джерело скілів - одна команда зі списком `-s`, порядок skills - канонічний, зберігай його
@@ -23,7 +23,7 @@ pnpm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) те�
   `" <name>"` з пробілом попереду й нічого не знаходить. Це не баг - не «виправляй» такі рядки.
   Закоментований рядок продовження обірвав би команду.
 - Вимикаючи skill, прибери його назву з `AGENTS.md` (Workflow sequences) і вкладених `AGENTS.md`:
-  агент не має кликати skill, якого немає в `.claude/skills/`.
+  агент не має кликати skill, якого немає в `.claude/skills/`. Це звіряє `tests/unit/agentsSkills.spec.ts`.
 - Версія `skl-x` запінена (`skl-x@0.4.12`) у `clean.sh` і `.github/workflows/ci.yml` - оновлюй
   обидва разом. `skills.sh` і `skills.local.sh` беруть останній `skl-x`: `sln` у local-скрипті
   знімає опубліковану копію сам лише з 0.4.9.
