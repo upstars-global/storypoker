@@ -27,8 +27,8 @@ on:
 # of a newer one (its gate then skips as moved on). The review job's own group, per PR, cancels the
 # review of an older head once a newer head passes its gate. A review request for someone else, and a
 # CI run that was not a pull_request event (the gate skips it), get their own group and cancel
-# nothing. A workflow_dispatch run knows only the PR number, so it gets its own group here; status
-# ownership in publish then decides which result is reported.
+# nothing. A workflow_dispatch run knows only the PR number, so it gets its own group here, and the
+# review job's group cancels whichever review of the PR started first.
 concurrency:
   group: >-
     claude-review-${{ github.event.pull_request.head.repo.full_name || github.event.workflow_run.head_repository.full_name || github.repository }}-${{
@@ -181,8 +181,9 @@ jobs:
     if: needs.gate.outputs.review == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Only runs that passed the gate get here, so the newest one for a PR wins and cancels the rest;
-    # publish then marks the cancelled head `error`.
+    # Only runs that passed the gate get here, so the newest one for a PR cancels the running review,
+    # on any head. On an older head publish marks it `error`; on the same head the newer gate owns the
+    # status and the cancelled run posts nothing.
     concurrency:
       group: claude-review-job-pr-${{ needs.gate.outputs.number }}
       cancel-in-progress: true
