@@ -1,5 +1,5 @@
 import { defineConfig, type Plugin } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'node:path'
@@ -22,7 +22,7 @@ export default defineConfig({
   envDir: import.meta.dirname,
   plugins: [
     stripRemoteFonts(),
-    vue(),
+    react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',

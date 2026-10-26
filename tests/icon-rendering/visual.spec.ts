@@ -88,7 +88,7 @@ for (const role of ['player', 'moderator', 'authorized-moderator'] as const) {
       expect(timerIcons).toBe(18)
       expect(cardsIcons).toBe(0)
     } else {
-      expect(timerIcons).toBe(36)
+      expect(timerIcons).toBe(37)
       expect(cardsIcons).toBe(5)
     }
 

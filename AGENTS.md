@@ -17,14 +17,15 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 ## Workflow
 - **`main` захищений:** тільки PR зі squash-merge, прямий push заборонено й адмінам (`enforce_admins`); розв'язані
   коментарі, strict-режим вимкнений (оновлювати гілку з `main` не обов'язково), approve не потрібен.
-  Required checks - це `name:` job-ів, а не job ids: `Detect secrets` / `Lint` / `Typecheck` / `Unit tests` /
-  `Build` / `Public pages load`. `E2E` не required (скіпається без E2E-секретів).
+  Required checks - це `name:` job-ів, а не job ids: `Lint` / `Typecheck` / `Unit tests` /
+  `Build` / `Public pages load`. `E2E` і `Visual` - лише `workflow_dispatch`.
 - **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
 - **Git worktrees:** ізольована робота - через `git-worktree-isolation`; незакомічені зміни основного каталогу не чіпати
 
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
 CI check = `pnpm run test:ci` - обов'язково перед завершенням будь-якої задачі.
+- Нерозібрані learnings з минулих сесій, прочитай перед початком роботи: @docs/session-learnings/AGENTS.md
 - **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
   `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verify` → CI check
@@ -50,23 +51,25 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
 
 | Scope | Що всередині | Інструкції |
 | --- | --- | --- |
-| `app/` | Vue SPA; хаб зі scope map і інваріантами | `app/AGENTS.md` |
-| `app/assets/` | Tailwind v4 CSS-first config, MUI-класи, 3 палітри | `app/assets/AGENTS.md` |
-| `app/components/` | AppModal/AppTooltip, іконки, ECharts, слот-віджет | `app/components/AGENTS.md` |
+| `app/` | React SPA; хаб зі scope map і інваріантами | `app/AGENTS.md` |
+| `app/assets/` | Tailwind v4 CSS-first config, міст токенів shadcn, MUI-класи, 3 палітри | `app/assets/AGENTS.md` |
+| `app/components/` | AppModal/AppTooltip/AppMenu, shadcn `ui/`, іконки, ECharts, слот | `app/components/AGENTS.md` |
 | `app/pages/` | маршрути, Realtime-підписки, reconciliation | `app/pages/AGENTS.md` |
-| `app/stores/` | Pinia: auth/room/players/presence/profiles | `app/stores/AGENTS.md` |
+| `app/stores/` | Zustand: auth/room/players/presence/profiles | `app/stores/AGENTS.md` |
 | `app/utils/` | колоди карт, shields, формули узгодженості | `app/utils/AGENTS.md` |
 | `supabase/` | схема таблиць, міграції, RLS, Storage-бакет | `supabase/AGENTS.md` |
 | `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
-| `tests/` | Vitest unit + Playwright e2e | `tests/AGENTS.md` |
+| `tests/` | Vitest unit + Playwright e2e і `visual` | `tests/AGENTS.md` |
 | `scripts/` | lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
 
 Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
 
 ## Tech Stack
-- **Framework:** Vue 3.5 + Vite 8 (Rolldown bundler) SPA, Composition API `<script setup>`; код у `app/`
-- **Routing:** `vue-router@5`; **State:** Pinia 4; **i18n:** `vue-i18n@11`, локалі `app/i18n/locales/{uk,en}.json`
+- **Framework:** React 19 + Vite 8 (Rolldown bundler, `@vitejs/plugin-react`) SPA, функціональні компоненти `.tsx`;
+  код у `app/`, хуки - `app/hooks/`
+- **Routing:** `react-router@8` (declarative, `app/router.tsx`); **State:** Zustand 5; **i18n:** `i18next` +
+  `react-i18next`, локалі `app/i18n/locales/{uk,en}.json`
 - **Styling:** Tailwind v4 через `@tailwindcss/vite`, CSS-first config - `app/assets/css/main.css`
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **PWA:** `vite-plugin-pwa` (Workbox, `prompt`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
@@ -75,11 +78,13 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
   перезавантажує вкладки, бо старий `autoUpdate`-бандл сам не перезавантажується) - тимчасово, прибрати
   наступним релізом разом із винятком у `scripts/audit-icon-build.ts`;
   splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
-- **UI:** локальні іконки через CSS mask (`app/components/AGENTS.md`), `v-wave`, DiceBear, Roboto 300-700;
-  **Charts:** `echarts` + `vue-echarts`
+- **UI:** shadcn/ui (style `base-nova` на `@base-ui/react`) у `app/components/ui/`, локальні іконки через CSS mask
+  (`app/components/AGENTS.md`), ripple - власний хук `useRipple`, DiceBear, Roboto 300-700;
+  **Charts:** `echarts` через `echarts/core` і хук `useEChart`
 - **Node/pnpm:** Node >=24.15.0, pnpm >=12.14.0 (`packageManager` у `package.json`)
-- **TypeScript лишається 6.x:** TS 7 (Go-порт) не має JS compiler API, на якому стоїть `scripts/icons/scan.ts`
-  (`ts.createSourceFile`, падає `icons:check`), а peer `typescript-eslint` - `<6.1.0`; мажор від `ncu` не бери
+- **TypeScript 7, пін точно `7.0.2`:** `scripts/icons/scan.ts` стоїть на нестабільному `typescript/unstable/*` - версію
+  піднімай лише з зеленим `icons:check`. Нативний `tsc` - optional-пакет `@typescript/typescript-<platform>`: install
+  без optional deps лишає без нього typecheck і сканер. Lint - `oxlint --type-aware` (`oxlint-tsgolint`), ESLint немає
 
 ## Common Commands
 `package.json` - джерело правди для повного списку скриптів. Тут лише неочевидне:
@@ -88,15 +93,18 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
 pnpm install         # preinstall → scripts/setup.sh (створює .env/, .agents/, .claude/settings.json)
                      # postinstall → scripts/skills.sh (мережевий skl-x add; skills-lock.json; у CI пропускається)
 pnpm run test:unit   # канонічний unit-run; `pnpm test` і `test:unit` - обидва `vitest run`
-pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery)
+pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery); локально - з
+                          # dummy VITE_SUPABASE_* з ci.yml, деталі `tests/AGENTS.md`
+pnpm run test:visual [<ref>]   # рендер <ref> (дефолт origin/main) - еталон для дерева; локально - у контейнері Playwright
 pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
 pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
                      # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
 ```
 
-CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`lint`/`typecheck` (`icons:check` + `typecheck`)/
+CI - `.github/workflows/ci.yml`: паралельні job ids `lint`/`typecheck` (`icons:check` + `typecheck`)/
 `unit` (`test:unit:coverage`)/`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
-Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
+Supabase-кредами) на кожен run; `visual` (контейнер Playwright) і `e2e` (локальний Supabase на раннері) - лише
+на `workflow_dispatch`: рішення власника 2026-10-26, поки нестабільні, не дефект для рев'ю;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` (а також на
@@ -105,7 +113,8 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 Автоматичний прогін рев'юїть head, коли на PR ще немає рев'ю бота з маркером `<!-- claude-review`, або коли в
 `### Summary` останнього такого рев'ю Critical чи Important > 0, воно було на іншому head і таких рев'ю менше 3;
 запит рев'ю в `so-upstars` і `workflow_dispatch` обходять цей ліміт, але зелений CI потрібен усім: запит чекає
-на нього, а dispatch на незеленому CI лише ставить статус `error`. Мітка `skip-auto-review`
+на нього, а dispatch на незеленому CI лише ставить статус `error`. Зелений тут - required jobs (`REQUIRED_JOBS`
+у гейті), `Visual` і `E2E` рев'ю не блокують. Мітка `skip-auto-review`
 вимикає будь-яке рев'ю PR (і на запит, і dispatch), PR від ботів і від `so-upstars` воркфлоу не рев'юїть.
 Скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
 воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`. Дія відновлює `.claude` з
@@ -154,7 +163,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - `/login`, `/signup`, `/forgot-password`, `/reset-password` - auth routes; `/ffc` - Feature Flags console
 
 `isValidRoomSlug()` приймає 1-32 символи `[a-z0-9-]`, без дефісу на початку/кінці; `normalizeRoomSlug()` чистить
-рядок, але довжину не перевіряє. Нові top-level routes перетинаються з `[slug].vue`; додавай явну сторінку або
+рядок, але довжину не перевіряє. Нові top-level routes перетинаються з `[slug].tsx`; додавай явну сторінку або
 вводь префікс.
 
 ## LocalStorage
@@ -163,7 +172,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 | `storypoker_session_<roomId>` | `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms |
 | `sp-theme` / `sp-palette` | `light\|dark` / `classic\|cyberdeck\|matcha` - деталі `app/assets/AGENTS.md` |
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
-| `sp-lang` | `uk \| en`; читається в `app/i18n.ts`, пишеться `persistLocale()`. Дефолт - `uk` |
+| `sp-lang` | `uk \| en`; читається в `app/i18n.tsx`, пишеться `persistLocale()`. Дефолт - `uk` |
 | `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
 | `sp-volume` | `0`-`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
 | `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
@@ -173,12 +182,12 @@ VITE_SUPABASE_KEY=...        # publishable client key
   доступно будь-кому, не лише поточному модератору); history/trends/theme/language/widget/slot - без ролевих обмежень
 - **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
   start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s),
-  будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `v-if="isModerator"` в
-  `CardsArea.vue`/`Timer.vue`, client-side only (RLS `using (true)`)
+  будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `isModerator` у
+  `CardsArea.tsx` і prop `canControl={isModerator}` у `Timer.tsx`, client-side only (RLS `using (true)`)
 - **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
   Детальна матриця - `DESIGN.md` §11.1-11.2
-- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.vue` (спільний селектор у
-  JoinOverlay+PlayerEditModal) на базі `RoleBadge.vue` (те саме відображення у PlayerRow) і пишеться як один shield у
+- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.tsx` (спільний селектор у
+  JoinOverlay+PlayerEditModal) на базі `RoleBadge.tsx` (те саме відображення у PlayerRow) і пишеться як один shield у
   `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи
   role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` дає DEV/QA-спліт
   для історії, трендів і API
@@ -192,7 +201,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 
 ## Code Style
 - Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline
-- TypeScript у composables/utils/stores; `<script setup lang="ts">` у Vue SFC
+- TypeScript скрізь: `.ts` у hooks/utils/stores, `.tsx` для компонентів і сторінок
 - Без wrapper-абстракцій, які тільки перейменовують функції
 - UI-тексти мають проходити через i18n, якщо компонент вже локалізований
 - `.vscode/settings.json` у репо навмисно: спільні налаштування VS Code для тіммейтів Scrum Office, щоб проєкт у всіх був налаштований однаково. Особисті на вигляд ключі в ньому - не дефект для рев'ю; змінювати лише за згодою команди

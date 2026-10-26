@@ -1,6 +1,20 @@
-import { parse } from '@vue/compiler-sfc'
-import type { AttributeNode, DirectiveNode, ElementNode, TemplateChildNode } from '@vue/compiler-core'
-import ts from 'typescript'
+import { API } from 'typescript/unstable/sync'
+import { createVirtualFileSystem } from 'typescript/unstable/fs'
+import {
+  isIdentifier,
+  isJsxAttribute,
+  isJsxExpression,
+  isJsxOpeningElement,
+  isJsxSelfClosingElement,
+  isNoSubstitutionTemplateLiteral,
+  isStringLiteral,
+  isVariableDeclaration,
+  type JsxAttribute,
+  type Node,
+  type NoSubstitutionTemplateLiteral,
+  type SourceFile,
+  type StringLiteral,
+} from 'typescript/unstable/ast'
 
 export interface IconBinding {
   file: string
@@ -43,51 +57,95 @@ function normalizeExpression(expression: string): string {
 
 const EXCLUDED_DECLARATIONS = new Set(['SHIELD_CATALOG'])
 
-function isExcludedDeclaration(node: ts.Node): boolean {
-  return ts.isVariableDeclaration(node)
-    && ts.isIdentifier(node.name)
+function isExcludedDeclaration(node: Node): boolean {
+  return isVariableDeclaration(node)
+    && isIdentifier(node.name)
     && EXCLUDED_DECLARATIONS.has(node.name.text)
 }
 
-function collectFromScript(code: string, file: string, usage: IconUsage, iconContext = false): void {
-  const source = ts.createSourceFile(file, code, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS)
-  const visit = (node: ts.Node): void => {
+function isStringLiteralLike(node: Node): node is StringLiteral | NoSubstitutionTemplateLiteral {
+  return isStringLiteral(node) || isNoSubstitutionTemplateLiteral(node)
+}
+
+const ICON_COMPONENT = 'AppIcon'
+const ICON_PROP = 'name'
+
+function iconPropsOf(node: Node): JsxAttribute[] {
+  if (!isJsxSelfClosingElement(node) && !isJsxOpeningElement(node)) return []
+  if (!isIdentifier(node.tagName) || node.tagName.text !== ICON_COMPONENT) return []
+  return node.attributes.properties.filter((property): property is JsxAttribute =>
+    isJsxAttribute(property) && isIdentifier(property.name) && property.name.text === ICON_PROP)
+}
+
+function collectLiterals(root: Node, usage: IconUsage, iconContext: boolean): void {
+  const visit = (node: Node): void => {
     if (isExcludedDeclaration(node)) return
-    if (ts.isStringLiteralLike(node) && isIconName(node.text)) {
+    if (isStringLiteralLike(node) && isIconName(node.text)) {
       if (iconContext || ICONIFY_PREFIXES.has(iconPrefix(node.text))) usage.literals.push(node.text)
       usage.allLiterals.push(node.text)
     }
-    ts.forEachChild(node, visit)
+    node.forEachChild(visit)
+  }
+  visit(root)
+}
+
+function collectIconProp(prop: JsxAttribute, file: string, source: SourceFile, usage: IconUsage): boolean {
+  const value = prop.initializer
+  if (!value) return false
+  if (isStringLiteral(value)) {
+    if (isIconName(value.text)) {
+      usage.literals.push(value.text)
+      usage.allLiterals.push(value.text)
+    }
+    return true
+  }
+  if (isJsxExpression(value) && value.expression) {
+    usage.bindings.push({ file, expression: normalizeExpression(value.expression.getText(source)) })
+    collectLiterals(value.expression, usage, true)
+    return true
+  }
+  return false
+}
+
+function collectFromSource(source: SourceFile, file: string, usage: IconUsage): void {
+  const handledProps = new Set<Node>()
+  const visit = (node: Node): void => {
+    if (isExcludedDeclaration(node)) return
+    if (handledProps.has(node)) return
+    for (const prop of iconPropsOf(node)) {
+      if (collectIconProp(prop, file, source, usage)) handledProps.add(prop)
+    }
+    if (isStringLiteralLike(node) && isIconName(node.text)) {
+      if (ICONIFY_PREFIXES.has(iconPrefix(node.text))) usage.literals.push(node.text)
+      usage.allLiterals.push(node.text)
+    }
+    node.forEachChild(visit)
   }
   visit(source)
 }
 
-function isElement(node: TemplateChildNode): node is ElementNode {
-  return node.type === 1
-}
+const VIRTUAL_ROOT = '/icon-scan'
+const VIRTUAL_TSCONFIG = `${VIRTUAL_ROOT}/tsconfig.json`
 
-function collectFromTemplate(node: TemplateChildNode, file: string, usage: IconUsage): void {
-  if (isElement(node)) {
-    for (const prop of node.props) {
-      if (prop.type === 6) {
-        const attr = prop as AttributeNode
-        if (attr.name === 'icon' && attr.value && isIconName(attr.value.content)) {
-          usage.literals.push(attr.value.content)
-          usage.allLiterals.push(attr.value.content)
-        }
-        continue
-      }
-      const dir = prop as DirectiveNode
-      if (dir.name !== 'bind') continue
-      const arg = dir.arg
-      if (!arg || arg.type !== 4 || arg.content !== 'icon') continue
-      const exp = dir.exp
-      if (!exp || exp.type !== 4) continue
-      usage.bindings.push({ file, expression: normalizeExpression(exp.content) })
-      collectFromScript(`(${exp.content})`, file, usage, true)
+function parseSources(sources: Record<string, string>, onSource: (source: SourceFile, file: string) => void): void {
+  const files: Record<string, string> = {
+    [VIRTUAL_TSCONFIG]: JSON.stringify({
+      compilerOptions: { jsx: 'preserve', noLib: true, noResolve: true, types: [] },
+      include: ['**/*'],
+    }),
+  }
+  for (const [file, code] of Object.entries(sources)) files[`${VIRTUAL_ROOT}/${file}`] = code
+  const api = new API({ cwd: VIRTUAL_ROOT, fs: createVirtualFileSystem(files) })
+  try {
+    const project = api.updateSnapshot({ openProjects: [VIRTUAL_TSCONFIG] }).getProject(VIRTUAL_TSCONFIG)
+    if (!project) throw new Error('icon scan: TypeScript project did not open')
+    for (const file of Object.keys(sources)) {
+      const source = project.program.getSourceFile(`${VIRTUAL_ROOT}/${file}`)
+      if (!source) throw new Error(`icon scan: TypeScript did not load ${file}`)
+      onSource(source, file)
     }
-    for (const child of node.children) collectFromTemplate(child, file, usage)
-    return
+  } finally {
+    api.close()
   }
 }
 
@@ -99,19 +157,7 @@ export function isIconUsageSource(file: string): boolean {
 
 export function scanIconUsage(sources: Record<string, string>): IconUsage {
   const usage: IconUsage = { literals: [], bindings: [], allLiterals: [] }
-  for (const [file, code] of Object.entries(sources)) {
-    if (file.endsWith('.vue')) {
-      const { descriptor } = parse(code, { filename: file })
-      if (descriptor.template?.ast) {
-        for (const child of descriptor.template.ast.children) collectFromTemplate(child, file, usage)
-      }
-      for (const block of [descriptor.script, descriptor.scriptSetup]) {
-        if (block) collectFromScript(block.content, file, usage)
-      }
-      continue
-    }
-    collectFromScript(code, file, usage)
-  }
+  if (Object.keys(sources).length) parseSources(sources, (source, file) => collectFromSource(source, file, usage))
   usage.literals = [...new Set(usage.literals)].sort()
   usage.allLiterals = [...new Set(usage.allLiterals)].sort()
   return usage

@@ -11,26 +11,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  detect-secrets:
-    name: Detect secrets
-    runs-on: ubuntu-latest
-    outputs:
-      has_e2e: ${{ steps.check.outputs.has_e2e }}
-    steps:
-      - id: check
-        env:
-          E2E_URL: ${{ secrets.E2E_SUPABASE_URL }}
-          E2E_ANON: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
-          E2E_SR: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-          E2E_USER: ${{ secrets.E2E_TEST_USER_EMAIL }}
-          E2E_PASS: ${{ secrets.E2E_TEST_USER_PASSWORD }}
-        run: |
-          if [[ -n "$E2E_URL" && -n "$E2E_ANON" && -n "$E2E_SR" && -n "$E2E_USER" && -n "$E2E_PASS" ]]; then
-            echo "has_e2e=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_e2e=false" >> "$GITHUB_OUTPUT"
-          fi
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -93,6 +73,10 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # TypeScript 7 runs a native tsc from an optional platform package; an install
+      # that drops optional dependencies leaves typecheck and the icon scanner without it.
+      - name: Check native TypeScript 7 binary
+        run: pnpm exec tsc -v | grep 'Version 7\.'
       - run: pnpm run icons:check
       - run: pnpm run typecheck
 
@@ -189,12 +173,60 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # Renders the base revision and this one in the same pinned Playwright image (tag = @playwright/test)
+  # and compares them; no baseline PNGs are stored. Not a required check. git must be in the image,
+  # otherwise checkout falls back to the REST API and leaves no history for git archive.
+  # Owner decision 2026-10-26: off on push and pull requests while it is unstable (about 6 minutes);
+  # run it with a manual dispatch.
+  visual:
+    name: Visual
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --user root
+    env:
+      HOME: /root
+    steps:
+      - run: apt-get update && apt-get install -y --no-install-recommends git
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The container runs as root, so git refuses the runner-owned checkout without this.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      # A push that creates a branch reports an all-zero before SHA, which git archive cannot read.
+      # A dispatch has neither SHA, so it compares with the merge-base, not the newer main tip.
+      - run: pnpm run test:visual "${BASE_REF:-$(git merge-base origin/main HEAD)}"
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before) || '' }}
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-visual
+          path: |
+            test-results/playwright/
+            test-results/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Runs against a throwaway local Supabase on the runner (Docker is preinstalled), never the
+  # shared project. scripts/supabase-local.sh writes .env/.env.test, which playwright.config.ts
+  # skips under CI, so the next step exports it to the job env.
+  # Owner decision 2026-10-26: off on push and pull requests while image pulls hit registry rate
+  # limits; run it with a manual dispatch.
   e2e:
     name: E2E
-    needs: detect-secrets
-    if: ${{ needs.detect-secrets.outputs.has_e2e == 'true' }}
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -218,15 +250,19 @@ jobs:
       - name: Install Playwright system deps
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium webkit
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.108.0
+      - run: pnpm run supabase:local
+      - name: Export local Supabase env
+        run: |
+          while IFS='=' read -r key value; do
+            case "$key" in
+              SUPABASE_TEST_SERVICE_ROLE_KEY|E2E_TEST_USER_PASSWORD) echo "::add-mask::$value" ;;
+            esac
+            echo "$key=$value" >> "$GITHUB_ENV"
+          done < .env/.env.test
       - run: pnpm run test:e2e
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
-          VITE_SUPABASE_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
-          SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
-          SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
-          E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
-          E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4

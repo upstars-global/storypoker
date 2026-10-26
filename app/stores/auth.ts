@@ -1,46 +1,58 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { create } from 'zustand'
 import { getSupabase } from '~/lib/supabase-instance'
 import type { User } from '@supabase/supabase-js'
 
-export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
-  let initialized = false
+interface AuthState {
+  user: User | null
+  init: () => Promise<void>
+  signIn: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string) => Promise<void>
+  requestPasswordReset: (email: string, redirectTo: string) => Promise<void>
+  updatePassword: (password: string) => Promise<void>
+  signOut: () => Promise<void>
+}
 
-  async function init() {
-    if (initialized) return
-    initialized = true
-    const supabase = getSupabase()
-    const { data } = await supabase.auth.getSession()
-    user.value = data.session?.user ?? null
-    supabase.auth.onAuthStateChange((_event, session) => {
-      user.value = session?.user ?? null
+let initialization: Promise<void> | null = null
+
+export const useAuthStore = create<AuthState>()(set => ({
+  user: null,
+
+  init() {
+    initialization ??= (async () => {
+      const supabase = getSupabase()
+      const { data } = await supabase.auth.getSession()
+      set({ user: data.session?.user ?? null })
+      supabase.auth.onAuthStateChange((_event, session) => {
+        set({ user: session?.user ?? null })
+      })
+    })().catch(error => {
+      initialization = null
+      throw error
     })
-  }
+    return initialization
+  },
 
-  async function signIn(email: string, password: string) {
+  async signIn(email, password) {
     const { error } = await getSupabase().auth.signInWithPassword({ email, password })
     if (error) throw error
-  }
+  },
 
-  async function signUp(email: string, password: string) {
+  async signUp(email, password) {
     const { error } = await getSupabase().auth.signUp({ email, password })
     if (error) throw error
-  }
+  },
 
-  async function requestPasswordReset(email: string, redirectTo: string) {
+  async requestPasswordReset(email, redirectTo) {
     const { error } = await getSupabase().auth.resetPasswordForEmail(email, { redirectTo })
     if (error) throw error
-  }
+  },
 
-  async function updatePassword(password: string) {
+  async updatePassword(password) {
     const { error } = await getSupabase().auth.updateUser({ password })
     if (error) throw error
-  }
+  },
 
-  async function signOut() {
+  async signOut() {
     await getSupabase().auth.signOut()
-  }
-
-  return { user, init, signIn, signUp, requestPasswordReset, updatePassword, signOut }
-})
+  },
+}))

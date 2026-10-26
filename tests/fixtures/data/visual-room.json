@@ -1,0 +1,228 @@
+{
+  "meta": {
+    "roomId": "VisRoom1",
+    "slug": "visual-sprint",
+    "playerId": "00000000-0000-4000-8000-000000000002",
+    "moderatorPlayerId": "00000000-0000-4000-8000-000000000001",
+    "moderatorUser": {
+      "id": "00000000-0000-4000-9000-000000000001",
+      "email": "moderator@example.test"
+    },
+    "onlinePlayerIds": [
+      "00000000-0000-4000-8000-000000000001",
+      "00000000-0000-4000-8000-000000000002",
+      "00000000-0000-4000-8000-000000000003",
+      "00000000-0000-4000-8000-000000000004",
+      "00000000-0000-4000-8000-000000000005",
+      "00000000-0000-4000-8000-000000000007"
+    ],
+    "lastVisitedAt": "2026-09-09T09:00:00.000Z"
+  },
+  "tables": {
+    "rooms": [
+      {
+        "id": "VisRoom1",
+        "slug": "visual-sprint",
+        "name": "Sprint Planning",
+        "created_at": "2026-09-01T08:00:00.000Z",
+        "background_url": null,
+        "background_updated_at": null,
+        "background_opacity": null,
+        "background_owner_id": null
+      }
+    ],
+    "room_state": [
+      {
+        "room_id": "VisRoom1",
+        "phase": "voting",
+        "deck_preset": "scrum",
+        "active_cards": ["1/2", "1", "2", "3", "5", "8", "13", "20", "?", "☕"],
+        "round_started_at": "2026-09-09T09:02:30.000Z",
+        "paused_at": null,
+        "paused_elapsed_ms": 0,
+        "alarm_minutes": null,
+        "alarm_muted": null,
+        "poll_question": null,
+        "result_cohorts": null
+      }
+    ],
+    "players": [
+      {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "VisRoom1",
+        "name": "Avery",
+        "is_moderator": true,
+        "vote": null,
+        "user_id": "00000000-0000-4000-9000-000000000001",
+        "shields": ["po"],
+        "created_at": "2026-09-09T08:50:00.000Z",
+        "left_at": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000002",
+        "room_id": "VisRoom1",
+        "name": "Blake",
+        "is_moderator": false,
+        "vote": "5",
+        "user_id": null,
+        "shields": ["be"],
+        "created_at": "2026-09-09T08:51:00.000Z",
+        "left_at": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000003",
+        "room_id": "VisRoom1",
+        "name": "Casey",
+        "is_moderator": false,
+        "vote": "5",
+        "user_id": null,
+        "shields": ["fe"],
+        "created_at": "2026-09-09T08:52:00.000Z",
+        "left_at": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000004",
+        "room_id": "VisRoom1",
+        "name": "Drew",
+        "is_moderator": false,
+        "vote": "8",
+        "user_id": null,
+        "shields": ["qa"],
+        "created_at": "2026-09-09T08:53:00.000Z",
+        "left_at": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000005",
+        "room_id": "VisRoom1",
+        "name": "Emery",
+        "is_moderator": false,
+        "vote": "5",
+        "user_id": null,
+        "shields": ["aqa"],
+        "created_at": "2026-09-09T08:54:00.000Z",
+        "left_at": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000006",
+        "room_id": "VisRoom1",
+        "name": "Finley",
+        "is_moderator": false,
+        "vote": null,
+        "user_id": null,
+        "shields": ["sre"],
+        "created_at": "2026-09-09T08:55:00.000Z",
+        "left_at": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000007",
+        "room_id": "VisRoom1",
+        "name": "Harper",
+        "is_moderator": false,
+        "vote": "3",
+        "user_id": null,
+        "shields": ["custom:Designer"],
+        "created_at": "2026-09-09T08:56:00.000Z",
+        "left_at": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000008",
+        "room_id": "VisRoom1",
+        "name": "Jordan",
+        "is_moderator": false,
+        "vote": "13",
+        "user_id": null,
+        "shields": [],
+        "created_at": "2026-09-09T08:57:00.000Z",
+        "left_at": null
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000009",
+        "room_id": "VisRoom1",
+        "name": "Quinn",
+        "is_moderator": false,
+        "vote": null,
+        "user_id": null,
+        "shields": ["dev"],
+        "created_at": "2026-09-09T08:58:00.000Z",
+        "left_at": "2026-09-09T09:01:00.000Z"
+      }
+    ],
+    "round_history": [
+      {
+        "id": "00000000-0000-4000-a000-000000000001",
+        "room_id": "VisRoom1",
+        "started_at": "2026-09-08T09:00:00.000Z",
+        "revealed_at": "2026-09-08T09:06:10.000Z",
+        "created_at": "2026-09-08T09:06:10.000Z",
+        "deck_preset": "scrum",
+        "active_cards": ["1/2", "1", "2", "3", "5", "8", "13", "20", "?", "☕"],
+        "votes": [
+          { "player_id": "00000000-0000-4000-8000-000000000002", "name": "Blake", "vote": "3" },
+          { "player_id": "00000000-0000-4000-8000-000000000003", "name": "Casey", "vote": "5" },
+          { "player_id": "00000000-0000-4000-8000-000000000004", "name": "Drew", "vote": "5" },
+          { "player_id": "00000000-0000-4000-8000-000000000005", "name": "Emery", "vote": "13" },
+          { "player_id": "00000000-0000-4000-8000-000000000008", "name": "Jordan", "vote": "3" }
+        ]
+      },
+      {
+        "id": "00000000-0000-4000-a000-000000000002",
+        "room_id": "VisRoom1",
+        "started_at": "2026-09-08T09:10:00.000Z",
+        "revealed_at": "2026-09-08T09:14:45.000Z",
+        "created_at": "2026-09-08T09:14:45.000Z",
+        "deck_preset": "scrum",
+        "active_cards": ["1/2", "1", "2", "3", "5", "8", "13", "20", "?", "☕"],
+        "votes": [
+          { "player_id": "00000000-0000-4000-8000-000000000002", "name": "Blake", "vote": "8" },
+          { "player_id": "00000000-0000-4000-8000-000000000003", "name": "Casey", "vote": "8" },
+          { "player_id": "00000000-0000-4000-8000-000000000004", "name": "Drew", "vote": "13" },
+          { "player_id": "00000000-0000-4000-8000-000000000005", "name": "Emery", "vote": "8" },
+          { "player_id": "00000000-0000-4000-8000-000000000006", "name": "Finley", "vote": "5" }
+        ]
+      },
+      {
+        "id": "00000000-0000-4000-a000-000000000003",
+        "room_id": "VisRoom1",
+        "started_at": "2026-09-09T08:40:00.000Z",
+        "revealed_at": "2026-09-09T08:44:20.000Z",
+        "created_at": "2026-09-09T08:44:20.000Z",
+        "deck_preset": "scrum",
+        "active_cards": ["1/2", "1", "2", "3", "5", "8", "13", "20", "?", "☕"],
+        "votes": [
+          { "player_id": "00000000-0000-4000-8000-000000000002", "name": "Blake", "vote": "2" },
+          { "player_id": "00000000-0000-4000-8000-000000000003", "name": "Casey", "vote": "3" },
+          { "player_id": "00000000-0000-4000-8000-000000000004", "name": "Drew", "vote": "3" },
+          { "player_id": "00000000-0000-4000-8000-000000000005", "name": "Emery", "vote": "8" },
+          { "player_id": "00000000-0000-4000-8000-000000000007", "name": "Harper", "vote": "2" },
+          { "player_id": "00000000-0000-4000-8000-000000000008", "name": "Jordan", "vote": "?" }
+        ]
+      },
+      {
+        "id": "00000000-0000-4000-a000-000000000004",
+        "room_id": "VisRoom1",
+        "started_at": "2026-09-09T08:46:00.000Z",
+        "revealed_at": "2026-09-09T08:49:30.000Z",
+        "created_at": "2026-09-09T08:49:30.000Z",
+        "deck_preset": "scrum",
+        "active_cards": ["1/2", "1", "2", "3", "5", "8", "13", "20", "?", "☕"],
+        "votes": [
+          { "player_id": "00000000-0000-4000-8000-000000000002", "name": "Blake", "vote": "5" },
+          { "player_id": "00000000-0000-4000-8000-000000000003", "name": "Casey", "vote": "5" },
+          { "player_id": "00000000-0000-4000-8000-000000000004", "name": "Drew", "vote": "8" },
+          { "player_id": "00000000-0000-4000-8000-000000000005", "name": "Emery", "vote": "5" },
+          { "player_id": "00000000-0000-4000-8000-000000000006", "name": "Finley", "vote": "5" },
+          { "player_id": "00000000-0000-4000-8000-000000000008", "name": "Jordan", "vote": "8" }
+        ]
+      }
+    ],
+    "user_profiles": [
+      {
+        "user_id": "00000000-0000-4000-9000-000000000001",
+        "avatar_style": "bottts",
+        "avatar_seed": "visual-moderator",
+        "avatar_url": null,
+        "updated_at": "2026-09-01T08:00:00.000Z"
+      }
+    ]
+  }
+}

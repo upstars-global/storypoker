@@ -1,7 +1,5 @@
 # Utils - колоди, ролі, формули
 
-
-
 Пресети в `app/utils/cardDecks.ts`:
 
 | id | default active |
@@ -21,15 +19,15 @@
 
 `goal_clarity` ("Goal Clarity Score") - фіксоване питання "Наскільки чітко я розумію Sprint Goals?" (`defaultQuestion`
 на пресеті, не moderator-typed `poll_question`, як у `voting`/`vote_question`); рахується як звичайний числовий пресет
-(`isNumericPreset` у `roundStats.ts`, `DECK_NAMES` у `room-json.mts`). Після reveal `ResultsArea.vue` показує не
-PieChart, а кольорове коло з середнім балом (`goalClarityScore` prop): зелене `>3.5`, жовте `3.5-2.5`, червоне `<2.5`;
+(`isNumericPreset` у `roundStats.ts`, `DECK_NAMES` у `room-json.mts`). Після reveal `ResultsArea.tsx` замість
+PieChart показує кольорове коло з середнім балом (`goalClarityScore` prop): зелене `>3.5`, жовте `3.5-2.5`, червоне `<2.5`;
 за результатом `≤3.5` - підказка переформулювати ціль/DoD (`results.goalClarityHint`).
 
 ## Формули узгодженості
 
 `alignmentScore`/`averageOf` (`app/utils/alignment.ts`, `roundStats.ts`) і DEV/QA-спліт (`shields.ts`) навмисно
 продубльовані в `netlify/functions/room-json.mts` - Netlify bundler не резолвить Vite alias `~/*`. Зміну формули
-синхронізувати вручну в обох місцях. Pipeline графіка узгодженості (`AlignmentTrendsModal.vue`) - `DESIGN.md`
+синхронізувати вручну в обох місцях. Pipeline графіка узгодженості (`AlignmentTrendsModal.tsx`) - `DESIGN.md`
 §11.3-11.4.
 
 `isNumericPreset` вирішує, які колоди потрапляють в узгодженість: `scrum`/`fibonacci`/`hours`/`goal_clarity` +
@@ -37,8 +35,8 @@ legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і не�
 
 ## Consensus
 
-`resultCelebration.ts → shouldCelebrate(votes, groups)` - єдиний предикат для салюту (`ResultsArea.vue`) і звуку
-(`isConsensus` у `pages/[slug].vue`); `groups` - кола результатів з `groupVotesByCohort()` (`resultCohorts.ts`).
+`resultCelebration.ts → shouldCelebrate(votes, groups)` - єдиний предикат для салюту (`ResultsArea.tsx`) і звуку
+(`isConsensus` у `pages/[slug].tsx`); `groups` - кола результатів з `groupVotesByCohort()` (`resultCohorts.ts`).
 Одноголосною вважається група з рівно однією унікальною оцінкою **і** ≥ 2 голосами. Без груп те саме правило
 застосовується до всіх голосів.
 Поріг ≥ 2 узгоджений з `DESIGN.md` §11: рядок `round_history` теж пишеться лише при `votes.length >= 2`.

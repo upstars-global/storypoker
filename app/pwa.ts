@@ -1,5 +1,5 @@
 import { registerSW } from 'virtual:pwa-register'
-import { useAppUpdate } from '~/composables/useAppUpdate'
+import { appUpdateStore } from '~/hooks/useAppUpdate'
 
 const UPDATE_CHECK_MS = 15 * 60_000
 const UPDATE_APPLY_TIMEOUT_MS = 10_000
@@ -36,7 +36,7 @@ async function applyUpdate(updateServiceWorker: () => Promise<void>) {
 }
 
 export function initAppUpdate() {
-  const { scheduleUpdate } = useAppUpdate()
+  const { scheduleUpdate } = appUpdateStore.getState()
   const scheduleApply = () => scheduleUpdate(() => void applyUpdate(updateServiceWorker))
   if ('serviceWorker' in navigator) watchForTakeover(scheduleApply)
   const updateServiceWorker = registerSW({

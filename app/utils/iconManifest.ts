@@ -9,13 +9,7 @@ export const flagCases: readonly IconFlags[] = [
 
 export const dynamicBindings: readonly { file: string; expression: string; names: readonly string[] }[] = [
   {
-    file: 'app/components/AlignmentTrendsModal.vue',
-    expression: "trend.dir === 'up' ? 'ic:baseline-trending-up' : trend.dir === 'down'"
-      + " ? 'ic:baseline-trending-down' : 'ic:baseline-trending-flat'",
-    names: ['ic:baseline-trending-up', 'ic:baseline-trending-down', 'ic:baseline-trending-flat'],
-  },
-  {
-    file: 'app/components/AppHeader.vue',
+    file: 'app/components/AppHeader.tsx',
     expression: 'volumeLevelIcon',
     names: [
       'tabler:number-0-small',
@@ -32,37 +26,49 @@ export const dynamicBindings: readonly { file: string; expression: string; names
     ],
   },
   {
-    file: 'app/components/AppHeader.vue',
+    file: 'app/components/AppHeader.tsx',
     expression: 'volumeIcon',
     names: ['lucide:volume-x', 'lucide:volume-1', 'lucide:volume-2'],
   },
   {
-    file: 'app/components/AppHeader.vue',
+    file: 'app/components/AppHeader.tsx',
     expression: "isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'",
     names: ['ic:baseline-light-mode', 'ic:baseline-dark-mode'],
   },
   {
-    file: 'app/components/AppHeader.vue',
-    expression: "locale === code ? 'ic:baseline-check' : 'ic:baseline-language'",
+    file: 'app/components/AppHeader.tsx',
+    expression: "i18n.language === code ? 'ic:baseline-check' : 'ic:baseline-language'",
     names: ['ic:baseline-check', 'ic:baseline-language'],
   },
   {
-    file: 'app/components/CardsArea.vue',
+    file: 'app/components/AlignmentTrendsModal.tsx',
+    expression: "trend.dir === 'up' ? 'ic:baseline-trending-up' : trend.dir === 'down'"
+      + " ? 'ic:baseline-trending-down' : 'ic:baseline-trending-flat'",
+    names: ['ic:baseline-trending-up', 'ic:baseline-trending-down', 'ic:baseline-trending-flat'],
+  },
+  {
+    file: 'app/components/CardsArea.tsx',
     expression: 'option.icon',
     names: ['ic:baseline-volume-off', 'app:timer', 'app:town-hall'],
   },
   {
-    file: 'app/components/Timer.vue',
+    file: 'app/components/Timer.tsx',
+    expression: 'icon',
+    names: [
+      'ic:baseline-fast-forward',
+      'ic:baseline-fast-rewind',
+      'ic:baseline-pause',
+      'ic:baseline-play-arrow',
+      'ic:baseline-stop',
+    ],
+  },
+  {
+    file: 'app/components/Timer.tsx',
     expression: "alarmMuted ? 'ic:baseline-notifications-off' : 'ic:baseline-notifications-active'",
     names: ['ic:baseline-notifications-off', 'ic:baseline-notifications-active'],
   },
   {
-    file: 'app/components/PasswordInput.vue',
-    expression: "visible ? 'ic:baseline-visibility-off' : 'ic:baseline-visibility'",
-    names: ['ic:baseline-visibility-off', 'ic:baseline-visibility'],
-  },
-  {
-    file: 'app/components/PlayerRow.vue',
+    file: 'app/components/PlayerRow.tsx',
     expression: 'diceIcon',
     names: [
       'tabler:dice-1',
@@ -74,7 +80,7 @@ export const dynamicBindings: readonly { file: string; expression: string; names
     ],
   },
   {
-    file: 'app/components/SlotMachine.vue',
+    file: 'app/components/SlotMachine.tsx',
     expression: 'symbol',
     names: [
       'tabler:apple',
@@ -106,15 +112,20 @@ const literalNames: readonly string[] = [
   'ic:baseline-check',
   'ic:baseline-check-circle',
   'ic:baseline-close',
+  'ic:baseline-dark-mode',
   'ic:baseline-edit',
   'ic:baseline-fast-forward',
   'ic:baseline-fast-rewind',
   'ic:baseline-history',
+  'ic:baseline-language',
+  'ic:baseline-light-mode',
   'ic:baseline-login',
   'ic:baseline-logout',
   'ic:baseline-more-vert',
   'ic:baseline-navigate-before',
   'ic:baseline-navigate-next',
+  'ic:baseline-notifications-active',
+  'ic:baseline-notifications-off',
   'ic:baseline-palette',
   'ic:baseline-pause',
   'ic:baseline-person-add',
@@ -124,7 +135,11 @@ const literalNames: readonly string[] = [
   'ic:baseline-settings',
   'ic:baseline-stop',
   'ic:baseline-timer',
+  'ic:baseline-trending-down',
+  'ic:baseline-trending-flat',
   'ic:baseline-trending-up',
+  'ic:baseline-visibility',
+  'ic:baseline-visibility-off',
   'ic:baseline-volume-off',
   'ic:baseline-wallpaper',
   'lucide:id-card',

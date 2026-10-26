@@ -1,113 +1,152 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { create } from 'zustand'
 import { getSupabase } from '~/lib/supabase-instance'
 import type { Player } from './types'
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
-export const usePlayersStore = defineStore('players', () => {
-  const players = ref<Player[]>([])
-  const pendingVotes = ref<Record<string, string | null>>({})
-  const roomId = ref<string | null>(null)
+interface PlayersState {
+  roomId: string | null
+  players: Player[]
+  pendingVotes: Record<string, string | null>
+  visiblePlayers: Player[]
+  applyChange: (payload: RealtimePostgresChangesPayload<Player>) => void
+  voteOf: (playerId: string) => string | null
+  castVote: (playerId: string, card: string | null) => Promise<void>
+  clearPendingVotes: () => void
+  rename: (playerId: string, name: string) => Promise<void>
+  toggleModerator: (playerId: string, value: boolean) => Promise<void>
+  setShields: (playerId: string, shields: string[]) => Promise<void>
+  kick: (playerId: string) => Promise<void>
+  leave: (playerId: string) => Promise<void>
+  join: (name: string, userId?: string | null, shields?: string[]) => Promise<Player>
+  rejoin: (playerId: string) => Promise<Player>
+  findExistingPlayer: (roomIdArg: string, userId: string | null) => Promise<Player | null>
+  linkUser: (playerId: string, userId: string) => Promise<void>
+  fetchAll: (roomIdArg: string) => Promise<void>
+}
 
-  const visiblePlayers = computed(() =>
-    players.value
-      .filter(p => p.left_at === null)
-      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
-  )
+function sortVisible(players: Player[]): Player[] {
+  return players
+    .filter(p => p.left_at === null)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+}
 
-  function applyChange(payload: RealtimePostgresChangesPayload<Player>) {
+function withoutKey<T>(record: Record<string, T>, key: string): Record<string, T> {
+  if (!(key in record)) return record
+  const next = { ...record }
+  delete next[key]
+  return next
+}
+
+function replacePlayer(players: Player[], playerId: string, patch: (p: Player) => Player): Player[] {
+  return players.map(p => (p.id === playerId ? patch(p) : p))
+}
+
+export const usePlayersStore = create<PlayersState>()((set, get) => ({
+  roomId: null,
+  players: [],
+  pendingVotes: {},
+  visiblePlayers: [],
+
+  applyChange(payload) {
     switch (payload.eventType) {
-      case 'INSERT':
-        if (!players.value.find(p => p.id === payload.new.id)) {
-          players.value.push(payload.new)
-        }
-        break
-      case 'UPDATE': {
-        const idx = players.value.findIndex(p => p.id === payload.new.id)
-        if (idx >= 0) players.value[idx] = payload.new
-        if (pendingVotes.value[payload.new.id] === payload.new.vote) {
-          delete pendingVotes.value[payload.new.id]
+      case 'INSERT': {
+        const row = payload.new
+        if (!get().players.some(p => p.id === row.id)) {
+          set(s => ({ players: [...s.players, row] }))
         }
         break
       }
-      case 'DELETE':
-        players.value = players.value.filter(p => p.id !== payload.old.id)
+      case 'UPDATE': {
+        const row = payload.new
+        set(s => ({
+          players: replacePlayer(s.players, row.id, () => row),
+          pendingVotes: s.pendingVotes[row.id] === row.vote ? withoutKey(s.pendingVotes, row.id) : s.pendingVotes,
+        }))
         break
+      }
+      case 'DELETE': {
+        const id = payload.old.id
+        set(s => ({ players: s.players.filter(p => p.id !== id) }))
+        break
+      }
     }
-  }
+  },
 
-  function voteOf(playerId: string): string | null {
-    if (pendingVotes.value[playerId] !== undefined) return pendingVotes.value[playerId]
-    return players.value.find(p => p.id === playerId)?.vote ?? null
-  }
+  voteOf(playerId) {
+    const pending = get().pendingVotes[playerId]
+    if (pending !== undefined) return pending
+    return get().players.find(p => p.id === playerId)?.vote ?? null
+  },
 
-  async function castVote(playerId: string, card: string | null) {
-    pendingVotes.value[playerId] = card
+  async castVote(playerId, card) {
+    set(s => ({ pendingVotes: { ...s.pendingVotes, [playerId]: card } }))
     try {
       const { error } = await getSupabase()
         .from('players')
         .update({ vote: card })
         .eq('id', playerId)
       if (error) throw error
-      const current = players.value.find(p => p.id === playerId)
-      if (current) current.vote = card
-      delete pendingVotes.value[playerId]
+      set(s => ({
+        players: replacePlayer(s.players, playerId, p => ({ ...p, vote: card })),
+        pendingVotes: withoutKey(s.pendingVotes, playerId),
+      }))
     } catch (e) {
-      delete pendingVotes.value[playerId]
+      set(s => ({ pendingVotes: withoutKey(s.pendingVotes, playerId) }))
       throw e
     }
-  }
+  },
 
-  function clearPendingVotes() {
-    pendingVotes.value = {}
-  }
+  clearPendingVotes() {
+    set({ pendingVotes: {} })
+  },
 
-  async function rename(playerId: string, name: string) {
+  async rename(playerId, name) {
     await getSupabase().from('players').update({ name }).eq('id', playerId)
-  }
+  },
 
-  async function toggleModerator(playerId: string, value: boolean) {
+  async toggleModerator(playerId, value) {
     await getSupabase().from('players').update({ is_moderator: value }).eq('id', playerId)
-  }
+  },
 
-  async function setShields(playerId: string, shields: string[]) {
-    const idx = players.value.findIndex(p => p.id === playerId)
-    const existing = idx >= 0 ? players.value[idx] : undefined
-    if (existing) players.value[idx] = { ...existing, shields }
+  async setShields(playerId, shields) {
+    set(s => ({ players: replacePlayer(s.players, playerId, p => ({ ...p, shields })) }))
     const { error } = await getSupabase().from('players').update({ shields }).eq('id', playerId)
     if (error) {
-      if (roomId.value) await fetchAll(roomId.value)
+      const roomId = get().roomId
+      if (roomId) await get().fetchAll(roomId)
       throw error
     }
-  }
+  },
 
-  async function kick(playerId: string) {
+  async kick(playerId) {
     await getSupabase()
       .from('players')
       .update({ left_at: new Date().toISOString() })
       .eq('id', playerId)
-  }
+  },
 
-  async function leave(playerId: string) {
-    if (roomId.value) localStorage.removeItem(`storypoker_session_${roomId.value}`)
+  async leave(playerId) {
+    const roomId = get().roomId
+    if (roomId) localStorage.removeItem(`storypoker_session_${roomId}`)
     await getSupabase()
       .from('players')
       .update({ left_at: new Date().toISOString() })
       .eq('id', playerId)
-  }
+  },
 
-  async function join(name: string, userId: string | null = null, shields: string[] = []): Promise<Player> {
-    if (!roomId.value) throw new Error('roomId not set')
+  async join(name, userId = null, shields = []) {
+    const roomId = get().roomId
+    if (!roomId) throw new Error('roomId not set')
     const { data, error } = await getSupabase()
       .from('players')
-      .insert({ room_id: roomId.value, name, user_id: userId, is_moderator: false, shields })
+      .insert({ room_id: roomId, name, user_id: userId, is_moderator: false, shields })
       .select()
       .single()
     if (error) throw error
     return data as Player
-  }
+  },
 
-  async function rejoin(playerId: string): Promise<Player> {
+  async rejoin(playerId) {
     const { data, error } = await getSupabase()
       .from('players')
       .update({ left_at: null })
@@ -116,9 +155,9 @@ export const usePlayersStore = defineStore('players', () => {
       .single()
     if (error) throw error
     return data as Player
-  }
+  },
 
-  async function findExistingPlayer(roomIdArg: string, userId: string | null): Promise<Player | null> {
+  async findExistingPlayer(roomIdArg, userId) {
     const supabase = getSupabase()
     if (userId) {
       const { data } = await supabase
@@ -152,27 +191,25 @@ export const usePlayersStore = defineStore('players', () => {
       .order('created_at', { ascending: false })
       .limit(1)
     return ((data ?? [])[0] as Player | undefined) ?? null
-  }
+  },
 
-  async function linkUser(playerId: string, userId: string) {
-    const idx = players.value.findIndex(p => p.id === playerId)
-    const existing = idx >= 0 ? players.value[idx] : null
-    if (existing) players.value[idx] = { ...existing, user_id: userId }
+  async linkUser(playerId, userId) {
+    set(s => ({ players: replacePlayer(s.players, playerId, p => ({ ...p, user_id: userId })) }))
     await getSupabase().from('players').update({ user_id: userId }).eq('id', playerId)
-  }
+  },
 
-  async function fetchAll(roomIdArg: string): Promise<void> {
+  async fetchAll(roomIdArg) {
     const { data } = await getSupabase()
       .from('players')
       .select('*')
       .eq('room_id', roomIdArg)
       .order('created_at')
-    players.value = (data ?? []) as Player[]
-  }
+    set({ players: (data ?? []) as Player[] })
+  },
+}))
 
-  return {
-    roomId, players, pendingVotes, visiblePlayers,
-    applyChange, voteOf, castVote, clearPendingVotes,
-    rename, toggleModerator, setShields, kick, leave, join, rejoin, findExistingPlayer, linkUser, fetchAll,
+usePlayersStore.subscribe((state, previous) => {
+  if (state.players !== previous.players) {
+    usePlayersStore.setState({ visiblePlayers: sortVisible(state.players) })
   }
 })

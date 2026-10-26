@@ -19,6 +19,8 @@ dist/
 
 supabase/*
 !supabase/migrations
+!supabase/config.toml
+!supabase/seed.sql
 !supabase/AGENTS.md
 !supabase/CLAUDE.md
 
@@ -35,3 +37,6 @@ test-results/
 # legacy artifact paths, migrated by scripts/migrate-test-artifacts.sh
 playwright-report/
 coverage/
+
+# session-learnings notes, local to this checkout
+docs/session-learnings/

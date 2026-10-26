@@ -1,5 +1,4 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { create as createStore } from 'zustand'
 import { getSupabase } from '~/lib/supabase-instance'
 import { getDeck, type DeckPresetId } from '~/utils/cardDecks'
 import { usePlayersStore } from './players'
@@ -30,45 +29,68 @@ export function backgroundDisplayUrl(path: string, updatedAt: string | null): st
   return `${publicUrl}?v=${encodeURIComponent(updatedAt ?? '')}`
 }
 
-export const useRoomStore = defineStore('room', () => {
-  const roomId = ref<string | null>(null)
-  const roomState = ref<RoomState | null>(null)
+interface RoomStoreState {
+  roomId: string | null
+  roomState: RoomState | null
+  applyChange: (payload: RealtimePostgresChangesPayload<RoomState>) => void
+  reveal: () => Promise<void>
+  fetchHistory: () => Promise<RoundHistory[]>
+  startNewRound: () => Promise<void>
+  resetVotes: () => Promise<void>
+  saveCardDeck: (cards: string[]) => Promise<void>
+  setDeckPreset: (presetId: DeckPresetId) => Promise<void>
+  setPollQuestion: (question: string | null) => Promise<void>
+  setResultCohorts: (cohorts: string[]) => Promise<void>
+  setAlarm: (settings: { minutes?: number; muted?: boolean }) => Promise<void>
+  create: () => Promise<string>
+  resolveRoom: (input: string) => Promise<ResolvedRoom | null>
+  setRoomName: (name: string | null, slug: string | null) => Promise<void>
+  uploadBackground: (blob: Blob, opacity: number) => Promise<Partial<RoomBackground> | null>
+  setBackgroundOpacity: (opacity: number) => Promise<Partial<RoomBackground> | null>
+  removeBackground: () => Promise<Partial<RoomBackground> | null>
+  resetTimer: (expectedStartedAt?: string) => Promise<void>
+  pauseTimer: () => Promise<void>
+  resumeTimer: () => Promise<void>
+  adjustTimer: (deltaMs: number) => Promise<void>
+}
 
+export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
   function applyChange(payload: RealtimePostgresChangesPayload<RoomState>) {
     if (payload.eventType === 'UPDATE') {
-      roomState.value = payload.new
+      set({ roomState: payload.new })
     }
   }
 
   async function reveal() {
-    if (!roomId.value || !roomState.value || roomState.value.phase === 'revealed') return
+    const { roomId, roomState } = get()
+    if (!roomId || !roomState || roomState.phase === 'revealed') return
     const supabase = getSupabase()
-    const playersStore = usePlayersStore()
+    const playersStore = usePlayersStore.getState()
     const votes: RoundHistoryVote[] = playersStore.visiblePlayers
       .filter(p => p.vote !== null)
       .map(p => ({ player_id: p.id, name: p.name, vote: p.vote as string }))
 
     const revealedAt = new Date()
     const update: Partial<Pick<RoomState, 'phase' | 'paused_at' | 'paused_elapsed_ms'>> = { phase: 'revealed' }
-    if (roomState.value.paused_at) {
-      const pausedSince = new Date(roomState.value.paused_at).getTime()
+    if (roomState.paused_at) {
+      const pausedSince = new Date(roomState.paused_at).getTime()
       update.paused_at = null
       update.paused_elapsed_ms = Math.max(
         0,
-        (roomState.value.paused_elapsed_ms ?? 0) + (revealedAt.getTime() - pausedSince),
+        (roomState.paused_elapsed_ms ?? 0) + (revealedAt.getTime() - pausedSince),
       )
     }
 
-    await supabase.from('room_state').update(update).eq('room_id', roomId.value)
+    await supabase.from('room_state').update(update).eq('room_id', roomId)
 
     if (votes.length >= 2) {
       const historyRow: TablesInsert<'round_history'> = {
-        room_id: roomId.value,
-        started_at: roomState.value.round_started_at,
+        room_id: roomId,
+        started_at: roomState.round_started_at,
         revealed_at: revealedAt.toISOString(),
         votes: votes as Json,
-        active_cards: roomState.value.active_cards ?? null,
-        deck_preset: roomState.value.deck_preset ?? null,
+        active_cards: roomState.active_cards ?? null,
+        deck_preset: roomState.deck_preset ?? null,
       }
       const { error } = await supabase.from('round_history').insert(historyRow)
       if (error) console.error('[reveal] round_history insert failed:', error)
@@ -76,19 +98,21 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   async function fetchHistory(): Promise<RoundHistory[]> {
-    if (!roomId.value) return []
+    const { roomId } = get()
+    if (!roomId) return []
     const { data } = await getSupabase()
       .from('round_history')
       .select('*')
-      .eq('room_id', roomId.value)
+      .eq('room_id', roomId)
       .order('revealed_at', { ascending: false })
     return (data ?? []).map(row => ({ ...row, votes: row.votes as unknown as RoundHistoryVote[] }))
   }
 
   async function startNewRound() {
-    if (!roomId.value) return
+    const { roomId, roomState } = get()
+    if (!roomId) return
     const supabase = getSupabase()
-    const preset = roomState.value?.deck_preset
+    const preset = roomState?.deck_preset
     const stateUpdate: TablesUpdate<'room_state'> = {
       phase: 'voting',
       round_started_at: new Date().toISOString(),
@@ -100,20 +124,22 @@ export const useRoomStore = defineStore('room', () => {
       stateUpdate.active_cards = getDeck('vote_question').defaultActive
     }
     await Promise.all([
-      supabase.from('players').update({ vote: null }).eq('room_id', roomId.value),
-      supabase.from('room_state').update(stateUpdate).eq('room_id', roomId.value),
+      supabase.from('players').update({ vote: null }).eq('room_id', roomId),
+      supabase.from('room_state').update(stateUpdate).eq('room_id', roomId),
     ])
   }
 
   async function resetVotes() {
-    if (!roomId.value) return
-    const playersStore = usePlayersStore()
-    await getSupabase().from('players').update({ vote: null }).eq('room_id', roomId.value)
+    const { roomId } = get()
+    if (!roomId) return
+    const playersStore = usePlayersStore.getState()
+    await getSupabase().from('players').update({ vote: null }).eq('room_id', roomId)
     playersStore.clearPendingVotes()
   }
 
   async function resetTimer(expectedStartedAt?: string) {
-    if (!roomId.value) return
+    const { roomId } = get()
+    if (!roomId) return
     const query = getSupabase()
       .from('room_state')
       .update({
@@ -121,7 +147,7 @@ export const useRoomStore = defineStore('room', () => {
         paused_at: null,
         paused_elapsed_ms: 0,
       })
-      .eq('room_id', roomId.value)
+      .eq('room_id', roomId)
     const { error } = await (expectedStartedAt
       ? query.eq('round_started_at', expectedStartedAt).eq('phase', 'voting')
       : query)
@@ -129,76 +155,84 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   async function pauseTimer() {
-    if (!roomId.value || !roomState.value || roomState.value.paused_at) return
+    const { roomId, roomState } = get()
+    if (!roomId || !roomState || roomState.paused_at) return
     await getSupabase()
       .from('room_state')
       .update({ paused_at: new Date().toISOString() })
-      .eq('room_id', roomId.value)
+      .eq('room_id', roomId)
   }
 
   async function resumeTimer() {
-    if (!roomId.value || !roomState.value || !roomState.value.paused_at) return
-    const pausedSince = new Date(roomState.value.paused_at).getTime()
-    const next = Math.max(0, (roomState.value.paused_elapsed_ms ?? 0) + (Date.now() - pausedSince))
+    const { roomId, roomState } = get()
+    if (!roomId || !roomState || !roomState.paused_at) return
+    const pausedSince = new Date(roomState.paused_at).getTime()
+    const next = Math.max(0, (roomState.paused_elapsed_ms ?? 0) + (Date.now() - pausedSince))
     await getSupabase()
       .from('room_state')
       .update({ paused_at: null, paused_elapsed_ms: next })
-      .eq('room_id', roomId.value)
+      .eq('room_id', roomId)
   }
 
   async function adjustTimer(deltaMs: number) {
-    if (!roomId.value || !roomState.value) return
-    const start = new Date(roomState.value.round_started_at).getTime()
-    const pivot = roomState.value.paused_at
-      ? new Date(roomState.value.paused_at).getTime()
+    const { roomId, roomState } = get()
+    if (!roomId || !roomState) return
+    const start = new Date(roomState.round_started_at).getTime()
+    const pivot = roomState.paused_at
+      ? new Date(roomState.paused_at).getTime()
       : Date.now()
-    const cap = pivot - (roomState.value.paused_elapsed_ms ?? 0)
+    const cap = pivot - (roomState.paused_elapsed_ms ?? 0)
     const nextStart = Math.min(cap, start - deltaMs)
     await getSupabase()
       .from('room_state')
       .update({ round_started_at: new Date(nextStart).toISOString() })
-      .eq('room_id', roomId.value)
+      .eq('room_id', roomId)
   }
 
   async function saveCardDeck(cards: string[]) {
-    if (!roomId.value) return
-    await getSupabase().from('room_state').update({ active_cards: cards }).eq('room_id', roomId.value)
+    const { roomId } = get()
+    if (!roomId) return
+    await getSupabase().from('room_state').update({ active_cards: cards }).eq('room_id', roomId)
   }
 
   async function setDeckPreset(presetId: DeckPresetId) {
-    if (!roomId.value) return
+    const { roomId } = get()
+    if (!roomId) return
     const preset = getDeck(presetId)
     await getSupabase()
       .from('room_state')
       .update({ deck_preset: presetId, active_cards: preset.defaultActive, poll_question: preset.defaultQuestion ?? null })
-      .eq('room_id', roomId.value)
+      .eq('room_id', roomId)
   }
 
   async function setResultCohorts(cohorts: string[]) {
-    if (!roomId.value) return
+    const { roomId } = get()
+    if (!roomId) return
     const { error } = await getSupabase()
       .from('room_state')
       .update({ result_cohorts: cohorts })
-      .eq('room_id', roomId.value)
+      .eq('room_id', roomId)
     if (error) throw error
   }
 
   async function setAlarm(settings: { minutes?: number; muted?: boolean }) {
-    if (!roomId.value) return
+    const { roomId } = get()
+    if (!roomId) return
     const update: TablesUpdate<'room_state'> = {}
     if (settings.minutes !== undefined) update.alarm_minutes = settings.minutes
     if (settings.muted !== undefined) update.alarm_muted = settings.muted
-    const { error } = await getSupabase().from('room_state').update(update).eq('room_id', roomId.value)
+    const { error } = await getSupabase().from('room_state').update(update).eq('room_id', roomId)
     if (error) throw error
   }
 
   async function setPollQuestion(question: string | null) {
-    if (!roomId.value) return
+    const { roomId } = get()
+    if (!roomId) return
     const value = question?.trim() || null
     await getSupabase()
       .from('room_state')
       .update({ poll_question: value })
-      .eq('room_id', roomId.value)
+      .eq('room_id', roomId)
   }
 
   function generateRoomId(): string {
@@ -235,9 +269,10 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   async function setRoomName(name: string | null, slug: string | null): Promise<void> {
-    if (!roomId.value) return
+    const { roomId } = get()
+    if (!roomId) return
     const supabase = getSupabase()
-    const { error } = await supabase.from('rooms').update({ name, slug }).eq('id', roomId.value)
+    const { error } = await supabase.from('rooms').update({ name, slug }).eq('id', roomId)
     if (error) {
       if (error.code === '23505') {
         const e = new Error('room_slug_taken') as Error & { code?: string }
@@ -249,44 +284,47 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   async function uploadBackground(blob: Blob, opacity: number): Promise<Partial<RoomBackground> | null> {
-    if (!roomId.value) return null
-    if (!useAuthStore().user) throw new Error('Sign in to set the room background')
+    const { roomId } = get()
+    if (!roomId) return null
+    if (!useAuthStore.getState().user) throw new Error('Sign in to set the room background')
     const supabase = getSupabase()
-    const path = `${roomId.value}/background.webp`
+    const path = `${roomId}/background.webp`
     const { error: uploadErr } = await supabase.storage
       .from(BACKGROUND_BUCKET)
       .upload(path, blob, { upsert: true, contentType: 'image/webp' })
     if (uploadErr) throw uploadErr
     const background = { background_url: path, background_updated_at: new Date().toISOString(), background_opacity: opacity }
-    const { error } = await supabase.from('rooms').update(background).eq('id', roomId.value)
+    const { error } = await supabase.from('rooms').update(background).eq('id', roomId)
     if (error) throw error
     return background
   }
 
   async function setBackgroundOpacity(opacity: number): Promise<Partial<RoomBackground> | null> {
-    if (!roomId.value) return null
+    const { roomId } = get()
+    if (!roomId) return null
     const background = { background_opacity: opacity }
-    const { error } = await getSupabase().from('rooms').update(background).eq('id', roomId.value)
+    const { error } = await getSupabase().from('rooms').update(background).eq('id', roomId)
     if (error) throw error
     return background
   }
 
   async function removeBackground(): Promise<Partial<RoomBackground> | null> {
-    if (!roomId.value) return null
+    const { roomId } = get()
+    if (!roomId) return null
     const supabase = getSupabase()
     const background = { background_url: null, background_updated_at: new Date().toISOString() }
-    const { error } = await supabase.from('rooms').update(background).eq('id', roomId.value)
+    const { error } = await supabase.from('rooms').update(background).eq('id', roomId)
     if (error) throw error
     await supabase.storage
       .from(BACKGROUND_BUCKET)
-      .remove([`${roomId.value}/background.webp`])
+      .remove([`${roomId}/background.webp`])
       .catch(() => undefined)
     return background
   }
 
   return {
-    roomId,
-    roomState,
+    roomId: null,
+    roomState: null,
     applyChange,
     reveal,
     fetchHistory,

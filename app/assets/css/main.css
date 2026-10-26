@@ -3,8 +3,10 @@
 
 @import 'tailwindcss';
 @import '~/generated/icons.css' layer(components);
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
-@source './../../**/*.{vue,ts}';
+@source './../../**/*.{ts,tsx}';
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
@@ -38,6 +40,31 @@
   --text-mui-caption--line-height: 1.5;
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-heading: var(--font-display, inherit);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-4);
+  --shadow-lg: var(--shadow-8);
+}
+
 @utility bg-app {
   background-color: var(--bg-app);
 }
@@ -50,9 +77,6 @@
 }
 @utility bg-elevated {
   background-color: var(--bg-elevated);
-}
-@utility bg-overlay {
-  background-color: var(--bg-overlay);
 }
 @utility bg-skeleton {
   background-color: var(--bg-skeleton);
@@ -112,6 +136,28 @@ html[data-theme='dark'] {
   --appbar-gradient: none;
   --btn-md-bg: #607d8b;
   --btn-md-bg-hover: #1c313a;
+}
+
+:root {
+  --radius-input: 4px;
+}
+
+:root {
+  --background: var(--bg-app);
+  --foreground: var(--text-body);
+  --popover: var(--bg-elevated);
+  --popover-foreground: var(--text-primary);
+  --primary-foreground: var(--btn-text, var(--text-inverse));
+  --secondary: var(--bg-appbar);
+  --secondary-foreground: var(--text-inverse);
+  --muted: var(--hover-bg);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--hover-bg);
+  --accent-foreground: var(--text-body);
+  --destructive: var(--danger);
+  --input: var(--border-input);
+  --ring: var(--primary);
+  --radius: var(--radius-input);
 }
 
 html[data-theme='light'] {
@@ -465,59 +511,6 @@ body {
     }
   }
 
-  .mui-btn-text {
-    background: transparent;
-    color: var(--primary);
-    box-shadow: none;
-    min-width: 64px;
-    min-height: 36px;
-    padding: 6px 16px;
-    border-radius: var(--radius-input, 4px);
-  }
-  .mui-btn-text:hover {
-    background-color: var(--primary-soft);
-    box-shadow: none;
-  }
-  .mui-btn-text:active {
-    box-shadow: none;
-  }
-  .mui-btn-text:disabled {
-    color: var(--text-disabled);
-    background: transparent;
-    pointer-events: none;
-  }
-
-  .mui-btn-secondary {
-    background-color: var(--bg-appbar);
-    color: #fff;
-  }
-  .mui-btn-secondary:hover {
-    background-color: var(--bg-paper-header);
-  }
-  html[data-theme='light'] .mui-btn-secondary {
-    background-color: rgba(0, 0, 0, 0.08);
-    color: var(--text-primary);
-    box-shadow: none;
-  }
-  html[data-theme='light'] .mui-btn-secondary:hover {
-    background-color: rgba(0, 0, 0, 0.14);
-    box-shadow: none;
-  }
-
-  .mui-btn-sm {
-    min-width: 64px;
-    min-height: 28px;
-    padding: 4px 12px;
-    font-size: 0.75rem;
-    letter-spacing: 0.04em;
-    box-shadow: var(--shadow-1);
-  }
-  @media (max-width: 899.95px) {
-    .mui-btn-sm {
-      min-width: 56px;
-    }
-  }
-
   .mui-btn-md {
     min-width: 180px;
     min-height: 46px;
@@ -614,32 +607,6 @@ body {
     z-index: 1400;
   }
 
-  .mui-shield {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid var(--border-input);
-    background-color: transparent;
-    color: var(--text-body);
-    cursor: pointer;
-    transition: border-color 150ms, background-color 150ms, color 150ms;
-    user-select: none;
-  }
-  .mui-shield:hover:not(:disabled) {
-    border-color: var(--primary);
-    color: var(--text-primary);
-  }
-  .mui-shield:disabled {
-    opacity: 0.38;
-    cursor: not-allowed;
-  }
-  .mui-shield.is-selected {
-    border-color: var(--primary);
-    background-color: var(--primary-soft);
-    color: var(--text-primary);
-  }
   .mui-chip {
     display: inline-flex;
     align-items: center;
@@ -675,26 +642,6 @@ body {
     line-height: 1;
   }
 
-  .mui-shield-tag {
-    padding: 3px 8px;
-    border-radius: 6px;
-    color: var(--icon-player-color);
-    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size: 0.625rem;
-    font-weight: 600;
-    line-height: 1.5;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-  .mui-shield-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    border-radius: 8px;
-    border: 1px solid var(--border-input);
-    color: var(--icon-player-color);
-  }
   .mui-role-tag {
     display: inline-flex;
     align-items: center;
@@ -812,15 +759,6 @@ body {
     color: var(--text-primary);
   }
 
-  .mui-radio {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    user-select: none;
-    color: var(--text-body);
-    font-size: 0.9375rem;
-  }
   .mui-slider {
     cursor: pointer;
     appearance: none;
@@ -883,12 +821,6 @@ body {
     transform: translate(-50%, -50%);
     font-size: 1.5rem;
     color: var(--bg-appbar);
-  }
-  .mui-radio input {
-    accent-color: var(--primary);
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
   }
 
   .mui-card {
@@ -1133,11 +1065,6 @@ dialog.app-modal::backdrop {
   display: none;
 }
 
-.app-tooltip-top    { position: absolute; bottom: calc(100% + var(--tt-offset, 6px)); left: 50%; transform: translateX(-50%); pointer-events: none; }
-.app-tooltip-bottom { position: absolute; top:    calc(100% + var(--tt-offset, 6px)); left: 50%; transform: translateX(-50%); pointer-events: none; }
-.app-tooltip-left   { position: absolute; right:  calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
-.app-tooltip-right  { position: absolute; left:   calc(100% + var(--tt-offset, 6px)); top:  50%; transform: translateY(-50%); pointer-events: none; }
-
 /* Theme switch: circular clip-path reveal drives the transition, so suppress
    the default root cross-fade and stack the new snapshot above the old one. */
 ::view-transition-old(root),
@@ -1155,6 +1082,123 @@ dialog.app-modal::backdrop {
    result bubbles) stay part of the root snapshot instead of drifting above it. */
 :root[data-theme-transition] * {
   transition: none !important;
+}
+
+.celebration-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  overflow: hidden;
+}
+
+.celebration-particle {
+  position: absolute;
+  left: var(--start-x);
+  top: var(--start-y);
+  width: var(--size);
+  height: calc(var(--size) * 0.4);
+  border-radius: 2px;
+  background: hsl(var(--hue) 90% 55%);
+  transform-origin: center;
+  opacity: 0;
+  animation: confetti-burst var(--duration) ease-out 1;
+  animation-delay: var(--delay);
+}
+
+@keyframes confetti-burst {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg) scale(0.3);
+  }
+  6% {
+    opacity: 1;
+    transform: translate(calc(var(--vx) * 0.06), calc(var(--vy) * 0.06)) rotate(calc(var(--spin) * 0.06)) scale(1);
+  }
+  45% {
+    opacity: 1;
+    transform: translate(calc(var(--vx) * 0.45), var(--vy)) rotate(calc(var(--spin) * 0.5)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--vx), calc(var(--vy) + var(--fall))) rotate(var(--spin)) scale(0.8);
+  }
+}
+
+.win-blink {
+  animation: win-blink 0.5s ease-in-out 3;
+}
+
+@keyframes win-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+.timer-alarm-blink {
+  animation: timer-alarm-blink 0.6s ease-in-out var(--alarm-blinks);
+}
+
+@keyframes timer-alarm-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+.slot-window {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--radius-card, 8px);
+  border: 2px solid var(--border-input);
+  background-color: var(--bg-elevated);
+  transition: box-shadow 300ms, border-color 300ms;
+}
+.slot-window.is-jammed .slot-strip {
+  animation: slot-jam 400ms ease-in-out;
+}
+.slot-window.is-jammed .slot-reel:nth-child(2) .slot-strip {
+  animation-delay: 40ms;
+}
+.slot-window.is-jammed .slot-reel:nth-child(3) .slot-strip {
+  animation-delay: 80ms;
+}
+
+@keyframes slot-jam {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(3px); }
+  45% { transform: translateY(-2px); }
+  70% { transform: translateY(2px); }
+  90% { transform: translateY(-1px); }
+}
+
+.slot-reel {
+  width: 52px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: calc(var(--radius-card, 8px) / 2);
+  background-color: var(--bg-paper);
+  border: 1px solid var(--border);
+}
+.slot-strip {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+.slot-cell {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.room-background-frame {
+  cursor: grab;
+  touch-action: none;
+}
+.room-background-frame:active {
+  cursor: grabbing;
 }
 
 @media (prefers-reduced-motion: reduce) {

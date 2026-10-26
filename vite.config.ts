@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'node:path'
@@ -7,7 +7,7 @@ import { resolve } from 'node:path'
 export default defineConfig({
   envDir: resolve(import.meta.dirname, '.env'),
   plugins: [
-    vue(),
+    react(),
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',

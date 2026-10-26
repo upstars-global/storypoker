@@ -3,6 +3,7 @@ import { icons as ic } from '@iconify-json/ic'
 import { icons as lucide } from '@iconify-json/lucide'
 import { getIconData } from '@iconify/utils'
 import { buildCollections, serializeCollections } from '../../../scripts/icons/subset'
+import { scanIconUsage } from '../../../scripts/icons/scan'
 import generated from '~/generated/iconCollections.json'
 
 it('includes only requested records and rejects unknown names', () => {
@@ -39,4 +40,44 @@ it('detects a dropped record in a committed copy of the subset', () => {
   const firstPrefix = committed[0]!
   delete firstPrefix.icons[Object.keys(firstPrefix.icons).sort()[0]!]
   expect(serializeCollections(committed as never)).not.toBe(expected)
+})
+
+it('scans literal and expression icon names in .tsx sources', () => {
+  const usage = scanIconUsage({
+    'app/components/Probe.tsx': 'export function Probe({ on }: { on: boolean }) {\n'
+      + '  return <div><AppIcon name="ic:baseline-add" /><AppIcon name={on ? \'ic:baseline-check\' : \'tabler:star\'} /></div>\n'
+      + '}\n',
+  })
+  expect(usage.literals).toEqual(['ic:baseline-add', 'ic:baseline-check', 'tabler:star'])
+  expect(usage.bindings).toEqual([
+    { file: 'app/components/Probe.tsx', expression: "on ? 'ic:baseline-check' : 'tabler:star'" },
+  ])
+})
+
+it('ignores the name prop of elements other than AppIcon in .tsx sources', () => {
+  const usage = scanIconUsage({
+    'app/components/Probe.tsx': 'export const Probe = () => <input name="sm:hidden" /> ',
+  })
+  expect(usage.literals).toEqual([])
+  expect(usage.bindings).toEqual([])
+})
+
+it('reads generic arrows in .ts sources without treating them as JSX', () => {
+  const usage = scanIconUsage({
+    'app/utils/probe.ts': "export const pick = <T,>(value: T) => value\nexport const ICON = 'ic:baseline-add'\n",
+  })
+  expect(usage.literals).toEqual(['ic:baseline-add'])
+})
+
+it('collects both branches of a ternary name in a nested .tsx element', () => {
+  const usage = scanIconUsage({
+    'app/components/Toggle.tsx': 'export const Toggle = ({ on }: { on: boolean }) => (\n'
+      + '  <button><AppIcon name={on ? `ic:baseline-check` : "ic:baseline-close"} /></button>\n'
+      + ')\n',
+  })
+  expect(usage.literals).toEqual(['ic:baseline-check', 'ic:baseline-close'])
+  expect(usage.allLiterals).toEqual(['ic:baseline-check', 'ic:baseline-close'])
+  expect(usage.bindings).toEqual([
+    { file: 'app/components/Toggle.tsx', expression: 'on ? `ic:baseline-check` : "ic:baseline-close"' },
+  ])
 })
