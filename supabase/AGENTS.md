@@ -63,7 +63,8 @@ authorized moderator. Зняття фону, як і аватарки, спер�
 
 ## Round history snapshot
 
-`reveal()` оновлює `room_state.phase='revealed'` і пише `round_history` зі snapshot `{player_id,name,vote}[]` тільки
-коли `votes.length >= 2`. `?` і `☕` рахуються як голоси. Snapshot містить `name`, щоб історія лишалась читабельною
-після rename/leave. Також зберігає `active_cards`/`deck_preset` знятого раунду. Формули узгодженості -
+`reveal()` оновлює `room_state.phase='revealed'` умовою `phase <> 'revealed'` і пише `round_history` зі snapshot
+`{player_id,name,vote}[]` тільки коли цей update змінив рядок і `votes.length >= 2`; 0 рядків - перечитує
+`room_state`. `?` і `☕` рахуються як голоси. Snapshot містить `name`, щоб історія лишалась читабельною після
+rename/leave. Також зберігає `active_cards`/`deck_preset` знятого раунду. Формули узгодженості -
 `app/utils/AGENTS.md`. Ручного CSV-експорту немає (видалено) - `netlify/functions/room-json.mts` покриває цю потребу.

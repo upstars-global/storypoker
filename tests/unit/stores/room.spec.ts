@@ -27,14 +27,18 @@ function fakeRoomState(overrides: Partial<RoomState> = {}): RoomState {
 type UpdateQuery = Promise<{ error: null }> & {
   eq: (column: string, value: unknown) => UpdateQuery
   neq: (column: string, value: unknown) => UpdateQuery
-  select: (columns: string) => Promise<{ data: { room_id: string }[]; error: null }>
+  select: (columns: string) => Promise<{ data: { room_id: string }[] | null; error: { message: string } | null }>
 }
 
-function updateQuery(updatedRows = [{ room_id: 'r1' }], filters: [string, string, unknown][] = []): UpdateQuery {
+function updateQuery(
+  updatedRows: { room_id: string }[] | null = [{ room_id: 'r1' }],
+  filters: [string, string, unknown][] = [],
+  error: { message: string } | null = null,
+): UpdateQuery {
   const query: UpdateQuery = Object.assign(Promise.resolve({ error: null as null }), {
     eq: (column: string, value: unknown) => { filters.push(['eq', column, value]); return query },
     neq: (column: string, value: unknown) => { filters.push(['neq', column, value]); return query },
-    select: () => Promise.resolve({ data: updatedRows, error: null as null }),
+    select: () => Promise.resolve({ data: updatedRows, error }),
   })
   return query
 }
@@ -138,8 +142,14 @@ describe('roomStore actions', () => {
   it('reveal() writes round_history only when its update moved the round out of voting', async () => {
     const filters: [string, string, unknown][] = []
     const insert = vi.fn().mockResolvedValue({ error: null })
+    const revealedState = fakeRoomState({ phase: 'revealed' })
+    const single = vi.fn().mockResolvedValue({ data: revealedState, error: null })
     setSupabase(asSupabase({
-      from: () => ({ update: () => updateQuery([], filters), insert }),
+      from: () => ({
+        update: () => updateQuery([], filters),
+        insert,
+        select: () => ({ eq: () => ({ single }) }),
+      }),
     }))
     useRoomStore.setState({ roomId: 'r1' })
     useRoomStore.setState({ roomState: fakeRoomState() })
@@ -150,6 +160,27 @@ describe('roomStore actions', () => {
     await state().reveal()
     expect(filters).toEqual([['eq', 'room_id', 'r1'], ['neq', 'phase', 'revealed']])
     expect(insert).not.toHaveBeenCalled()
+    expect(state().roomState).toEqual(revealedState)
+  })
+
+  it('reveal() logs a failed update and writes no round_history', async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null })
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const error = { message: 'network down' }
+    setSupabase(asSupabase({
+      from: () => ({ update: () => updateQuery(null, [], error), insert }),
+    }))
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState() })
+    usePlayersStore.setState({ players: [
+      fakePlayer({ id: 'p1', name: 'Alice', vote: '5' }),
+      fakePlayer({ id: 'p2', name: 'Bob', vote: '8' }),
+    ] })
+    await state().reveal()
+    expect(insert).not.toHaveBeenCalled()
+    expect(consoleError).toHaveBeenCalledWith('[reveal] room_state update failed:', error)
+    expect(state().roomState?.phase).toBe('voting')
+    consoleError.mockRestore()
   })
 
   it('reveal() finalizes active pause duration before revealing', async () => {
