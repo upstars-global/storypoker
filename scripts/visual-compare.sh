@@ -11,8 +11,9 @@ shots="$repo/test-results/visual-baselines"
 
 cd "$repo"
 git rev-parse --verify --quiet "$base_ref^{commit}" >/dev/null || { echo "unknown revision: $base_ref" >&2; exit 1; }
-# Playwright reuses a server already on the visual port outside CI, so both passes would shoot it
-node -e "require('net').connect(4174, '127.0.0.1').on('connect', () => process.exit(1)).on('error', () => process.exit(0))" \
+# Playwright reuses a server already on the visual port outside CI, so both passes would shoot it.
+# It probes localhost, which may resolve to either loopback address, so both are checked.
+node -e "const net = require('net'); let left = 2; for (const host of ['127.0.0.1', '::1']) net.connect(4174, host).on('connect', () => process.exit(1)).on('error', () => { if (--left === 0) process.exit(0) })" \
   || { echo "port 4174 is busy; stop that server first" >&2; exit 1; }
 rm -rf "${base_src:?}" "${base_dist:?}" "${shots:?}"
 mkdir -p "$base_src"

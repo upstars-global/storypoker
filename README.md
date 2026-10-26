@@ -254,7 +254,7 @@ pnpm exec playwright install chromium
 pnpm run test:e2e -- --project=chromium
 ```
 
-[scripts/supabase-local.sh](scripts/supabase-local.sh) starts the stack with the migrations and [supabase/seed.sql](supabase/seed.sql) (table grants for `anon` and `authenticated`), writes `.env/.env.test` with the local keys if it is missing, and recreates the e2e test user. The CLI runs from `~/.cache/storypoker-supabase`, because the repo's `.env` is a directory the CLI cannot read. Signup emails land in Mailpit at http://127.0.0.1:54324.
+[scripts/supabase-local.sh](scripts/supabase-local.sh) starts the stack with the migrations and [supabase/seed.sql](supabase/seed.sql) (table grants for `anon` and `authenticated`), writes `.env/.env.test` with the local keys if it is missing or points at another URL (the old file is kept as `.env/.env.test.bak`), and recreates the e2e test user. The CLI runs from `~/.cache/storypoker-supabase`, because the repo's `.env` is a directory the CLI cannot read. Signup emails land in Mailpit at http://127.0.0.1:54324.
 
 - Supabase images take about 7 GB: check free space with `df -h` before the first `colima start`.
 - Playwright WebKit does not run on macOS 14; run the `webkit` project on macOS 15+ or in the `mcr.microsoft.com/playwright` container with `--network host`.

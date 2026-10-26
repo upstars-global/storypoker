@@ -899,3 +899,5 @@ Deferred: banner fade-out on hide (R2-A-F8) needs an exit transition for conditi
 Deferred: alarm minutes commit on spinner steps (R2-A-F11) needs a native change listener; now commits on blur and Enter - owner
 Deferred: AppModal renders <dialog open> without showModal(), so z-[9999] banners draw over an open modal (R2-A-F12) - owner
 Round review 3: R2 so-upstars - 3 Important accepted and fixed, 11 Minor fixed, 3 rejected with evidence, 3 deferred
+Review R3 so-upstars: PR #46 review on ac23a9e158898f7ee01ed9942e27af52cfc4b8d6, Critical 0 Important 0 Minor 4, verdict ready; follow-ups in issue #51
+Received R3 so-upstars: ACCEPT A-F1 (auth init clears its cached promise on failure, test for a retry after a rejected getSession), C-F1 (README names the other-URL rewrite), C-F2 (supabase-local.sh keeps .env/.env.test.bak and prints the replaced URL), C-F3 (visual-compare.sh probes 127.0.0.1 and ::1); Re-review: requested manually from so-upstars

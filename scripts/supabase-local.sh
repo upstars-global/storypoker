@@ -21,10 +21,15 @@ service_key="$(value SERVICE_ROLE_KEY)"
   || { echo "supabase status gave no API URL or keys" >&2; exit 1; }
 
 # A file left from another project would send e2e there, so only one that points at this stack is kept
-if [ -e "$env_test" ] && [ "$(sed -n 's/^VITE_SUPABASE_URL=//p' "$env_test")" = "$api_url" ]; then
+old_url="$( [ -e "$env_test" ] && sed -n 's/^VITE_SUPABASE_URL=//p' "$env_test" || true)"
+if [ -e "$env_test" ] && [ "$old_url" = "$api_url" ]; then
   echo "$env_test exists, left unchanged"
 else
   mkdir -p "$repo/.env"
+  if [ -e "$env_test" ]; then
+    cp "$env_test" "$env_test.bak"
+    echo "$env_test pointed at ${old_url:-no URL}; saved it as $env_test.bak"
+  fi
   cat > "$env_test" <<EOF
 VITE_SUPABASE_URL=$api_url
 VITE_SUPABASE_KEY=$client_key
