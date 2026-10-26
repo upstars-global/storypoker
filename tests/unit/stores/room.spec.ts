@@ -144,11 +144,17 @@ describe('roomStore actions', () => {
     const insert = vi.fn().mockResolvedValue({ error: null })
     const revealedState = fakeRoomState({ phase: 'revealed' })
     const single = vi.fn().mockResolvedValue({ data: revealedState, error: null })
+    const refetch: unknown[][] = []
     setSupabase(asSupabase({
-      from: () => ({
+      from: (table: string) => ({
         update: () => updateQuery([], filters),
         insert,
-        select: () => ({ eq: () => ({ single }) }),
+        select: (columns: string) => ({
+          eq: (column: string, value: unknown) => {
+            refetch.push([table, columns, column, value])
+            return { single }
+          },
+        }),
       }),
     }))
     useRoomStore.setState({ roomId: 'r1' })
@@ -160,7 +166,46 @@ describe('roomStore actions', () => {
     await state().reveal()
     expect(filters).toEqual([['eq', 'room_id', 'r1'], ['neq', 'phase', 'revealed']])
     expect(insert).not.toHaveBeenCalled()
+    expect(refetch).toEqual([['room_state', '*', 'room_id', 'r1']])
     expect(state().roomState).toEqual(revealedState)
+  })
+
+  it('reveal() keeps the store when the room or its state changed during the refetch', async () => {
+    const newerState = fakeRoomState({ room_id: 'r2' })
+    setSupabase(asSupabase({
+      from: () => ({
+        update: () => updateQuery([]),
+        select: () => ({
+          eq: () => ({
+            single: () => {
+              useRoomStore.setState({ roomId: 'r2', roomState: newerState })
+              return Promise.resolve({ data: fakeRoomState({ phase: 'revealed' }), error: null })
+            },
+          }),
+        }),
+      }),
+    }))
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState() })
+    await state().reveal()
+    expect(state().roomState).toBe(newerState)
+  })
+
+  it('reveal() logs a failed refetch', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const error = { message: 'network down' }
+    setSupabase(asSupabase({
+      from: () => ({
+        update: () => updateQuery([]),
+        select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error }) }) }),
+      }),
+    }))
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: fakeRoomState() })
+    await state().reveal()
+    expect(consoleError).toHaveBeenCalledWith('[reveal] room_state refetch failed:', error)
+    expect(state().roomState?.phase).toBe('voting')
+    consoleError.mockRestore()
   })
 
   it('reveal() logs a failed update and writes no round_history', async () => {

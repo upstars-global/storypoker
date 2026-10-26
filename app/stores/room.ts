@@ -94,8 +94,15 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
     }
 
     if (!revealedRows?.length) {
-      const { data: currentState } = await supabase.from('room_state').select('*').eq('room_id', roomId).single()
-      if (currentState) set({ roomState: currentState as RoomState })
+      const { data: currentState, error: refetchError } = await supabase
+        .from('room_state')
+        .select('*')
+        .eq('room_id', roomId)
+        .single()
+      if (refetchError) console.error('[reveal] room_state refetch failed:', refetchError)
+      if (currentState && get().roomId === roomId && get().roomState === roomState) {
+        set({ roomState: currentState as RoomState })
+      }
       return
     }
 
