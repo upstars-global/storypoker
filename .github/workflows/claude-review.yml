@@ -184,6 +184,9 @@ jobs:
     # Only runs that passed the gate get here, so the newest one for a PR cancels the running review,
     # on any head. On an older head publish marks it `error`; on the same head the newer gate owns the
     # status and the cancelled run posts nothing.
+    # Accepted trade-off (AGENTS.md): when a dispatch and an event-driven run review one head, the run
+    # that joins this group last wins and only the status owner posts, so the head can end with `error`
+    # and no review until the bot is requested again.
     concurrency:
       group: claude-review-job-pr-${{ needs.gate.outputs.number }}
       cancel-in-progress: true

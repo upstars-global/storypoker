@@ -113,7 +113,7 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 сам прибирає з checkout усі `.claude/` (вкладені теж), `.mcp.json`, `.claude.json` і `CLAUDE.local.md`; base-копії
 `.claude/` теж (вкладена тека теж вантажиться), обидві сторони змін є в `diff.patch` - це прийнятий компроміс, а не
 дефект для рев'ю.
-Агент не має shell (`--disallowedTools "Bash"`: вбудовані read-only команди на кшталт `printenv` читають його env)
+Агент не має shell (`--disallowedTools "Bash"`: read-only команди, як `printenv`, читають env)
 і `gh`, читає лише workspace і `~/.claude/skills` (`blockReadsOutsideWorkingDirectories`), `.git/` йому закритий
 (`Read(./.git/**)`: в `.git/config` лежить токен дії), а пише лише тіло у файл. Лог, дифф, base-копії, tree і
 `pr.json` (опис; рев'ю й коментарі лише OWNER/MEMBER/COLLABORATOR) йому готує `Prepare review target` в
@@ -126,9 +126,10 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `pull_request`-подій - одразу з гілки PR, для `workflow_dispatch` - з ref, на якому його
 запущено. Job `review` має групу `concurrency` за номером PR: новіший прогін після гейту (і dispatch чи запит на
-тому ж head) скасовує поточне рев'ю, старий head дістає `error`. Власник статусу - прогін з URL статусу; гонка,
-коли новий гейт ставить `pending` між перевіркою власника й фінальним статусом старого прогону, - прийнятий
-компроміс, а не дефект для рев'ю: вікно - один API-запит, Re-request review відновлює рев'ю.
+тому ж head) скасовує поточне рев'ю, старий head дістає `error`. Постить лише власник статусу (чий URL у
+статусі), тож dispatch і авторев'ю одного head, як і новий гейт між перевіркою власника й фінальним статусом
+старого прогону, можуть лишити `error` без рев'ю - прийнятий компроміс, а не дефект для рев'ю: хибного рев'ю
+немає, Re-request review лікує.
 Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
 прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review sha=`. GitHub не дає запросити рев'ю в
 автора PR, а PR від `so-upstars` воркфлоу пропускає: шлях `review_requested` перевіряй на PR іншого акаунта.
