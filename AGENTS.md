@@ -18,7 +18,7 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 - **`main` захищений:** тільки PR зі squash-merge, прямий push заборонено й адмінам (`enforce_admins`); розв'язані
   коментарі, strict-режим вимкнений (оновлювати гілку з `main` не обов'язково), approve не потрібен.
   Required checks - це `name:` job-ів, а не job ids: `Lint` / `Typecheck` / `Unit tests` /
-  `Build` / `Public pages load`. `E2E` і `Visual` - лише `workflow_dispatch`.
+  `Build` / `Public pages load`. `E2E` - не required; `Visual` - лише `workflow_dispatch`.
 - **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
 - **Гілки:** план із сабагентами - одна гілка в основній теці, без git worktree і проміжних squash у `main`, один PR
 - **Темп:** у довгому плані комміть і пуш після кожної завершеної задачі, у паузі між сабагентами
@@ -107,8 +107,9 @@ Stage і локальний запуск ходять в одну прод-ба�
 
 CI - `.github/workflows/ci.yml`: паралельні job ids `lint`/`typecheck` (`icons:check` + `typecheck`)/
 `unit` (`test:unit:coverage`)/`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
-Supabase-кредами) на кожен run; `visual` (контейнер Playwright) і `e2e` (локальний Supabase на раннері) - лише
-на `workflow_dispatch`: рішення власника 2026-10-26, поки нестабільні, не дефект для рев'ю;
+Supabase-кредами) і `e2e` (локальний Supabase на раннері, образи з `ghcr.io`: анонімні pull з `public.ecr.aws`
+падають з `toomanyrequests`) на кожен run; `visual` (контейнер Playwright) - лише на `workflow_dispatch`: рішення
+власника 2026-10-26, поки повільний, не дефект для рев'ю;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й

@@ -16,7 +16,7 @@ character class. Точний час після `vi.setSystemTime` звіряй 
 `shouldAdvanceTime: true` годинник іде під час `await`, і тест періодично падає в CI.
 `pnpm run typecheck` бере `app/**`, `tests/unit/**`, harness і `tests/{e2e,page-objects,visual}/**` (`tests/e2e/tsconfig.json`).
 E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test` - локально його пише `pnpm run supabase:local` (локальний
-Supabase у colima, README «Local Supabase»); job `e2e` у CI (лише `workflow_dispatch`, поки нестабільний) запускає той самий скрипт на раннері й передає
+Supabase у colima, README «Local Supabase»); job `e2e` у CI (образи Supabase з `ghcr.io`) запускає той самий скрипт на раннері й передає
 `.env/.env.test` у `$GITHUB_ENV`, бо під `CI` конфіг файл не читає. Без `E2E_BASE_URL` Playwright сам збирає і
 запускає `pnpm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується);
 задай `E2E_BASE_URL`, щоб тестувати вже запущений сервер. `playwright.config.ts` передає серверу `VITE_SUPABASE_*`
