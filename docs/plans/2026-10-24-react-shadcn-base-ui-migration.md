@@ -922,3 +922,6 @@ Finding R7-F1 Minor: on workflow_dispatch Visual compares with the origin/main t
 Round review 7
 Received R7 so-upstars: R7-F1 ACCEPT - the dispatch falls back to git merge-base origin/main HEAD (ci.yml), README names it; set-asides stay out of scope (dispatch-on-main concurrency predates the PR, AC5 superseded by the owner ruling, historical journal line); open question answered by the fix (merge-base); Re-review: not needed (one-line fallback in an advisory dispatch-only job, actionlint and the expansion checked)
 Verify: PASS full tree 7a584db25bd1d9a70e02218b2c6c264b460b3a5d 2026-10-26 18:53
+Review R8 so-upstars: PR #46 re-review on 2fed0288e470f80a4cf34172505fce9a9d37fba0, tree b9062f99e4a50989ad05258c2a43038b09be77f3, Intent PASS / System PASS / Craft PASS; Critical 0 Important 0 Minor 0, R7-F1 addressed; ready
+Received R8 so-upstars: no findings to rule on; Re-review: not needed (clean round)
+Merged: PR #46 squash-merged into main as 31aa0b37384102672189df10c1642bdf6a422f2b by io-upstars 2026-10-26 19:40 +0200; head 2fed028, branch deleted

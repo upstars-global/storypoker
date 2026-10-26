@@ -16,7 +16,7 @@ character class. Точний час після `vi.setSystemTime` звіряй 
 `shouldAdvanceTime: true` годинник іде під час `await`, і тест періодично падає в CI.
 `pnpm run typecheck` бере `app/**`, `tests/unit/**`, harness і `tests/{e2e,page-objects,visual}/**` (`tests/e2e/tsconfig.json`).
 E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test` - локально його пише `pnpm run supabase:local` (локальний
-Supabase у colima, README «Local Supabase»); job `e2e` у CI (лише `workflow_dispatch`, поки нестабільний) запускає той самий скрипт на раннері й передає
+Supabase у colima, README «Local Supabase»); job `e2e` у CI (образи Supabase з `ghcr.io`) запускає той самий скрипт на раннері й передає
 `.env/.env.test` у `$GITHUB_ENV`, бо під `CI` конфіг файл не читає. Без `E2E_BASE_URL` Playwright сам збирає і
 запускає `pnpm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується);
 задай `E2E_BASE_URL`, щоб тестувати вже запущений сервер. `playwright.config.ts` передає серверу `VITE_SUPABASE_*`
@@ -26,7 +26,10 @@ CI-job і з `CI=1`: без нього конфіг читає `.env/.env.test` 
 VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only pnpm run test:e2e:pages`. `CI=1` вимикає й
 `reuseExistingServer`: коли `:4173` зайнятий, збери dist із тими самими dummy-значеннями, підніми `vite preview`
 на іншому порту й передай його в `E2E_BASE_URL`. Тест init-script палітри в `page-load.spec.ts` коректний
-лише на зібраному preview (`E2E_BASE_URL` на `vite dev` дає недостовірний результат).
+лише на зібраному preview (`E2E_BASE_URL` на `vite dev` дає недостовірний результат). WebKit на macOS 14 -
+заморожена збірка (`Unknown setting: PushAPIEnabled`): такі проєкти ганяй у `mcr.microsoft.com/playwright:v<версія>-noble`
+з `--network host`; джерела монтуй з `~` (colima не монтує `/tmp`) лише для читання й копіюй у контейнері перед
+`pnpm install`.
 
 ## Visual (`tests/visual/`)
 
@@ -41,7 +44,8 @@ VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only pnpm run tes
 збірки) і порівнює з робочим деревом. Екран, що впав на `<ref>`, лишається без еталона й падає при порівнянні.
 Знімай у образі `mcr.microsoft.com/playwright:v1.64.1-noble` (тег = версія `@playwright/test`), як CI-job:
 на macOS рендер розходиться з Linux. Навмисна зміна дизайну дає червоний `Visual` на ручному прогоні свого PR; після злиття
-еталоном стає новий `main`.
+еталоном стає новий `main`. Скріншоти сервісу, що надихнув Story Poker, у цей публічний репо не комітити: вони
+живуть в окремому приватному репо.
 
 ## Icon rendering harness (`tests/icon-rendering/`)
 

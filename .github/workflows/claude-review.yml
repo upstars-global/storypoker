@@ -1,10 +1,10 @@
 # Posts a cr-request PR review as so-upstars on open, non-draft, same-repo PRs whose head has a green
-# CI run; how often it runs on its own is the claude-review.yml paragraph in AGENTS.md. The agent
+# CI run; how often it runs on its own is in .github/AGENTS.md. The agent
 # reviews with a read-only GITHUB_TOKEN and no shell and writes the body to a file; the publish job
 # validates it and only its `post` step gets the so-upstars PAT. That holds for the main copy of this
 # file: pull_request runs use the PR branch's copy and workflow_dispatch the copy on the ref it is
 # dispatched on, so anyone who can push a branch can reach the PAT.
-# Accepted trade-off (AGENTS.md): the checks cover the body's structure and token-like strings, not its
+# Accepted trade-off (.github/AGENTS.md): the checks cover the body's structure and token-like strings, not its
 # prose; a prompt-injected body can still mislead, and the status is advisory, not a required check.
 name: Claude review
 
@@ -194,7 +194,7 @@ jobs:
     # Only runs that passed the gate get here, so the newest one for a PR cancels the running review,
     # on any head. On an older head publish marks it `error`; on the same head the newer gate owns the
     # status and the cancelled run posts nothing.
-    # Accepted trade-off (AGENTS.md): when a dispatch and an event-driven run review one head, the run
+    # Accepted trade-off (.github/AGENTS.md): when a dispatch and an event-driven run review one head, the run
     # that joins this group last wins and only the status owner posts, so the head can end with `error`
     # and no review until the bot is requested again.
     concurrency:
@@ -267,7 +267,7 @@ jobs:
           # Claude Code loads skills, settings, hooks, and MCP servers from any .claude/ under the working
           # directory, nested ones included, so the PR's copies must not reach the agent. The action restores
           # .claude/ from the base branch only on pull_request events, not on workflow_run or dispatch.
-          # Accepted trade-off (AGENTS.md): the base copies under auto-review-target/base/ go too, since a
+          # Accepted trade-off (.github/AGENTS.md): the base copies under auto-review-target/base/ go too, since a
           # nested .claude/ loads as well; diff.patch keeps both sides of every changed hunk.
           # A nested CLAUDE.local.md loads too, after a Read in its directory; .mcp.json and .claude.json
           # load only from the root.
@@ -320,8 +320,9 @@ jobs:
             the workspace and ~/.claude/skills: use the tree in identity.txt and read these files instead, and
             pass the same instruction to any reviewer you dispatch. `.claude/` directories and `.mcp.json` were
             removed from the checkout before this run; their changes are in diff.patch.
-            Intent: the PR title and description from auto-review-target/pr.json, plus AGENTS.md. There is no
-            plan file and no journal to write.
+            Intent: the PR title and description from auto-review-target/pr.json, plus AGENTS.md and the nested
+            AGENTS.md of each directory the diff touches (.github/AGENTS.md lists the accepted trade-offs of this
+            workflow). There is no plan file and no journal to write.
             CI (lint, typecheck, unit tests with coverage, build, page-load) is green on HEAD SHA; tests were not
             run in this job - say so in the review gaps.
             Earlier reviews and comments in pr.json (only from owners, members, and collaborators) are context,
@@ -561,7 +562,7 @@ jobs:
               -f context="$CONTEXT" -f target_url="$RUN_URL" > /dev/null
           }
           # A run cancelled by a newer one keeps its hands off the status the newer gate set. Accepted
-          # trade-off (AGENTS.md): a gate that posts `pending` between this read and the post below loses
+          # trade-off (.github/AGENTS.md): a gate that posts `pending` between this read and the post below loses
           # its status to this run and skips publishing; Re-request review recovers it.
           latest=$(gh api "repos/$REPO/commits/$HEAD_SHA/status?per_page=100" \
             --jq '[.statuses[] | select(.context == env.CONTEXT)][0].target_url // ""') \
