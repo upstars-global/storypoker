@@ -265,8 +265,8 @@ pnpm run test:e2e -- --project=chromium
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests, pushes to `main` and manual dispatch:
 
 - `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
-- `visual` (not required) runs `pnpm run test:visual` in the `mcr.microsoft.com/playwright` container: it renders the PR base and the PR head and compares them, so no baseline images are stored. On a difference the `test-results-visual` artifact holds the expected, actual and diff images for 7 days.
-- `e2e` (not required; Chromium + WebKit) starts a throwaway local Supabase on the runner with `pnpm run supabase:local` and never touches the shared project.
+- `visual` (not required; manual dispatch only while it is unstable, an owner decision) runs `pnpm run test:visual` in the `mcr.microsoft.com/playwright` container: it renders the PR base and the PR head and compares them, so no baseline images are stored. On a difference the `test-results-visual` artifact holds the expected, actual and diff images for 7 days.
+- `e2e` (not required; manual dispatch only while image pulls hit registry rate limits, an owner decision; Chromium + WebKit) starts a throwaway local Supabase on the runner with `pnpm run supabase:local` and never touches the shared project.
 - There is no deploy job: Netlify builds `main` itself from the repo (`netlify.toml`), and the CI `dist` is built with placeholder credentials for the icon audit only.
 
 ### Ports

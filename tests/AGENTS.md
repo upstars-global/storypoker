@@ -16,7 +16,7 @@ character class. Точний час після `vi.setSystemTime` звіряй 
 `shouldAdvanceTime: true` годинник іде під час `await`, і тест періодично падає в CI.
 `pnpm run typecheck` бере `app/**`, `tests/unit/**`, harness і `tests/{e2e,page-objects,visual}/**` (`tests/e2e/tsconfig.json`).
 E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test` - локально його пише `pnpm run supabase:local` (локальний
-Supabase у colima, README «Local Supabase»); job `e2e` у CI запускає той самий скрипт на раннері й передає
+Supabase у colima, README «Local Supabase»); job `e2e` у CI (лише `workflow_dispatch`, поки нестабільний) запускає той самий скрипт на раннері й передає
 `.env/.env.test` у `$GITHUB_ENV`, бо під `CI` конфіг файл не читає. Без `E2E_BASE_URL` Playwright сам збирає і
 запускає `pnpm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується);
 задай `E2E_BASE_URL`, щоб тестувати вже запущений сервер. `playwright.config.ts` передає серверу `VITE_SUPABASE_*`
@@ -30,7 +30,7 @@ VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only pnpm run tes
 
 ## Visual (`tests/visual/`)
 
-Проєкт `visual` (не required CI-job `Visual`) знімає скріншоти публічних сторінок, кімнати й модалок у 3 палітрах ×
+Проєкт `visual` (CI-job `Visual`, лише `workflow_dispatch`, поки нестабільний) знімає скріншоти публічних сторінок, кімнати й модалок у 3 палітрах ×
 2 темах × 1280/375 px; `maxDiffPixelRatio: 0.01`, `retries: 0`. `playwright.config.ts` додає проєкт і його сервер
 (`:4174`, збірка в `test-results/visual-dist` з фіксованим фейковим Supabase URL) лише коли `visual` названо в
 `--project`: пиши `--project=visual <filter>`, бо `--project visual <path>` Playwright читає як кілька назв проєктів.
@@ -40,7 +40,7 @@ VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only pnpm run tes
 `--update-snapshots=all` у `test-results/visual-baselines/` (`STORYPOKER_VISUAL_DIST` - preview готового dist без
 збірки) і порівнює з робочим деревом. Екран, що впав на `<ref>`, лишається без еталона й падає при порівнянні.
 Знімай у образі `mcr.microsoft.com/playwright:v1.64.1-noble` (тег = версія `@playwright/test`), як CI-job:
-на macOS рендер розходиться з Linux. Навмисна зміна дизайну дає червоний `Visual` на своєму PR; після злиття
+на macOS рендер розходиться з Linux. Навмисна зміна дизайну дає червоний `Visual` на ручному прогоні свого PR; після злиття
 еталоном стає новий `main`.
 
 ## Icon rendering harness (`tests/icon-rendering/`)

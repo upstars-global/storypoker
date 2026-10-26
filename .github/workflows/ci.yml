@@ -176,8 +176,11 @@ jobs:
   # Renders the base revision and this one in the same pinned Playwright image (tag = @playwright/test)
   # and compares them; no baseline PNGs are stored. Not a required check. git must be in the image,
   # otherwise checkout falls back to the REST API and leaves no history for git archive.
+  # Owner decision 2026-10-26: off on push and pull requests while it is unstable (about 6 minutes);
+  # run it with a manual dispatch.
   visual:
     name: Visual
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     container:
@@ -216,8 +219,11 @@ jobs:
   # Runs against a throwaway local Supabase on the runner (Docker is preinstalled), never the
   # shared project. scripts/supabase-local.sh writes .env/.env.test, which playwright.config.ts
   # skips under CI, so the next step exports it to the job env.
+  # Owner decision 2026-10-26: off on push and pull requests while image pulls hit registry rate
+  # limits; run it with a manual dispatch.
   e2e:
     name: E2E
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
