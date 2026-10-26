@@ -198,9 +198,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # The container runs as root, so git refuses the runner-owned checkout without this.
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      # A push that creates a branch reports an all-zero before SHA, which git archive cannot read.
       - run: pnpm run test:visual "$BASE_REF"
         env:
-          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+          BASE_REF: ${{ github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before) || 'origin/main' }}
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v4
