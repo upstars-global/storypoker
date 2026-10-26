@@ -5,6 +5,28 @@ import { useAuthStore } from '~/stores/auth'
 import { asSupabase } from '../../support/helpers/fakeSupabase'
 import { resetStores } from '../../support/helpers/resetStores'
 
+describe('auth store init', () => {
+  it('gives every concurrent caller the restored session', async () => {
+    vi.resetModules()
+    const instance = await import('~/lib/supabase-instance')
+    const { useAuthStore: freshAuthStore } = await import('~/stores/auth')
+    let resolveSession: (value: { data: { session: { user: { id: string } } } }) => void = () => {}
+    instance.setSupabase(asSupabase({
+      auth: {
+        getSession: vi.fn().mockReturnValue(new Promise(resolve => {
+          resolveSession = resolve
+        })),
+        onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      },
+    }))
+    const first = freshAuthStore.getState().init()
+    const second = freshAuthStore.getState().init().then(() => freshAuthStore.getState().user?.id)
+    resolveSession({ data: { session: { user: { id: 'u1' } } } })
+    await first
+    await expect(second).resolves.toBe('u1')
+  })
+})
+
 describe('auth store', () => {
   beforeEach(async () => {
     resetSupabase()

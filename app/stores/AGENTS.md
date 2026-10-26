@@ -2,8 +2,8 @@
 
 Zustand stores у `app/stores/`: дії й стан - `useXStore.getState()`, у компонентах - `useXStore(selector)`;
 `players.visiblePlayers` - поле, яке `subscribe` перераховує при кожній зміні `players`. Тести скидають стан
-`resetStores()` з `tests/support/helpers/resetStores.ts`; модульні `initialized` в `auth.ts` і `inflight` (Map
-запитів у польоті) в `profiles.ts` він не скидає.
+`resetStores()` з `tests/support/helpers/resetStores.ts`; модульні `initialization` (спільний промис `init()`)
+в `auth.ts` і `inflight` (Map запитів у польоті) в `profiles.ts` він не скидає.
 
 - `auth.ts` - Supabase session, sign in/up/out, password reset/update
 - `room.ts` - room state, create, reveal, new round, deck, resolve, room name/slug

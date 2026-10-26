@@ -12,20 +12,21 @@ interface AuthState {
   signOut: () => Promise<void>
 }
 
-let initialized = false
+let initialization: Promise<void> | null = null
 
 export const useAuthStore = create<AuthState>()(set => ({
   user: null,
 
-  async init() {
-    if (initialized) return
-    initialized = true
-    const supabase = getSupabase()
-    const { data } = await supabase.auth.getSession()
-    set({ user: data.session?.user ?? null })
-    supabase.auth.onAuthStateChange((_event, session) => {
-      set({ user: session?.user ?? null })
-    })
+  init() {
+    initialization ??= (async () => {
+      const supabase = getSupabase()
+      const { data } = await supabase.auth.getSession()
+      set({ user: data.session?.user ?? null })
+      supabase.auth.onAuthStateChange((_event, session) => {
+        set({ user: session?.user ?? null })
+      })
+    })()
+    return initialization
   },
 
   async signIn(email, password) {

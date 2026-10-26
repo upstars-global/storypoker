@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router'
 import AppHeader from '~/components/AppHeader'
+import { useAuthStore } from '~/stores/auth'
 
 type AuthPageLayoutProps = {
   title: string
@@ -8,9 +10,18 @@ type AuthPageLayoutProps = {
 }
 
 export default function AuthPageLayout({ title, description, children }: AuthPageLayoutProps) {
+  const navigate = useNavigate()
+
   return (
     <div className="min-h-screen flex flex-col bg-app text-body">
-      <AppHeader />
+      <AppHeader
+        onlineCount={0}
+        isModerator={false}
+        playerName=""
+        onOpenSignIn={() => void navigate('/login')}
+        onOpenSignUp={() => void navigate('/signup')}
+        onSignOut={() => void useAuthStore.getState().signOut()}
+      />
       <main
         id="main"
         tabIndex={-1}

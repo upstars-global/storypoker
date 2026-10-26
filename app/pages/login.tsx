@@ -27,7 +27,7 @@ export default function LoginPage() {
   }, [init])
 
   useEffect(() => {
-    if (user) void navigate('/')
+    if (user) void navigate('/', { replace: true })
   }, [user, navigate])
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -43,7 +43,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await signIn(trimmedEmail, password)
-      void navigate('/')
+      void navigate('/', { replace: true })
     } catch (e) {
       setErrors(current => ({ ...current, server: errorMessage(e) }))
     } finally {

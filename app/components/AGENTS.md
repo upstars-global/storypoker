@@ -13,8 +13,10 @@
   `Button` з `ui/` його сам не чіпляє. Текст кнопки, що змінюється, загортай у `<span>`, щоб хвиля не зникала
 - `RolePicker.tsx` - спільний селектор ролі (JoinOverlay + PlayerEditModal) на базі `RoleBadge.tsx`;
   каталог ролей і запис у `players.shields` - `app/utils/AGENTS.md`
-- `app/components/ui/` - згенеровані shadcn CLI примітиви (`button`, `dialog`, `dropdown-menu`, `select`, `switch`,
-  `tooltip`, `input`); стилі - лише через міст токенів (`app/assets/AGENTS.md`)
+- `app/components/ui/` - згенеровані shadcn CLI примітиви (`button`, `dialog`, `dropdown-menu`, `select`,
+  `tooltip`, `input`); стилі - лише через міст токенів (`app/assets/AGENTS.md`). Switch не прийнятий: перемикачі
+  `/ffc` і `PlayerRow` лишаються на `.mui-switch` (як і кнопка скидання в `/ffc` на `.mui-btn`) заради піксельної
+  рівності з Vue-версією
 
 ## Іконки
 

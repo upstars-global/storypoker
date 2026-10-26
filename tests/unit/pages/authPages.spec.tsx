@@ -194,3 +194,62 @@ describe('reset password page', () => {
     expect(screen.getByText(i18n.t('resetPassword.updated'))).toBeTruthy()
   })
 })
+
+describe('auth page header', () => {
+  async function mountWithAuthRoutes(path: string, page: ReactNode) {
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route path="/" element={<div data-testid="home-page" />} />
+            <Route path="/login" element={<div data-testid="login-route" />} />
+            <Route path="/signup" element={<div data-testid="signup-route" />} />
+            <Route path={path} element={page} />
+          </Routes>
+        </MemoryRouter>,
+      )
+    })
+  }
+
+  async function openAccountMenu() {
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('account-menu-button'))
+    })
+    return screen.findByRole('menu')
+  }
+
+  it('opens sign in from the header menu', async () => {
+    await mountWithAuthRoutes('/forgot-password', <ForgotPasswordPage />)
+    await openAccountMenu()
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('auth-sign-in-menu-item'))
+    })
+    expect(screen.getByTestId('login-route')).toBeTruthy()
+  })
+
+  it('opens sign up from the header menu', async () => {
+    await mountWithAuthRoutes('/forgot-password', <ForgotPasswordPage />)
+    await openAccountMenu()
+    await act(async () => {
+      fireEvent.click(screen.getByRole('menuitem', { name: i18n.t('common.signUp') }))
+    })
+    expect(screen.getByTestId('signup-route')).toBeTruthy()
+  })
+
+  it('signs out from the header menu', async () => {
+    setSupabase(asSupabase({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({ data: { session: { user } } }),
+        onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      },
+    }))
+    const signOut = vi.fn().mockResolvedValue(undefined)
+    useAuthStore.setState({ user, signOut })
+    await mountWithAuthRoutes('/reset-password', <ResetPasswordPage />)
+    await openAccountMenu()
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('auth-sign-out-menu-item'))
+    })
+    expect(signOut).toHaveBeenCalled()
+  })
+})

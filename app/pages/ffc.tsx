@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import AppHeader from '~/components/AppHeader'
-import uk from '~/i18n/locales/uk.json'
+import AuthModal from '~/components/AuthModal'
+import UserSettingsModal from '~/components/UserSettingsModal'
+import { useAuthStore } from '~/stores/auth'
+import { useProfilesStore } from '~/stores/profiles'
 import {
   getFeatureFlags,
   resetFeatureFlagValues,
@@ -10,7 +14,19 @@ import {
 } from '~/configs/featureFlags'
 
 export default function FeatureFlagsPage() {
+  const { t } = useTranslation()
   const [featureFlags, setFeatureFlags] = useState<FeatureFlags>(getFeatureFlags)
+  const [showAuth, setShowAuth] = useState<'signin' | 'signup' | null>(null)
+  const [showAccountSettings, setShowAccountSettings] = useState(false)
+  const user = useAuthStore(state => state.user)
+
+  useEffect(() => {
+    void (async () => {
+      await useAuthStore.getState().init()
+      const userId = useAuthStore.getState().user?.id
+      if (userId) await useProfilesStore.getState().fetchOne(userId)
+    })()
+  }, [])
 
   function toggleFeatureFlag(key: FeatureFlagKey) {
     const newValue = !featureFlags[key].enabled
@@ -27,7 +43,25 @@ export default function FeatureFlagsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-app text-body">
-      <AppHeader title={uk.ffc.title} />
+      <AppHeader
+        onlineCount={0}
+        isModerator={false}
+        playerName=""
+        title={t('ffc.title')}
+        onOpenSignIn={() => setShowAuth('signin')}
+        onOpenSignUp={() => setShowAuth('signup')}
+        onOpenAccountSettings={() => setShowAccountSettings(true)}
+        onSignOut={() => void useAuthStore.getState().signOut()}
+      />
+      {showAuth && (
+        <AuthModal
+          mode={showAuth}
+          onClose={() => setShowAuth(null)}
+        />
+      )}
+      {showAccountSettings && user && (
+        <UserSettingsModal onClose={() => setShowAccountSettings(false)} />
+      )}
       <main
         id="main"
         tabIndex={-1}
@@ -41,7 +75,7 @@ export default function FeatureFlagsPage() {
             >
               <div className="mui-paper-header">
                 <div className="flex items-center justify-between w-full">
-                  <div>{uk.ffc.flags[featureFlagKey].name}</div>
+                  <div>{t(`ffc.flags.${featureFlagKey}.name`)}</div>
                   <label
                     className="mui-switch"
                     htmlFor={`ffc-${featureFlagKey}`}
@@ -55,22 +89,22 @@ export default function FeatureFlagsPage() {
                     />
                     <span className="track" />
                     <span className="thumb" />
-                    <span className="sr-only">{uk.ffc.flags[featureFlagKey].name}</span>
+                    <span className="sr-only">{t(`ffc.flags.${featureFlagKey}.name`)}</span>
                   </label>
                 </div>
               </div>
               <div className="pl-4 pr-2 py-2 gap-2 flex flex-col">
-                <div>{uk.ffc.flags[featureFlagKey].description}</div>
+                <div>{t(`ffc.flags.${featureFlagKey}.description`)}</div>
               </div>
             </div>
           ))}
           {featureFlags.example.enabled && (
             <div className="mui-paper">
               <div className="mui-paper-header">
-                <div>{uk.ffc.exampleHeader}</div>
+                <div>{t('ffc.exampleHeader')}</div>
               </div>
               <div className="pl-4 pr-2 py-2">
-                {uk.ffc.exampleText}
+                {t('ffc.exampleText')}
               </div>
             </div>
           )}
@@ -81,7 +115,7 @@ export default function FeatureFlagsPage() {
             className="mui-btn"
             onClick={resetFeatureFlags}
           >
-            {uk.ffc.resetFeatureFlags}
+            {t('ffc.resetFeatureFlags')}
           </button>
         </div>
       </main>

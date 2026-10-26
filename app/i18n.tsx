@@ -31,7 +31,7 @@ export const i18n = i18next.createInstance()
 
 void i18n.use(initReactI18next).init({
   lng: initialLocale,
-  fallbackLng: 'uk',
+  fallbackLng: 'en',
   resources: { uk: { translation: uk }, en: { translation: en } },
   interpolation: { prefix: '{', suffix: '}', escapeValue: false },
   initAsync: false,

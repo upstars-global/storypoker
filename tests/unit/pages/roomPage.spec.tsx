@@ -111,7 +111,7 @@ function fakeClient(players: Player[], state: RoomState) {
     send: vi.fn(),
   }
   const from = vi.fn((table: string) => query(table === 'players' ? players : state))
-  return { client: asSupabase({ from, channel: () => channel }), from, send: channel.send }
+  return { client: asSupabase({ from, channel: () => channel }), from, send: channel.send, unsubscribe: channel.unsubscribe }
 }
 
 function LocationProbe() {
@@ -129,6 +129,7 @@ const mocks = {
   resolveRoom: vi.fn(),
   from: vi.fn(),
   send: vi.fn(),
+  unsubscribe: vi.fn(),
 }
 
 async function flush() {
@@ -149,10 +150,11 @@ async function mountRoom(options: {
   const players = options.players ?? estimators
   const state = options.state ?? fakeState({ phase: 'revealed' })
   const user = options.user === undefined ? ({ id: 'u1' } as User) : options.user
-  const { client, from, send } = fakeClient(players, state)
+  const { client, from, send, unsubscribe } = fakeClient(players, state)
   setSupabase(client)
   mocks.from = from
   mocks.send = send
+  mocks.unsubscribe = unsubscribe
 
   mocks.resolveRoom = vi.fn().mockResolvedValue(options.room === undefined ? fakeRoom() : options.room)
   mocks.rejoin = vi.fn(options.rejoin ?? (async () => me))
@@ -607,5 +609,25 @@ describe('room page update hold', () => {
       await vi.advanceTimersByTimeAsync(0)
     })
     expect(apply).toHaveBeenCalledOnce()
+  })
+})
+
+describe('room page unmount', () => {
+  it('unsubscribes, stops presence, drops the visibility listener and releases the update hold', async () => {
+    const holdUpdate = vi.spyOn(appUpdateStore.getState(), 'holdUpdate')
+    const { unmount } = await mountRoom()
+    expect(mocks.presenceStart).toHaveBeenCalled()
+    const queriesBefore = mocks.from.mock.calls.length
+
+    unmount()
+    await flush()
+
+    expect(mocks.unsubscribe).toHaveBeenCalled()
+    expect(mocks.presenceStop).toHaveBeenCalled()
+    expect(holdUpdate).toHaveBeenLastCalledWith(false)
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
+    document.dispatchEvent(new Event('visibilitychange'))
+    await flush()
+    expect(mocks.from.mock.calls.length).toBe(queriesBefore)
   })
 })

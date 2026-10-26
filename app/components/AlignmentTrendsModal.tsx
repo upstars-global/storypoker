@@ -225,9 +225,6 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
     const axisDateFmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' })
     const tooltipDateFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' })
 
-    // A null slot between sessions more than one calendar day apart breaks the line there,
-    // so separate estimation sessions do not read as one continuous run; indexMap maps each
-    // slot back to its points index (-1 for inserted gap slots).
     const categories: string[] = []
     const dev: (number | null)[] = []
     const qa: (number | null)[] = []
