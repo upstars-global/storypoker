@@ -891,3 +891,11 @@ Received R1: R1-codex-F1 ACCEPT - README Local Supabase adds pnpm exec playwrigh
 Ruling: owner 2026-10-26 - CI e2e against a local Supabase on the runner, Detect secrets dropped from required checks; visual baselines no longer stored (348 PNG, Git LFS and visual-baselines.yml removed), Visual compares the PR base render with the head via scripts/visual-compare.sh
 Verify: PASS full tree 9616cb761efc173b1a1c60bba056379b5353bc17 2026-10-26 00:52
 Verify: PASS full tree 5d3e2c8f1f4ba2ca0801f13e17ee6e3902b152c8 2026-10-26 01:08
+Review R2 so-upstars: PR #46 review on 6d059540f42f98104a0c4ef820df1c9504d2d338, tree 3fa81eac6149a80b7409dcc321705719c948ac20, Intent FINDINGS / System FINDINGS / Craft FINDINGS; Critical 0 Important 3 Minor 17
+Received R2 so-upstars: R2-C-F1 ACCEPT - claude-review gate decides on the required jobs only (REQUIRED_JOBS); R2-A-F1 ACCEPT - AuthPageLayout wires the header like the Vue pages; R2-A-F2 ACCEPT - /ffc uses t(), inits auth, mounts AuthModal and UserSettingsModal; Re-review: needed (gate and page behavior), the automatic R3 review covers it
+Received R2 so-upstars: ACCEPT A-F3 (replace navigation after sign-in), A-F4 (shared init promise), A-F5 (fallbackLng en as in Vue), A-F6 (unmount test), A-F9 (comment removed), A-F13 (unused ui/switch.tsx removed), C-F2, C-F3, C-F4, C-F5, C-F6; REJECT A-F7 (Date.now() in render fails the react purity lint), A-F10 (not reproduced, join e2e green), C-F7 (gitignored import is the session-learnings design); DEFER A-F8, A-F11, A-F12
+Ruling: owner 2026-10-26 via R2 - shadcn Switch is not adopted; /ffc and PlayerRow keep .mui-switch (and the /ffc reset button .mui-btn) for pixel parity with the Vue render; spec section 8 updated
+Deferred: banner fade-out on hide (R2-A-F8) needs an exit transition for conditionally rendered banners - owner
+Deferred: alarm minutes commit on spinner steps (R2-A-F11) needs a native change listener; now commits on blur and Enter - owner
+Deferred: AppModal renders <dialog open> without showModal(), so z-[9999] banners draw over an open modal (R2-A-F12) - owner
+Round review 3: R2 so-upstars - 3 Important accepted and fixed, 11 Minor fixed, 3 rejected with evidence, 3 deferred
