@@ -18,7 +18,8 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 - **`main` захищений:** тільки PR зі squash-merge, прямий push заборонено й адмінам (`enforce_admins`); розв'язані
   коментарі, strict-режим вимкнений (оновлювати гілку з `main` не обов'язково), approve не потрібен.
   Required checks - це `name:` job-ів, а не job ids: `Lint` / `Typecheck` / `Unit tests` /
-  `Build` / `Public pages load`. `E2E` і `Visual` - не required, лише `workflow_dispatch`.
+  `Build` / `Public pages load`. E2E і Visual у CI немає: перед squash PR - зелений `pnpm run test:pre-squash`
+  локально (colima), squash без нього - лише за рішенням власника.
 - **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
 - **Гілки:** план із сабагентами - одна гілка в основній теці, без git worktree і проміжних squash у `main`, один PR
 - **Темп:** у довгому плані комміть і пуш після кожної завершеної задачі, у паузі між сабагентами
@@ -98,6 +99,8 @@ pnpm run test:unit   # канонічний unit-run; `pnpm test` і `test:unit`
 pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery); локально - з
                           # dummy VITE_SUPABASE_* з ci.yml, деталі `tests/AGENTS.md`
 pnpm run test:visual [<ref>]   # рендер <ref> (дефолт origin/main) - еталон для дерева; локально - у контейнері Playwright
+pnpm run test:pre-squash [<ref>]   # перед squash: локальний Supabase + e2e chromium/webkit + visual проти <ref>
+                                   # (дефолт merge-base з origin/main) у контейнері Playwright; звіти - test-results/pre-squash
 pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build + icons:audit-build - як CI
 pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
                      # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
@@ -105,14 +108,13 @@ pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам зби�
 Stage і локальний запуск ходять в одну прод-базу Supabase: до злиття не запускай `deploy:stage` без рішення
 власника й не міняй схему чи RLS; ручні перевірки - на локальному preview (тестову кімнату створювати можна).
 
-CI - `.github/workflows/ci.yml`. Ціль - кожен job до ~2 хв (рішення власника 2026-10-26), `timeout-minutes` - 4
-(`e2e` - 10); job, що виходить за ціль, переносять на `workflow_dispatch` або шардують, а не піднімають timeout.
+CI - `.github/workflows/ci.yml`. Ціль - кожен job до ~2 хв (рішення власника 2026-10-26), `timeout-minutes` - 4;
+перевірку, що виходить за ціль, шардують або переносять у `scripts/pre-squash.sh`, а не піднімають timeout.
 На кожен run паралельні job ids `lint`/`typecheck` (`icons:check` + `typecheck`)/`unit` (`test:unit:coverage`)/
 `build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy Supabase-кредами на Google Chrome
-раннера через `PLAYWRIGHT_CHANNEL=chrome`: без apt, який зависав на повільному дзеркалі). Лише на
-`workflow_dispatch`: `e2e` (локальний Supabase на раннері, лише старт ~90 с; образи з `ghcr.io`: анонімні pull з
-`public.ecr.aws` падають з `toomanyrequests`) і `visual` (контейнер Playwright, 8 шардів; поки нестабільний, не
-дефект для рев'ю);
+раннера через `PLAYWRIGHT_CHANNEL=chrome`: без apt, який зависав на повільному дзеркалі). E2E (лише старт
+Supabase ~90 с, apt для WebKit зависав) і Visual винесені з CI в локальний `test:pre-squash` (рішення власника
+2026-10-27); Visual поки нестабільний, його збій - не дефект для рев'ю;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й

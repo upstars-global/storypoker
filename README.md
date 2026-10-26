@@ -238,6 +238,7 @@ pnpm run build
 pnpm run test:e2e:pages   # public pages smoke; set dummy VITE_SUPABASE_* first (see tests/AGENTS.md)
 pnpm run test:visual      # screenshots of origin/main vs the working tree (Playwright container)
 pnpm run test:e2e         # full Playwright suite, requires .env/.env.test (see Local Supabase)
+pnpm run test:pre-squash  # before squashing a PR: e2e (Chromium + WebKit) and visual in the Playwright container
 ```
 
 `pnpm run test:ci` runs `icons:check` and the first four in one go - the same gate as CI.
@@ -258,16 +259,16 @@ pnpm run test:e2e -- --project=chromium
 
 - Supabase images take about 7 GB: check free space with `df -h` before the first `colima start`.
 - Playwright WebKit does not run on macOS 14; run the `webkit` project on macOS 15+ or in the `mcr.microsoft.com/playwright` container with `--network host`.
+- `pnpm run test:pre-squash [<ref>]` does all of it in one go: starts the local Supabase, copies the working tree into `test-results/pre-squash-src`, runs the `chromium` and `webkit` e2e projects and `pnpm run test:visual <ref>` (default: the merge-base with `origin/main`) in the `mcr.microsoft.com/playwright` container, and leaves the reports in `test-results/pre-squash/`. Run it before squashing a PR: CI runs neither suite.
 - Stop everything with `supabase stop --workdir ~/.cache/storypoker-supabase && colima stop`.
 
 ### CI/CD (GitHub Actions + Netlify)
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests, pushes to `main` and manual dispatch:
 
-- Every job targets about two minutes, with a 4-minute timeout (10 for `e2e`).
+- Every job targets about two minutes, with a 4-minute timeout.
 - `lint`, `typecheck`, `unit`, `build` and `page-load` (smoke of the public pages on the runner's Google Chrome with dummy Supabase credentials) run in parallel on every run.
-- `visual` (not required; manual dispatch only while it is unstable, an owner decision) runs `pnpm run test:visual` in eight shards in the `mcr.microsoft.com/playwright` container: it renders the PR base (on a manual dispatch, the merge-base with `origin/main`) and the PR head and compares them, so no baseline images are stored. On a difference the `test-results-visual-<shard>` artifacts hold the expected, actual and diff images for 7 days.
-- `e2e` (not required; manual dispatch only, since starting Supabase alone takes about 90 seconds; Chromium + WebKit) pulls the Supabase images from `ghcr.io` and starts a throwaway local Supabase on the runner with `pnpm run supabase:local` and never touches the shared project.
+- The full e2e suite and the visual compare do not run in CI (starting Supabase alone takes about 90 seconds); run `pnpm run test:pre-squash` locally before squashing (see Local Supabase).
 - There is no deploy job: Netlify builds `main` itself from the repo (`netlify.toml`), and the CI `dist` is built with placeholder credentials for the icon audit only.
 
 ### Ports

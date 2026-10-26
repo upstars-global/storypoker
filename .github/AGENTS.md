@@ -9,7 +9,7 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 `### Summary` останнього такого рев'ю Critical чи Important > 0, воно було на іншому head і таких рев'ю менше 3;
 запит рев'ю в `so-upstars` і `workflow_dispatch` обходять цей ліміт, але зелений CI потрібен усім: запит чекає
 на нього, а dispatch на незеленому CI лише ставить статус `error`. Зелений тут - required jobs (`REQUIRED_JOBS`
-у гейті): `Visual` і `E2E` ідуть лише на `workflow_dispatch` і рев'ю не блокують; гейт чекає кінця всього прогону
+у гейті); E2E і Visual у CI немає (локальний `test:pre-squash`); гейт чекає кінця всього прогону
 `CI`. Мітка `skip-auto-review`
 вимикає будь-яке рев'ю PR (і на запит, і dispatch), PR від ботів і від `so-upstars` воркфлоу не рев'юїть.
 Скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
