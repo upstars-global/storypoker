@@ -24,10 +24,12 @@ on:
 
 # One group per PR branch and head SHA, so the gate that posts the latest `pending` status for a head
 # is also the run whose review survives, and a late CI run for an older head cannot cancel the review
-# of a newer one (its gate then skips as moved on). A review request for someone else, and a CI run that was not a pull_request
-# event (the gate skips it), get their own group and cancel nothing. A
-# workflow_dispatch run knows only the PR number, so it gets its own group and may review alongside
-# an event-driven run; status ownership in publish then decides which result is reported.
+# of a newer one (its gate then skips as moved on). Accepted trade-off (AGENTS.md): a push no longer
+# cancels a review of the older head, which runs to the end and is dropped in publish as superseded.
+# A review request for someone else, and a CI run that was not a pull_request event (the gate skips
+# it), get their own group and cancel nothing. A workflow_dispatch run knows only the PR number, so
+# it gets its own group and may review alongside an event-driven run; status ownership in publish
+# then decides which result is reported.
 concurrency:
   group: >-
     claude-review-${{ github.event.pull_request.head.repo.full_name || github.event.workflow_run.head_repository.full_name || github.repository }}-${{
