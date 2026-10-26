@@ -278,9 +278,9 @@ jobs:
       - name: Install cr-request skill
         id: skill
         env:
-          # sentimony/agentic-workflow v0.0.4; the repo variable overrides it. The reviewer skill comes
-          # from a released commit, never from the PR head under review.
-          SKILLS_REF: ${{ vars.REVIEW_SKILLS_REF || 'a5cf04b2d5d72d6fa624bdb46223f1ada6a2047a' }}
+          # sentimony/agentic-workflow commit of tag v0.0.6; the repo variable overrides it. The reviewer
+          # skill comes from a released commit, never from the PR head under review.
+          SKILLS_REF: ${{ vars.REVIEW_SKILLS_REF || '1e151554148db6086fbb6a1f17374508cc321664' }}
         run: |
           [[ "$SKILLS_REF" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::REVIEW_SKILLS_REF must be a full commit SHA"; exit 1; }
           # git clone --branch takes no SHA
@@ -296,6 +296,11 @@ jobs:
           test -n "$version" || { echo "::error::No version in the cr-request SKILL.md"; exit 1; }
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
+      # The duration in the signature line covers the agent step only, from here to the step after it.
+      - name: Record review start
+        id: start
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         id: claude
         with:
@@ -305,6 +310,8 @@ jobs:
           # User-scope setting: Read, Grep, and Glob outside the working directory are refused; Claude Code
           # keeps ~/.claude/skills readable.
           settings: '{"permissions":{"blockReadsOutsideWorkingDirectories":true}}'
+          # Accepted trade-off (.github/AGENTS.md): the ` · ` exemption names both closing lines, as in the
+          # other review workflows, though the agent writes it only in the Next step line.
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ needs.gate.outputs.number }}
@@ -337,9 +344,10 @@ jobs:
             If the cr-request skill is not available to you, do not review and do not write the review file; stop
             and report that the skill is missing.
 
-            Write exactly one pull request review body in English, with plain hyphens only, to
-            auto-review-out/review.md; do not write or edit any other file. Do not post it; a later step posts it
-            as a review that neither approves nor requests changes. The body must start with this exact line:
+            Write exactly one pull request review body in English, with plain hyphens only (the ` · ` of the two
+            closing lines excepted), to auto-review-out/review.md; do not write or edit any other file. Do not post
+            it; a later step posts it as a review that neither approves nor requests changes. The body must start
+            with this exact line:
             <!-- claude-review sha=${{ needs.gate.outputs.head_sha }} -->
             then the reviewed range, the commits in it, and the coverage (files read, what was skipped), then a
             `### Summary` section with two Markdown tables and one line.
@@ -371,12 +379,15 @@ jobs:
             findings means zeros. After the summary: the findings with severity, location (file:line), impact,
             evidence, and confidence, optional suggestions, the set-aside list, open questions about intent, review
             gaps, and strengths.
-            In the skill's closing `Next step` line, write the skill name as inline code with a leading slash, for
-            example: Next step: `/cr-received` - 2 findings to rule on. Leave `none` as plain text.
             Never copy a token or secret into the body. Write GitHub logins, team names, and any other text that
             starts with @ inside backticks, so the posted review notifies nobody.
-            The line below replaces the skill's default `Reviewed with: cr-request skill` closing line; the
-            `Next step` line goes right before it, and the body must end with it, backticks included:
+            End the body with the two CI closing lines that the cr-request skill states: the signature line below,
+            backticks included, then the `Next step` line as the very last line, written with ` · ` before the
+            reason and the skill, whichever it is, as inline code with a leading slash:
+            ``Next step: `/<skill>` · <reason>``, for example ``Next step: `/cr-received` · 4 findings to rule on``;
+            `none` stays plain text (`Next step: none · <reason>`). The ` · ` in these two lines is the required
+            format, not a dash. The skill writes the signature without a duration; the workflow appends the review
+            duration to it afterwards as ` · In <m> min <s> sec`. The signature line:
             Reviewed with: `/cr-request` ${{ steps.skill.outputs.version }} skill
           # Reads stay in the workspace and the installed skill, so injected PR text cannot steer the agent to
           # runner files or /proc and copy a token into the body. Grep and Glob are allowed bare: the
@@ -387,6 +398,38 @@ jobs:
             --model ${{ vars.CLAUDE_REVIEW_MODEL || 'claude-opus-5-5' }}
             --allowedTools "Skill,Agent,Task,Grep,Glob,Read(./**),Read(~/.claude/skills/**),Edit(./auto-review-out/review.md),Write(./auto-review-out/review.md)"
             --disallowedTools "Bash,Read(./.git/**)"
+
+      # The duration is the agent step's wall time; the agent cannot measure it. Only the signature line
+      # among the last two non-blank lines is rewritten, so a quoted signature higher up stays as written;
+      # anything the agent put after the signature and a space there is replaced by the measured duration.
+      # Under a minute it reads `In 0 min 42 sec`.
+      - name: Add review duration
+        env:
+          START: ${{ steps.start.outputs.epoch }}
+          SIGNATURE: 'Reviewed with: `/cr-request` ${{ steps.skill.outputs.version }} skill'
+          SEP: ' · '
+        run: |
+          body=auto-review-out/review.md
+          [ -f "$body" ] || exit 0
+          elapsed=$(( $(date +%s) - START ))
+          export DURATION="In $(( elapsed / 60 )) min $(( elapsed % 60 )) sec"
+          tmp="$(mktemp)"
+          # Two passes over the body: the first finds the last two non-blank lines, the second rewrites.
+          awk '
+            { sub(/\r$/, "") }
+            NR == FNR { if ($0 !~ /^[[:space:]]*$/) { prev = last; last = FNR } next }
+            FNR == prev || FNR == last {
+              line = $0; sub(/[[:space:]]+$/, "", line)
+              sig = ENVIRON["SIGNATURE"]; sep = ENVIRON["SEP"]
+              rest = substr(line, length(sig) + 1)
+              if (substr(line, 1, length(sig)) == sig && (rest == "" || substr(rest, 1, 1) == " ")) {
+                $0 = sig sep ENVIRON["DURATION"]
+              }
+            }
+            { print }
+          ' "$body" "$body" > "$tmp"
+          mv "$tmp" "$body"
+          echo "Review duration: $DURATION"
 
       # The action hides the agent's output: list the paths it read and the calls the permission rules
       # refused (paths and commands only), and the result when it wrote no body.
@@ -501,8 +544,19 @@ jobs:
           fail() { post_status failure "$1"; exit 1; }
           [[ "$VERSION" =~ ^[0-9][0-9.]*$ ]] || fail "No cr-request version from the review job"
           [ "$(head -n 1 "$BODY_FILE" | tr -d '\r')" = "$MARKER" ] || fail "The review body does not start with the marker"
-          last=$(tr -d '\r' < "$BODY_FILE" | grep -v '^[[:space:]]*$' | tail -n 1 | sed 's/[[:space:]]*$//' || true)
-          [ "$last" = "Reviewed with: \`/cr-request\` $VERSION skill" ] || fail "The review body does not end with the signature line"
+          # The signature with the duration the review job appended, then `Next step` (cr-request 0.0.6+).
+          # A signature as the very last line is the order before 0.0.6, for a REVIEW_SKILLS_REF override.
+          tail2=$(tr -d '\r' < "$BODY_FILE" | grep -v '^[[:space:]]*$' | tail -n 2 | sed 's/[[:space:]]*$//' || true)
+          prev=$(head -n 1 <<< "$tail2")
+          last=$(tail -n 1 <<< "$tail2")
+          signature_re="^Reviewed with: \`/cr-request\` ${VERSION//./\\.} skill · In [0-9]+ min [0-9]+ sec\$"
+          if [[ "$prev" =~ $signature_re ]] && [[ "$last" == "Next step: "* ]]; then
+            signature="$prev"
+          elif [[ "$last" =~ $signature_re ]]; then
+            signature="$last"
+          else
+            fail "The review body does not end with the signature and Next step lines"
+          fi
           # GitHub rejects review bodies over 65536 characters; bytes are the stricter bound
           [ "$(wc -c < "$BODY_FILE")" -le 65536 ] || fail "The review body is longer than GitHub accepts"
           # ATATT: Atlassian API tokens, as in JIRA_APITOKEN
@@ -528,7 +582,7 @@ jobs:
             echo "ready_to_post=true"
             # Back-dated, so runner clock skew against GitHub's submitted_at cannot hide a posted review
             echo "validated_at=$(date -u -d '-2 minutes' +%Y-%m-%dT%H:%M:%SZ)"
-            echo "signature=Reviewed with: \`/cr-request\` $VERSION skill"
+            echo "signature=$signature"
             echo "summary=$summary"
             echo "state=$state"
           } >> "$GITHUB_OUTPUT"

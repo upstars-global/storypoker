@@ -13,7 +13,7 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 затримує рев'ю - прийнятий компроміс, а не дефект для рев'ю. Мітка `skip-auto-review`
 вимикає будь-яке рев'ю PR (і на запит, і dispatch), PR від ботів і від `so-upstars` воркфлоу не рев'юїть.
 Скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
-воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`. Дія відновлює `.claude` з
+воркфлоу - повний SHA тегу `v0.0.6`, `1e151554…`) і копіюється в `~/.claude/skills`. Дія відновлює `.claude` з
 `main` лише на подіях `pull_request`, а не на `workflow_run`/`workflow_dispatch`, тож крок `Prepare review target`
 сам прибирає з checkout усі `.claude/` і `CLAUDE.local.md` (вкладені теж), `.mcp.json` і `.claude.json`; base-копії
 `.claude/` теж (вкладена тека теж вантажиться), обидві сторони змін є в `diff.patch` - це прийнятий компроміс, а не
@@ -25,8 +25,11 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 `auto-review-target/`; PR, що трекає цю теку чи `auto-review-out/`, валить job. Job `publish` перевіряє тіло й
 свіжість head, а PAT має тільки крок `post` (звіряє, що токен належить `so-upstars`) - гарантія лише для копії з
 `main`, прогони `pull_request` беруть воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер, підпис
-останнім рядком, вердикти й лічильники з `### Summary`, розмір, токеноподібні рядки), а не його зміст: це прийнятий
-компроміс, а не дефект для рев'ю - статус дорадчий, рев'ю читає людина;
+з тривалістю кроку агента, яку дописує крок `Add review duration`, і `Next step` останнім рядком; або підпис
+останнім - порядок до 0.0.6, для override `REVIEW_SKILLS_REF`; вердикти й лічильники з `### Summary`, розмір,
+токеноподібні рядки), а не його зміст: це прийнятий компроміс, а не дефект для рев'ю - статус дорадчий, рев'ю
+читає людина. Виняток для ` · ` «двох закриваючих рядків» у промпті - спільне формулювання чотирьох
+review-воркфлоу, хоч агент пише ` · ` лише в `Next step`: прийнятий компроміс, а не дефект для рев'ю;
 хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `pull_request`-подій - одразу з гілки PR, для `workflow_dispatch` - з ref, на якому його
