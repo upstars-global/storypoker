@@ -914,3 +914,4 @@ Received R5 so-upstars: R5-F1 ACCEPT - the keep-backup branch also requires .env
 Review R6 so-upstars: PR #46 re-review on 614302bbe99130aa6ce99d58588477c43fb4fd77, tree 88c4d51c919b2a0d806801f500346eda31f25a05, Intent PASS / System PASS / Craft PASS; Critical 0 Important 0 Minor 0, R5-F1 addressed
 Received R6 so-upstars: no findings to rule on; set-aside items (dangling .env.test symlink, matching URL with missing keys) stay out of scope as pre-existing and outside the fix diff; Re-review: not needed (clean round)
 Verify: PASS full tree 7eb9ca0a18b848eaeeb31cc9e3b5060dd71672cb 2026-10-26 18:26
+Verify: PASS full tree e9be0a420fcc48d7595f3889d6b8059b7c04fe32 2026-10-26 18:26
