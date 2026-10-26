@@ -17,8 +17,11 @@ value() { printf '%s\n' "$status" | sed -n "s/^$1=\"\{0,1\}\([^\"]*\)\"\{0,1\}\$
 api_url="$(value API_URL)"
 client_key="$(value PUBLISHABLE_KEY)"
 service_key="$(value SERVICE_ROLE_KEY)"
+[ -n "$api_url" ] && [ -n "$client_key" ] && [ -n "$service_key" ] \
+  || { echo "supabase status gave no API URL or keys" >&2; exit 1; }
 
-if [ -e "$env_test" ]; then
+# A file left from another project would send e2e there, so only one that points at this stack is kept
+if [ -e "$env_test" ] && [ "$(sed -n 's/^VITE_SUPABASE_URL=//p' "$env_test")" = "$api_url" ]; then
   echo "$env_test exists, left unchanged"
 else
   mkdir -p "$repo/.env"

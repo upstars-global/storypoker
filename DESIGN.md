@@ -463,7 +463,7 @@ round_history (
 
 **Картки** - фіксована шкала `1,2,3,4,5` (`cards === defaultActive`, без `?`/`☕`/toggle - як `boolean`).
 
-**Фіксоване питання** - `DeckPreset.defaultQuestion` (нове опційне поле в `app/utils/cardDecks.ts`, на відміну від moderator-typed `poll_question` у `voting`/`vote_question`). `setDeckPreset()` пише `poll_question: preset.defaultQuestion ?? null` - той самий `room_state.poll_question`/UI-шлях показу питання (`CardsArea.tsx`/`ResultsArea.tsx`), що й у poll-колод, але автоматично заповнений і не редагується голосуванням (лишається, доки моделятор не зміне пресет). `CardsArea.vue` показує заголовок питання за самим фактом `pollQuestion` (`!!pollQuestion`), не лише для `pollMode`/`voteQuestionMode`.
+**Фіксоване питання** - `DeckPreset.defaultQuestion` (нове опційне поле в `app/utils/cardDecks.ts`, на відміну від moderator-typed `poll_question` у `voting`/`vote_question`). `setDeckPreset()` пише `poll_question: preset.defaultQuestion ?? null` - той самий `room_state.poll_question`/UI-шлях показу питання (`CardsArea.tsx`/`ResultsArea.tsx`), що й у poll-колод, але автоматично заповнений і не редагується голосуванням (лишається, доки моделятор не зміне пресет). `CardsArea.tsx` показує заголовок питання за самим фактом `pollQuestion` (`!!pollQuestion`), не лише для `pollMode`/`voteQuestionMode`.
 
 **Не poll-колода** - `isPollPreset()` (`roundStats.ts`) навмисно НЕ включає `goal_clarity`: голосування/reveal/celebration/consensus/alignment-badge (`AlignmentCard`) працюють як для звичайного числового пресету. `isNumericPreset()` - включає, тож раунди потрапляють у `HistoryModal`/`AlignmentTrendsModal`/`room-json.mts` API нарівні зі scrum/fibonacci/hours (той самий `alignmentScore` - 0-100 spread-consensus, шкало-агностичний).
 

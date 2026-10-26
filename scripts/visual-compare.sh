@@ -10,6 +10,10 @@ base_dist="$repo/test-results/visual-base-dist"
 shots="$repo/test-results/visual-baselines"
 
 cd "$repo"
+git rev-parse --verify --quiet "$base_ref^{commit}" >/dev/null || { echo "unknown revision: $base_ref" >&2; exit 1; }
+# Playwright reuses a server already on the visual port outside CI, so both passes would shoot it
+node -e "require('net').connect(4174, '127.0.0.1').on('connect', () => process.exit(1)).on('error', () => process.exit(0))" \
+  || { echo "port 4174 is busy; stop that server first" >&2; exit 1; }
 rm -rf "${base_src:?}" "${base_dist:?}" "${shots:?}"
 mkdir -p "$base_src"
 git archive "$base_ref" | tar -x -C "$base_src"
