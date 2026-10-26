@@ -917,3 +917,8 @@ Verify: PASS full tree 7eb9ca0a18b848eaeeb31cc9e3b5060dd71672cb 2026-10-26 18:26
 Verify: PASS full tree e9be0a420fcc48d7595f3889d6b8059b7c04fe32 2026-10-26 18:26
 Ruling: owner 2026-10-26 - CI jobs E2E and Visual run only on workflow_dispatch while unstable (E2E: Supabase image pulls hit registry rate limits; Visual: about 6 minutes, to be cut to about 1 minute in a follow-up); neither is a required check
 Verify: PASS full tree 6231e1cc9bdcb980ae838f8d38f1843189a9edbf 2026-10-26 18:47
+Review R7 so-upstars (1384b23, tree 02170168c1b49b5f017dc313126e1caf328d0488): Critical 0, Important 0, Minor 1; ready
+Finding R7-F1 Minor: on workflow_dispatch Visual compares with the origin/main tip instead of the PR base the docs describe
+Round review 7
+Received R7 so-upstars: R7-F1 ACCEPT - the dispatch falls back to git merge-base origin/main HEAD (ci.yml), README names it; set-asides stay out of scope (dispatch-on-main concurrency predates the PR, AC5 superseded by the owner ruling, historical journal line); open question answered by the fix (merge-base); Re-review: not needed (one-line fallback in an advisory dispatch-only job, actionlint and the expansion checked)
+Verify: PASS full tree 7a584db25bd1d9a70e02218b2c6c264b460b3a5d 2026-10-26 18:53
