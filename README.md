@@ -264,9 +264,10 @@ pnpm run test:e2e -- --project=chromium
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests, pushes to `main` and manual dispatch:
 
-- `lint`, `typecheck`, `unit`, `build` and `page-load` (Chromium smoke of the public pages with dummy Supabase credentials) run in parallel on every run.
-- `visual` (not required; manual dispatch only while it is unstable, an owner decision) runs `pnpm run test:visual` in the `mcr.microsoft.com/playwright` container: it renders the PR base (on a manual dispatch, the merge-base with `origin/main`) and the PR head and compares them, so no baseline images are stored. On a difference the `test-results-visual` artifact holds the expected, actual and diff images for 7 days.
-- `e2e` (not required; Chromium + WebKit) pulls the Supabase images from `ghcr.io` and starts a throwaway local Supabase on the runner with `pnpm run supabase:local` and never touches the shared project.
+- Every job targets about two minutes, with a 4-minute timeout (10 for `e2e`).
+- `lint`, `typecheck`, `unit`, `build` and `page-load` (smoke of the public pages on the runner's Google Chrome with dummy Supabase credentials) run in parallel on every run.
+- `visual` (not required; manual dispatch only while it is unstable, an owner decision) runs `pnpm run test:visual` in six shards in the `mcr.microsoft.com/playwright` container: it renders the PR base (on a manual dispatch, the merge-base with `origin/main`) and the PR head and compares them, so no baseline images are stored. On a difference the `test-results-visual-<shard>` artifacts hold the expected, actual and diff images for 7 days.
+- `e2e` (not required; manual dispatch only, since starting Supabase alone takes about 90 seconds; Chromium + WebKit) pulls the Supabase images from `ghcr.io` and starts a throwaway local Supabase on the runner with `pnpm run supabase:local` and never touches the shared project.
 - There is no deploy job: Netlify builds `main` itself from the repo (`netlify.toml`), and the CI `dist` is built with placeholder credentials for the icon audit only.
 
 ### Ports

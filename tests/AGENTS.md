@@ -16,7 +16,7 @@ character class. Точний час після `vi.setSystemTime` звіряй 
 `shouldAdvanceTime: true` годинник іде під час `await`, і тест періодично падає в CI.
 `pnpm run typecheck` бере `app/**`, `tests/unit/**`, harness і `tests/{e2e,page-objects,visual}/**` (`tests/e2e/tsconfig.json`).
 E2E: Playwright у `tests/e2e/`; потребує `.env/.env.test` - локально його пише `pnpm run supabase:local` (локальний
-Supabase у colima, README «Local Supabase»); job `e2e` у CI (образи Supabase з `ghcr.io`) запускає той самий скрипт на раннері й передає
+Supabase у colima, README «Local Supabase»); job `e2e` у CI (лише `workflow_dispatch`, проєкти `chromium` і `webkit`; образи Supabase з `ghcr.io`) запускає той самий скрипт на раннері й передає
 `.env/.env.test` у `$GITHUB_ENV`, бо під `CI` конфіг файл не читає. Без `E2E_BASE_URL` Playwright сам збирає і
 запускає `pnpm run preview` на `:4173` (`reuseExistingServer: !CI` - локальний процес на 4173 перевикористовується);
 задай `E2E_BASE_URL`, щоб тестувати вже запущений сервер. `playwright.config.ts` передає серверу `VITE_SUPABASE_*`
@@ -33,7 +33,7 @@ VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only pnpm run tes
 
 ## Visual (`tests/visual/`)
 
-Проєкт `visual` (CI-job `Visual`, лише `workflow_dispatch`, поки нестабільний) знімає скріншоти публічних сторінок, кімнати й модалок у 3 палітрах ×
+Проєкт `visual` (CI-job `Visual`, лише `workflow_dispatch`, 6 шардів, поки нестабільний) знімає скріншоти публічних сторінок, кімнати й модалок у 3 палітрах ×
 2 темах × 1280/375 px; `maxDiffPixelRatio: 0.01`, `retries: 0`. `playwright.config.ts` додає проєкт і його сервер
 (`:4174`, збірка в `test-results/visual-dist` з фіксованим фейковим Supabase URL) лише коли `visual` названо в
 `--project`: пиши `--project=visual <filter>`, бо `--project visual <path>` Playwright читає як кілька назв проєктів.

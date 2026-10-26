@@ -5,6 +5,7 @@ set -e
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 base_ref="${1:-origin/main}"
+[ $# -gt 0 ] && shift
 base_src="$repo/test-results/visual-base-src"
 base_dist="$repo/test-results/visual-base-dist"
 shots="$repo/test-results/visual-baselines"
@@ -30,8 +31,8 @@ console.log('url=' + m.VISUAL_SUPABASE_URL + ' key=' + m.VISUAL_SUPABASE_KEY)
 )
 
 echo "rendering $base_ref as the reference"
-STORYPOKER_VISUAL_DIST="$base_dist" pnpm exec playwright test --project=visual --update-snapshots=all \
+STORYPOKER_VISUAL_DIST="$base_dist" pnpm exec playwright test --project=visual --update-snapshots=all "$@" \
   || echo "some screens failed on $base_ref; they have no reference and fail below"
 
 echo "comparing the working tree with $base_ref"
-pnpm exec playwright test --project=visual
+pnpm exec playwright test --project=visual "$@"

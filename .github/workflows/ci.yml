@@ -14,7 +14,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
 
@@ -64,7 +64,7 @@ jobs:
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -83,7 +83,7 @@ jobs:
   unit:
     name: Unit tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -105,7 +105,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -136,7 +136,7 @@ jobs:
   page-load:
     name: Public pages load
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -145,23 +145,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Resolve Playwright version
-        id: pw
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-      - name: Cache Playwright browsers
-        id: pw-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ runner.os }}-${{ steps.pw.outputs.version }}
-      - name: Install Playwright browsers
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Install Playwright system deps
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
+      # The runner image ships Google Chrome with its system libraries, so no apt step can stall the job;
+      # only ffmpeg, which records the retry video, comes from the Playwright CDN.
+      - run: pnpm exec playwright install ffmpeg
       - run: pnpm exec playwright test --project page-load --project icon-delivery
         env:
+          PLAYWRIGHT_CHANNEL: chrome
           VITE_SUPABASE_URL: https://dummy.supabase.co
           VITE_SUPABASE_KEY: sb_publishable_dummy_key_for_page_load_smoke_only
       - name: Upload test results
@@ -176,13 +165,17 @@ jobs:
   # Renders the base revision and this one in the same pinned Playwright image (tag = @playwright/test)
   # and compares them; no baseline PNGs are stored. Not a required check. git must be in the image,
   # otherwise checkout falls back to the REST API and leaves no history for git archive.
-  # Owner decision 2026-10-26: off on push and pull requests while it is unstable (about 6 minutes);
-  # run it with a manual dispatch.
+  # Owner decision 2026-10-26: off on push and pull requests while it is unstable; run it with a manual
+  # dispatch. Shards keep each job near two minutes; every shard renders its own part of both revisions.
   visual:
     name: Visual
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
       options: --user root
@@ -203,14 +196,14 @@ jobs:
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       # A push that creates a branch reports an all-zero before SHA, which git archive cannot read.
       # A dispatch has neither SHA, so it compares with the merge-base, not the newer main tip.
-      - run: pnpm run test:visual "${BASE_REF:-$(git merge-base origin/main HEAD)}"
+      - run: pnpm run test:visual "${BASE_REF:-$(git merge-base origin/main HEAD)}" --shard=${{ matrix.shard }}/6 --workers=4
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before) || '' }}
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-visual
+          name: test-results-visual-${{ matrix.shard }}
           path: |
             test-results/playwright/
             test-results/playwright-report/
@@ -222,10 +215,12 @@ jobs:
   # skips under CI, so the next step exports it to the job env.
   # Supabase images come from ghcr.io: anonymous pulls from the CLI default public.ecr.aws hit
   # "toomanyrequests: Data limit exceeded" on shared runner IPs.
+  # Manual dispatch only: starting Supabase alone takes about 90 seconds, past the two-minute job target.
   e2e:
     name: E2E
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     env:
       SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
     steps:
@@ -267,7 +262,7 @@ jobs:
             esac
             echo "$key=$value" >> "$GITHUB_ENV"
           done < .env/.env.test
-      - run: pnpm run test:e2e
+      - run: pnpm exec playwright test --project chromium --project webkit
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
