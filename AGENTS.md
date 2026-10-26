@@ -20,7 +20,8 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
   Required checks - це `name:` job-ів, а не job ids: `Lint` / `Typecheck` / `Unit tests` /
   `Build` / `Public pages load`. `E2E` і `Visual` - лише `workflow_dispatch`.
 - **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
-- **Git worktrees:** ізольована робота - через `git-worktree-isolation`; незакомічені зміни основного каталогу не чіпати
+- **Гілки:** план із сабагентами - одна гілка в основній теці, без git worktree і проміжних squash у `main`, один PR
+- **Темп:** у довгому плані комміть і пуш після кожної завершеної задачі, у паузі між сабагентами
 
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
@@ -97,10 +98,12 @@ pnpm run test:unit   # канонічний unit-run; `pnpm test` і `test:unit`
 pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery); локально - з
                           # dummy VITE_SUPABASE_* з ci.yml, деталі `tests/AGENTS.md`
 pnpm run test:visual [<ref>]   # рендер <ref> (дефолт origin/main) - еталон для дерева; локально - у контейнері Playwright
-pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build - саме це біжить CI
+pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build + icons:audit-build - як CI
 pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
                      # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
 ```
+Stage і локальний запуск ходять в одну прод-базу Supabase: до злиття не запускай `deploy:stage` без рішення
+власника й не міняй схему чи RLS; ручні перевірки - на локальному preview (тестову кімнату створювати можна).
 
 CI - `.github/workflows/ci.yml`: паралельні job ids `lint`/`typecheck` (`icons:check` + `typecheck`)/
 `unit` (`test:unit:coverage`)/`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
@@ -113,6 +116,9 @@ job `build` збирає `dist` лише для `icons:audit-build` і з placeh
 
 ## Environment Setup
 `pnpm-lock.yaml` - committed (required for `pnpm install --frozen-lockfile`). Do NOT add it to `.gitignore`.
+Peer Vite-плагіна, який імпортує його віртуальний модуль (`virtual:pwa-register` → `workbox-window`), став прямою
+`devDependency`: pnpm peer-и не hoist-ить. Збірку як у CI відтворюй у чистому worktree з
+`pnpm install --frozen-lockfile --ignore-scripts`.
 
 Усі env-файли - у `/.env/` (gitignored, окрім `*.example`). Vite читає через `envDir: '.env'` у `vite.config.ts`:
 `/.env/.env.local` (персональні override), `/.env/.env` (командні defaults), `/.env/.env.test` (креди тестового

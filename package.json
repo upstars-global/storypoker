@@ -32,7 +32,7 @@
     "test:e2e:icons": "playwright test --project icon-delivery",
     "test:e2e:ui": "playwright test --ui",
     "test:visual": "sh scripts/visual-compare.sh",
-    "test:ci": "pnpm run icons:check && pnpm run lint && pnpm run typecheck && pnpm run test:unit && pnpm run build",
+    "test:ci": "pnpm run icons:check && pnpm run lint && pnpm run typecheck && pnpm run test:unit && pnpm run build && pnpm run icons:audit-build",
     "deploy:stage": "npx -y netlify-cli@latest deploy --alias stage",
     "deploy:prod": "npx -y netlify-cli@latest deploy --prod --context production"
   },

@@ -37,3 +37,7 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
 прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review sha=`. GitHub не дає запросити рев'ю в
 автора PR, а PR від `so-upstars` воркфлоу пропускає: шлях `review_requested` перевіряй на PR іншого акаунта.
+У `--allowedTools` агента `Write(./auto-review-out/review.md)` стоїть поруч з `Edit(...)`: `Edit` не створює файл,
+і без `Write` прогін іноді проходить, не записавши рев'ю. Пін action на SHA з коментарем `# vN` звіряй без API:
+`git ls-remote --tags https://github.com/<owner>/<action>.git </dev/null | grep <sha>` має дати `refs/tags/vN`;
+агент рев'ю мережі не має, тож результат впиши в опис PR.
