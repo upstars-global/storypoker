@@ -170,25 +170,38 @@ describe('roomStore actions', () => {
     expect(state().roomState).toEqual(revealedState)
   })
 
-  it('reveal() keeps the store when the room or its state changed during the refetch', async () => {
-    const newerState = fakeRoomState({ room_id: 'r2' })
+  function refetchChanging(change: () => void) {
     setSupabase(asSupabase({
       from: () => ({
         update: () => updateQuery([]),
         select: () => ({
           eq: () => ({
             single: () => {
-              useRoomStore.setState({ roomId: 'r2', roomState: newerState })
+              change()
               return Promise.resolve({ data: fakeRoomState({ phase: 'revealed' }), error: null })
             },
           }),
         }),
       }),
     }))
+  }
+
+  it('reveal() keeps a newer room_state that arrived during the refetch', async () => {
+    const newerState = fakeRoomState({ round_started_at: '2026-05-04T00:05:00Z' })
+    refetchChanging(() => useRoomStore.setState({ roomState: newerState }))
     useRoomStore.setState({ roomId: 'r1' })
     useRoomStore.setState({ roomState: fakeRoomState() })
     await state().reveal()
     expect(state().roomState).toBe(newerState)
+  })
+
+  it('reveal() ignores the refetch when the room changed during it', async () => {
+    const votingState = fakeRoomState()
+    refetchChanging(() => useRoomStore.setState({ roomId: 'r2' }))
+    useRoomStore.setState({ roomId: 'r1' })
+    useRoomStore.setState({ roomState: votingState })
+    await state().reveal()
+    expect(state().roomState).toBe(votingState)
   })
 
   it('reveal() logs a failed refetch', async () => {
