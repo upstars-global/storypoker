@@ -116,12 +116,12 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 Агент не має shell (`--disallowedTools "Bash"`: вбудовані read-only команди на кшталт `printenv` читають його env)
 і `gh`, читає лише workspace і `~/.claude/skills` (`blockReadsOutsideWorkingDirectories`), `.git/` йому закритий
 (`Read(./.git/**)`: в `.git/config` лежить токен дії), а пише лише тіло у файл. Лог, дифф, base-копії, tree і
-`pr.json` (опис; рев'ю й коментарі лише OWNER/MEMBER/COLLABORATOR) йому готує `Prepare review target` в `auto-review-target/`; PR, що трекає цю
-теку чи `auto-review-out/`, валить job. Job `publish` перевіряє тіло й свіжість head, а PAT має тільки крок `post`
-(звіряє, що токен належить `so-upstars`) - гарантія лише для копії з `main`, прогони `pull_request` беруть
-воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер, підпис останнім рядком, вердикти й лічильники з
-`### Summary`, розмір, токеноподібні рядки), а не його зміст: це прийнятий компроміс, а не дефект для рев'ю -
-статус дорадчий, рев'ю читає людина;
+`pr.json` (опис; рев'ю й коментарі лише OWNER/MEMBER/COLLABORATOR) йому готує `Prepare review target` в
+`auto-review-target/`; PR, що трекає цю теку чи `auto-review-out/`, валить job. Job `publish` перевіряє тіло й
+свіжість head, а PAT має тільки крок `post` (звіряє, що токен належить `so-upstars`) - гарантія лише для копії з
+`main`, прогони `pull_request` беруть воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер, підпис
+останнім рядком, вердикти й лічильники з `### Summary`, розмір, токеноподібні рядки), а не його зміст: це прийнятий
+компроміс, а не дефект для рев'ю - статус дорадчий, рев'ю читає людина;
 хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `pull_request`-подій - одразу з гілки PR, для `workflow_dispatch` - з ref, на якому його
