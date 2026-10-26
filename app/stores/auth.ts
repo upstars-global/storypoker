@@ -25,7 +25,10 @@ export const useAuthStore = create<AuthState>()(set => ({
       supabase.auth.onAuthStateChange((_event, session) => {
         set({ user: session?.user ?? null })
       })
-    })()
+    })().catch(error => {
+      initialization = null
+      throw error
+    })
     return initialization
   },
 

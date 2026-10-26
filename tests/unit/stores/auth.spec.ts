@@ -25,6 +25,23 @@ describe('auth store init', () => {
     await first
     await expect(second).resolves.toBe('u1')
   })
+
+  it('retries the session restore after a failed first attempt', async () => {
+    vi.resetModules()
+    const instance = await import('~/lib/supabase-instance')
+    const { useAuthStore: freshAuthStore } = await import('~/stores/auth')
+    instance.setSupabase(asSupabase({
+      auth: {
+        getSession: vi.fn()
+          .mockRejectedValueOnce(new Error('network down'))
+          .mockResolvedValueOnce({ data: { session: { user: { id: 'u1' } } } }),
+        onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      },
+    }))
+    await expect(freshAuthStore.getState().init()).rejects.toThrow('network down')
+    await freshAuthStore.getState().init()
+    expect(freshAuthStore.getState().user?.id).toBe('u1')
+  })
 })
 
 describe('auth store', () => {
