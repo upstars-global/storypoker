@@ -81,7 +81,30 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
       )
     }
 
-    await supabase.from('room_state').update(update).eq('room_id', roomId)
+    const { data: revealedRows, error: revealError } = await supabase
+      .from('room_state')
+      .update(update)
+      .eq('room_id', roomId)
+      .neq('phase', 'revealed')
+      .select('room_id')
+
+    if (revealError) {
+      console.error('[reveal] room_state update failed:', revealError)
+      return
+    }
+
+    if (!revealedRows?.length) {
+      const { data: currentState, error: refetchError } = await supabase
+        .from('room_state')
+        .select('*')
+        .eq('room_id', roomId)
+        .single()
+      if (refetchError) console.error('[reveal] room_state refetch failed:', refetchError)
+      if (currentState && get().roomId === roomId && get().roomState === roomState) {
+        set({ roomState: currentState as RoomState })
+      }
+      return
+    }
 
     if (votes.length >= 2) {
       const historyRow: TablesInsert<'round_history'> = {
