@@ -99,24 +99,38 @@ CI - `.github/workflows/ci.yml`: паралельні job ids `detect-secrets`/`
 Supabase-кредами) на кожен run; `e2e` - тільки коли задані E2E-секрети;
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
-`.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` Claude проходить
-`cr-request` і один раз лишає PR review від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`);
-скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
-воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`: на подіях `pull_request` дія
-відновлює `.claude` з `main`. Агент має лише read-only `GITHUB_TOKEN` і пише тіло у файл; лог, дифф і base-копії
-йому готує крок `Prepare review target` в `auto-review-target/`, бо `git diff`/`log`/`show` з `--output=` пишуть
-файли раннера (`$GITHUB_ENV`) - їх в `--allowedTools` немає; PR, що трекає цю теку чи `auto-review-out/`, валить
-job. Job `publish` перевіряє тіло й свіжість head, а PAT має тільки крок `post` (звіряє, що токен належить
-`so-upstars`) - гарантія лише для копії з `main`, прогони `pull_request` беруть воркфлоу з гілки PR. `publish`
-перевіряє структуру тіла (маркер, підпис, лічильники, токеноподібні рядки), а не його зміст: це прийнятий компроміс,
-а не дефект для рев'ю - статус дорадчий, рев'ю читає людина;
+`.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` (а також на
+ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Claude проходить `cr-request` і лишає PR review
+від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`; модель - repo variable `CLAUDE_REVIEW_MODEL`).
+Автоматичний прогін рев'юїть head, коли на PR ще немає рев'ю бота з маркером `<!-- claude-review`, або коли в
+`### Summary` останнього такого рев'ю Critical чи Important > 0, воно було на іншому head і таких рев'ю менше 3;
+запит рев'ю в `so-upstars` і `workflow_dispatch` обходять цей ліміт, але зелений CI потрібен усім: запит чекає
+на нього, а dispatch на незеленому CI лише ставить статус `error`. Мітка `skip-auto-review`
+вимикає будь-яке рев'ю PR (і на запит, і dispatch), PR від ботів і від `so-upstars` воркфлоу не рев'юїть.
+Скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
+воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`. Дія відновлює `.claude` з
+`main` лише на подіях `pull_request`, а не на `workflow_run`/`workflow_dispatch`, тож крок `Prepare review target`
+сам прибирає з checkout усі `.claude/` (вкладені теж), `.mcp.json`, `.claude.json` і `CLAUDE.local.md`; base-копії
+`.claude/` теж (вкладена тека теж вантажиться), обидві сторони змін є в `diff.patch` - це прийнятий компроміс, а не
+дефект для рев'ю.
+Агент не має shell (`--disallowedTools "Bash"`: вбудовані read-only команди на кшталт `printenv` читають його env)
+і `gh`, читає лише workspace і `~/.claude/skills` (`blockReadsOutsideWorkingDirectories`), `.git/` йому закритий
+(`Read(./.git/**)`: в `.git/config` лежить токен дії), а пише лише тіло у файл. Лог, дифф, base-копії, tree і
+`pr.json` (опис; рев'ю й коментарі лише OWNER/MEMBER/COLLABORATOR) йому готує `Prepare review target` в `auto-review-target/`; PR, що трекає цю
+теку чи `auto-review-out/`, валить job. Job `publish` перевіряє тіло й свіжість head, а PAT має тільки крок `post`
+(звіряє, що токен належить `so-upstars`) - гарантія лише для копії з `main`, прогони `pull_request` беруть
+воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер, підпис останнім рядком, вердикти й лічильники з
+`### Summary`, розмір, токеноподібні рядки), а не його зміст: це прийнятий компроміс, а не дефект для рев'ю -
+статус дорадчий, рев'ю читає людина;
 хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
-(копія з `main`), для `review_requested` - одразу з гілки PR.
+(копія з `main`), для `pull_request`-подій - одразу з гілки PR, для `workflow_dispatch` - з ref, на якому його
+запущено. Власник статусу - прогін, чий URL стоїть в останньому статусі; гонка, коли новий гейт ставить `pending`
+між перевіркою власника й фінальним статусом старого прогону (новий тоді не публікує), - прийнятий компроміс, а не
+дефект для рев'ю: вікно - один API-запит, статус дорадчий, Re-request review відновлює рев'ю.
 Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
-прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review -->`. GitHub не дає запросити рев'ю в
-автора PR, а агент тут відкриває PR від `so-upstars` (`GH_ACC`): шлях `review_requested` перевіряй на PR
-іншого акаунта.
+прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review sha=`. GitHub не дає запросити рев'ю в
+автора PR, а PR від `so-upstars` воркфлоу пропускає: шлях `review_requested` перевіряй на PR іншого акаунта.
 
 ## Environment Setup
 `pnpm-lock.yaml` - committed (required for `pnpm install --frozen-lockfile`). Do NOT add it to `.gitignore`.
