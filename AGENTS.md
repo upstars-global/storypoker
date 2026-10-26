@@ -110,10 +110,10 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 Скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
 воркфлоу - повний SHA тегу `v0.0.4`, `a5cf04b2…`) і копіюється в `~/.claude/skills`. Дія відновлює `.claude` з
 `main` лише на подіях `pull_request`, а не на `workflow_run`/`workflow_dispatch`, тож крок `Prepare review target`
-сам прибирає з checkout усі `.claude/` (вкладені теж), `.mcp.json`, `.claude.json` і `CLAUDE.local.md`; base-копії
+сам прибирає з checkout усі `.claude/` і `CLAUDE.local.md` (вкладені теж), `.mcp.json` і `.claude.json`; base-копії
 `.claude/` теж (вкладена тека теж вантажиться), обидві сторони змін є в `diff.patch` - це прийнятий компроміс, а не
 дефект для рев'ю.
-Агент не має shell (`--disallowedTools "Bash"`: вбудовані read-only команди на кшталт `printenv` читають його env)
+Агент не має shell (`--disallowedTools "Bash"`: read-only команди, як `printenv`, читають env)
 і `gh`, читає лише workspace і `~/.claude/skills` (`blockReadsOutsideWorkingDirectories`), `.git/` йому закритий
 (`Read(./.git/**)`: в `.git/config` лежить токен дії), а пише лише тіло у файл. Лог, дифф, base-копії, tree і
 `pr.json` (опис; рев'ю й коментарі лише OWNER/MEMBER/COLLABORATOR) йому готує `Prepare review target` в
@@ -125,10 +125,11 @@ ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Cl
 хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `pull_request`-подій - одразу з гілки PR, для `workflow_dispatch` - з ref, на якому його
-запущено. Власник статусу - прогін, чий URL стоїть в останньому статусі; гонка, коли новий гейт ставить `pending`
-між перевіркою власника й фінальним статусом старого прогону (новий тоді не публікує), - прийнятий компроміс, а не
-дефект для рев'ю: вікно - один API-запит, статус дорадчий, Re-request review відновлює рев'ю. Група `concurrency`
-містить head SHA: push не скасовує рев'ю старого head, `publish` відкидає його як superseded - прийнятий компроміс.
+запущено. Job `review` має групу `concurrency` за номером PR: новіший прогін після гейту (і dispatch чи запит на
+тому ж head) скасовує поточне рев'ю, старий head дістає `error`. Постить лише власник статусу (чий URL у
+статусі), тож dispatch і авторев'ю одного head, як і новий гейт між перевіркою власника й фінальним статусом
+старого прогону, можуть лишити `error` без рев'ю - прийнятий компроміс, а не дефект для рев'ю: хибного рев'ю
+немає, Re-request review лікує.
 Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
 прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review sha=`. GitHub не дає запросити рев'ю в
 автора PR, а PR від `so-upstars` воркфлоу пропускає: шлях `review_requested` перевіряй на PR іншого акаунта.

@@ -24,12 +24,11 @@ on:
 
 # One group per PR branch and head SHA, so the gate that posts the latest `pending` status for a head
 # is also the run whose review survives, and a late CI run for an older head cannot cancel the review
-# of a newer one (its gate then skips as moved on). Accepted trade-off (AGENTS.md): a push no longer
-# cancels a review of the older head, which runs to the end and is dropped in publish as superseded.
-# A review request for someone else, and a CI run that was not a pull_request event (the gate skips
-# it), get their own group and cancel nothing. A workflow_dispatch run knows only the PR number, so
-# it gets its own group and may review alongside an event-driven run; status ownership in publish
-# then decides which result is reported.
+# of a newer one (its gate then skips as moved on). The review job's own group, per PR, cancels the
+# review of an older head once a newer head passes its gate. A review request for someone else, and a
+# CI run that was not a pull_request event (the gate skips it), get their own group and cancel
+# nothing. A workflow_dispatch run knows only the PR number, so it gets its own group here, and the
+# review job's group cancels whichever review of the PR started first.
 concurrency:
   group: >-
     claude-review-${{ github.event.pull_request.head.repo.full_name || github.event.workflow_run.head_repository.full_name || github.repository }}-${{
@@ -182,6 +181,15 @@ jobs:
     if: needs.gate.outputs.review == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Only runs that passed the gate get here, so the newest one for a PR cancels the running review,
+    # on any head. On an older head publish marks it `error`; on the same head the newer gate owns the
+    # status and the cancelled run posts nothing.
+    # Accepted trade-off (AGENTS.md): when a dispatch and an event-driven run review one head, the run
+    # that joins this group last wins and only the status owner posts, so the head can end with `error`
+    # and no review until the bot is requested again.
+    concurrency:
+      group: claude-review-job-pr-${{ needs.gate.outputs.number }}
+      cancel-in-progress: true
     permissions:
       contents: read
       pull-requests: read
@@ -251,8 +259,10 @@ jobs:
           # .claude/ from the base branch only on pull_request events, not on workflow_run or dispatch.
           # Accepted trade-off (AGENTS.md): the base copies under auto-review-target/base/ go too, since a
           # nested .claude/ loads as well; diff.patch keeps both sides of every changed hunk.
-          find . -path ./.git -prune -o -name .claude -prune -exec rm -rf {} +
-          rm -f .mcp.json .claude.json CLAUDE.local.md
+          # A nested CLAUDE.local.md loads too, after a Read in its directory; .mcp.json and .claude.json
+          # load only from the root.
+          find . -path ./.git -prune -o \( -name .claude -o -name CLAUDE.local.md \) -prune -exec rm -rf {} +
+          rm -f .mcp.json .claude.json
 
       # User scope: nothing from the PR checkout can replace the installed skill.
       - name: Install cr-request skill
@@ -461,7 +471,12 @@ jobs:
 
           if [ ! -f "$BODY_FILE" ]; then
             if [ "$REVIEW_RESULT" = cancelled ]; then
-              post_status error "Claude review was cancelled"
+              head=$(gh api "repos/$REPO/pulls/$NUMBER" --jq .head.sha || true)
+              if [ -n "$head" ] && [ "$head" != "$HEAD_SHA" ]; then
+                post_status error "Superseded by a newer head"
+              else
+                post_status error "Claude review was cancelled"
+              fi
               exit 0
             fi
             post_status failure "Claude review failed before writing a review"
