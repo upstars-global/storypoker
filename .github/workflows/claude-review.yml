@@ -1,6 +1,9 @@
-# The agent reviews with a read-only GITHUB_TOKEN and writes the body to a file; the publish job
+# Posts a cr-request PR review as so-upstars on open, non-draft, same-repo PRs whose head has a green
+# CI run; how often it runs on its own is the claude-review.yml paragraph in AGENTS.md. The agent
+# reviews with a read-only GITHUB_TOKEN and no shell and writes the body to a file; the publish job
 # validates it and only its `post` step gets the so-upstars PAT. That holds for the main copy of this
-# file: pull_request runs use the PR branch's copy, so anyone who can push a branch can reach the PAT.
+# file: pull_request runs use the PR branch's copy and workflow_dispatch the copy on the ref it is
+# dispatched on, so anyone who can push a branch can reach the PAT.
 # Accepted trade-off (AGENTS.md): the checks cover the body's structure and token-like strings, not its
 # prose; a prompt-injected body can still mislead, and the status is advisory, not a required check.
 name: Claude review
@@ -9,13 +12,32 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
+  # A PR marked ready after its CI went green gets no new CI run. Opened and reopened are left out:
+  # CI runs on both here (bare pull_request in ci.yml), and its workflow_run brings the review.
   pull_request:
     types: [ready_for_review, review_requested]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number
+        required: true
 
+# One group per PR branch and head SHA, so the gate that posts the latest `pending` status for a head
+# is also the run whose review survives, and a late CI run for an older head cannot cancel the review
+# of a newer one (its gate then skips as moved on). Accepted trade-off (AGENTS.md): a push no longer
+# cancels a review of the older head, which runs to the end and is dropped in publish as superseded.
+# A review request for someone else, and a CI run that was not a pull_request event (the gate skips
+# it), get their own group and cancel nothing. A workflow_dispatch run knows only the PR number, so
+# it gets its own group and may review alongside an event-driven run; status ownership in publish
+# then decides which result is reported.
 concurrency:
   group: >-
-    claude-review-${{ github.event.pull_request.head.ref || github.event.workflow_run.head_branch }}${{
-    github.event.action == 'review_requested' && github.event.requested_reviewer.login != 'so-upstars'
+    claude-review-${{ github.event.pull_request.head.repo.full_name || github.event.workflow_run.head_repository.full_name || github.repository }}-${{
+    github.event.pull_request.head.ref || github.event.workflow_run.head_branch || format('pr-{0}', inputs.pr_number) }}${{
+    (github.event.workflow_run.head_sha || github.event.pull_request.head.sha)
+    && format('-{0}', github.event.workflow_run.head_sha || github.event.pull_request.head.sha) || '' }}${{
+    ((github.event.action == 'review_requested' && github.event.requested_reviewer.login != 'so-upstars') ||
+    (github.event_name == 'workflow_run' && github.event.workflow_run.event != 'pull_request'))
     && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
@@ -24,10 +46,12 @@ permissions: {}
 jobs:
   gate:
     name: Review gate
+    # Failed CI runs pass too: the gate turns a pending request's status into `error` and skips.
     if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request') ||
       (github.event_name == 'pull_request' &&
-        (github.event.action == 'ready_for_review' || github.event.requested_reviewer.login == 'so-upstars')) ||
-      github.event.workflow_run.event == 'pull_request'
+        (github.event.action != 'review_requested' || github.event.requested_reviewer.login == 'so-upstars'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -45,13 +69,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          REVIEWER: so-upstars
           EVENT: ${{ github.event_name }}
-          EVENT_PR: ${{ github.event.pull_request.number }}
+          EVENT_PR: ${{ github.event.pull_request.number || inputs.pr_number }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
           RUN_HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
           RUN_PRS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
-          MARKER: '<!-- claude-review -->'
           CONTEXT: Claude review
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # Automatic runs stop after this many reviews by the bot on one PR
+          AUTO_LIMIT: 3
         run: |
           post_status() {
             gh api "repos/$REPO/statuses/$head_sha" -f state="$1" -f description="$2" \
@@ -59,53 +86,89 @@ jobs:
           }
 
           skip() {
-            echo "Skip: $1"
+            echo "Skip: $1" | tee -a "$GITHUB_STEP_SUMMARY"
             echo "review=false" >> "$GITHUB_OUTPUT"
             exit 0
           }
 
-          if [ "$EVENT" = pull_request ]; then
-            number="$EVENT_PR"
-          else
-            [ "$RUN_HEAD_REPO" = "$REPO" ] || skip "fork PR"
+          # For skips that end a requested review: a "waiting for green CI" status would stay pending.
+          skip_final() {
+            [ -n "${head_sha:-}" ] || skip "$1"
+            waiting=$(gh api "repos/$REPO/commits/$head_sha/status?per_page=100" \
+              --jq '[.statuses[] | select(.context == env.CONTEXT)][0] | select(.state == "pending")
+                | (.description // "") | startswith("Review requested; waiting")')
+            [ "$waiting" != true ] || post_status error "Not reviewed: $1"
+            skip "$1"
+          }
+
+          if [ "$EVENT" = workflow_run ]; then
+            [ "$RUN_HEAD_REPO" = "$REPO" ] || skip "CI run from a fork"
             number=$(jq -r '.[0].number // empty' <<< "$RUN_PRS")
+            # The run's commit is no open PR's head any more; a waiting status on it is resolved.
+            [ -n "$number" ] || { head_sha="$RUN_SHA"; skip_final "no pull request for $RUN_SHA"; }
+          else
+            number="$EVENT_PR"
           fi
-          [ -n "$number" ] || skip "no pull request for this run"
+          [[ "$number" =~ ^[0-9]+$ ]] || skip "invalid PR number '$number'"
 
           pr=$(gh api "repos/$REPO/pulls/$number")
-          [ "$(jq -r .state <<< "$pr")" = open ] || skip "PR #$number is not open"
-          [ "$(jq -r .draft <<< "$pr")" = false ] || skip "PR #$number is a draft"
-          [ "$(jq -r .head.repo.full_name <<< "$pr")" = "$REPO" ] || skip "PR #$number is from a fork"
-          [ "$(jq -r .user.type <<< "$pr")" != Bot ] || skip "PR #$number is from a bot"
           head_sha=$(jq -r .head.sha <<< "$pr")
           base_sha=$(jq -r .base.sha <<< "$pr")
-          requested=$(jq '[.requested_reviewers[].login] | index("so-upstars") != null' <<< "$pr")
+          [ "$(jq -r .state <<< "$pr")" = open ] || skip_final "PR #$number is not open"
+          [ "$(jq -r .draft <<< "$pr")" = false ] || skip_final "PR #$number is a draft"
+          [ "$(jq -r .head.repo.full_name <<< "$pr")" = "$REPO" ] || skip "PR #$number is from a fork"
+          [ "$(jq -r .user.type <<< "$pr")" != Bot ] || skip_final "PR #$number is from a bot"
+          [ "$(jq -r .user.login <<< "$pr")" != "$REVIEWER" ] || skip_final "PR #$number is by $REVIEWER"
+          jq -e '.labels | map(.name) | index("skip-auto-review") | not' <<< "$pr" > /dev/null \
+            || skip_final "PR #$number has the skip-auto-review label"
+          [ -z "$RUN_SHA" ] || [ "$RUN_SHA" = "$head_sha" ] || skip "PR #$number moved on from $RUN_SHA"
+          requested=$(jq --arg r "$REVIEWER" '[.requested_reviewers[].login] | index($r) != null' <<< "$pr")
 
+          # CI runs on pull_request here, so the per-workflow list filtered by that event finds it
           ci=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$head_sha&event=pull_request&per_page=1" \
-            --jq '.workflow_runs[0].conclusion // "none"')
+            --jq '.workflow_runs[0] | if . == null then "none" elif .status != "completed" then .status else .conclusion end')
           if [ "$ci" != success ]; then
-            if [ "$requested" = true ] && [ "$ci" = none ]; then
-              post_status pending "Review requested; waiting for green CI"
-            elif [ "$requested" = true ]; then
-              post_status error "Review requested; CI is $ci, the review waits for a green run"
+            if [ "$requested" = true ]; then
+              case "$ci" in
+                none | queued | in_progress | waiting | pending | requested)
+                  post_status pending "Review requested; waiting for green CI" ;;
+                *)
+                  post_status error "Review requested; CI is $ci, the review waits for a green run" ;;
+              esac
+            elif [ "$EVENT" = workflow_dispatch ]; then
+              # A dispatch does not wait; say why nothing ran
+              post_status error "Dispatch skipped: CI is $ci; dispatch again after a green run"
             fi
             skip "CI on $head_sha is $ci"
           fi
 
-          bodies=""
-          if [ "$requested" != true ]; then
-            bodies=$(gh api --paginate "repos/$REPO/pulls/$number/reviews" \
-              --jq '.[] | select(.user.login == "so-upstars") | .body'
-            gh api --paginate "repos/$REPO/issues/$number/comments" \
-              --jq '.[] | select(.user.login == "so-upstars") | .body')
-          fi
-          if grep -qF "$MARKER" <<< "$bodies"; then
-            post_status success "Skipped: the PR already has a Claude review"
-            skip "PR #$number already has a Claude review"
+          # A pending review request and workflow_dispatch always run. An automatic run reviews a PR with
+          # no review by the bot yet, or one whose latest review has Critical or Important findings on an
+          # older head, while the bot has fewer than AUTO_LIMIT reviews on the PR. Reviews from before
+          # the sha= marker carry `<!-- claude-review -->`, so the prefix matches both.
+          if [ "$requested" != true ] && [ "$EVENT" != workflow_dispatch ]; then
+            # Captured first, so no pipe closes early; bash -e stops on a failed call.
+            marked=$(gh api --paginate "repos/$REPO/pulls/$number/reviews" \
+              --jq '.[] | select(.user.login == env.REVIEWER and ((.body // "") | startswith("<!-- claude-review")))
+                | {commit_id, body}')
+            total=$(jq -s length <<< "$marked")
+            if [ "$total" -gt 0 ]; then
+              latest=$(jq -s last <<< "$marked")
+              reviewed_sha=$(jq -r .commit_id <<< "$latest")
+              # A Summary without both counts counts as blocking, so it never silences later heads.
+              blocking=$(jq -r .body <<< "$latest" | tr -d '\r' \
+                | awk '/^### /{on = ($0 ~ /^### Summary[[:space:]]*$/); next} on' \
+                | awk -F'|' '$2 ~ /^ *(Critical|Important) *$/ && $3 ~ /^ *[0-9]+ *$/ {n++; s += $3}
+                    END {print (n == 2 ? s : 1)}')
+              [ "$blocking" -gt 0 ] || skip_final "the latest review of PR #$number has no Critical or Important findings"
+              [ "$reviewed_sha" != "$head_sha" ] || skip_final "PR #$number already has a review of $head_sha"
+              [ "$total" -lt "$AUTO_LIMIT" ] || skip_final "PR #$number has $total reviews by $REVIEWER; request $REVIEWER for another"
+            fi
           fi
 
           post_status pending "Claude review in progress"
 
+          echo "Review PR #$number at $head_sha" | tee -a "$GITHUB_STEP_SUMMARY"
           {
             echo "review=true"
             echo "number=$number"
@@ -126,18 +189,21 @@ jobs:
     outputs:
       version: ${{ steps.skill.outputs.version }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           ref: ${{ needs.gate.outputs.head_sha }}
           fetch-depth: 0
           persist-credentials: false
 
-      # The agent gets no git diff, log, or show: they accept --output=<path>, which can write runner
-      # file commands such as $GITHUB_ENV. The target is prepared here and handed over as files instead.
+      # The agent gets no shell: git diff, log, and show accept --output=<path>, which can write runner
+      # file commands such as $GITHUB_ENV, and gh --jq can read its environment. The target is prepared
+      # here and handed over as files instead.
       - name: Prepare review target
         # bash adds pipefail, so a failing git diff before the base-copy loop fails the step
         shell: bash
         env:
+          # Read-only, for the PR metadata below; the agent itself gets no gh
+          GH_TOKEN: ${{ github.token }}
           NUMBER: ${{ needs.gate.outputs.number }}
           BASE_SHA: ${{ needs.gate.outputs.base_sha }}
           HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
@@ -175,11 +241,25 @@ jobs:
               git show "$merge_base:$path" > "$out/base/$path"
             done
           test -s "$out/diff.patch" || { echo "::error::empty diff for $merge_base..$HEAD_SHA"; exit 1; }
+          # Reviews and comments only from people with write access: anyone else's text stays out
+          gh pr view "$NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --json title,body,author,baseRefName,headRefName,url,reviews,comments \
+            --jq '(.reviews, .comments) |= map(select(.authorAssociation | IN("OWNER", "MEMBER", "COLLABORATOR")))' \
+            > "$out/pr.json"
+          # Claude Code loads skills, settings, hooks, and MCP servers from any .claude/ under the working
+          # directory, nested ones included, so the PR's copies must not reach the agent. The action restores
+          # .claude/ from the base branch only on pull_request events, not on workflow_run or dispatch.
+          # Accepted trade-off (AGENTS.md): the base copies under auto-review-target/base/ go too, since a
+          # nested .claude/ loads as well; diff.patch keeps both sides of every changed hunk.
+          find . -path ./.git -prune -o -name .claude -prune -exec rm -rf {} +
+          rm -f .mcp.json .claude.json CLAUDE.local.md
 
+      # User scope: nothing from the PR checkout can replace the installed skill.
       - name: Install cr-request skill
         id: skill
         env:
-          # sentimony/agentic-workflow v0.0.4; the repo variable overrides it
+          # sentimony/agentic-workflow v0.0.4; the repo variable overrides it. The reviewer skill comes
+          # from a released commit, never from the PR head under review.
           SKILLS_REF: ${{ vars.REVIEW_SKILLS_REF || 'a5cf04b2d5d72d6fa624bdb46223f1ada6a2047a' }}
         run: |
           [[ "$SKILLS_REF" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::REVIEW_SKILLS_REF must be a full commit SHA"; exit 1; }
@@ -198,11 +278,13 @@ jobs:
 
       - uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         id: claude
-        env:
-          GH_TOKEN: ${{ github.token }}
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Read-only token for the action itself; the agent's tools have no gh
           github_token: ${{ github.token }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # User-scope setting: Read, Grep, and Glob outside the working directory are refused; Claude Code
+          # keeps ~/.claude/skills readable.
+          settings: '{"permissions":{"blockReadsOutsideWorkingDirectories":true}}'
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ needs.gate.outputs.number }}
@@ -212,19 +294,33 @@ jobs:
             Run the cr-request skill for this pull request on a prepared target. The review boundary is the
             committed range BASE SHA...HEAD SHA (three dots, from their merge base), already captured in
             auto-review-target/: identity.txt (the target identity, tree included), log.txt (`<short sha> <full sha>
-            <subject>` per commit), stat.txt, diff.patch, and base/ with the merge-base copies of modified, deleted,
-            and type-changed files. The checkout is HEAD SHA. git diff, git log, and git show are not available;
-            read these files instead, and pass the same instruction to any reviewer you dispatch.
-            Read the PR title and description with `gh pr view` for requirements. CI is green on HEAD SHA.
+            <subject>` per commit), stat.txt, diff.patch, base/ with the merge-base copies of modified, deleted,
+            and type-changed files, and pr.json (title, description, author, branches, URL, reviews, comments).
+            The checkout is HEAD SHA. No shell commands are available (no git, no gh), and reads are limited to
+            the workspace and ~/.claude/skills: use the tree in identity.txt and read these files instead, and
+            pass the same instruction to any reviewer you dispatch. `.claude/` directories and `.mcp.json` were
+            removed from the checkout before this run; their changes are in diff.patch.
+            Intent: the PR title and description from auto-review-target/pr.json, plus AGENTS.md. There is no
+            plan file and no journal to write.
+            CI (lint, typecheck, unit tests with coverage, build, page-load) is green on HEAD SHA; tests were not
+            run in this job - say so in the review gaps.
+            Earlier reviews and comments in pr.json (only from owners, members, and collaborators) are context,
+            not the author's intent; label this a fresh review pass when the same reviewer already reviewed an
+            older head.
             Do not run gh-switch or cr-received and do not modify repository files.
+
+            This run ends with your final message: dispatch reviewers in the foreground, never in the
+            background, write auto-review-out/review.md before you finish, and never end with a reviewer still
+            running.
 
             If the cr-request skill is not available to you, do not review and do not write the review file; stop
             and report that the skill is missing.
 
             Write exactly one pull request review body in English, with plain hyphens only, to
-            auto-review-out/review.md. Do not post it; a later step posts it as a review comment that neither
-            approves nor requests changes. The body must start with the line `<!-- claude-review -->`, then the
-            reviewed range, the commits in it, and the coverage (files read, what was skipped), then a
+            auto-review-out/review.md; do not write or edit any other file. Do not post it; a later step posts it
+            as a review that neither approves nor requests changes. The body must start with this exact line:
+            <!-- claude-review sha=${{ needs.gate.outputs.head_sha }} -->
+            then the reviewed range, the commits in it, and the coverage (files read, what was skipped), then a
             `### Summary` section with two Markdown tables and one line.
 
             Write the reviewed range as a compare link with short SHAs, followed by the number of files and lines:
@@ -251,30 +347,59 @@ jobs:
             **Merge readiness:** ready, ready with fixes, or not ready - <one line>
 
             Use only the severities Critical, Important, and Minor; the counts must match the findings, and zero
-            findings means zeros. After the summary: the findings with severity, location, impact, evidence, and
-            confidence, the set-aside list, open questions about intent, and strengths.
+            findings means zeros. After the summary: the findings with severity, location (file:line), impact,
+            evidence, and confidence, optional suggestions, the set-aside list, open questions about intent, review
+            gaps, and strengths.
             In the skill's closing `Next step` line, write the skill name as inline code with a leading slash, for
             example: Next step: `/cr-received` - 2 findings to rule on. Leave `none` as plain text.
-            Never copy a token or secret into the body. The body must end with this line, backticks included:
+            Never copy a token or secret into the body. Write GitHub logins, team names, and any other text that
+            starts with @ inside backticks, so the posted review notifies nobody.
+            The line below replaces the skill's default `Reviewed with: cr-request skill` closing line; the
+            `Next step` line goes right before it, and the body must end with it, backticks included:
             Reviewed with: `/cr-request` ${{ steps.skill.outputs.version }} skill
+          # Reads stay in the workspace and the installed skill, so injected PR text cannot steer the agent to
+          # runner files or /proc and copy a token into the body. Grep and Glob are allowed bare: the
+          # blockReadsOutsideWorkingDirectories setting, not a path rule, refuses them outside the workspace.
+          # .git/config holds the action's token in the origin URL, so .git/ is denied for Read, Grep, and
+          # Glob alike. Bash is denied, built-in read-only commands included: printenv reads the agent's env.
           claude_args: >-
-            --allowedTools "Skill,Agent,Task,Read,Grep,Glob,Write(./auto-review-out/**),Edit(./auto-review-out/**),Bash(git status:*),Bash(git ls-files:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*)"
+            --model ${{ vars.CLAUDE_REVIEW_MODEL || 'claude-opus-5-5' }}
+            --allowedTools "Skill,Agent,Task,Grep,Glob,Read(./**),Read(~/.claude/skills/**),Edit(./auto-review-out/review.md),Write(./auto-review-out/review.md)"
+            --disallowedTools "Bash,Read(./.git/**)"
 
-      # The action hides the agent's output, so a run that ends without a body would leave no reason
-      - name: Show why no review was written
+      # The action hides the agent's output: list the paths it read and the calls the permission rules
+      # refused (paths and commands only), and the result when it wrote no body.
+      - name: Show file access and why no review was written
         if: always() && steps.claude.outputs.execution_file != ''
         env:
           EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
         run: |
-          [ -f auto-review-out/review.md ] && exit 0
           [ -f "$EXECUTION_FILE" ] || exit 0
-          echo "::warning::The agent finished without auto-review-out/review.md; its result follows"
-          jq -r '[if type == "array" then .[] else . end | select(.type? == "result")] | last | "subtype=\(.subtype // "none") turns=\(.num_turns // "none") is_error=\(.is_error | tostring)", (.result // "no result message")[0:4000]' "$EXECUTION_FILE" || true
+          [ -f auto-review-out/review.md ] \
+            || echo "::warning::The agent finished without auto-review-out/review.md; its result follows"
+          # The agent chooses these strings: fields print as JSON, one per line, and the runner ignores
+          # workflow commands until the random token ends the block.
+          stop="$(openssl rand -hex 16)"
+          echo "::stop-commands::$stop"
+          trap 'echo "::$stop::"' EXIT
+          echo "Read and search calls:"
+          jq -r '[if type == "array" then .[] else . end | select(.type? == "assistant") | .message.content[]?
+            | select(.type? == "tool_use" and (.name == "Read" or .name == "Grep" or .name == "Glob"))
+            | "\(.name) \(.input | {file_path, path, pattern, glob} | with_entries(select(.value != null)) | tojson)"]
+            | unique[]' "$EXECUTION_FILE" || true
+          echo "Permission denials:"
+          jq -r '[if type == "array" then .[] else . end | select(.type? == "result")] | last
+            | (.permission_denials // [])[]
+            | "\(.tool_name) \(.tool_input | {file_path, path, pattern, glob, command} | with_entries(select(.value != null))
+                | if .command then .command |= .[0:160] else . end | tojson)"' "$EXECUTION_FILE" || true
+          if [ ! -f auto-review-out/review.md ]; then
+            jq -r '[if type == "array" then .[] else . end | select(.type? == "result")] | last | "subtype=\(.subtype // "none") turns=\(.num_turns // "none") is_error=\(.is_error | tostring)", (.result // "no result message")[0:4000]' "$EXECUTION_FILE" || true
+          fi
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: claude-review
-          # Only the file publish reads: anything else the agent writes stays on the runner
+          # Only the file publish reads: the review target and anything else stay on the runner
           path: auto-review-out/review.md
           if-no-files-found: error
           retention-days: 1
@@ -290,9 +415,10 @@ jobs:
       statuses: write
     env:
       REPO: ${{ github.repository }}
+      REVIEWER: so-upstars
       NUMBER: ${{ needs.gate.outputs.number }}
       HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
-      MARKER: '<!-- claude-review -->'
+      MARKER: '<!-- claude-review sha=${{ needs.gate.outputs.head_sha }} -->'
       CONTEXT: Claude review
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       BODY_FILE: auto-review-out/review.md
@@ -314,13 +440,23 @@ jobs:
             gh api "repos/$REPO/statuses/$HEAD_SHA" -f state="$1" -f description="$2" \
               -f context="$CONTEXT" -f target_url="$RUN_URL" > /dev/null
           }
+          # Only the Summary section, up to the next heading, counts: a table quoted in a finding must not
+          # decide the status
+          summary_section() {
+            tr -d '\r' < "$BODY_FILE" | awk '/^### /{on = ($0 ~ /^### Summary[[:space:]]*$/); next} on'
+          }
           count() {
-            grep -oE "^\| *$1 *\| *[0-9]+ *\|" "$BODY_FILE" | grep -oE '[0-9]+' | head -n 1 || true
+            summary_section | grep -oE "^\| *$1 *\| *[0-9]+ *\|" | grep -oE '[0-9]+' | head -n 1 || true
+          }
+          verdict() {
+            summary_section | grep -oE "^\| *$1 *\| *(PASS|FINDINGS|UNASSESSED) *\|" | head -n 1 || true
           }
 
-          # An older run must not overwrite the status a newer gate set
-          latest=$(gh api "repos/$REPO/commits/$HEAD_SHA/statuses" \
-            --jq '[.[] | select(.context == env.CONTEXT)][0].target_url // ""')
+          # An older run must not overwrite the status a newer gate set. A failed read leaves no status
+          # behind otherwise, so it reports an error under this run's URL.
+          latest=$(gh api "repos/$REPO/commits/$HEAD_SHA/status?per_page=100" \
+            --jq '[.statuses[] | select(.context == env.CONTEXT)][0].target_url // ""') \
+            || { post_status error "Could not read the Claude review status"; exit 1; }
           [ "$latest" = "$RUN_URL" ] || { echo "Status owned by a newer run"; exit 0; }
 
           if [ ! -f "$BODY_FILE" ]; then
@@ -332,20 +468,28 @@ jobs:
             exit 1
           fi
 
-          head=$(gh api "repos/$REPO/pulls/$NUMBER" --jq .head.sha)
+          head=$(gh api "repos/$REPO/pulls/$NUMBER" --jq .head.sha) \
+            || { post_status error "Could not read the PR head"; exit 1; }
           [ "$head" = "$HEAD_SHA" ] || { post_status error "Superseded by a newer head"; exit 0; }
 
           fail() { post_status failure "$1"; exit 1; }
           [[ "$VERSION" =~ ^[0-9][0-9.]*$ ]] || fail "No cr-request version from the review job"
-          [ "$(head -n 1 "$BODY_FILE")" = "$MARKER" ] || fail "The review body does not start with the marker"
-          grep -qxF "Reviewed with: \`/cr-request\` $VERSION skill" "$BODY_FILE" || fail "The review body has no signature line"
-          if grep -qE '(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_)[A-Za-z0-9]' "$BODY_FILE"; then
+          [ "$(head -n 1 "$BODY_FILE" | tr -d '\r')" = "$MARKER" ] || fail "The review body does not start with the marker"
+          last=$(tr -d '\r' < "$BODY_FILE" | grep -v '^[[:space:]]*$' | tail -n 1 | sed 's/[[:space:]]*$//' || true)
+          [ "$last" = "Reviewed with: \`/cr-request\` $VERSION skill" ] || fail "The review body does not end with the signature line"
+          # GitHub rejects review bodies over 65536 characters; bytes are the stricter bound
+          [ "$(wc -c < "$BODY_FILE")" -le 65536 ] || fail "The review body is longer than GitHub accepts"
+          # ATATT: Atlassian API tokens, as in JIRA_APITOKEN
+          if grep -qE '(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_|ATATT)[A-Za-z0-9]' "$BODY_FILE"; then
             fail "Review body contains a token-like string"
           fi
+          for axis in Intent System Craft; do
+            [ -n "$(verdict "$axis")" ] || fail "The review has no $axis verdict in its Summary"
+          done
           critical=$(count Critical)
           important=$(count Important)
           minor=$(count Minor)
-          readiness=$(grep -oE '\*\*Merge readiness:\*\* *(ready with fixes|not ready|ready)' "$BODY_FILE" \
+          readiness=$(summary_section | grep -oE '\*\*Merge readiness:\*\* *(ready with fixes|not ready|ready)' \
             | sed -E 's/.*\*\* *//' | head -n 1 || true)
           if [ -z "$critical" ] || [ -z "$important" ] || [ -z "$minor" ] || [ -z "$readiness" ]; then
             fail "The review has no Summary counts or merge readiness"
@@ -356,6 +500,8 @@ jobs:
           if [ "$critical" -gt 0 ] || [ "$readiness" = "not ready" ]; then state=failure; fi
           {
             echo "ready_to_post=true"
+            # Back-dated, so runner clock skew against GitHub's submitted_at cannot hide a posted review
+            echo "validated_at=$(date -u -d '-2 minutes' +%Y-%m-%dT%H:%M:%SZ)"
             echo "signature=Reviewed with: \`/cr-request\` $VERSION skill"
             echo "summary=$summary"
             echo "state=$state"
@@ -369,7 +515,7 @@ jobs:
         run: |
           test -n "$GH_TOKEN" || { echo "::error::SO_UPSTARS_PR_TOKEN is not set"; exit 1; }
           login="$(gh api user --jq .login)"
-          test "$login" = so-upstars || { echo "::error::SO_UPSTARS_PR_TOKEN belongs to '$login', not so-upstars"; exit 1; }
+          test "$login" = "$REVIEWER" || { echo "::error::SO_UPSTARS_PR_TOKEN belongs to '$login', not $REVIEWER"; exit 1; }
           id=$(gh api -X POST "repos/$REPO/pulls/$NUMBER/reviews" -f commit_id="$HEAD_SHA" -f event=COMMENT \
             -F body=@"$BODY_FILE" --jq .id)
           echo "review_id=$id" >> "$GITHUB_OUTPUT"
@@ -383,17 +529,50 @@ jobs:
           SIGNATURE: ${{ steps.validate.outputs.signature }}
           SUMMARY: ${{ steps.validate.outputs.summary }}
           STATE: ${{ steps.validate.outputs.state }}
+          VALIDATED_AT: ${{ steps.validate.outputs.validated_at }}
         run: |
           post_status() {
             gh api "repos/$REPO/statuses/$HEAD_SHA" -f state="$1" -f description="$2" \
               -f context="$CONTEXT" -f target_url="$RUN_URL" > /dev/null
           }
-          if [ "$POST_OUTCOME" != success ] || [ -z "$REVIEW_ID" ]; then
+          # A run cancelled by a newer one keeps its hands off the status the newer gate set. Accepted
+          # trade-off (AGENTS.md): a gate that posts `pending` between this read and the post below loses
+          # its status to this run and skips publishing; Re-request review recovers it.
+          latest=$(gh api "repos/$REPO/commits/$HEAD_SHA/status?per_page=100" \
+            --jq '[.statuses[] | select(.context == env.CONTEXT)][0].target_url // ""') \
+            || { post_status error "Could not read the Claude review status"; exit 1; }
+          [ "$latest" = "$RUN_URL" ] || { echo "Status owned by a newer run"; exit 0; }
+          # A cancel may cut the post step short after the POST landed. Only then look the review up, and
+          # only among reviews submitted from two minutes before this run validated its body, so an earlier
+          # review of the same head stands in only when two runs on one head post within that window.
+          if [ "$POST_OUTCOME" = cancelled ] && [ -z "$REVIEW_ID" ]; then
+            ids=$(gh api --paginate "repos/$REPO/pulls/$NUMBER/reviews" \
+              --jq '.[] | select(.user.login == env.REVIEWER and .commit_id == env.HEAD_SHA
+                and .submitted_at >= env.VALIDATED_AT and (.body | contains(env.MARKER))) | .id') \
+              || { post_status error "Could not read the PR reviews"; exit 1; }
+            REVIEW_ID=$(tail -n 1 <<< "$ids")
+          elif [ "$POST_OUTCOME" != success ]; then
+            REVIEW_ID=""
+          fi
+          if [ -z "$REVIEW_ID" ]; then
             post_status failure "Posting the review failed"
             exit 1
           fi
           posted=$(gh api "repos/$REPO/pulls/$NUMBER/reviews/$REVIEW_ID" \
-            --jq '.user.login == "so-upstars" and .commit_id == env.HEAD_SHA
-              and (.body | contains(env.MARKER)) and (.body | contains(env.SIGNATURE))')
+            --jq '.user.login == env.REVIEWER and .commit_id == env.HEAD_SHA
+              and (.body | contains(env.MARKER)) and (.body | contains(env.SIGNATURE))') \
+            || { post_status error "Could not read the posted review"; exit 1; }
           [ "$posted" = true ] || { post_status failure "Posted review not found"; exit 1; }
           post_status "$STATE" "$SUMMARY"
+
+      # A step that failed before setting a final status, a transient API error for example.
+      - name: Report an unexpected failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          current=$(gh api "repos/$REPO/commits/$HEAD_SHA/status?per_page=100" \
+            --jq '[.statuses[] | select(.context == env.CONTEXT)][0] | "\(.target_url) \(.state)"')
+          [ "$current" = "$RUN_URL pending" ] || exit 0
+          gh api "repos/$REPO/statuses/$HEAD_SHA" -f state=error -f description="Publishing the review failed" \
+            -f context="$CONTEXT" -f target_url="$RUN_URL" > /dev/null
