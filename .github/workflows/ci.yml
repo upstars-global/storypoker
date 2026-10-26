@@ -175,7 +175,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
       options: --user root
@@ -196,7 +196,7 @@ jobs:
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       # A push that creates a branch reports an all-zero before SHA, which git archive cannot read.
       # A dispatch has neither SHA, so it compares with the merge-base, not the newer main tip.
-      - run: pnpm run test:visual "${BASE_REF:-$(git merge-base origin/main HEAD)}" --shard=${{ matrix.shard }}/6 --workers=4
+      - run: pnpm run test:visual "${BASE_REF:-$(git merge-base origin/main HEAD)}" --shard=${{ matrix.shard }}/8 --workers=4
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before) || '' }}
       - name: Upload test results

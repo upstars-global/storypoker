@@ -111,7 +111,7 @@ CI - `.github/workflows/ci.yml`. Ціль - кожен job до ~2 хв (ріш�
 `build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy Supabase-кредами на Google Chrome
 раннера через `PLAYWRIGHT_CHANNEL=chrome`: без apt, який зависав на повільному дзеркалі). Лише на
 `workflow_dispatch`: `e2e` (локальний Supabase на раннері, лише старт ~90 с; образи з `ghcr.io`: анонімні pull з
-`public.ecr.aws` падають з `toomanyrequests`) і `visual` (контейнер Playwright, 6 шардів; поки нестабільний, не
+`public.ecr.aws` падають з `toomanyrequests`) і `visual` (контейнер Playwright, 8 шардів; поки нестабільний, не
 дефект для рев'ю);
 деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
 job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.

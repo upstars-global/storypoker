@@ -33,7 +33,7 @@ VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only pnpm run tes
 
 ## Visual (`tests/visual/`)
 
-Проєкт `visual` (CI-job `Visual`, лише `workflow_dispatch`, 6 шардів, поки нестабільний) знімає скріншоти публічних сторінок, кімнати й модалок у 3 палітрах ×
+Проєкт `visual` (CI-job `Visual`, лише `workflow_dispatch`, 8 шардів, поки нестабільний) знімає скріншоти публічних сторінок, кімнати й модалок у 3 палітрах ×
 2 темах × 1280/375 px; `maxDiffPixelRatio: 0.01`, `retries: 0`. `playwright.config.ts` додає проєкт і його сервер
 (`:4174`, збірка в `test-results/visual-dist` з фіксованим фейковим Supabase URL) лише коли `visual` названо в
 `--project`: пиши `--project=visual <filter>`, бо `--project visual <path>` Playwright читає як кілька назв проєктів.
