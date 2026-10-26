@@ -79,6 +79,8 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           # Automatic runs stop after this many reviews by the bot on one PR
           AUTO_LIMIT: 3
+          # The required checks from AGENTS.md; Visual and E2E are not required and do not gate the review
+          REQUIRED_JOBS: '["Lint","Typecheck","Unit tests","Build","Public pages load"]'
         run: |
           post_status() {
             gh api "repos/$REPO/statuses/$head_sha" -f state="$1" -f description="$2" \
@@ -125,8 +127,16 @@ jobs:
           requested=$(jq --arg r "$REVIEWER" '[.requested_reviewers[].login] | index($r) != null' <<< "$pr")
 
           # CI runs on pull_request here, so the per-workflow list filtered by that event finds it
-          ci=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$head_sha&event=pull_request&per_page=1" \
-            --jq '.workflow_runs[0] | if . == null then "none" elif .status != "completed" then .status else .conclusion end')
+          ci_run=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$head_sha&event=pull_request&per_page=1" \
+            --jq '.workflow_runs[0] | if . == null then "none" elif .status != "completed" then .status else .id end')
+          ci=$ci_run
+          if [[ "$ci_run" =~ ^[0-9]+$ ]]; then
+            # A completed run is green when every required job succeeded; a missing one counts as failure
+            jobs=$(gh api --paginate "repos/$REPO/actions/runs/$ci_run/jobs?per_page=100" --jq '.jobs[] | {name, conclusion}')
+            ci=$(jq -rs --argjson required "$REQUIRED_JOBS" \
+              '[$required[] as $n | (map(select(.name == $n)) | first | .conclusion) // "missing"]
+                | if all(. == "success") then "success" else "failure" end' <<< "$jobs")
+          fi
           if [ "$ci" != success ]; then
             if [ "$requested" = true ]; then
               case "$ci" in
