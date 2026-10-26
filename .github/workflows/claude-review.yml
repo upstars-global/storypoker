@@ -310,6 +310,8 @@ jobs:
           # User-scope setting: Read, Grep, and Glob outside the working directory are refused; Claude Code
           # keeps ~/.claude/skills readable.
           settings: '{"permissions":{"blockReadsOutsideWorkingDirectories":true}}'
+          # Accepted trade-off (.github/AGENTS.md): the ` · ` exemption names both closing lines, as in the
+          # other review workflows, though the agent writes it only in the Next step line.
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ needs.gate.outputs.number }}
