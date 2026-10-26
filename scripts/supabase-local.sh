@@ -27,7 +27,7 @@ if [ -e "$env_test" ] && [ "$old_url" = "$api_url" ]; then
 else
   mkdir -p "$repo/.env"
   # The first backup holds the developer's own file; a later mismatch must not overwrite it
-  if [ -e "$env_test.bak" ]; then
+  if [ -e "$env_test" ] && [ -e "$env_test.bak" ]; then
     echo "$env_test pointed at ${old_url:-no URL}; kept the earlier backup $env_test.bak"
   elif [ -e "$env_test" ]; then
     cp "$env_test" "$env_test.bak"
