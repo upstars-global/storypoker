@@ -17,6 +17,9 @@ git rev-parse --verify --quiet "$base_ref^{commit}" >/dev/null || { echo "unknow
 node -e "const net = require('net'); let left = 2; for (const host of ['127.0.0.1', '::1']) net.connect(4174, host).on('connect', () => process.exit(1)).on('error', () => { if (--left === 0) process.exit(0) })" \
   || { echo "port 4174 is busy; stop that server first" >&2; exit 1; }
 rm -rf "${base_src:?}" "${base_dist:?}" "${shots:?}"
+# The copy carries AGENTS.md files of the base revision, which agents would pick up as instructions.
+trap 'rm -rf "${base_src:?}"' EXIT
+trap 'exit 130' INT TERM
 mkdir -p "$base_src"
 git archive "$base_ref" | tar -x -C "$base_src"
 
@@ -29,7 +32,6 @@ console.log('url=' + m.VISUAL_SUPABASE_URL + ' key=' + m.VISUAL_SUPABASE_KEY)
   CI=1 pnpm install --frozen-lockfile --ignore-scripts
   VITE_SUPABASE_URL="$url" VITE_SUPABASE_KEY="$key" pnpm exec vite build --outDir "$base_dist" --emptyOutDir
 )
-# The copy carries AGENTS.md files of the base revision, which agents would pick up as instructions.
 rm -rf "${base_src:?}"
 
 echo "rendering $base_ref as the reference"

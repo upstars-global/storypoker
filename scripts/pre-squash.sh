@@ -5,7 +5,8 @@ set -e
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo"
-base_ref="${1:-$(git merge-base origin/main HEAD)}"
+base_ref="${1:-$(git merge-base origin/main HEAD 2>/dev/null || true)}"
+[ -n "$base_ref" ] || { echo "no merge-base with origin/main; fetch it or pass <ref>" >&2; exit 1; }
 version="$(node -p "require('@playwright/test/package.json').version")"
 image="mcr.microsoft.com/playwright:v$version-noble"
 src="$repo/test-results/pre-squash-src"
@@ -19,6 +20,9 @@ pnpm run supabase:local
 # colima mounts only the home directory, so the copy lives under the repo, not in /tmp.
 # It keeps .git, which visual-compare.sh needs for git archive of the base revision.
 rm -rf "${src:?}" "${out:?}"
+# The copy carries AGENTS.md files of this revision, which agents would pick up as instructions.
+trap 'rm -rf "${src:?}"' EXIT
+trap 'exit 130' INT TERM
 mkdir -p "$src" "$out"
 tar -C "$repo" --exclude=./node_modules --exclude=./test-results --exclude=./dist -cf - . | tar -C "$src" -xf -
 
@@ -29,20 +33,19 @@ docker run --rm --network host --ipc host -e CI=1 --env-file "$repo/.env/.env.te
   -v "$src:/work" -v "$out:/out" -v storypoker-pnpm-store:/pnpm-store -w /work \
   -e BASE_REF="$base_ref" "$image" bash -c '
     git config --global --add safe.directory /work
-    corepack enable >/dev/null
+    corepack enable >/dev/null || exit 1
     pnpm config set store-dir /pnpm-store >/dev/null
-    pnpm install --frozen-lockfile --ignore-scripts >/dev/null
+    pnpm install --frozen-lockfile --ignore-scripts || exit 1
     status=0
     pnpm exec playwright test --project chromium --project webkit || status=1
-    cp -R test-results/playwright test-results/playwright-report /out/e2e 2>/dev/null || mkdir -p /out/e2e
+    mkdir -p /out/e2e
+    cp -R test-results/playwright test-results/playwright-report /out/e2e 2>/dev/null || true
     sh scripts/visual-compare.sh "$BASE_REF" --workers=4 || status=1
     mkdir -p /out/visual
     cp -R test-results/playwright test-results/playwright-report /out/visual 2>/dev/null || true
     exit $status
   ' || status=$?
 
-# The copy carries AGENTS.md files of this revision, which agents would pick up as instructions.
-rm -rf "${src:?}"
 [ "$status" -eq 0 ] && echo "pre-squash: e2e and visual passed against $base_ref" \
   || echo "pre-squash: failed; reports are in test-results/pre-squash" >&2
 exit "$status"
