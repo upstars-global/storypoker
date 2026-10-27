@@ -10,3 +10,7 @@
 
 Branch: 2610262356-dev-session
 Verify: PASS full tree be0ab174add8ebd27f53ae41e252074b8e212c55 2026-10-27 03:11
+Received R3: R3-F1 ACCEPT, R3-F2 ACCEPT Re-review: not needed
+Ruling: R2-F2 stays rejected - pre-squash supports colima only, where the host removed root-written files in every run - a native Linux Docker user gets a leftover copy to delete by hand
+Round review 3: R3-F1 Ctrl-C waits for the container; R3-F2 HUP skips the EXIT trap
+Verify: PASS full tree 04a8ce1fdd6736586dfea217b9e9d6cd89f544b4 2026-10-27 03:46

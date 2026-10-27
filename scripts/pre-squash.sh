@@ -22,14 +22,18 @@ pnpm run supabase:local
 rm -rf "${src:?}" "${out:?}"
 # The copy carries AGENTS.md files of this revision, which agents would pick up as instructions.
 trap 'rm -rf "${src:?}"' EXIT
-trap 'exit 130' INT TERM
+# Without a tty the docker CLI does not stop the container on Ctrl-C, and sh runs a trap only after its
+# foreground command returns, so the container runs in the background and the trap removes it.
+name="storypoker-pre-squash-$$"
+trap 'docker rm -f "$name" >/dev/null 2>&1; exit 130' INT TERM
+trap 'docker rm -f "$name" >/dev/null 2>&1; exit 129' HUP
 mkdir -p "$src" "$out"
 tar -C "$repo" --exclude=./node_modules --exclude=./test-results --exclude=./dist -cf - . | tar -C "$src" -xf -
 
 # CI=1 gives the worker count and retry of the former CI job; under CI the config skips .env/.env.test,
 # so the file goes in through --env-file.
 status=0
-docker run --rm --network host --ipc host -e CI=1 --env-file "$repo/.env/.env.test" \
+docker run --rm --name "$name" --network host --ipc host -e CI=1 --env-file "$repo/.env/.env.test" \
   -v "$src:/work" -v "$out:/out" -v storypoker-pnpm-store:/pnpm-store -w /work \
   -e BASE_REF="$base_ref" "$image" bash -c '
     git config --global --add safe.directory /work
@@ -44,7 +48,8 @@ docker run --rm --network host --ipc host -e CI=1 --env-file "$repo/.env/.env.te
     mkdir -p /out/visual
     cp -R test-results/playwright test-results/playwright-report /out/visual 2>/dev/null || true
     exit $status
-  ' || status=$?
+  ' &
+wait $! || status=$?
 
 [ "$status" -eq 0 ] && echo "pre-squash: e2e and visual passed against $base_ref" \
   || echo "pre-squash: failed; reports are in test-results/pre-squash" >&2

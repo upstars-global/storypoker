@@ -20,6 +20,7 @@ rm -rf "${base_src:?}" "${base_dist:?}" "${shots:?}"
 # The copy carries AGENTS.md files of the base revision, which agents would pick up as instructions.
 trap 'rm -rf "${base_src:?}"' EXIT
 trap 'exit 130' INT TERM
+trap 'exit 129' HUP
 mkdir -p "$base_src"
 git archive "$base_ref" | tar -x -C "$base_src"
 
