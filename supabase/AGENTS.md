@@ -11,6 +11,11 @@ Editor або Management API (`POST /v1/projects/<ref>/database/query` з осо
 `anon`/`authenticated` - лише в `seed.sql` (локально), у міграціях їх немає. Історії міграцій у базі немає:
 перед накатом звір стан через `information_schema`, кілька файлів - однією транзакцією, після DDL -
 `notify pgrst, 'reload schema';`.
+Поведінку самого Postgres (гонка двох `UPDATE ... WHERE`, блокування, ізоляція) без Docker перевіряй на тимчасовому
+кластері Homebrew: `initdb -D <tmp>/data -A trust -U postgres`,
+`pg_ctl -D <tmp>/data -o "-p <port> -k <tmp> -c listen_addresses=''" -w start`,
+сесії - `psql -h <tmp> -p <port> -U postgres -d postgres`, наприкінці `pg_ctl -D <tmp>/data -w stop`
+і лише після нього видалити теку. Порт назовні не відкривається; PostgREST і RLS так не перевірити.
 RLS перевіряй живою пробою, що нічого не лишає: міграцію й перевірки - в один `do`-блок, який закінчується
 `raise exception` з результатами (Management API відкочує все й повертає їх у тексті помилки). Роль і користувач -
 `set_config('role', 'authenticated', true)` і `set_config('request.jwt.claims', ...)` з `sub`, далі запит як
