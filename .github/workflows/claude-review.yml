@@ -78,7 +78,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           # Automatic runs stop after this many reviews by the bot on one PR
           AUTO_LIMIT: 3
-          # The required checks from AGENTS.md; Visual and E2E are not required and do not gate the review
+          # The required checks from AGENTS.md
           REQUIRED_JOBS: '["Lint","Typecheck","Unit tests","Build","Public pages load"]'
         run: |
           post_status() {

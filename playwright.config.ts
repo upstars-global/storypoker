@@ -104,12 +104,12 @@ export default defineConfig({
   projects: [
     {
       name: 'page-load',
-      use: devices['Desktop Chrome'],
+      use: { ...devices['Desktop Chrome'], channel: process.env.PLAYWRIGHT_CHANNEL },
       testMatch: ['**/page-load.spec.ts'],
     },
     {
       name: 'icon-delivery',
-      use: devices['Desktop Chrome'],
+      use: { ...devices['Desktop Chrome'], channel: process.env.PLAYWRIGHT_CHANNEL },
       testMatch: ['**/icon-delivery.spec.ts'],
     },
     {
