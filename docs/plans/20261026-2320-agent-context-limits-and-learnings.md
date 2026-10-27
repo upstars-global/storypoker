@@ -15,3 +15,5 @@ Ruling: R1-F2 rejected - the verify skill names standalone plan-journals docs/pl
 Ruling: R1-F3 rejected - the record has the verify skill's standalone plan-journal shape (Branch and Verify lines, no fence, no Base) - the verified tree is traced through the Branch line, not a commit
 Round review 1: R1-F1 budget text vs 64 KiB config; R1-F4 newline inside the quoted pg_ctl -o argument
 Verify: PASS full tree 6cb0f4d1d678f36d7764ce3354265e2bbe4a4c53 2026-10-27 04:37
+Received R2: R2-F1 ACCEPT (PR description only, tree unchanged); Re-review: not needed
+Round review 2: R2-F1 CI-check rule change missing from the PR description
