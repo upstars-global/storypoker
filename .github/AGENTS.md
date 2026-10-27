@@ -33,13 +33,17 @@ review-воркфлоу, хоч агент пише ` · ` лише в `Next ste
 хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
 `so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
 (копія з `main`), для `pull_request`-подій - одразу з гілки PR, для `workflow_dispatch` - з ref, на якому його
-запущено. Job `review` має групу `concurrency` за номером PR: новіший прогін після гейту (і dispatch чи запит на
+запущено. Щоб перевірити правку на копії з гілки PR, запитуй рев'ю `so-upstars` лише після кінця прогону `CI` на
+head і гейта `workflow_run` після нього: раніший запит гейт лише ставить у `pending`, а рев'ю потім робить
+`workflow_run` з копії `main`. Job `review` має групу `concurrency` за номером PR: новіший прогін після гейту (і dispatch чи запит на
 тому ж head) скасовує поточне рев'ю, старий head дістає `error`. Постить лише власник статусу (чий URL у
 статусі), тож dispatch і авторев'ю одного head, як і новий гейт між перевіркою власника й фінальним статусом
 старого прогону, можуть лишити `error` без рев'ю - прийнятий компроміс, а не дефект для рев'ю: хибного рев'ю
 немає, Re-request review лікує.
 Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
-прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review sha=`. GitHub не дає запросити рев'ю в
+прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review sha=`. Прогін гейта з `workflow_run`
+має `head_sha` вершини `main`, а не head PR: шукай його в `actions/workflows/claude-review.yml/runs` без фільтра
+`head_sha`, за `event` і часом. GitHub не дає запросити рев'ю в
 автора PR, а PR від `so-upstars` воркфлоу пропускає: шлях `review_requested` перевіряй на PR іншого акаунта.
 У `--allowedTools` агента `Write(./auto-review-out/review.md)` стоїть поруч з `Edit(...)`: `Edit` не створює файл,
 і без `Write` прогін іноді проходить, не записавши рев'ю. Пін action на SHA з коментарем `# vN` звіряй без API:

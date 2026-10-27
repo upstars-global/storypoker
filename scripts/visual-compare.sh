@@ -29,6 +29,8 @@ console.log('url=' + m.VISUAL_SUPABASE_URL + ' key=' + m.VISUAL_SUPABASE_KEY)
   CI=1 pnpm install --frozen-lockfile --ignore-scripts
   VITE_SUPABASE_URL="$url" VITE_SUPABASE_KEY="$key" pnpm exec vite build --outDir "$base_dist" --emptyOutDir
 )
+# The copy carries AGENTS.md files of the base revision, which agents would pick up as instructions.
+rm -rf "${base_src:?}"
 
 echo "rendering $base_ref as the reference"
 STORYPOKER_VISUAL_DIST="$base_dist" pnpm exec playwright test --project=visual --update-snapshots=all "$@" \

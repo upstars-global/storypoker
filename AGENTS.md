@@ -124,7 +124,9 @@ job `build` збирає `dist` лише для `icons:audit-build` і з placeh
 `pnpm-lock.yaml` - committed (required for `pnpm install --frozen-lockfile`). Do NOT add it to `.gitignore`.
 Peer Vite-плагіна, який імпортує його віртуальний модуль (`virtual:pwa-register` → `workbox-window`), став прямою
 `devDependency`: pnpm peer-и не hoist-ить. Збірку як у CI відтворюй у чистому worktree з
-`pnpm install --frozen-lockfile --ignore-scripts`.
+`pnpm install --frozen-lockfile --ignore-scripts`; `test:ci` там запускай з placeholder-кредами job `build`
+(`VITE_SUPABASE_URL=https://placeholder.supabase.co VITE_SUPABASE_KEY=placeholder`): без `.env/` `icons:audit-build`
+падає, бо клієнт Supabase вирізається з бандла.
 
 Усі env-файли - у `/.env/` (gitignored, окрім `*.example`). Vite читає через `envDir: '.env'` у `vite.config.ts`:
 `/.env/.env.local` (персональні override), `/.env/.env` (командні defaults), `/.env/.env.test` (креди тестового
