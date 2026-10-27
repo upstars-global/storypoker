@@ -18,3 +18,6 @@ Received R4: R4-F1 REJECT Re-review: not needed
 Ruling: R4-F1 rejected - docker CLI 29.9.2 exits on a process-group SIGINT during an image pull although started as a background job; no container and no copy stay behind, reproduced on the real trap lines
 Round review 4: R4-F1 Ctrl-C during the image pull may orphan the docker CLI
 Verify: PASS full tree 04a8ce1fdd6736586dfea217b9e9d6cd89f544b4 2026-10-27 03:56
+Received R5: R5-F1 ACCEPT, R5-F2 ACCEPT Re-review: not needed
+Round review 5: R5-F1 stale Visual/E2E note in the review gate; R5-F2 pre-squash from a git worktree fails with a misleading error
+Verify: PASS full tree e3f1e6ff81489e54021a975cf0af140dac9ea6f1 2026-10-27 04:15

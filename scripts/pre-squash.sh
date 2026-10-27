@@ -14,6 +14,8 @@ out="$repo/test-results/pre-squash"
 
 docker info >/dev/null 2>&1 || { echo "Docker is not running; start it with: colima start --cpu 4 --memory 6" >&2; exit 1; }
 git rev-parse --verify --quiet "$base_ref^{commit}" >/dev/null || { echo "unknown revision: $base_ref" >&2; exit 1; }
+# A git worktree has a .git file pointing into the main clone, which the container does not mount.
+[ -d "$repo/.git" ] || { echo "run pre-squash from the main checkout, not a git worktree" >&2; exit 1; }
 
 pnpm run supabase:local
 
