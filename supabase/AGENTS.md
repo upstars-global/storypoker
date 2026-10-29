@@ -29,7 +29,7 @@ allowed»), тож delete-політику так не перевірити - л
   background_owner_id, created_at)`
 - `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms,
   poll_question, result_cohorts[], alarm_minutes, alarm_muted)` - `result_cohorts` з `017`, check-констрейнт на
-  `DEV/BE/FE/SRE/QA`, `null` = DEV+QA; будильник таймера з `018` (`alarm_minutes` 3-20, `null` = 5 хв)
+  `DEV/BE/FE/SRE/QA`, `null` = DEV+BE+FE+QA; будильник таймера з `018` (`alarm_minutes` 3-20, `null` = 5 хв)
 - `players (id uuid PK, room_id, name, is_moderator, vote, user_id, shields text[], created_at, left_at)`
 - `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, deck_preset, created_at)`
 - `user_profiles (user_id uuid PK, avatar_style, avatar_seed, avatar_url, updated_at)`

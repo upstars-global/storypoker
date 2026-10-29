@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { cohortForShields, groupVotesByCohort, normalizeCohorts, resultCohortFor } from '~/utils/resultCohorts'
 
 describe('normalizeCohorts', () => {
-  it('defaults to DEV and QA until the room configures them', () => {
-    expect(normalizeCohorts(null)).toEqual(['DEV', 'QA'])
-    expect(normalizeCohorts(undefined)).toEqual(['DEV', 'QA'])
+  it('defaults to DEV, BE, FE and QA until the room configures them', () => {
+    expect(normalizeCohorts(null)).toEqual(['DEV', 'BE', 'FE', 'QA'])
+    expect(normalizeCohorts(undefined)).toEqual(['DEV', 'BE', 'FE', 'QA'])
   })
 
   it('drops unknown tags and keeps the canonical order', () => {
@@ -50,9 +50,11 @@ describe('groupVotesByCohort', () => {
     { shields: ['sm'], vote: null },
   ]
 
-  it('shows all developers in DEV and QA apart by default', () => {
+  it('shows BE, FE and QA apart from DEV by default', () => {
     expect(groupVotesByCohort(players, normalizeCohorts(null))).toEqual([
-      { key: 'DEV', votes: { '3': 2, '5': 2 } },
+      { key: 'DEV', votes: { '3': 1 } },
+      { key: 'BE', votes: { '5': 1 } },
+      { key: 'FE', votes: { '3': 1, '5': 1 } },
       { key: 'QA', votes: { '8': 2 } },
     ])
   })

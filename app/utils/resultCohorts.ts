@@ -3,7 +3,7 @@ import { roleTagForShields } from './shields'
 export const RESULT_COHORTS: readonly string[] = ['DEV', 'BE', 'FE', 'SRE', 'QA']
 export const ALWAYS_SHOWN_COHORT = 'QA'
 export const DEV_UMBRELLA_COHORT = 'DEV'
-export const DEFAULT_RESULT_COHORTS: readonly string[] = [DEV_UMBRELLA_COHORT, ALWAYS_SHOWN_COHORT]
+export const DEFAULT_RESULT_COHORTS: readonly string[] = [DEV_UMBRELLA_COHORT, 'BE', 'FE', ALWAYS_SHOWN_COHORT]
 const DEV_SUBCOHORTS = new Set(['BE', 'FE', 'SRE'])
 
 export type VoteCounts = Record<string, number>
