@@ -162,7 +162,7 @@ export default function ResultsArea({
           <div
             key={g.label}
             className="flex flex-col items-center gap-2"
-            style={{ flex: '1 1 280px', maxWidth: '500px' }}
+            style={{ flex: '0 1 240px' }}
           >
             <span className="mui-h6 text-primary">
               {g.label}

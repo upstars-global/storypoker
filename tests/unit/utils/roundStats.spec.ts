@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { averageOf, voteToNumber, summarizeRound, isNumericPreset, splitRoundAlignment } from '~/utils/roundStats'
+import { averageOf, voteToNumber, summarizeRound, isNumericPreset, roleRoundAlignment, splitRoundAlignment } from '~/utils/roundStats'
 import type { RoundHistory } from '~/stores/types'
 
 const FIB = ['1', '2', '3', '5', '8', '13', '21', '?', '☕']
@@ -146,5 +146,23 @@ describe('splitRoundAlignment without non-estimators', () => {
     }
     const shields = new Map([['d1', ['be']], ['d2', ['fe']], ['po', ['po']]])
     expect(splitRoundAlignment(round as never, shields)).toEqual({ dev: 100, qa: null })
+  })
+})
+
+describe('roleRoundAlignment', () => {
+  it('scores every role on its own and skips custom roles', () => {
+    const round = {
+      id: 'r', room_id: 'x', started_at: '', revealed_at: '', created_at: null,
+      active_cards: ['1', '2', '3', '5', '8'], deck_preset: 'scrum',
+      votes: [
+        { player_id: 'b1', name: 'B1', vote: '3' },
+        { player_id: 'b2', name: 'B2', vote: '3' },
+        { player_id: 'po', name: 'PO', vote: '8' },
+        { player_id: 'ux', name: 'UX', vote: '1' },
+        { player_id: 'gone', name: 'Gone', vote: '5' },
+      ],
+    }
+    const shields = new Map([['b1', ['be']], ['b2', ['be']], ['po', ['po']], ['ux', ['custom:UX']]])
+    expect(roleRoundAlignment(round as never, shields)).toEqual({ BE: 100, PO: null, DEV: null })
   })
 })

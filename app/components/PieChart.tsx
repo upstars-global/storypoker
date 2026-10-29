@@ -52,7 +52,7 @@ export default function PieChart({ votes }: { votes: Record<string, number> }) {
               <circle
                 cx="50"
                 cy="50"
-                r="49"
+                r="40"
                 fill={data.single.color}
               />
               <text

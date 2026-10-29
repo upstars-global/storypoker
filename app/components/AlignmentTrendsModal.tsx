@@ -13,8 +13,8 @@ import { useShieldsMap } from '~/hooks/useShieldsMap'
 import { useRoomStore } from '~/stores/room'
 import type { RoundHistory } from '~/stores/types'
 import { DECK_PRESETS } from '~/utils/cardDecks'
-import { isNumericPreset, splitRoundAlignment, summarizeRound, voteToNumber } from '~/utils/roundStats'
-import { DEV_COHORT_LABEL, type TrendCohort } from '~/utils/shields'
+import { COHORT_COLORS, ROLE_COHORTS } from '~/utils/resultCohorts'
+import { isNumericPreset, roleRoundAlignment, summarizeRound, voteToNumber } from '~/utils/roundStats'
 
 registerChartModules([CanvasRenderer, LineChart, GridComponent, TooltipComponent, DataZoomComponent, MarkLineComponent])
 
@@ -29,8 +29,8 @@ const TIME_RANGES: readonly TimeRange[] = ['30D', '90D', '6M', '1Y']
 
 interface ChartPoint {
   date: Date
-  devAlignment: number | null
-  qaAlignment: number | null
+  alignments: Record<string, number | null>
+  overall: number | null
   deckPreset: string | null
   round: RoundHistory
 }
@@ -92,7 +92,7 @@ function rangeClass(active: boolean, padding: string): string {
 
 type TrendsChartProps = {
   option: EChartsCoreOption
-  onViewDetails: (index: number, cohort: TrendCohort) => void
+  onViewDetails: (index: number, cohort: string) => void
 }
 
 function TrendsChart({ option, onViewDetails }: TrendsChartProps) {
@@ -110,7 +110,7 @@ function TrendsChart({ option, onViewDetails }: TrendsChartProps) {
       if (!target?.closest) return
       const detailsEl = target.closest<HTMLElement>('[data-view-details]')
       if (detailsEl) {
-        const cohort: TrendCohort = detailsEl.dataset.cohort === 'QA' ? 'QA' : 'DEV'
+        const cohort = detailsEl.dataset.cohort ?? ''
         viewDetails.current(Number(detailsEl.dataset.index), cohort)
         chart.current?.dispatchAction({ type: 'hideTip' })
         return
@@ -138,10 +138,9 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
   const [allPoints, setAllPoints] = useState<ChartPoint[]>([])
   const [loading, setLoading] = useState(true)
   const [deckFilter, setDeckFilter] = useState<string | null>(null)
-  const [showDevSeries, setShowDevSeries] = useState(true)
-  const [showQaSeries, setShowQaSeries] = useState(true)
+  const [hiddenCohorts, setHiddenCohorts] = useState<ReadonlySet<string>>(new Set())
   const [selectedRound, setSelectedRound] = useState<RoundHistory | null>(null)
-  const [selectedCohort, setSelectedCohort] = useState<TrendCohort | null>(null)
+  const [selectedCohort, setSelectedCohort] = useState<string | null>(null)
   const shieldsRef = useRef(shieldsMap)
 
   useEffect(() => {
@@ -162,8 +161,9 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
             return true
           })
           .map((r) => {
-            const { dev, qa } = splitRoundAlignment(r, shieldsRef.current)
-            return { date: new Date(r.revealed_at), devAlignment: dev, qaAlignment: qa, deckPreset: r.deck_preset, round: r }
+            const alignments = roleRoundAlignment(r, shieldsRef.current)
+            const overall = average(Object.values(alignments))
+            return { date: new Date(r.revealed_at), alignments, overall, deckPreset: r.deck_preset, round: r }
           })
           .sort((a, b) => a.date.getTime() - b.date.getTime()))
       } catch (e) {
@@ -198,20 +198,18 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
     && (deckFilter === null || p.deckPreset === deckFilter),
   ), [allPoints, cutoff, deckFilter])
 
-  const hasQaData = points.some(p => p.qaAlignment !== null)
-  const currentDevScore = [...points].reverse().find(p => p.devAlignment !== null)?.devAlignment ?? null
-  const currentQaScore = [...points].reverse().find(p => p.qaAlignment !== null)?.qaAlignment ?? null
-  const avgDev = average(points.map(p => p.devAlignment))
-  const avgQa = average(points.map(p => p.qaAlignment))
+  const cohortsWithData = ROLE_COHORTS.filter(cohort => points.some(p => p.alignments[cohort] != null))
+  const currentScore = [...points].reverse().find(p => p.overall !== null)?.overall ?? null
+  const avgScore = average(points.map(p => p.overall))
   const estimatesCount = points.length
   const hasEnoughData = points.length >= 2
 
   let trend: { pct: number; dir: 'up' | 'down' | 'stable' } | null = null
-  const devVals = points.map(p => p.devAlignment).filter((v): v is number => v !== null)
-  if (devVals.length >= 4) {
-    const half = Math.floor(devVals.length / 2)
-    const recentAvg = devVals.slice(half).reduce((s, v) => s + v, 0) / (devVals.length - half)
-    const olderAvg = devVals.slice(0, half).reduce((s, v) => s + v, 0) / half
+  const overallVals = points.map(p => p.overall).filter((v): v is number => v !== null)
+  if (overallVals.length >= 4) {
+    const half = Math.floor(overallVals.length / 2)
+    const recentAvg = overallVals.slice(half).reduce((s, v) => s + v, 0) / (overallVals.length - half)
+    const olderAvg = overallVals.slice(0, half).reduce((s, v) => s + v, 0) / half
     const pct = olderAvg === 0 ? 0 : ((recentAvg - olderAvg) / olderAvg) * 100
     trend = {
       pct: Math.abs(Math.round(pct * 10) / 10),
@@ -226,20 +224,18 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
     const tooltipDateFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' })
 
     const categories: string[] = []
-    const dev: (number | null)[] = []
-    const qa: (number | null)[] = []
+    const visibleCohorts = cohortsWithData.filter(cohort => !hiddenCohorts.has(cohort))
+    const data: Record<string, (number | null)[]> = Object.fromEntries(visibleCohorts.map(cohort => [cohort, []]))
     const indexMap: number[] = []
     points.forEach((p, i) => {
       const prev = points[i - 1]
       if (prev && (startOfDay(p.date) - startOfDay(prev.date)) / DAY_MS > 1) {
         categories.push('')
-        dev.push(null)
-        qa.push(null)
+        for (const cohort of visibleCohorts) data[cohort]!.push(null)
         indexMap.push(-1)
       }
       categories.push(`${axisDateFmt.format(p.date)}\nw${isoWeek(p.date)}`)
-      dev.push(p.devAlignment)
-      qa.push(p.qaAlignment)
+      for (const cohort of visibleCohorts) data[cohort]!.push(p.alignments[cohort] ?? null)
       indexMap.push(i)
     })
 
@@ -248,7 +244,7 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
       const point = points[realIdx]
       if (!point || params.value === null || params.value === undefined) return ''
       const dateStr = tooltipDateFmt.format(point.date)
-      const cohort: TrendCohort = params.seriesName === 'QA' ? 'QA' : 'DEV'
+      const cohort = params.seriesName ?? ''
       return `<div style="min-width:130px">`
         + `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">`
         + `<span style="font-weight:600;color:#fff;font-size:11px;">${params.seriesName} ${params.value}%</span>`
@@ -259,29 +255,17 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
         + `</div>`
     }
 
-    const devSeries = {
-      name: DEV_COHORT_LABEL,
+    const cohortSeries = visibleCohorts.map(cohort => ({
+      name: cohort,
       type: 'line',
       smooth: true,
       symbol: 'circle',
       symbolSize: 8,
       connectNulls: false,
-      lineStyle: { width: 2, color: '#26a69a' },
-      itemStyle: { color: '#26a69a' },
-      data: dev,
-    }
-
-    const qaSeries = {
-      name: 'QA',
-      type: 'line',
-      smooth: true,
-      symbol: 'circle',
-      symbolSize: 8,
-      connectNulls: false,
-      lineStyle: { width: 2, color: '#ffa726' },
-      itemStyle: { color: '#ffa726' },
-      data: qa,
-    }
+      lineStyle: { width: 2, color: COHORT_COLORS[cohort] },
+      itemStyle: { color: COHORT_COLORS[cohort] },
+      data: data[cohort],
+    }))
 
     const refLineSeries = {
       name: '__refLines',
@@ -303,10 +287,7 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
       },
     }
 
-    const series: object[] = []
-    if (showDevSeries) series.push(devSeries)
-    if (showQaSeries && points.some(p => p.qaAlignment !== null)) series.push(qaSeries)
-    series.push(refLineSeries)
+    const series: object[] = [...cohortSeries, refLineSeries]
 
     return {
       backgroundColor: 'transparent',
@@ -360,9 +341,17 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
       ],
       series,
     }
-  }, [points, showDevSeries, showQaSeries, locale, t])
+  }, [points, cohortsWithData, hiddenCohorts, locale, t])
 
-  function openRoundSnapshotAt(idx: number, cohort: TrendCohort) {
+  function toggleCohort(cohort: string) {
+    setHiddenCohorts((current) => {
+      const next = new Set(current)
+      if (!next.delete(cohort)) next.add(cohort)
+      return next
+    })
+  }
+
+  function openRoundSnapshotAt(idx: number, cohort: string) {
     const round = points[idx]?.round
     if (!round) return
     setSelectedRound(round)
@@ -398,27 +387,16 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
                   <div className="flex flex-col gap-1 rounded border p-3">
                     <span className="text-mui-caption text-muted">{t('trends.currentScore')}</span>
                     <div className="flex items-end gap-2">
-                      <span
-                        className="text-2xl font-bold"
-                        style={{ color: '#26a69a' }}
-                      >
-                        {currentDevScore ?? '-'}
+                      <span className="text-2xl font-bold text-primary">
+                        {currentScore ?? '-'}
                       </span>
-                      {hasQaData && (
-                        <span
-                          className="text-2xl font-bold"
-                          style={{ color: '#ffa726' }}
-                        >
-                          {`/ ${currentQaScore ?? '-'}`}
-                        </span>
-                      )}
                     </div>
-                    {currentDevScore !== null && (
+                    {currentScore !== null && (
                       <span
                         className="w-fit rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
-                        style={{ backgroundColor: levelColor(currentDevScore) }}
+                        style={{ backgroundColor: levelColor(currentScore) }}
                       >
-                        {alignmentLevel(currentDevScore)}
+                        {alignmentLevel(currentScore)}
                       </span>
                     )}
                   </div>
@@ -450,27 +428,16 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
                   <div className="flex flex-col gap-1 rounded border p-3">
                     <span className="text-mui-caption text-muted">{t('trends.averageScore')}</span>
                     <div className="flex items-end gap-2">
-                      <span
-                        className="text-2xl font-bold"
-                        style={{ color: '#26a69a' }}
-                      >
-                        {avgDev ?? '-'}
+                      <span className="text-2xl font-bold text-primary">
+                        {avgScore ?? '-'}
                       </span>
-                      {hasQaData && (
-                        <span
-                          className="text-2xl font-bold"
-                          style={{ color: '#ffa726' }}
-                        >
-                          {`/ ${avgQa ?? '-'}`}
-                        </span>
-                      )}
                     </div>
-                    {avgDev !== null && (
+                    {avgScore !== null && (
                       <span
                         className="w-fit rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
-                        style={{ backgroundColor: levelColor(avgDev) }}
+                        style={{ backgroundColor: levelColor(avgScore) }}
                       >
-                        {alignmentLevel(avgDev)}
+                        {alignmentLevel(avgScore)}
                       </span>
                     )}
                   </div>
@@ -489,32 +456,21 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
                         {t('trends.chartTitle')}
                       </span>
                       <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          className={`flex items-center gap-1 text-mui-caption transition-opacity${showDevSeries ? '' : ' opacity-40'}`}
-                          aria-pressed={showDevSeries}
-                          onClick={() => setShowDevSeries(!showDevSeries)}
-                        >
-                          <span
-                            className="inline-block h-2 w-4 rounded"
-                            style={{ background: '#26a69a' }}
-                          />
-                          {DEV_COHORT_LABEL}
-                        </button>
-                        {hasQaData && (
+                        {cohortsWithData.map(cohort => (
                           <button
+                            key={cohort}
                             type="button"
-                            className={`flex items-center gap-1 text-mui-caption transition-opacity${showQaSeries ? '' : ' opacity-40'}`}
-                            aria-pressed={showQaSeries}
-                            onClick={() => setShowQaSeries(!showQaSeries)}
+                            className={`flex items-center gap-1 text-mui-caption transition-opacity${hiddenCohorts.has(cohort) ? ' opacity-40' : ''}`}
+                            aria-pressed={!hiddenCohorts.has(cohort)}
+                            onClick={() => toggleCohort(cohort)}
                           >
                             <span
                               className="inline-block h-2 w-4 rounded"
-                              style={{ background: '#ffa726' }}
+                              style={{ background: COHORT_COLORS[cohort] }}
                             />
-                            QA
+                            {cohort}
                           </button>
-                        )}
+                        ))}
                       </div>
                     </div>
                     <div className="flex gap-1">

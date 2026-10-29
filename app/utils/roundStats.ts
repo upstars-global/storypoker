@@ -1,5 +1,6 @@
 import { alignmentScore } from './alignment'
 import { trendCohorts } from './shields'
+import { voteCohortFor } from './resultCohorts'
 import { DECK_PRESETS, DEFAULT_PRESET_ID } from './cardDecks'
 import type { RoundHistory } from '~/stores/types'
 
@@ -71,6 +72,21 @@ export function splitRoundAlignment(
     dev: alignmentScore(devCounts, activeCards),
     qa: alignmentScore(qaCounts, activeCards),
   }
+}
+
+export function roleRoundAlignment(
+  round: RoundHistory,
+  shieldsByPlayer: ReadonlyMap<string, string[]>,
+): Record<string, number | null> {
+  const countsByCohort: Record<string, Record<string, number>> = {}
+  for (const v of round.votes) {
+    const cohort = voteCohortFor(shieldsByPlayer, v.player_id)
+    if (!cohort) continue
+    const counts = countsByCohort[cohort] ??= {}
+    counts[v.vote] = (counts[v.vote] ?? 0) + 1
+  }
+  const activeCards = resolveActiveCards(round.active_cards, round.deck_preset)
+  return Object.fromEntries(Object.entries(countsByCohort).map(([cohort, counts]) => [cohort, alignmentScore(counts, activeCards)]))
 }
 
 export function roundAlignment(
