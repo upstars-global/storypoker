@@ -434,10 +434,20 @@ describe('room page results', () => {
 
   it('falls back to a single all-votes circle when no voter has a cohort', async () => {
     await mountRoom({
-      players: [me, fakePlayer('dan', ['po'], '3'), fakePlayer('erin', ['sm'], '5')],
+      players: [me, fakePlayer('dan', ['custom:Design'], '3'), fakePlayer('erin', ['custom:UX'], '5')],
     })
     expect(lastProps(ResultsArea).groups).toBeNull()
     expect(blockLabels()).toEqual([i18n.t('results.general')])
+  })
+
+  it('shows PO and SM in their own circles', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('dan', ['po'], '3'), fakePlayer('erin', ['sm'], '5')],
+    })
+    expect(lastProps(ResultsArea).groups).toEqual([
+      { label: 'PO', votes: { '3': 1 } },
+      { label: 'SM', votes: { '5': 1 } },
+    ])
   })
 
   it('counts a voter without a role as DEV', async () => {

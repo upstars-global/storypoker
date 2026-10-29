@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { cohortForShields, groupVotesByCohort, normalizeCohorts, resultCohortFor } from '~/utils/resultCohorts'
 
 describe('normalizeCohorts', () => {
-  it('defaults to DEV and QA until the room configures them', () => {
-    expect(normalizeCohorts(null)).toEqual(['DEV', 'QA'])
-    expect(normalizeCohorts(undefined)).toEqual(['DEV', 'QA'])
+  it('defaults to every developer role and QA until the room configures them', () => {
+    expect(normalizeCohorts(null)).toEqual(['DEV', 'BE', 'FE', 'SRE', 'QA'])
+    expect(normalizeCohorts(undefined)).toEqual(['DEV', 'BE', 'FE', 'SRE', 'QA'])
   })
 
   it('drops unknown tags and keeps the canonical order', () => {
@@ -25,9 +25,9 @@ describe('cohortForShields', () => {
     expect(cohortForShields(['aqa'])).toBe('QA')
   })
 
-  it('leaves PO, SM and custom roles outside the cohorts', () => {
-    expect(cohortForShields(['po'])).toBeNull()
-    expect(cohortForShields(['sm'])).toBeNull()
+  it('gives PO and SM their own cohorts and leaves custom roles outside', () => {
+    expect(cohortForShields(['po'])).toBe('PO')
+    expect(cohortForShields(['sm'])).toBe('SM')
     expect(cohortForShields(['custom:Design'])).toBeNull()
   })
 
@@ -50,19 +50,25 @@ describe('groupVotesByCohort', () => {
     { shields: ['sm'], vote: null },
   ]
 
-  it('shows all developers in DEV and QA apart by default', () => {
-    expect(groupVotesByCohort(players, normalizeCohorts(null))).toEqual([
-      { key: 'DEV', votes: { '3': 2, '5': 2 } },
+  it('shows every role in its own circle by default', () => {
+    expect(groupVotesByCohort([...players, { shields: ['sre'], vote: '5' }, { shields: ['sm'], vote: '1' }], normalizeCohorts(null))).toEqual([
+      { key: 'DEV', votes: { '3': 1 } },
+      { key: 'BE', votes: { '5': 1 } },
+      { key: 'FE', votes: { '3': 1, '5': 1 } },
+      { key: 'SRE', votes: { '5': 1 } },
       { key: 'QA', votes: { '8': 2 } },
+      { key: 'PO', votes: { '2': 1 } },
+      { key: 'SM', votes: { '1': 1 } },
     ])
   })
 
-  it('builds one group per cohort and ignores PO, SM and players without a role', () => {
+  it('keeps PO in its own circle and ignores custom roles', () => {
     expect(groupVotesByCohort(players, ['DEV', 'BE', 'FE', 'SRE', 'QA'])).toEqual([
       { key: 'DEV', votes: { '3': 1 } },
       { key: 'BE', votes: { '5': 1 } },
       { key: 'FE', votes: { '3': 1, '5': 1 } },
       { key: 'QA', votes: { '8': 2 } },
+      { key: 'PO', votes: { '2': 1 } },
     ])
   })
 
@@ -70,6 +76,7 @@ describe('groupVotesByCohort', () => {
     expect(groupVotesByCohort([...players, { shields: ['sre'], vote: '5' }], ['DEV'])).toEqual([
       { key: 'DEV', votes: { '3': 2, '5': 3 } },
       { key: 'QA', votes: { '8': 2 } },
+      { key: 'PO', votes: { '2': 1 } },
     ])
   })
 
@@ -78,6 +85,7 @@ describe('groupVotesByCohort', () => {
       { key: 'DEV', votes: { '3': 1, '5': 2 } },
       { key: 'FE', votes: { '3': 1, '5': 1 } },
       { key: 'QA', votes: { '8': 2 } },
+      { key: 'PO', votes: { '2': 1 } },
     ])
   })
 
@@ -86,6 +94,7 @@ describe('groupVotesByCohort', () => {
       { key: 'BE', votes: { '5': 1 } },
       { key: 'FE', votes: { '3': 1, '5': 1 } },
       { key: 'QA', votes: { '8': 2 } },
+      { key: 'PO', votes: { '2': 1 } },
     ])
   })
 
@@ -103,6 +112,7 @@ describe('resultCohortFor', () => {
     expect(resultCohortFor('DEV', ['BE', 'QA'])).toBeNull()
     expect(resultCohortFor('BE', ['DEV', 'BE', 'QA'])).toBe('BE')
     expect(resultCohortFor('QA', ['QA'])).toBe('QA')
+    expect(resultCohortFor('PO', ['DEV'])).toBe('PO')
     expect(resultCohortFor(null, ['DEV'])).toBeNull()
   })
 })

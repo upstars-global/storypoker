@@ -5,12 +5,13 @@ import RoleBadge from '~/components/RoleBadge'
 import { useCardLabel } from '~/hooks/useCardLabel'
 import type { RoundHistory } from '~/stores/types'
 import { DECK_PRESETS } from '~/utils/cardDecks'
-import { DEV_COHORT_LABEL, roleTagForShields, roleTagOrder, trendCohorts, type TrendCohort } from '~/utils/shields'
+import { COHORT_COLORS, voteCohortFor } from '~/utils/resultCohorts'
+import { roleTagForShields, roleTagOrder } from '~/utils/shields'
 
 type RoundSnapshotModalProps = {
   round: RoundHistory
   shieldsMap?: Map<string, string[]>
-  cohort?: TrendCohort | null
+  cohort?: string | null
   onClose: () => void
 }
 
@@ -21,10 +22,8 @@ export default function RoundSnapshotModal({ round, shieldsMap, cohort = null, o
   const deckName = round.deck_preset
     ? (DECK_PRESETS.find(p => p.id === round.deck_preset)?.name ?? round.deck_preset)
     : null
-  const cohortLabel = cohort ? (cohort === 'QA' ? 'QA' : DEV_COHORT_LABEL) : null
-  const voteCohorts = trendCohorts(round.votes, shieldsMap)
   const sortedVotes = [...round.votes]
-    .filter(v => !cohort || voteCohorts.get(v.player_id) === cohort)
+    .filter(v => !cohort || voteCohortFor(shieldsMap, v.player_id) === cohort)
     .map(v => ({ ...v, roleTag: roleTagForShields(shieldsMap?.get(v.player_id)) }))
     .sort((a, b) => roleTagOrder(a.roleTag) - roleTagOrder(b.roleTag) || a.name.localeCompare(b.name))
 
@@ -43,12 +42,12 @@ export default function RoundSnapshotModal({ round, shieldsMap, cohort = null, o
           className="flex items-center gap-2 text-mui-h2 font-bold text-primary"
         >
           {t('trends.roundSnapshotTitle')}
-          {cohortLabel && (
+          {cohort && (
             <span
               className="rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
-              style={{ backgroundColor: cohort === 'QA' ? '#ffa726' : '#26a69a' }}
+              style={{ backgroundColor: COHORT_COLORS[cohort] }}
             >
-              {cohortLabel}
+              {cohort}
             </span>
           )}
         </h3>

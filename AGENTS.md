@@ -178,9 +178,10 @@ VITE_SUPABASE_KEY=...        # publishable client key
   role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` дає DEV/QA-спліт
   для історії, трендів і API
 - **Кола результатів:** після reveal - коло на когорту DEV/BE/FE/SRE/QA (QA = QA+GQA+AQA, завжди показується),
-  набір - чіпи «Показувати результати» в «Налаштувати колоду» (`room_state.result_cohorts`, `null` = DEV+QA). DEV увімкнено
+  набір - чіпи «Показувати результати» в «Налаштувати колоду» (`room_state.result_cohorts`, `null` = усі). DEV увімкнено
   - загальне коло: вимкнені BE/FE/SRE зливаються в нього; DEV вимкнено - голоси DEV і вимкнених ролей приховані, бейдж
-  червоний. PO/SM і кастомні - поза колами й трендами; без ролі й ті, хто вийшов, - DEV; у трендах усі розробники - один DEV
+  червоний. PO і SM - завжди власні кола (не в чіпах); кастомні - поза колами й трендами; без ролі й ті, хто вийшов, -
+  DEV. Графік трендів - лінія на кожну роль (`roleRoundAlignment()`), історія й API - DEV/QA-спліт
   (`resultCohortFor()` у `resultCohorts.ts`, `trendCohorts()` у `shields.ts`)
 - **Consensus:** салют + decision-sound, коли хоча б одне коло результатів одноголосне з ≥ 2 голосами. Деталі -
   `app/utils/AGENTS.md`

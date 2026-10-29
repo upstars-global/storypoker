@@ -34,6 +34,5 @@
   "terminal.integrated.enablePersistentSessions": true,
   "terminal.integrated.persistentSessionReviveProcess": "onExitAndWindowClose",
   "window.confirmBeforeClose": "keyboardOnly",
-  "editor.hover.enabled": "off",
-  "editor.parameterHints.enabled": false,
+  "files.autoSave": "onFocusChange",
 }
