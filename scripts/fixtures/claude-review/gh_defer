@@ -14,7 +14,8 @@ if role=='fixture-resolver':
     if payload and payload.get('query','').startswith('mutation') and 'resolveReviewThread' not in payload['query']: sys.exit(7)
 if payload and 'resolveReviewThread' in payload.get('query','') and role!='fixture-resolver': sys.exit(7)
 
-review={'id':202,'user':{'login':'so-upstars'},'commit_id':'a'*40,'body':state.get('body','initial')}
+review_id=int(os.environ.get('REVIEW_ID','202'))
+review={'id':review_id,'user':{'login':'so-upstars'},'commit_id':'a'*40,'body':state.get('body','initial')}
 result=None
 if ep=='repos/owner/repo/commits/'+('a'*40)+'/status?per_page=100':
     print(os.environ.get('STATUS_OWNER',os.environ['RUN_URL'])); sys.exit(0)
@@ -23,7 +24,9 @@ elif ep=='repos/owner/repo/statuses/'+('a'*40):
     result={}
 elif ep=='user': result={'login':'so-upstars'}
 elif ep=='repos/owner/repo/pulls/42': result={'number':42,'head':{'sha':state.get('head','a'*40)}}
-elif ep=='repos/owner/repo/pulls/42/reviews/202':
+elif ep.startswith('repos/owner/repo/pulls/42/reviews?'):
+    result=[state['origin']]+state.get('history',[])+[review]
+elif ep==f'repos/owner/repo/pulls/42/reviews/{review_id}':
     if method=='GET':
         if '--jq' in a:
             print('true' if os.environ.get('MARKER','') in review['body'] and os.environ.get('SIGNATURE','') in review['body'] else 'false'); sys.exit(0)

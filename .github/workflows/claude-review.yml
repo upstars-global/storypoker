@@ -282,6 +282,13 @@ jobs:
               def timestamp(value):
                   require(isinstance(value,str) and re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z',value),'invalid evidence time')
                   return datetime.fromisoformat(value.replace('Z','+00:00'))
+              def accepted_proposal(envelope, finding, proposal, source):
+                  key=(finding['origin_review_id'],finding['original_id'],finding['path'])
+                  evidence=[e for e in envelope['disposition_events'] if (e['origin_review_id'],e['original_id'],e['path'])==key]
+                  expected={'origin_review_id':key[0],'original_id':key[1],'path':key[2],
+                      'disposition':'DEFER','reason':proposal['reason'],'source_comment_id':source['databaseId'],
+                      'source_author':source['author']['login'],'source_updated_at':source['updatedAt']}
+                  return len(evidence)==1 and evidence[0]==expected
               for r,d in valid:
                   for f in d['previous_findings']:
                       key=(f['origin_review_id'],f['original_id'])
@@ -303,13 +310,13 @@ jobs:
                       for v,c in candidates:
                           if v['head_sha'] not in known_heads:
                               history_gap=True; continue
-                          timeline[key].append((timestamp(c['updatedAt']),1,c['databaseId'],'host',v))
+                          timeline[key].append((timestamp(c['updatedAt']),1,c['databaseId'],'host',(v,c)))
                       # Host dispositions are explicit; NOT_ADDRESSED only clears a prior fixed status.
                       # A later ADDRESSED proves a fix, while a later explicit host decision replaces it.
-                      acceptance=None; host=None
+                      acceptance=None; host=None; host_source=None
                       for _,_,_,kind,value in sorted(timeline[key]):
                           if kind=='host':
-                              host=value; states[key]=host['disposition']; acceptance=None
+                              host,host_source=value; states[key]=host['disposition']; acceptance=None
                           else:
                               previous,envelope=value
                               if previous['status']=='ADDRESSED':
@@ -319,7 +326,8 @@ jobs:
                                   acceptance=None
                                   if (states[key]=='DEFER' and previous['defer_decision']=='ACCEPTED'
                                       and host is not None and envelope['head_sha']==host['head_sha']
-                                      and previous['owner']==host['owner']):
+                                      and previous['owner']==host['owner']
+                                      and accepted_proposal(envelope,previous,host,host_source)):
                                       acceptance=(previous,envelope)
                       if states[key]=='DEFER':
                           complete=False
@@ -1580,6 +1588,18 @@ jobs:
                   print('::warning::Legacy review has no structured ledger; actions remain pending')
                   sys.exit(0)
               d=loads(path.read_text(encoding='utf-8'))
+              if phase=='PREPARE' and prepared is None and any(f['defer_decision']=='ACCEPTED' for f in d['previous_findings']):
+                  history=[]
+                  for old in pages(f'{prefix}/pulls/{number}/reviews'):
+                      if old.get('id')==review_id or (old.get('user') or {}).get('login')!=reviewer: continue
+                      raw=ledger_re.findall(old.get('body') or '')
+                      if len(raw)!=1: continue
+                      try: prior=loads(raw[0])
+                      except (ValueError,TypeError): continue
+                      if (valid_envelope(prior) and prior['repository']==repo and prior['pr_number']==number
+                          and prior['head_sha']==sha and old.get('commit_id')==sha and prior['run_id']==run_id
+                          and prior['published_review_id']==old.get('id')): history.append(prior)
+                  if history: prepared=min(history,key=lambda e:e['published_review_id'])
               # Shape/identity already checked by the preceding validation step; no code from the PR is executed here.
               guard()
               all_threads=threads() if d['previous_findings'] else []
@@ -2193,6 +2213,18 @@ jobs:
                   print('::warning::Legacy review has no structured ledger; actions remain pending')
                   sys.exit(0)
               d=loads(path.read_text(encoding='utf-8'))
+              if phase=='PREPARE' and prepared is None and any(f['defer_decision']=='ACCEPTED' for f in d['previous_findings']):
+                  history=[]
+                  for old in pages(f'{prefix}/pulls/{number}/reviews'):
+                      if old.get('id')==review_id or (old.get('user') or {}).get('login')!=reviewer: continue
+                      raw=ledger_re.findall(old.get('body') or '')
+                      if len(raw)!=1: continue
+                      try: prior=loads(raw[0])
+                      except (ValueError,TypeError): continue
+                      if (valid_envelope(prior) and prior['repository']==repo and prior['pr_number']==number
+                          and prior['head_sha']==sha and old.get('commit_id')==sha and prior['run_id']==run_id
+                          and prior['published_review_id']==old.get('id')): history.append(prior)
+                  if history: prepared=min(history,key=lambda e:e['published_review_id'])
               # Shape/identity already checked by the preceding validation step; no code from the PR is executed here.
               guard()
               all_threads=threads() if d['previous_findings'] else []

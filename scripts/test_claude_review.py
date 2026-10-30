@@ -487,6 +487,24 @@ class ResolverRunTest(unittest.TestCase):
         self.assertIn('Can wait',self.state()['body'])
         self.assertNotIn('Changed while completing',self.state()['body'])
 
+    def test_reposted_review_in_same_run_retains_prepared_acceptance(self):
+        self.prepare()
+        state=self.state(); original=state['body']; count=state.get('put_count',0)
+        self.edit_proposal('Changed before failed-job retry',update_time=True)
+        state=self.state()
+        state['history']=[{'id':202,'user':{'login':'so-upstars'},'commit_id':'a'*40,'body':original}]
+        state['body']='initial'
+        (self.root/'state.json').write_text(json.dumps(state))
+        (self.root/'actions.json').write_text(json.dumps(self.actions))
+        result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE',STAGE='prepare',REVIEW_ID='203')
+        self.assertNotEqual(result.returncode,0,result.stderr)
+        self.assertEqual(self.state().get('put_count',0),count)
+        result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE',STAGE='prepare',REVIEW_ID='204',GITHUB_RUN_ID='404')
+        self.assertEqual(result.returncode,0,result.stderr)
+        envelope=json.loads(self.state()['body'].split('<!-- claude-review-ledger:v1 ',1)[1].split(' -->',1)[0])
+        self.assertEqual(envelope['run_id'],404)
+        self.assertEqual(envelope['disposition_events'][0]['reason'],'Changed before failed-job retry')
+
     def test_success_api_identity_bot_actor_and_idempotent_completion(self):
         self.prepare()
         # An untrusted artifact cannot supply the mutation ID.
@@ -1087,6 +1105,19 @@ class SummaryRunTest(unittest.TestCase):
             data['head_sha']='c'*40
             state,_=self.run_summary(data)
             self.assertIn('Deferred: 0 + unknown',state['comments'][0]['body'])
+
+    def test_same_timestamp_defer_edits_require_matching_source_evidence(self):
+        for change in ('reason','comment_id','author'):
+            with self.subTest(change=change):
+                data=self.defer_fixture(); marker=data['threads'][0]['comments'][1]
+                if change=='reason':
+                    payload=json.loads(marker['body'].split('v1 ',1)[1].split(' -->')[0])
+                    payload['reason']='Different proposal in the same second'
+                    marker['body']='<!-- cr-received-disposition:v1 '+json.dumps(payload)+' -->'
+                elif change=='comment_id': marker['databaseId']=4
+                else: marker['author']={'login':'bob'}
+                state,_=self.run_summary(data)
+                self.assertIn('Deferred: 0 + unknown',state['comments'][0]['body'])
 
     def test_thread_and_reply_pagination(self):
         review=self.review()
