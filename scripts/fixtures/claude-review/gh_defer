@@ -52,7 +52,7 @@ elif ep=='repos/owner/repo/pulls/comments/1003':
     if os.environ.get('FAIL_REPLY_READ') or state.get('missing_reply') or not any(c['databaseId']==1003 for c in state['thread']['comments']): sys.exit(1)
     result={'id':1003,'user':{'login':'so-upstars'},'in_reply_to_id':999 if state.get('wrong_reply_root') else 1001,'pull_request_url':'https://api.github.com/repos/owner/repo/pulls/42'}
 elif ep=='repos/owner/repo/collaborators/alice/permission': result={'permission':'read' if os.environ.get('FAIL_PERMISSION') else 'write'}
-elif ep.startswith('repos/owner/repo/issues?'): result=[state['issue']] if state.get('issue') else []
+elif ep.startswith('repos/owner/repo/issues?'): result=([state['issue']] if state.get('issue') else [])+state.get('extra_issues',[])
 elif ep=='repos/owner/repo/issues' and method=='POST':
     result={'number':57,'state':'open','html_url':'https://github.com/owner/repo/issues/57','body':payload['body'],'user':{'login':'so-upstars'}}
     state['issue']=result

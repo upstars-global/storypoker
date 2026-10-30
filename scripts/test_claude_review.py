@@ -79,7 +79,7 @@ else:
 print(json.dumps(result))
 ''')
             fake.chmod(0o755)
-            env = {**os.environ, 'PATH': str(root) + os.pathsep + os.environ['PATH'], 'GITHUB_REPOSITORY':'owner/repo', 'NUMBER':'42'}
+            env = {**os.environ, 'PATH': str(root) + os.pathsep + os.environ['PATH'], 'GITHUB_REPOSITORY':'owner/repo', 'NUMBER':'42', 'GITHUB_OUTPUT':str(root/'output')}
             subprocess.run(['bash', '-eo', 'pipefail', '-c', run], cwd=root, env=env, check=True)
             threads = json.loads((root / '.auto-review/target/threads.json').read_text())
             self.assertEqual([t['thread_id'] for t in threads], ['t1', 't2'])
@@ -87,8 +87,6 @@ print(json.dumps(result))
             self.assertEqual(threads[0]['comments'][1]['authorAssociation'], 'MEMBER')
 
 
-if __name__ == '__main__':
-    unittest.main()
 
 class DraftTest(unittest.TestCase):
     def run_draft(self, change=None):
@@ -193,6 +191,8 @@ def pipeline_script():
 set +e
 : > "$GITHUB_OUTPUT"
 export GH_TOKEN=fixture-publisher PHASE=PREPARE STAGE=prepare
+export REVIEW_THREADS_FILE="$FIXTURE_DIR/threads.json"
+export REVIEW_THREADS_DIGEST=$(python3 -c 'import json,os,pathlib,hashlib; p=pathlib.Path(os.environ["REVIEW_THREADS_FILE"]); s=json.loads((p.parent/"state.json").read_text()); p.write_text(json.dumps([s["thread"]])); print(hashlib.sha256(p.read_bytes()).hexdigest())')
 bash -eo pipefail -c {prepare}
 prepare_rc=$?
 export REQUESTS=$(python3 -c 'import os,pathlib; p=pathlib.Path(os.environ["GITHUB_OUTPUT"]); rows=[x.split("=",1)[1] for x in p.read_text().splitlines() if x.startswith("requests=")]; print(rows[-1] if rows else "[]")')
@@ -366,12 +366,13 @@ class DeferTest(unittest.TestCase):
             (root/'state.json').write_text(json.dumps({'origin':two_origin,'thread':two_thread}))
             (root/'trace.jsonl').write_text('')
             result=subprocess.run(['bash','-eo','pipefail','-c',run],env=env,capture_output=True,text=True)
-            self.assertNotEqual(result.returncode,0)
+            self.assertEqual(result.returncode,0,result.stderr)
             state=json.loads((root/'state.json').read_text())
             self.assertIsNotNone(state.get('issue'))
             self.assertTrue(state['thread']['isResolved'])
             envelope=json.loads(state['body'].split('<!-- claude-review-ledger:v1 ',1)[1].split(' -->',1)[0])
-            self.assertEqual(envelope['action_progress'][1]['resolve']['state'],'PENDING')
+            self.assertEqual(envelope['action_progress'][1]['resolve']['state'],'NOT_REQUESTED')
+            self.assertIn('No source thread',envelope['action_progress'][1]['error'])
             self.assertIsNone(envelope['action_progress'][1]['resolve']['thread_id'])
 
 class ResolverRunTest(unittest.TestCase):
@@ -402,11 +403,15 @@ class ResolverRunTest(unittest.TestCase):
         self.env={**os.environ,'PATH':str(self.root)+os.pathsep+os.environ['PATH'],
                   'FIXTURE_DIR':str(self.root),'REPO':'owner/repo','NUMBER':'42','HEAD_SHA':sha,
                   'REVIEW_ID':'202','GITHUB_RUN_ID':'303','GITHUB_OUTPUT':str(self.root/'output'),
-                  'REVIEWER':'so-upstars','ACTIONS_FILE':str(self.root/'actions.json'),'POST_FILE':str(self.root/'post.md')}
+                  'REVIEWER':'so-upstars','ACTIONS_FILE':str(self.root/'actions.json'),'POST_FILE':str(self.root/'post.md'),
+                  'REVIEW_THREADS_FILE':str(self.root/'threads.json')}
         self.reset()
 
     def reset(self, addressed=False):
+        import hashlib
         (self.root/'state.json').write_text(json.dumps(self.initial))
+        (self.root/'threads.json').write_text(json.dumps([self.initial['thread']]))
+        self.env['REVIEW_THREADS_DIGEST']=hashlib.sha256((self.root/'threads.json').read_bytes()).hexdigest()
         actions=json.loads(json.dumps(self.actions))
         if addressed: actions['previous_findings'][0].update(status='ADDRESSED',defer_decision='NONE',owner=None)
         (self.root/'actions.json').write_text(json.dumps(actions))
@@ -499,6 +504,14 @@ class ResolverRunTest(unittest.TestCase):
         result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE',STAGE='prepare',REVIEW_ID='203')
         self.assertNotEqual(result.returncode,0,result.stderr)
         self.assertEqual(self.state().get('put_count',0),count)
+        result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE',STAGE='prepare',REVIEW_ID='204',GITHUB_RUN_ID='404')
+        self.assertNotEqual(result.returncode,0,result.stderr)
+        self.assertEqual(self.state().get('put_count',0),count)
+        # A genuinely fresh model run captures the edited proposal before reviewing it.
+        import hashlib
+        snapshot=self.root/'threads.json'
+        snapshot.write_text(json.dumps([self.state()['thread']]))
+        self.env['REVIEW_THREADS_DIGEST']=hashlib.sha256(snapshot.read_bytes()).hexdigest()
         result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE',STAGE='prepare',REVIEW_ID='204',GITHUB_RUN_ID='404')
         self.assertEqual(result.returncode,0,result.stderr)
         envelope=json.loads(self.state()['body'].split('<!-- claude-review-ledger:v1 ',1)[1].split(' -->',1)[0])
@@ -639,6 +652,85 @@ class ResolverRunTest(unittest.TestCase):
                 input=json.dumps(payload),env={**self.env,'GH_TOKEN':role},text=True,capture_output=True)
             self.assertNotEqual(result.returncode,0)
         self.assertFalse(self.state()['thread']['isResolved'])
+
+
+
+    def test_first_prepare_rejects_proposal_edited_since_review_snapshot(self):
+        import hashlib
+        snapshot=self.root/'threads.json'
+        snapshot.write_text(json.dumps([self.initial['thread']]))
+        self.edit_proposal('Edited before first PREPARE', update_time=True)
+        result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE',
+            REVIEW_THREADS_FILE=str(snapshot),REVIEW_THREADS_DIGEST=hashlib.sha256(snapshot.read_bytes()).hexdigest())
+        self.assertNotEqual(result.returncode,0,result.stderr)
+        self.assertIn('reviewed DEFER proposal changed',result.stderr)
+        self.assertFalse(self.state().get('issue'))
+        self.assertNotIn('body',self.state())
+
+    def test_snapshot_digest_rejects_tampered_review_context(self):
+        (self.root/'threads.json').write_text('[]')
+        result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE')
+        self.assertNotEqual(result.returncode,0,result.stderr)
+        self.assertIn('review snapshot digest mismatch',result.stderr)
+        self.assertFalse(self.state().get('issue'))
+
+    def test_body_only_findings_do_not_require_unrequested_mutations(self):
+        for status in ('ADDRESSED','NOT_ADDRESSED'):
+            with self.subTest(status=status):
+                self.reset()
+                state=self.state(); state['thread']['path']='other.py'
+                (self.root/'state.json').write_text(json.dumps(state))
+                actions=json.loads((self.root/'actions.json').read_text())
+                actions['previous_findings'][0].update(status=status,defer_decision='NONE',owner=None)
+                (self.root/'actions.json').write_text(json.dumps(actions))
+                result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE')
+                self.assertEqual(result.returncode,0,result.stderr)
+                self.assertIn('No source thread',self.state()['body'])
+                self.assertFalse(self.state().get('issue'))
+                self.assertEqual(self.mutations(),[])
+
+    def test_foreign_deferred_markers_cannot_block_recovery(self):
+        marker='<!-- claude-review-deferred:v1 '+json.dumps({'repository':'owner/repo','pr_number':42,
+            'origin_review_id':101,'original_id':'R1-F1','path':'a.py'},separators=(',',':'))+' -->'
+        state=self.state()
+        state['extra_issues']=[{'number':88,'user':{'login':'mallory'},'body':marker}]
+        state['thread']['comments'].append({'databaseId':1004,'author':{'login':'mallory'},'body':marker})
+        (self.root/'state.json').write_text(json.dumps(state))
+        result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE')
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(self.state()['issue']['user']['login'],'so-upstars')
+        self.assertFalse(self.state()['thread']['isResolved'])
+
+    def test_legacy_origin_records_gap_without_mutations(self):
+        state=self.state(); state['origin']['body']='Legacy prose without ledger'
+        (self.root/'state.json').write_text(json.dumps(state))
+        result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE')
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('Origin ledger unavailable',self.state()['body'])
+        self.assertFalse(self.state().get('issue'))
+        self.assertEqual(self.mutations(),[])
+
+
+
+class PublicationFailureTest(unittest.TestCase):
+    def test_publish_finalizer_owns_pending_status_and_has_no_pat(self):
+        workflow=SummaryRefreshTest.workflow()
+        item=next(s for s in workflow['jobs']['publish']['steps'] if s.get('name')=='Finalize failed publication')
+        self.assertEqual(item['if'],'failure() || cancelled()')
+        self.assertEqual(item['env'],{'GH_TOKEN':'${{ github.token }}'})
+        for current,expected in [('run pending',True),('other pending',False),('run success',False)]:
+            with self.subTest(current=current), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp)
+                fake=root/'gh'
+                fake.write_text('#!/bin/sh\ncase "$2" in *status[?]*) printf "%s\\n" "$CURRENT";; *statuses*) printf "%s" "$*" > "$TRACE";; *) exit 2;; esac\n')
+                fake.chmod(0o755)
+                env={**os.environ,'PATH':str(root)+os.pathsep+os.environ['PATH'],
+                    'CURRENT':current,'TRACE':str(root/'trace'),'REPO':'owner/repo',
+                    'HEAD_SHA':'a'*40,'CONTEXT':'Claude review','RUN_URL':'run'}
+                result=subprocess.run(['bash','-eo','pipefail','-c',item['run']],env=env,capture_output=True,text=True)
+                self.assertEqual(result.returncode,0,result.stderr)
+                self.assertEqual((root/'trace').exists(),expected)
+                if expected: self.assertIn('state=error',(root/'trace').read_text())
 
 
 class FooterTest(unittest.TestCase):
@@ -794,7 +886,7 @@ class SummaryParserTest(unittest.TestCase):
     def test_gate_understands_all_three_summary_layouts(self):
         script=step('Review gate decision')
         start=script.index("blocking=$(awk -F'|'")
-        end=script.index('[ "$last_sha"',start)
+        end=script.index('# Count unresolved prior blockers',start)
         fragment=script[start:end]+'\nprintf "%s" "$blocking"\n'
         cases=[('| Intent | System | Craft | Critical | Important | Minor |\n| --- | --- | --- | --- | --- | --- |\n| PASS | FINDINGS | PASS | 1 | 2 | 9 |',3),
                ('| Critical | Important | Minor |\n| --- | --- | --- |\n| 2 | 4 | 8 |',6),
@@ -812,7 +904,7 @@ class GateTest(unittest.TestCase):
             pr={'head':{'sha':'a'*40,'repo':{'full_name':'owner/repo'}}, 'base':{'sha':'b'*40},
                 'state':'open','draft':False,'user':{'type':'User','login':author},
                 'labels':[{'name':x} for x in labels], 'requested_reviewers':[{'login':'so-upstars'}] if requested else []}
-            (root/'data.json').write_text(json.dumps({'pr':pr,'reviews':reviews,'ci':ci,'jobs':jobs if jobs is not None else [{'name':n,'conclusion':'success'} for n in ['Lint','Typecheck','Unit tests','Build','Public pages load']]}))
+            (root/'data.json').write_text(json.dumps({'pr':pr,'reviews':reviews,'ci':ci,'jobs':jobs if jobs is not None else [{'name':n,'conclusion':'success'} for n in ['Lint','Typecheck','Unit tests','Build','Public pages load','Review workflow fixtures']]}))
             fake=root/'gh'
             fake.write_text('''#!/usr/bin/env python3
 import json, os, subprocess, sys
@@ -837,7 +929,7 @@ sys.exit(2)
             fake.chmod(0o755)
             env={**os.environ,'PATH':str(root)+os.pathsep+os.environ['PATH'],'DATA':str(root/'data.json'),
                  'REPO':'owner/repo','REVIEWER':'so-upstars','RUN_SHA':'','RUN_HEAD_REPO':'',
-                 'REQUIRED_JOBS':json.dumps(['Lint','Typecheck','Unit tests','Build','Public pages load']),
+                 'REQUIRED_JOBS':json.dumps(['Lint','Typecheck','Unit tests','Build','Public pages load','Review workflow fixtures']),
                  'EVENT_PR':'42','EVENT_NAME':event,'EVENT_ACTION':action,'CONTEXT':'Claude review',
                  'RUN_URL':'url','GITHUB_OUTPUT':str(root/'output'),'GITHUB_STEP_SUMMARY':str(root/'summary')}
             result=subprocess.run(['bash','-eo','pipefail','-c',step('Review gate decision')],env=env,capture_output=True,text=True)
@@ -855,7 +947,7 @@ sys.exit(2)
         return reviews
 
     def test_storypoker_required_jobs_and_self_review_guard(self):
-        required=['Lint','Typecheck','Unit tests','Build','Public pages load']
+        required=['Lint','Typecheck','Unit tests','Build','Public pages load','Review workflow fixtures']
         for name in required:
             for conclusion in ('failure','missing'):
                 with self.subTest(name=name, conclusion=conclusion):
@@ -868,6 +960,33 @@ sys.exit(2)
         self.assertEqual(result.returncode,0,result.stderr)
         self.assertIn('review=false',output)
         self.assertIn('is by so-upstars',result.stdout)
+
+    def test_unresolved_previous_blocker_keeps_automatic_round(self):
+        review=self.reviews(0,1,clean=True)[0]
+        envelope={'schema_version':1,'envelope_version':1,'repository':'owner/repo','pr_number':42,
+            'head_sha':'c'*40,'review_source_id':101,'published_review_id':101,'run_id':200,
+            'duration_seconds':20,'findings':[],
+            'previous_findings':[{'origin_review_id':99,'original_id':'R1-F1','path':'a.py',
+                'severity':'Important','status':'NOT_ADDRESSED','defer_decision':'NONE','reason':'Still open','owner':None}],
+            'action_progress':[],'disposition_events':[]}
+        review.update(id=101,commit_id='c'*40)
+        review['body']+='\n<!-- claude-review-ledger:v1 '+json.dumps(envelope)+' -->'
+        result,output=self.run_gate([review])
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('review=true',output)
+        finding=envelope['previous_findings'][0]
+        for disposition in ('ADDRESSED','REJECT','DEFER'):
+            with self.subTest(disposition=disposition):
+                changed=json.loads(json.dumps(envelope))
+                if disposition=='ADDRESSED': changed['previous_findings'][0]['status']='ADDRESSED'
+                elif disposition=='REJECT': changed['disposition_events']=[{**finding,'disposition':'REJECT'}]
+                else:
+                    changed['previous_findings'][0]['defer_decision']='ACCEPTED'
+                    changed['action_progress']=[{**finding,**{k:{'state':'SUCCEEDED'} for k in ('issue','reply','resolve')}}]
+                review['body']=self.reviews(0,1,clean=True)[0]['body']+'\n<!-- claude-review-ledger:v1 '+json.dumps(changed)+' -->'
+                result,output=self.run_gate([review])
+                self.assertEqual(result.returncode,0,result.stderr)
+                self.assertIn('review=false',output)
 
     def test_limits_and_manual_counts(self):
         for manual,auto,limit,allow in [(0,4,5,True),(0,5,5,False),(1,3,5,True),(2,3,5,False),(0,1,1,False),(0,9,10,True),(0,10,10,False)]:
@@ -1198,3 +1317,7 @@ class SummaryRunTest(unittest.TestCase):
         fixture['threads'][0]['comments']=[fixture['threads'][0]['comments'][0],later,original]
         state,_=self.run_summary(fixture)
         self.assertIn('Rejected: 0\n',state['comments'][0]['body'])
+
+
+if __name__ == '__main__':
+    unittest.main()
