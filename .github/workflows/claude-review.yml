@@ -1202,8 +1202,8 @@ jobs:
             and (.path | type == "string") and (.line | type == "number" and . >= 1 and floor == .)
             and (.body | type == "string" and length > 0 and length <= 8000))' "$COMMENTS_FILE" > /dev/null \
             || fail "The inline comments file is malformed"
-          if grep -qE '(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_)[A-Za-z0-9]' "$POST_FILE" "$COMMENTS_FILE" \
-            || { [ -f "$ACTIONS_FILE" ] && grep -qE '(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_)[A-Za-z0-9]' "$ACTIONS_FILE"; }; then
+          if grep -qE '(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_|ATATT)[A-Za-z0-9]' "$POST_FILE" "$COMMENTS_FILE" \
+            || { [ -f "$ACTIONS_FILE" ] && grep -qE '(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_|ATATT)[A-Za-z0-9]' "$ACTIONS_FILE"; }; then
             fail "Review output contains a token-like string"
           fi
 

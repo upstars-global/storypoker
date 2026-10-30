@@ -600,6 +600,27 @@ class FooterTest(unittest.TestCase):
                 result=subprocess.run(['bash','-c','fail() { exit 1; }\n'+fragment],env={**os.environ,'BODY_FILE':str(path),'VERSION':'0.0.11'},capture_output=True,text=True)
                 self.assertNotEqual(result.returncode,0)
 
+class TokenFilterTest(unittest.TestCase):
+    def test_atlassian_prefix_is_blocked_in_every_transport(self):
+        script=step('Validate review body')
+        start=script.index("if grep -qE '")
+        end=script.index('\nfi',start)+len('\nfi')
+        fragment='fail() { exit 1; }\n'+script[start:end]
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            paths={name:root/name for name in ('POST_FILE','COMMENTS_FILE','ACTIONS_FILE')}
+            env={**os.environ,**{name:str(path) for name,path in paths.items()}}
+            for name in paths:
+                with self.subTest(transport=name):
+                    for path in paths.values(): path.write_text('safe synthetic text')
+                    paths[name].write_text('ATATT'+'SyntheticFixtureOnly123')
+                    result=subprocess.run(['bash','-c',fragment],env=env,capture_output=True,text=True)
+                    self.assertNotEqual(result.returncode,0,result.stderr)
+            for path in paths.values(): path.write_text('safe synthetic text')
+            result=subprocess.run(['bash','-c',fragment],env=env,capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+
+
 class SummaryParserTest(unittest.TestCase):
     def test_gate_understands_all_three_summary_layouts(self):
         script=step('Review gate decision')
