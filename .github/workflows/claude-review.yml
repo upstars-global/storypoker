@@ -1310,7 +1310,7 @@ jobs:
           PHASE: PREPARE
         run: |
           python3 -I - <<'PYCODE'
-          import json, os, re, subprocess, sys
+          import hashlib, json, os, re, subprocess, sys
           from datetime import datetime
           from pathlib import Path
 
@@ -1426,6 +1426,9 @@ jobs:
 
           phase=os.environ.get('PHASE','PREPARE')
           requests=[]
+          prepared=None
+          proposal_bindings={}
+          proposal_roots={}
           repo=os.environ['REPO']; number=int(os.environ['NUMBER']); sha=os.environ['HEAD_SHA']
           review_id=int(os.environ['REVIEW_ID']); run_id=int(os.environ['GITHUB_RUN_ID'])
           prefix=f'repos/{repo}'; reviewer=os.environ['REVIEWER']
@@ -1520,7 +1523,31 @@ jobs:
               require(len(events)<=1,'marker_conflict')
               return events
 
+          def ensure_no_tokens(value):
+              pattern=re.compile(r'(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_|ATATT)[A-Za-z0-9]')
+              pending=[value]
+              while pending:
+                  item=pending.pop()
+                  if isinstance(item,str): require(not pattern.search(item),'ledger contains a token-like string')
+                  elif isinstance(item,dict): pending.extend(item.keys()); pending.extend(item.values())
+                  elif isinstance(item,list): pending.extend(item)
+
+          def confirm_proposals():
+              for key,binding in proposal_bindings.items():
+                  current=gh(f'{prefix}/pulls/comments/{binding["comment_id"]}')
+                  require(current.get('id')==binding['comment_id']
+                      and current.get('user',{}).get('login')==binding['author']
+                      and current.get('in_reply_to_id')==proposal_roots[key]
+                      and current.get('pull_request_url')==f'https://api.github.com/repos/{repo}/pulls/{number}'
+                      and isinstance(current.get('body'),str) and isinstance(current.get('updated_at'),str),
+                      'prepared DEFER proposal unavailable')
+                  require(datetime.fromisoformat(current['updated_at'].replace('Z','+00:00'))
+                      ==datetime.fromisoformat(binding['updated_at'].replace('Z','+00:00'))
+                      and hashlib.sha256(current['body'].encode()).hexdigest()==binding['body_sha256'],
+                      'DEFER proposal changed; fresh review required')
+
           def persist(envelope):
+              ensure_no_tokens(envelope)
               marker='<!-- claude-review-ledger:v1 '+encoded(envelope)+' -->'
               # Keep the marker before the existing footer, outside the single details block.
               lines=Path(os.environ['POST_FILE']).read_text(encoding='utf-8').splitlines()
@@ -1528,25 +1555,26 @@ jobs:
               require(idx is not None,'review footer unavailable')
               body='\n'.join(lines[:idx]+[marker]+lines[idx:])+'\n'
               require(len(body.encode())<=65536,'ledger exceeds review body limit')
-              guard(); gh(endpoint,'PUT',{'body':body})
+              guard(); confirm_proposals(); gh(endpoint,'PUT',{'body':body})
               posted=gh(endpoint)
               require(posted.get('id')==review_id and posted.get('user',{}).get('login')==reviewer
                   and posted.get('commit_id')==sha and posted.get('body')==body,'ledger readback failed')
 
           try:
               path=Path(os.environ['ACTIONS_FILE'])
-              if phase=='COMPLETE':
-                  guard()
-                  posted=gh(endpoint)
-                  found=ledger_re.findall(posted.get('body',''))
+              guard()
+              posted=gh(endpoint)
+              found=ledger_re.findall(posted.get('body',''))
+              if phase=='COMPLETE' or found:
                   require(len(found)==1,'canonical ledger unavailable')
-                  canonical=loads(found[0])
-                  require(valid_envelope(canonical) and canonical['repository']==repo
-                      and canonical['pr_number']==number and canonical['head_sha']==sha
-                      and canonical['published_review_id']==review_id and canonical['run_id']==run_id,
+                  prepared=loads(found[0])
+                  require(valid_envelope(prepared) and prepared['repository']==repo
+                      and prepared['pr_number']==number and prepared['head_sha']==sha
+                      and prepared['published_review_id']==review_id and prepared['run_id']==run_id,
                       'canonical ledger identity mismatch')
+              if phase=='COMPLETE':
                   path.parent.mkdir(parents=True,exist_ok=True)
-                  path.write_text(encoded(canonical),encoding='utf-8')
+                  path.write_text(encoded(prepared),encoding='utf-8')
                   Path(os.environ['POST_FILE']).write_text(ledger_re.sub('',posted['body']),encoding='utf-8')
               if not path.is_file():
                   print('::warning::Legacy review has no structured ledger; actions remain pending')
@@ -1574,9 +1602,20 @@ jobs:
                           'defer decision lacks confirmed current proposal')
                   for v,c in source_events:
                       if v['head_sha']!=sha: continue
-                      events.append({'origin_review_id':f['origin_review_id'],'original_id':f['original_id'],'path':f['path'],
+                      event={'origin_review_id':f['origin_review_id'],'original_id':f['original_id'],'path':f['path'],
                           'disposition':v['disposition'],'reason':v['reason'],'source_comment_id':c['databaseId'],
-                          'source_author':c['author']['login'],'source_updated_at':c['updatedAt']})
+                          'source_author':c['author']['login'],'source_updated_at':c['updatedAt']}
+                      if f['defer_decision']=='ACCEPTED':
+                          key=(f['origin_review_id'],f['original_id'],f['path'])
+                          if prepared is not None:
+                              prior=[e for e in prepared['disposition_events'] if (e['origin_review_id'],e['original_id'],e['path'])==key]
+                              decisions=[e for e in prepared['previous_findings'] if (e['origin_review_id'],e['original_id'],e['path'])==key]
+                              require(len(prior)==1 and prior[0]==event and decisions==[f],
+                                  'DEFER proposal changed; fresh review required')
+                          proposal_bindings[key]={'comment_id':c['databaseId'],'author':c['author']['login'],
+                              'updated_at':c['updatedAt'],'body_sha256':hashlib.sha256(c['body'].encode()).hexdigest()}
+                          proposal_roots[key]=root['databaseId']
+                      events.append(event)
                   mapped.append((f,thread,root))
               d['review_source_id']=review_id
               for f in d['findings']: f['origin_review_id']=review_id
@@ -1661,7 +1700,8 @@ jobs:
                           requests.append({'kind':'ACCEPTED_DEFER' if accepted else 'ADDRESSED',
                               'repository':repo,'pr_number':number,'head_sha':sha,'review_id':review_id,
                               'origin_review_id':f['origin_review_id'],'root_id':root['databaseId'],'path':f['path'],
-                              'issue_id':progress['issue']['number'],'reply_id':progress['reply']['comment_id']})
+                              'issue_id':progress['issue']['number'],'reply_id':progress['reply']['comment_id'],
+                              'proposal':proposal_bindings.get((f['origin_review_id'],f['original_id'],f['path'])) if accepted else None})
                           require(len(requests)<=100,'too many resolve requests')
                           handoff=encoded(requests)
                           require(len(handoff.encode())<=60000,'resolve handoff too large')
@@ -1723,7 +1763,8 @@ jobs:
       - name: Resolve verified thread metadata
         run: |
           python3 -I - <<'PYCODE'
-          import json, os, re, subprocess, sys
+          import hashlib, json, os, re, subprocess, sys
+          from datetime import datetime
 
           def require(ok, message):
               if not ok: raise ValueError(message)
@@ -1785,6 +1826,18 @@ jobs:
                   and isinstance(old.get('commit_id'),str) and re.fullmatch('[0-9a-f]{40}',old['commit_id']), 'source comment metadata mismatch')
           def deferred(request):
               if request['kind']!='ACCEPTED_DEFER': return
+              binding=request['proposal']
+              proposal=api(f'{prefix}/pulls/comments/{binding["comment_id"]}')
+              require(proposal.get('id')==binding['comment_id']
+                  and proposal.get('user',{}).get('login')==binding['author']
+                  and proposal.get('in_reply_to_id')==request['root_id']
+                  and proposal.get('pull_request_url')==f'https://api.github.com/repos/{repo}/pulls/{number}'
+                  and isinstance(proposal.get('body'),str) and isinstance(proposal.get('updated_at'),str),
+                  'prepared proposal unavailable')
+              require(datetime.fromisoformat(proposal['updated_at'].replace('Z','+00:00'))
+                  ==datetime.fromisoformat(binding['updated_at'].replace('Z','+00:00'))
+                  and hashlib.sha256(proposal['body'].encode()).hexdigest()==binding['body_sha256'],
+                  'prepared proposal changed')
               issue=api(f'{prefix}/issues/{request["issue_id"]}')
               require(issue.get('number')==request['issue_id'] and issue.get('state')=='open'
                   and 'pull_request' not in issue and issue.get('user',{}).get('login')==reviewer
@@ -1798,7 +1851,7 @@ jobs:
               require(len(raw.encode())<=60000,'handoff too large')
               requests=json.loads(raw)
               require(isinstance(requests,list) and len(requests)<=100,'invalid handoff')
-              fields={'kind','repository','pr_number','head_sha','review_id','origin_review_id','root_id','path','issue_id','reply_id'}
+              fields={'kind','repository','pr_number','head_sha','review_id','origin_review_id','root_id','path','issue_id','reply_id','proposal'}
               roots=set()
               # Validate the entire batch before any mutation.
               for request in requests:
@@ -1811,18 +1864,28 @@ jobs:
                   require(request['root_id'] not in roots,'duplicate source root'); roots.add(request['root_id'])
                   require((positive(request['issue_id']) and positive(request['reply_id'])) if request['kind']=='ACCEPTED_DEFER'
                       else request['issue_id'] is None and request['reply_id'] is None,'invalid prepared evidence IDs')
+                  binding=request['proposal']
+                  if request['kind']=='ACCEPTED_DEFER':
+                      require(isinstance(binding,dict) and set(binding)=={'comment_id','author','updated_at','body_sha256'}
+                          and positive(binding['comment_id']) and isinstance(binding['author'],str)
+                          and re.fullmatch('[A-Za-z0-9-]+',binding['author'])
+                          and isinstance(binding['updated_at'],str) and isinstance(binding['body_sha256'],str)
+                          and re.fullmatch('[0-9a-f]{64}',binding['body_sha256']), 'invalid proposal binding')
+                      datetime.fromisoformat(binding['updated_at'].replace('Z','+00:00'))
+                  else: require(binding is None,'unexpected proposal binding')
               failed=False
               for request in requests:
                   try:
                       guard(); source(request); thread=candidates(request)
                       # Reread open issue and root-bound reply immediately before any mutation.
-                      source(request); deferred(request); guard()
+                      source(request); guard(); deferred(request)
                       if not thread['isResolved']:
                           q='mutation($id:ID!) { resolveReviewThread(input:{threadId:$id}) { thread { id isResolved } } }'
                           result=query(q,id=thread['id'])['resolveReviewThread']['thread']
                           require(result.get('id')==thread['id'] and result.get('isResolved') is True,'resolve response failed')
                       actual=candidates(request)
                       require(actual['id']==thread['id'] and actual['isResolved'] is True,'resolve readback failed')
+                      deferred(request)
                   except (ValueError,KeyError,TypeError,subprocess.SubprocessError):
                       failed=True
                       print('::error::Verified thread resolve remains pending',file=sys.stderr)
@@ -1860,7 +1923,7 @@ jobs:
           PHASE: COMPLETE
         run: |
           python3 -I - <<'PYCODE'
-          import json, os, re, subprocess, sys
+          import hashlib, json, os, re, subprocess, sys
           from datetime import datetime
           from pathlib import Path
 
@@ -1976,6 +2039,9 @@ jobs:
 
           phase=os.environ.get('PHASE','PREPARE')
           requests=[]
+          prepared=None
+          proposal_bindings={}
+          proposal_roots={}
           repo=os.environ['REPO']; number=int(os.environ['NUMBER']); sha=os.environ['HEAD_SHA']
           review_id=int(os.environ['REVIEW_ID']); run_id=int(os.environ['GITHUB_RUN_ID'])
           prefix=f'repos/{repo}'; reviewer=os.environ['REVIEWER']
@@ -2070,7 +2136,31 @@ jobs:
               require(len(events)<=1,'marker_conflict')
               return events
 
+          def ensure_no_tokens(value):
+              pattern=re.compile(r'(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_|ATATT)[A-Za-z0-9]')
+              pending=[value]
+              while pending:
+                  item=pending.pop()
+                  if isinstance(item,str): require(not pattern.search(item),'ledger contains a token-like string')
+                  elif isinstance(item,dict): pending.extend(item.keys()); pending.extend(item.values())
+                  elif isinstance(item,list): pending.extend(item)
+
+          def confirm_proposals():
+              for key,binding in proposal_bindings.items():
+                  current=gh(f'{prefix}/pulls/comments/{binding["comment_id"]}')
+                  require(current.get('id')==binding['comment_id']
+                      and current.get('user',{}).get('login')==binding['author']
+                      and current.get('in_reply_to_id')==proposal_roots[key]
+                      and current.get('pull_request_url')==f'https://api.github.com/repos/{repo}/pulls/{number}'
+                      and isinstance(current.get('body'),str) and isinstance(current.get('updated_at'),str),
+                      'prepared DEFER proposal unavailable')
+                  require(datetime.fromisoformat(current['updated_at'].replace('Z','+00:00'))
+                      ==datetime.fromisoformat(binding['updated_at'].replace('Z','+00:00'))
+                      and hashlib.sha256(current['body'].encode()).hexdigest()==binding['body_sha256'],
+                      'DEFER proposal changed; fresh review required')
+
           def persist(envelope):
+              ensure_no_tokens(envelope)
               marker='<!-- claude-review-ledger:v1 '+encoded(envelope)+' -->'
               # Keep the marker before the existing footer, outside the single details block.
               lines=Path(os.environ['POST_FILE']).read_text(encoding='utf-8').splitlines()
@@ -2078,25 +2168,26 @@ jobs:
               require(idx is not None,'review footer unavailable')
               body='\n'.join(lines[:idx]+[marker]+lines[idx:])+'\n'
               require(len(body.encode())<=65536,'ledger exceeds review body limit')
-              guard(); gh(endpoint,'PUT',{'body':body})
+              guard(); confirm_proposals(); gh(endpoint,'PUT',{'body':body})
               posted=gh(endpoint)
               require(posted.get('id')==review_id and posted.get('user',{}).get('login')==reviewer
                   and posted.get('commit_id')==sha and posted.get('body')==body,'ledger readback failed')
 
           try:
               path=Path(os.environ['ACTIONS_FILE'])
-              if phase=='COMPLETE':
-                  guard()
-                  posted=gh(endpoint)
-                  found=ledger_re.findall(posted.get('body',''))
+              guard()
+              posted=gh(endpoint)
+              found=ledger_re.findall(posted.get('body',''))
+              if phase=='COMPLETE' or found:
                   require(len(found)==1,'canonical ledger unavailable')
-                  canonical=loads(found[0])
-                  require(valid_envelope(canonical) and canonical['repository']==repo
-                      and canonical['pr_number']==number and canonical['head_sha']==sha
-                      and canonical['published_review_id']==review_id and canonical['run_id']==run_id,
+                  prepared=loads(found[0])
+                  require(valid_envelope(prepared) and prepared['repository']==repo
+                      and prepared['pr_number']==number and prepared['head_sha']==sha
+                      and prepared['published_review_id']==review_id and prepared['run_id']==run_id,
                       'canonical ledger identity mismatch')
+              if phase=='COMPLETE':
                   path.parent.mkdir(parents=True,exist_ok=True)
-                  path.write_text(encoded(canonical),encoding='utf-8')
+                  path.write_text(encoded(prepared),encoding='utf-8')
                   Path(os.environ['POST_FILE']).write_text(ledger_re.sub('',posted['body']),encoding='utf-8')
               if not path.is_file():
                   print('::warning::Legacy review has no structured ledger; actions remain pending')
@@ -2124,9 +2215,20 @@ jobs:
                           'defer decision lacks confirmed current proposal')
                   for v,c in source_events:
                       if v['head_sha']!=sha: continue
-                      events.append({'origin_review_id':f['origin_review_id'],'original_id':f['original_id'],'path':f['path'],
+                      event={'origin_review_id':f['origin_review_id'],'original_id':f['original_id'],'path':f['path'],
                           'disposition':v['disposition'],'reason':v['reason'],'source_comment_id':c['databaseId'],
-                          'source_author':c['author']['login'],'source_updated_at':c['updatedAt']})
+                          'source_author':c['author']['login'],'source_updated_at':c['updatedAt']}
+                      if f['defer_decision']=='ACCEPTED':
+                          key=(f['origin_review_id'],f['original_id'],f['path'])
+                          if prepared is not None:
+                              prior=[e for e in prepared['disposition_events'] if (e['origin_review_id'],e['original_id'],e['path'])==key]
+                              decisions=[e for e in prepared['previous_findings'] if (e['origin_review_id'],e['original_id'],e['path'])==key]
+                              require(len(prior)==1 and prior[0]==event and decisions==[f],
+                                  'DEFER proposal changed; fresh review required')
+                          proposal_bindings[key]={'comment_id':c['databaseId'],'author':c['author']['login'],
+                              'updated_at':c['updatedAt'],'body_sha256':hashlib.sha256(c['body'].encode()).hexdigest()}
+                          proposal_roots[key]=root['databaseId']
+                      events.append(event)
                   mapped.append((f,thread,root))
               d['review_source_id']=review_id
               for f in d['findings']: f['origin_review_id']=review_id
@@ -2211,7 +2313,8 @@ jobs:
                           requests.append({'kind':'ACCEPTED_DEFER' if accepted else 'ADDRESSED',
                               'repository':repo,'pr_number':number,'head_sha':sha,'review_id':review_id,
                               'origin_review_id':f['origin_review_id'],'root_id':root['databaseId'],'path':f['path'],
-                              'issue_id':progress['issue']['number'],'reply_id':progress['reply']['comment_id']})
+                              'issue_id':progress['issue']['number'],'reply_id':progress['reply']['comment_id'],
+                              'proposal':proposal_bindings.get((f['origin_review_id'],f['original_id'],f['path'])) if accepted else None})
                           require(len(requests)<=100,'too many resolve requests')
                           handoff=encoded(requests)
                           require(len(handoff.encode())<=60000,'resolve handoff too large')

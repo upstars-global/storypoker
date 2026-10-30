@@ -438,6 +438,55 @@ class ResolverRunTest(unittest.TestCase):
     def mutations(self):
         return [x for x in map(json.loads,(self.root/'trace.jsonl').read_text().splitlines()) if x.get('mutation')]
 
+    def edit_proposal(self, reason, update_time=False):
+        state=self.state(); comment=state['thread']['comments'][1]
+        value=json.loads(comment['body'].split('<!-- cr-received-disposition:v1 ',1)[1].split(' -->',1)[0])
+        value['reason']=reason
+        comment['body']='<!-- cr-received-disposition:v1 '+json.dumps(value)+' -->'
+        if update_time: comment['updatedAt']='2026-10-30T00:01:00Z'
+        (self.root/'state.json').write_text(json.dumps(state))
+
+    def test_api_reason_tokens_block_prepare_and_complete_puts(self):
+        self.edit_proposal('ghp_'+'SyntheticFixtureOnly123')
+        result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE',STAGE='prepare')
+        self.assertNotEqual(result.returncode,0)
+        self.assertFalse(any(x['method']=='PUT' for x in map(json.loads,(self.root/'trace.jsonl').read_text().splitlines())))
+        self.prepare(addressed=True)
+        count=self.state().get('put_count',0)
+        self.edit_proposal('ATATT'+'SyntheticFixtureOnly123')
+        result=self.complete()
+        self.assertNotEqual(result.returncode,0)
+        self.assertEqual(self.state().get('put_count',0),count)
+        self.assertNotIn('ATATT'+'SyntheticFixtureOnly123',self.state()['body'])
+
+    def test_edited_proposal_blocks_resolver_even_with_same_timestamp(self):
+        self.prepare(); self.edit_proposal('Changed after acceptance')
+        result=self.resolve()
+        self.assertNotEqual(result.returncode,0,result.stderr)
+        self.assertEqual(self.mutations(),[])
+        self.assertFalse(self.state()['thread']['isResolved'])
+
+    def test_edited_proposal_preserves_acceptance_during_complete_and_retry(self):
+        self.prepare(); result=self.resolve(); self.assertEqual(result.returncode,0,result.stderr)
+        original=self.state()['body']; count=self.state().get('put_count',0)
+        self.edit_proposal('Changed after acceptance',update_time=True)
+        result=self.complete()
+        self.assertNotEqual(result.returncode,0,result.stderr)
+        self.assertEqual(self.state()['body'],original)
+        self.assertEqual(self.state().get('put_count',0),count)
+        self.assertNotIn('deferred_complete=true',(self.root/'output').read_text())
+        result=self.run_step('Publish review actions',GH_TOKEN='fixture-publisher',PHASE='PREPARE',STAGE='prepare')
+        self.assertNotEqual(result.returncode,0,result.stderr)
+        self.assertEqual(self.state()['body'],original)
+
+    def test_proposal_edit_during_completion_stays_pending(self):
+        self.prepare(); result=self.resolve(); self.assertEqual(result.returncode,0,result.stderr)
+        result=self.complete(EDIT_PROPOSAL_ON_COMPLETE_READ='1')
+        self.assertNotEqual(result.returncode,0,result.stderr)
+        self.assertNotIn('deferred_complete=true',(self.root/'output').read_text())
+        self.assertIn('Can wait',self.state()['body'])
+        self.assertNotIn('Changed while completing',self.state()['body'])
+
     def test_success_api_identity_bot_actor_and_idempotent_completion(self):
         self.prepare()
         # An untrusted artifact cannot supply the mutation ID.

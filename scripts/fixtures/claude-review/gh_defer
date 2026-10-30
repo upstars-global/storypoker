@@ -39,6 +39,12 @@ elif ep=='repos/owner/repo/pulls/42/reviews/101': result=state['origin']
 elif ep=='repos/owner/repo/pulls/comments/1001':
     c=state['thread']['comments'][0]
     result={'id':c['databaseId'],'user':{'login':c['author']['login']},'pull_request_review_id':c['pullRequestReview']['databaseId'],'path':state['thread']['path'],'pull_request_url':'https://api.github.com/repos/owner/repo/pulls/'+('99' if state.get('wrong_pr_link') else '42'),'original_commit_id':state['origin']['commit_id']}
+elif ep=='repos/owner/repo/pulls/comments/1002':
+    comment=next((c for c in state['thread']['comments'] if c['databaseId']==1002),None)
+    if comment is None: sys.exit(1)
+    result={'id':1002,'user':{'login':comment['author']['login']},'in_reply_to_id':1001,
+            'pull_request_url':'https://api.github.com/repos/owner/repo/pulls/42',
+            'body':comment['body'],'updated_at':comment['updatedAt']}
 elif ep=='repos/owner/repo/pulls/comments/1003':
     if os.environ.get('FAIL_REPLY_READ') or state.get('missing_reply') or not any(c['databaseId']==1003 for c in state['thread']['comments']): sys.exit(1)
     result={'id':1003,'user':{'login':'so-upstars'},'in_reply_to_id':999 if state.get('wrong_reply_root') else 1001,'pull_request_url':'https://api.github.com/repos/owner/repo/pulls/42'}
@@ -49,6 +55,10 @@ elif ep=='repos/owner/repo/issues' and method=='POST':
     state['issue']=result
 elif ep=='repos/owner/repo/issues/57':
     result=state['issue']
+    if os.environ.get('STAGE')=='complete' and os.environ.get('EDIT_PROPOSAL_ON_COMPLETE_READ'):
+        comment=state['thread']['comments'][1]
+        comment['body']=comment['body'].replace('Can wait','Changed while completing')
+        comment['updatedAt']='2026-10-30T00:01:00Z'
     if os.environ.get('STAGE')=='resolve' and os.environ.get('CHANGE_HEAD_DURING_ISSUE'): state['head']='c'*40
     if os.environ.get('STAGE')=='resolve' and os.environ.get('CLOSE_ISSUE_AFTER_PREPARE'): result={**result,'state':'closed'}
 elif ep=='repos/owner/repo/pulls/42/comments/1001/replies' and method=='POST':
