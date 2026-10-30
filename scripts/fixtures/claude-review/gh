@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""Isolated GitHub fixture; every unknown endpoint fails closed."""
+import json, os, pathlib, sys
+p=pathlib.Path(os.environ['FIXTURE_DIR'])
+args=sys.argv[1:]
+if len(args)<2 or args[0]!='api': sys.exit(2)
+endpoint=args[1]
+method=args[args.index('--method')+1] if '--method' in args else 'GET'
+with (p/'trace.jsonl').open('a') as f: f.write(json.dumps({'endpoint':endpoint,'method':method})+'\n')
+if endpoint=='user': result={'login':'so-upstars'}
+elif endpoint=='repos/owner/repo/pulls/42': result={'number':42,'head':{'sha':os.environ.get('FIXTURE_HEAD','a'*40)}}
+elif endpoint=='repos/owner/repo/pulls/42/reviews/202':
+    body_path=p/'body'
+    if method=='PUT':
+        if os.environ.get('FAIL_PUT'): sys.exit(1)
+        body_path.write_text(json.load(sys.stdin)['body'])
+        result={'id':202}
+    elif method=='GET':
+        result={'id':202,'user':{'login':'so-upstars'},'commit_id':'a'*40,'body':body_path.read_text() if body_path.exists() else 'initial'}
+        if body_path.exists() and os.environ.get('FAIL_READBACK'): result['body']='wrong'
+    else: sys.exit(2)
+else: sys.exit(2)
+print(json.dumps(result))
