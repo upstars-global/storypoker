@@ -12,14 +12,14 @@ WORKFLOW = ROOT / '.github/workflows/claude-review.yml'
 
 def step(name):
     ruby = os.environ.get('RUBY', 'ruby')
-    script = "require 'yaml'; require 'json'; w=YAML.load_file(ARGV[0]); s=w['jobs'].values.flat_map{|j| j['steps'] || []}.find{|x| x['name']==ARGV[1]}; abort 'missing step' unless s; puts JSON.generate(s.fetch('run'))"
+    script = "require 'yaml'; require 'json'; w=YAML.load_file(ARGV[0], aliases: true); s=w['jobs'].values.flat_map{|j| j['steps'] || []}.find{|x| x['name']==ARGV[1]}; abort 'missing step' unless s; puts JSON.generate(s.fetch('run'))"
     return json.loads(subprocess.check_output([ruby, '-e', script, str(WORKFLOW), name], text=True))
 
 
 class TransportTest(unittest.TestCase):
     def test_prompt_tool_permissions_and_artifact_paths(self):
         ruby=os.environ.get('RUBY','ruby')
-        command="require 'yaml'; require 'json'; puts JSON.generate(YAML.load_file(ARGV[0]))"
+        command="require 'yaml'; require 'json'; puts JSON.generate(YAML.load_file(ARGV[0], aliases: true))"
         workflow=json.loads(subprocess.check_output([ruby,'-e',command,str(WORKFLOW)],text=True))
         review=workflow['jobs']['review']
         agent=next(s for s in review['steps'] if s.get('id')=='claude')
@@ -38,7 +38,7 @@ class TransportTest(unittest.TestCase):
 class ResolverBoundaryTest(unittest.TestCase):
     def test_isolated_job_permissions_and_transport(self):
         ruby=os.environ.get('RUBY','ruby')
-        script="require 'yaml'; require 'json'; puts JSON.generate(YAML.load_file(ARGV[0]))"
+        script="require 'yaml'; require 'json'; puts JSON.generate(YAML.load_file(ARGV[0], aliases: true))"
         jobs=json.loads(subprocess.check_output([ruby,'-e',script,str(WORKFLOW)],text=True))['jobs']
         self.assertEqual([name for name,j in jobs.items() if j.get('permissions',{}).get('contents')=='write'], ['resolve_threads'])
         resolver=jobs['resolve_threads']
@@ -604,7 +604,7 @@ class TokenFilterTest(unittest.TestCase):
     def test_atlassian_prefix_is_blocked_in_every_transport(self):
         script=step('Validate review body')
         start=script.index("if grep -qE '")
-        end=script.index('\nfi',start)+len('\nfi')
+        end=script.index('# The one-row Summary table:',start)
         fragment='fail() { exit 1; }\n'+script[start:end]
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
@@ -612,13 +612,102 @@ class TokenFilterTest(unittest.TestCase):
             env={**os.environ,**{name:str(path) for name,path in paths.items()}}
             for name in paths:
                 with self.subTest(transport=name):
-                    for path in paths.values(): path.write_text('safe synthetic text')
+                    for field,path in paths.items(): path.write_text('safe synthetic text' if field=='POST_FILE' else '{}')
                     paths[name].write_text('ATATT'+'SyntheticFixtureOnly123')
                     result=subprocess.run(['bash','-c',fragment],env=env,capture_output=True,text=True)
                     self.assertNotEqual(result.returncode,0,result.stderr)
-            for path in paths.values(): path.write_text('safe synthetic text')
+            for field,path in paths.items(): path.write_text('safe synthetic text' if field=='POST_FILE' else '{}')
             result=subprocess.run(['bash','-c',fragment],env=env,capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stderr)
+
+
+class PythonIsolationTest(unittest.TestCase):
+    def test_prepare_imports_ignore_checkout_and_pythonpath(self):
+        script=step('Prepare review threads')
+        snippet='\n'.join(script.splitlines()[:2])+'\nPY\n'
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/'json.py').write_text("from pathlib import Path\nPath('imported').touch()\nraise RuntimeError('checkout import')\n")
+            result=subprocess.run(['bash','-c',snippet],cwd=root,
+                env={**os.environ,'PYTHONPATH':str(root),'GH_TOKEN':'synthetic-fixture'},capture_output=True,text=True)
+            self.assertFalse((root/'imported').exists(),'checkout Python module executed')
+            self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_every_inline_python_uses_isolated_mode(self):
+        import re
+        lines=[line.strip() for line in WORKFLOW.read_text().splitlines() if re.match(r'\s*python3\s',line)]
+        self.assertGreater(len(lines),5)
+        self.assertTrue(all(line.startswith('python3 -I ') for line in lines),lines)
+
+
+class DecodedTokenFilterTest(unittest.TestCase):
+    def test_escaped_prefixes_and_malformed_json_are_rejected(self):
+        script=step('Validate review body')
+        start=script.index("if grep -qE '")
+        end=script.index('# The one-row Summary table:',start)
+        fragment='fail() { exit 1; }\n'+script[start:end]
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            paths={name:root/name for name in ('POST_FILE','COMMENTS_FILE','ACTIONS_FILE')}
+            env={**os.environ,**{name:str(path) for name,path in paths.items()}}
+            cases=[('COMMENTS_FILE',r'[{"body":"\u0041TATTSyntheticFixtureOnly123"}]'),
+                   ('ACTIONS_FILE',r'{"reason":"\u0041TATTSyntheticFixtureOnly123"}'),
+                   ('ACTIONS_FILE',r'{"nested":[{"reason":"\u0067hp_SyntheticFixtureOnly123"}]}'),
+                   ('ACTIONS_FILE','{"reason":')]
+            for name,value in cases:
+                with self.subTest(transport=name,value=value):
+                    paths['POST_FILE'].write_text('safe synthetic text')
+                    paths['COMMENTS_FILE'].write_text('[]'); paths['ACTIONS_FILE'].write_text('{}')
+                    paths[name].write_text(value)
+                    result=subprocess.run(['bash','-c',fragment],env=env,capture_output=True,text=True)
+                    self.assertNotEqual(result.returncode,0,result.stderr)
+
+
+class SummaryRefreshTest(unittest.TestCase):
+    @staticmethod
+    def workflow():
+        ruby=os.environ.get('RUBY','ruby')
+        return json.loads(subprocess.check_output([ruby,'-e',"require 'yaml'; require 'json'; puts JSON.generate(YAML.load_file(ARGV[0], aliases: true))",str(WORKFLOW)],text=True))
+
+    def test_refresh_runs_after_completion_with_shared_summary_lock(self):
+        jobs=self.workflow()['jobs']
+        self.assertIn('refresh_merged_summary',jobs)
+        refresh=jobs['refresh_merged_summary']; closed=jobs['merged_summary']
+        self.assertIn('complete',refresh['needs'])
+        self.assertIn('always()',refresh['if'])
+        self.assertIn("needs.gate.outputs.review == 'true'",refresh['if'])
+        self.assertEqual(refresh['permissions'],closed['permissions'])
+        for job in (refresh,closed):
+            self.assertTrue(job['concurrency']['group'].startswith('claude-review-summary-pr-'))
+            self.assertFalse(job['concurrency']['cancel-in-progress'])
+            self.assertTrue(all(s.get('if')=='always()' for s in job['steps']))
+        self.assertEqual(refresh['steps'],closed['steps'])
+
+    def test_late_review_refreshes_empty_merge_snapshot_without_duplicates(self):
+        jobs=self.workflow()['jobs']; self.assertIn('refresh_merged_summary',jobs)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            os.symlink(ROOT/'scripts/fixtures/claude-review/gh_summary',root/'gh')
+            state={'merged':True,'reviews':[],'comments':[],'threads':[]}
+            (root/'state.json').write_text(json.dumps(state))
+            env={**os.environ,'PATH':str(root)+os.pathsep+os.environ['PATH'],
+                 'FIXTURE_DIR':str(root),'REPO':'owner/repo','NUMBER':'42'}
+            def invoke(job):
+                for item in jobs[job]['steps']:
+                    result=subprocess.run(['bash','-eo','pipefail','-c',item['run']],cwd=root,env=env,capture_output=True,text=True)
+                    self.assertEqual(result.returncode,0,result.stderr)
+            invoke('merged_summary')
+            state=json.loads((root/'state.json').read_text()); self.assertEqual(state['comments'],[])
+            state['reviews']=[SummaryRunTest.review()]
+            (root/'state.json').write_text(json.dumps(state))
+            invoke('refresh_merged_summary'); invoke('merged_summary')
+            state=json.loads((root/'state.json').read_text())
+            self.assertEqual(len(state['comments']),1)
+            self.assertIn('Reviews: 1',state['comments'][0]['body'])
+
+    def test_unmerged_completion_skips_summary_publication(self):
+        state,_=SummaryRunTest().run_summary({'merged':False,'reviews':[],'comments':[]})
+        self.assertEqual(state['comments'],[])
 
 
 class SummaryParserTest(unittest.TestCase):
@@ -749,7 +838,7 @@ sys.exit(2)
 
     def test_workflow_settings(self):
         ruby=os.environ.get('RUBY','ruby')
-        workflow=json.loads(subprocess.check_output([ruby,'-e',"require 'yaml'; require 'json'; puts JSON.generate(YAML.load_file(ARGV[0]))",str(WORKFLOW)],text=True))
+        workflow=json.loads(subprocess.check_output([ruby,'-e',"require 'yaml'; require 'json'; puts JSON.generate(YAML.load_file(ARGV[0], aliases: true))",str(WORKFLOW)],text=True))
         review=workflow['jobs']['review']
         agent=next(s for s in review['steps'] if s.get('id')=='claude')
         self.assertIn("vars.CLAUDE_REVIEW_MODEL || 'claude-sonnet-5-5'",agent['with']['claude_args'])
@@ -767,7 +856,7 @@ sys.exit(2)
 class MergedSummaryTest(unittest.TestCase):
     def test_summary_job_is_isolated_and_closed_only(self):
         ruby = os.environ.get('RUBY', 'ruby')
-        workflow = json.loads(subprocess.check_output([ruby, '-e', "require 'yaml'; require 'json'; puts JSON.generate(YAML.load_file(ARGV[0]))", str(WORKFLOW)], text=True))
+        workflow = json.loads(subprocess.check_output([ruby, '-e', "require 'yaml'; require 'json'; puts JSON.generate(YAML.load_file(ARGV[0], aliases: true))", str(WORKFLOW)], text=True))
         job = workflow['jobs']['merged_summary']
         self.assertIn('closed', job['if'])
         self.assertIn('merged', job['if'])

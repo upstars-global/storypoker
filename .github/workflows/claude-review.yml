@@ -55,11 +55,13 @@ jobs:
       REPO: ${{ github.repository }}
       NUMBER: ${{ github.event.pull_request.number }}
     steps:
-      - name: Gather merged review summary
+      - &gather_merged_review_summary
+        name: Gather merged review summary
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 - <<'PYCODE'
+          python3 -I - <<'PYCODE'
           import json, os, re, subprocess, sys
           from datetime import datetime
           from pathlib import Path
@@ -243,7 +245,10 @@ jobs:
               ledger_re=re.compile(r'<!--\s*claude-review-ledger:v1\s+(\{.*?\})\s*-->',re.S)
               disposition_re=re.compile(r'<!--\s*cr-received-disposition:v1\s+(\{.*?\})\s*-->',re.S)
               pr=gh(f'{prefix}/pulls/{number}')
-              require(pr.get('number')==number and pr.get('merged') is True, 'PR is not merged')
+              require(pr.get('number')==number, 'PR identity mismatch')
+              if pr.get('merged') is not True:
+                  Path('summary.txt').unlink(missing_ok=True)
+                  sys.exit(0)
               reviews=[r for r in pages(f'{prefix}/pulls/{number}/reviews') if (r.get('user') or {}).get('login')==reviewer]
               if not reviews:
                   Path('summary.txt').unlink(missing_ok=True)
@@ -341,11 +346,13 @@ jobs:
               print('::error::Merged summary gathering failed', file=sys.stderr)
               sys.exit(1)
           PYCODE
-      - name: Publish merged review summary
+      - &publish_merged_review_summary
+        name: Publish merged review summary
+        if: always()
         env:
           GH_TOKEN: ${{ secrets.SO_UPSTARS_PR_TOKEN }}
         run: |
-          python3 - <<'PYCODE'
+          python3 -I - <<'PYCODE'
           import json, os, subprocess, sys
           from pathlib import Path
           p=Path('summary.txt')
@@ -621,7 +628,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 - <<'PY'
+          python3 -I - <<'PY'
           import json, os, subprocess
 
           fields = '''databaseId author { login } authorAssociation body createdAt updatedAt
@@ -1038,7 +1045,7 @@ jobs:
         id: actions
         if: always()
         run: |
-          python3 - <<'PY'
+          python3 -I - <<'PY'
           import json, os, re
           from pathlib import Path
 
@@ -1207,6 +1214,37 @@ jobs:
             fail "Review output contains a token-like string"
           fi
 
+          python3 -I - <<'PYTOKENS'
+          import json, os, re, sys
+          from pathlib import Path
+
+          token = re.compile(r'(ghp_|ghs_|gho_|ghu_|ghr_|github_pat_|sk-ant-|sb_secret_|ATATT)[A-Za-z0-9]')
+          def unique(pairs):
+              result = {}
+              for key, value in pairs:
+                  if key in result: raise ValueError('duplicate JSON key')
+                  result[key] = value
+              return result
+          def check(value):
+              pending = [value]
+              while pending:
+                  current = pending.pop()
+                  if isinstance(current, str):
+                      if token.search(current): raise ValueError('token-like string')
+                  elif isinstance(current, dict):
+                      pending.extend(current.keys()); pending.extend(current.values())
+                  elif isinstance(current, list):
+                      pending.extend(current)
+          try:
+              for name in ('COMMENTS_FILE', 'ACTIONS_FILE'):
+                  path = Path(os.environ[name])
+                  if name == 'ACTIONS_FILE' and not path.exists(): continue
+                  check(json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=unique))
+          except (ValueError, TypeError, OSError, RecursionError):
+              print('::error::Review JSON contains a token-like string or invalid data', file=sys.stderr)
+              sys.exit(1)
+          PYTOKENS
+
           # The one-row Summary table: its header, the separator, then the data row.
           header_re='^\| *Intent *\| *System *\| *Craft *\| *Critical *\| *Important *\| *Minor *\|$'
           verdict='(PASS|FINDINGS|UNASSESSED)'
@@ -1270,7 +1308,7 @@ jobs:
           REVIEW_ID: ${{ steps.post.outputs.review_id }}
           PHASE: PREPARE
         run: |
-          python3 - <<'PYCODE'
+          python3 -I - <<'PYCODE'
           import json, os, re, subprocess, sys
           from datetime import datetime
           from pathlib import Path
@@ -1683,7 +1721,7 @@ jobs:
     steps:
       - name: Resolve verified thread metadata
         run: |
-          python3 - <<'PYCODE'
+          python3 -I - <<'PYCODE'
           import json, os, re, subprocess, sys
 
           def require(ok, message):
@@ -1820,7 +1858,7 @@ jobs:
           REVIEW_ID: ${{ needs.publish.outputs.review_id }}
           PHASE: COMPLETE
         run: |
-          python3 - <<'PYCODE'
+          python3 -I - <<'PYCODE'
           import json, os, re, subprocess, sys
           from datetime import datetime
           from pathlib import Path
@@ -2281,3 +2319,23 @@ jobs:
           [ "$current" = "$RUN_URL pending" ] || exit 0
           gh api "repos/$REPO/statuses/$HEAD_SHA" -f state=error -f description="Publishing the review failed" \
             -f context="$CONTEXT" -f target_url="$RUN_URL" > /dev/null
+
+  refresh_merged_summary:
+    name: Refresh merged review summary
+    needs: [gate, complete]
+    if: always() && needs.gate.outputs.review == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    concurrency:
+      group: claude-review-summary-pr-${{ needs.gate.outputs.number }}
+      cancel-in-progress: false
+    env:
+      REPO: ${{ github.repository }}
+      NUMBER: ${{ needs.gate.outputs.number }}
+    steps:
+      - *gather_merged_review_summary
+      - *publish_merged_review_summary
