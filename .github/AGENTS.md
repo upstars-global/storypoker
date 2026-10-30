@@ -14,8 +14,9 @@ Workflow узгоджений із `sentimony/agentic-workflow`, commit `c68221a
 `skip-auto-review`, draft, fork, PR від ботів і самого `so-upstars` пропускаються. GitHub не дає
 запросити ревʼю в автора PR: live-перевірка `review_requested` потребує PR іншого акаунта.
 
-Зелений CI означає завершений `pull_request` run на повному head SHA, де успішні всі пʼять jobs:
-`Lint`, `Typecheck`, `Unit tests`, `Build`, `Public pages load`. Відсутній job теж означає failure.
+Зелений CI означає завершений `pull_request` run на повному head SHA, де успішні всі пʼять app jobs:
+`Lint`, `Typecheck`, `Unit tests`, `Build`, `Public pages load`, а також `Review workflow fixtures`.
+Відсутній job теж означає failure.
 E2E й Visual лишаються локальним `test:pre-squash`. `Claude review` - дорадчий статус.
 
 Read-only агент не має shell і `gh`, не читає `.git/`, отримує лише workspace та підготовлений
@@ -60,4 +61,4 @@ Usage limit акаунта `CLAUDE_CODE_OAUTH_TOKEN` з повідомлення
 
 CI запускає фікстури фактичних workflow-кроків: гейти, ліміти, footer, ledger, resolver, recovery
 і merged summary. Локально: `python3 -m unittest discover -s scripts -p 'test_claude_review.py'`.
-Прямий запуск файла збирає лише ранні тестові класи.
+Прямий запуск файла й unittest discovery збирають усі тестові класи.

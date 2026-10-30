@@ -6,6 +6,7 @@ pnpm-скрипти `postinstall` (`[ -n "$CI" ]`) і `predev` (`|| true`) те�
 
 | Скрипт | Запуск | Що робить |
 | --- | --- | --- |
+| `test_claude_review.py`, `fixtures/claude-review/` | `python3 -m unittest discover -s scripts -p 'test_claude_review.py'` | offline-перевірки фактичних кроків авторевʼю; Python/GitHub fixtures, Ruby YAML parser |
 | `setup.sh` | `preinstall`, `pnpm run setup` | створює `.agents/skills`, `.claude/skills`, `.env/` з порожніми `.env` і `.env.local`; пише або доповнює через `jq` `.claude/settings.json` (`attribution` вимкнена, хук `SessionStart` на `session-start.sh` додається один раз); наприкінці викликає `migrate-test-artifacts.sh` |
 | `migrate-test-artifacts.sh` | із `setup.sh` | переносить legacy `coverage/`, `playwright-report/` з кореня в `test-results/`; тимчасовий, прибрати разом із рядками в `.gitignore` |
 | `skills.sh` | `postinstall` (крім CI), `predev` (збій не зупиняє `dev`), `pnpm run skills` | спершу `skl-x update` і `skl-x rm .` (знімає всі skills проєкту), далі ставить skills через `skl-x add` для Codex і Claude Code; мережевий |
