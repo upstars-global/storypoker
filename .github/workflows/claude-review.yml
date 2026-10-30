@@ -1878,7 +1878,7 @@ jobs:
                   try:
                       guard(); source(request); thread=candidates(request)
                       # Reread open issue and root-bound reply immediately before any mutation.
-                      source(request); guard(); deferred(request)
+                      source(request); deferred(request); guard()
                       if not thread['isResolved']:
                           q='mutation($id:ID!) { resolveReviewThread(input:{threadId:$id}) { thread { id isResolved } } }'
                           result=query(q,id=thread['id'])['resolveReviewThread']['thread']
