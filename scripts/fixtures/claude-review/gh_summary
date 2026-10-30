@@ -1,0 +1,33 @@
+#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+root=Path(os.environ['FIXTURE_DIR']); state=json.loads((root/'state.json').read_text()); args=sys.argv[1:]
+endpoint=args[1]; method=args[args.index('--method')+1] if '--method' in args else 'GET'
+payload=json.load(sys.stdin) if '--input' in args else None
+with (root/'trace.jsonl').open('a') as f: f.write(json.dumps({'method':method,'endpoint':endpoint})+'\n')
+prefix='repos/owner/repo'; path=endpoint.split('?')[0]
+if path=='user': out={'login':'so-upstars'}
+elif path==prefix+'/pulls/42': out={'number':42,'merged':state.get('merged',True)}
+elif path==prefix+'/pulls/42/reviews':
+    page=int(endpoint.split('page=')[-1]); out=state['reviews'][(page-1)*100:page*100]
+elif path==prefix+'/issues/42/comments' and method=='GET':
+    page=int(endpoint.split('page=')[-1]); out=state.get('comments',[])[(page-1)*100:page*100]
+elif path==prefix+'/issues/42/comments' and method=='POST':
+    out={'id':999,'user':{'login':'so-upstars'},'body':payload['body']}; state.setdefault('comments',[]).append(out)
+elif path.startswith(prefix+'/issues/comments/') and method=='PATCH':
+    ident=int(path.rsplit('/',1)[1]); out=next(c for c in state['comments'] if c['id']==ident); out['body']=payload['body']
+elif '/collaborators/' in path: out={'permission':'write'}
+elif path=='graphql':
+    q=payload['query']; variables=payload['variables']; threads=state.get('threads',[])
+    def conn(nodes, offset=0):
+        return {'nodes':nodes[offset:offset+100], 'pageInfo':{'hasNextPage':len(nodes)>offset+100,'endCursor':str(offset+100) if len(nodes)>offset+100 else None}}
+    if 'node(id:' in q:
+        thread=next(t for t in threads if t['id']==variables['id'])
+        out={'data':{'node':{'comments':conn(thread['comments'],int(variables['cursor']))}}}
+    else:
+        nodes=[{**t,'comments':conn(t['comments'])} for t in threads]
+        out={'data':{'repository':{'pullRequest':{'reviewThreads':conn(nodes,int(variables.get('cursor') or 0))}}}}
+elif path.startswith(prefix+'/issues/') and method=='GET': out=state.get('issue',{})
+else:
+    print('unexpected endpoint',file=sys.stderr); sys.exit(1)
+(root/'state.json').write_text(json.dumps(state)); print(json.dumps(out))
