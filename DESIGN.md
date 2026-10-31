@@ -331,7 +331,7 @@ const isAuthorizedModerator = isModerator && !!user
 | Запустити відлік розкриття | `CardsArea.tsx` hold-to-start (силент/зі звуком/з атмосферою) → `broadcastCountdownStart` - деталі §11.6 |
 | Почати новий раунд | `ResultsArea.tsx`, `showNewRound={isModerator}` → `roomStore.startNewRound()` |
 | Налаштувати опитування (`voting`/`vote_question`) | `CardsArea.tsx`, умова `... && isModerator` → `setPollQuestion`/`startVoteQuestion` |
-| Налаштувати колоду карт і кола результатів | `AppHeader.tsx` меню → `ConfigureCardDeckModal` (чіпи «Показувати результати», §11.9) |
+| Налаштувати колоду карт | `AppHeader.tsx` меню → `ConfigureCardDeckModal` (пресет і карти; кола автоматичні, §11.9) |
 | Виключити гравця (kick) | `PlayerRow.tsx`, гейт `currentUserIsModerator` → `playersStore.kick` |
 | Керування таймером (reset/pause/resume/±30s) | `Timer.tsx`, `canControl={isModerator}` (саме `isModerator`, **не** `isAuthorizedModerator`) |
 
@@ -386,9 +386,9 @@ DEV. Роль на момент голосування у snapshot не збер
 Графік трендів малює окрему лінію на кожну з ролей DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM, що має
 не-null бал у видимому періоді (`roleRoundAlignment()` у `roundStats.ts`, сира роль - `voteCohortFor()`
 з `resultCohorts.ts`). Кожна лінія перемикається в легенді. `COHORT_COLORS` - спільна мапа для ліній і
-бейджів історії та знімка; GQA - `#ff7043`, AQA - `#fdd835`, QA - `#ffa726`. Чіпи «Показувати
-результати» (§11.9) на історію, тренди, головну й нові поля API не впливають. Кастомні ролі не мають
-рольових ліній.
+бейджів історії та знімка; GQA - `#ff7043`, AQA - `#fdd835`, QA - `#ffa726`. Автоматичні кола поточного
+раунду (§11.9), включно з кастомними, не змінюють історію, тренди, головну й нові поля API. Кастомні ролі
+не мають рольових ліній.
 
 **Legacy rounds без `active_cards`/`deck_preset`** (виправлено 2026-07-26): `alignmentScore` повертає
 `null`, якщо `deckOrder` порожній - а раунди, записані до міграції `010_round_history_deck.sql`, мають
