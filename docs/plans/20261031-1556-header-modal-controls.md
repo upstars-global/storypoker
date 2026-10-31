@@ -200,4 +200,10 @@ Ruling: R5 owner requirement supersedes Task3 outline>=3 and classic/dark header
 Ruling: AC7 synchronized with owner's subsequent local-review UI requests; local artifacts remain gitignored, submission saved and consumed without changing the owner's decisions
 Ruling: R5 focused proof -25public/icon Playwright checks PASS, including all6appearance cases with no border/outline, classic/dark original-color equality, remaining5header-fill/gradient equality and digit contrast
 
+Review R6: Critical 0 | Important 0 | Minor 0 tree 107f71a4adbcc52fcf0ec4f4ae4779fe1fc9f146 reviewer gpt-6.1-sol mode re-review
+Round review 6: owner visual R5-F1..F6 ADDRESSED; independent source trace of shared CSS and all6appearance tests
+Ruling: review R6 origin automatic - fresh cr-request reviewer, additional round5of15; no new findings. Alpha-fill compositing is a test measurement limitation with no observed contrast failure; original light fill/dark digit retained
+Ruling: R6 runtime coverage - host fresh551unit/25public+icon/12scene/108modal checks PASS; local form, reload, export and actual submission-file integration PASS in isolated browser contexts; source reviewer did not run these checks
+Verify: PASS full tree 107f71a4adbcc52fcf0ec4f4ae4779fe1fc9f146 2026-10-31 19:27
+
 ```
