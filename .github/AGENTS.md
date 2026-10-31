@@ -2,12 +2,13 @@
 
 Авторевʼю PR (`workflows/claude-review.yml`). Загальний CI (`ci.yml`) описаний у корінному `AGENTS.md`.
 
-Workflow узгоджений із `sentimony/agentic-workflow`, commit `c68221a`, з адаптацією до акаунта
+Workflow використовує спільний пакет ревʼю чотирьох репозиторіїв з адаптером акаунта
 `so-upstars`, секрету `SO_UPSTARS_PR_TOKEN` і CI Story Poker. Модель за замовчуванням -
 `claude-sonnet-5-5`, effort `medium`; repo variable `CLAUDE_REVIEW_MODEL` перевизначає модель.
 `REVIEW_SKILLS_REF` може закріпити повний SHA; без нього береться останній реліз `cr-request`.
 
-Автоматичні повтори вимагають нового head і Critical чи Important в останньому маркованому огляді.
+Автоматичні повтори вимагають нового head і нових або невирішених попередніх Critical чи Important
+в останньому маркованому огляді.
 Поріг за замовчуванням - 5 оглядів `so-upstars` на PR, включно з ручними. Одна валідна мітка
 `auto-review-rounds-N` перевизначає поріг; неоднозначні й невалідні мітки зупиняють гейт.
 Запит ревʼю `so-upstars` і `workflow_dispatch` обходять лічильник, зберігаючи решту перевірок.
@@ -62,3 +63,13 @@ Usage limit акаунта `CLAUDE_CODE_OAUTH_TOKEN` з повідомлення
 CI запускає фікстури фактичних workflow-кроків: гейти, ліміти, footer, ledger, resolver, recovery
 і merged summary. Локально: `python3 -m unittest discover -s scripts -p 'test_claude_review.py'`.
 Прямий запуск файла й unittest discovery збирають усі тестові класи.
+
+Невирішені попередні Critical/Important у canonical ledger також підтримують автоматичний повтор;
+REJECT і повністю підтверджене прийняте відкладення більше не блокують його. Прийняте відкладення
+звіряється зі знімком перед моделлю: зміна пропозиції після цього знімка зупиняє дію. Після помилки
+публікації фіналізатор завершує лише власний pending status; новіший run він не перезаписує.
+
+Спільний пакет контролює `scripts/check_review_parity.py` з явним адаптером у
+`scripts/review-parity.json`; локально запускай `python3 scripts/check_review_parity.py --self-test`
+і `python3 -m unittest discover -s scripts -p 'test_review_parity.py'`. Змінюючи спільну логіку,
+тести або fixtures, узгодь усі чотири копії; адаптер допускає лише перелічені проєктні відмінності.

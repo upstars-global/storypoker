@@ -419,6 +419,8 @@ jobs:
           REPO: ${{ github.repository }}
           REVIEWER: so-upstars
           REQUIRED_JOBS: '["Lint","Typecheck","Unit tests","Build","Public pages load","Review workflow fixtures"]'
+          CI_EVENTS: '["pull_request"]'
+          SKIPPABLE_JOBS: '[]'
           RUN_SHA: ${{ github.event.workflow_run.head_sha }}
           RUN_HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
           EVENT_PR: ${{ github.event.pull_request.number || inputs.pr_number }}
@@ -480,17 +482,22 @@ jobs:
           limit=$(jq -r 'if length == 0 then "5" else .[0] | ltrimstr("auto-review-rounds-") end' <<< "$limits")
           requested=$(jq --arg r "$REVIEWER" '[.requested_reviewers[].login] | index($r) != null' <<< "$pr")
 
-          # CI runs on pull_request here, so the per-workflow list filtered by that event finds it
-          ci_run=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$head_sha&event=pull_request&per_page=1" \
-              --jq '.workflow_runs[0] | if . == null then "none" elif .status != "completed" then .status
+          # Select the newest run on this exact head from the explicitly allowed CI source events.
+          # shellcheck disable=SC2016 # $event is a jq variable.
+          ci_run=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$head_sha&per_page=100" \
+              --jq '[.workflow_runs[] | select(.event as $event
+                | (env.CI_EVENTS | fromjson | index($event)) != null)][0]
+                | if . == null then "none" elif .status != "completed" then .status
                 elif .conclusion != "success" then .conclusion else .id end')
           ci=$ci_run
           if [[ "$ci_run" =~ ^[0-9]+$ ]]; then
-            # A completed run is green when every required job succeeded; a missing one counts as failure
+            # Every required job must exist and succeed, except explicitly allowed project CI skips.
             jobs=$(gh api --paginate "repos/$REPO/actions/runs/$ci_run/jobs?per_page=100" --jq '.jobs[] | {name, conclusion}')
-            ci=$(jq -rs --argjson required "$REQUIRED_JOBS" \
-              '[$required[] as $n | (map(select(.name == $n)) | first | .conclusion) // "missing"]
-                | if all(. == "success") then "success" else "failure" end' <<< "$jobs")
+            ci=$(jq -rs --argjson required "$REQUIRED_JOBS" --argjson skippable "$SKIPPABLE_JOBS" \
+              '[$required[] as $n | (map(select(.name == $n)) | first) as $job
+                | ($job.conclusion == "success" or ($job.conclusion == "skipped"
+                  and ($skippable | index($n)) != null))]
+                | if all(. == true) then "success" else "failure" end' <<< "$jobs")
           fi
           if [ "$ci" != success ]; then
             if [ "$requested" = true ]; then

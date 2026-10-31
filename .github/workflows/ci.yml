@@ -17,6 +17,10 @@ jobs:
     timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
+      - name: Check shared review parity
+        run: python3 scripts/check_review_parity.py --self-test
+      - name: Test review parity boundary
+        run: python3 -m unittest discover -s scripts -p 'test_review_parity.py'
       - name: Test review workflow
         run: python3 -m unittest discover -s scripts -p 'test_claude_review.py'
 
