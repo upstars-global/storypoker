@@ -39,6 +39,7 @@ export interface VoteGroup {
 }
 
 export interface ResultGroup {
+  key?: string
   label: string
   votes: VoteCounts
 }
@@ -95,6 +96,40 @@ export function groupVotesByCohort(
   return [...buckets]
     .filter(([, votes]) => Object.keys(votes).length > 0)
     .map(([key, votes]) => ({ key, votes }))
+}
+
+export function groupResultVotes(
+  players: readonly { shields: string[] | null; vote: string | null }[],
+): (ResultGroup & { key: string })[] {
+  const buckets = new Map<string, VoteCounts>(ROLE_COHORTS.map(key => [key, Object.create(null) as VoteCounts]))
+  for (const player of players) {
+    if (!player.vote) continue
+    let key = DEV_UMBRELLA_COHORT
+    for (const shield of player.shields ?? []) {
+      if (shield.startsWith(CUSTOM_SHIELD_PREFIX)) {
+        key = shield
+        break
+      }
+      const tag = roleTagForShields([shield])
+      if (tag && COHORT_BY_TAG.has(tag)) {
+        key = tag
+        break
+      }
+    }
+    let bucket = buckets.get(key)
+    if (!bucket) {
+      bucket = Object.create(null) as VoteCounts
+      buckets.set(key, bucket)
+    }
+    bucket[player.vote] = (bucket[player.vote] ?? 0) + 1
+  }
+  return [...buckets]
+    .filter(([, votes]) => Object.keys(votes).length > 0)
+    .map(([key, votes]) => ({
+      key,
+      label: key.startsWith(CUSTOM_SHIELD_PREFIX) ? key.slice(CUSTOM_SHIELD_PREFIX.length) : key,
+      votes,
+    }))
 }
 
 export function estimatorVotes<T extends { player_id: string }>(
