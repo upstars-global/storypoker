@@ -122,4 +122,7 @@ Ruling: R1-F1 remedy - change only existing expected THEMES sequence to dark/lig
 
 Ruling: R1-F1 proof - focused matrix self-check RED1failed on old expected order, then full scene.spec.ts GREEN12passed after one expected-sequence replacement at current line19; assertions retained, no runtime edits. Previous verification stale; full checks rerun on new committed tree
 
+Verify: PASS full tree 30169265167a967d7f195dcdf8827229b7708bb7 2026-10-31 16:16
+Ruling: final committed checks -551unit tests/53files,27public/icon tests,12visual scene self-checks and108browser geometry cases PASS; R1-F1 proven with RED1/GREEN12, no application diff after independent review
+
 ```
