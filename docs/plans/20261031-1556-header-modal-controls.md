@@ -261,4 +261,11 @@ Ruling: remaining criteria proof -108modal geometry cases and12ordered Before/Af
 Ruling: runtime scope - Desktop Chrome plus native Chromium mobile viewport checks; WebKit remains in repository pre-squash gate, no squash requested
 Verify: PASS full tree 21dbb6d837e72b14e395b6ccc1634e281e9631b1 2026-11-01 00:06
 
+Ruling: parent role revision integrated - merge69e69e5 into child52f86d3 without conflicts, source HEAD44e3891; parent approved spec automatic builtin/custom voted groups preserved alongside header/modal controls
+Review R13: Critical 0 | Important 0 | Minor 0 tree be9a0874760c4231da65a00beb96e56d71c16310 reviewer gpt-6.1-sol mode code
+Round review 13: independent combined integration review, individual source contracts preserved
+Ruling: review R13 origin automatic - final combined integration check; additional automatic budget round12of15 across parent/child chain
+Ruling: combined fresh checks PASS - test:ci562tests54files, rolebrowser24geometry/6modals/counts/specialdecks,18native submenu and108modalgeometry; public/icon Playwright39passed+1flaky(retryPASS); localgallery24cases carries12approved and12newpending, popup excludes collapsed cases; no owner decisions changed
+Verify: PASS full tree be9a0874760c4231da65a00beb96e56d71c16310 2026-11-01 00:57
+
 ```
