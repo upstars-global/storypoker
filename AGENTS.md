@@ -27,8 +27,9 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
-CI check = `pnpm run test:ci` - обов'язково перед завершенням задачі зі змінами в репозиторії. Для read-only аудитів
-дотримуйся обмежень викликаного скіла.
+CI check = `pnpm run test:ci` - app-перевірки, обов'язкові перед завершенням задачі зі змінами в репозиторії.
+Після змін reviewer workflow, його helpers або CI окремо запускай parity і Python workflow fixtures;
+команди - `.github/AGENTS.md`. Для read-only аудитів дотримуйся обмежень викликаного скіла.
 - Перед початком роботи прочитай `@docs/session-learnings/AGENTS.md`, якщо файл існує: локальні gitignored нотатки
   попередніх сесій (у бектиках навмисно - без автоімпорту).
 - **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
@@ -105,7 +106,8 @@ pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job 
 pnpm run test:visual [<ref>]   # рендер <ref> (дефолт origin/main) - еталон для дерева; локально - у контейнері Playwright
 pnpm run test:pre-squash [<ref>]   # перед squash: локальний Supabase + e2e chromium/webkit + visual проти <ref>
                                    # (дефолт merge-base з origin/main) у контейнері Playwright; звіти - test-results/pre-squash
-pnpm run test:ci     # icons:check + lint + typecheck + test:unit + build + icons:audit-build - як CI
+pnpm run test:ci     # app-частина CI: icons:check + lint + typecheck + test:unit + build + icons:audit-build
+                     # parity і Python workflow fixtures запускаються окремо; команди - .github/AGENTS.md
 pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
                      # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
 ```
@@ -114,13 +116,15 @@ Stage і локальний запуск ходять в одну прод-ба�
 
 CI - `.github/workflows/ci.yml`. Ціль - кожен job до ~2 хв (рішення власника 2026-10-26), `timeout-minutes` - 4;
 перевірку, що виходить за ціль, шардують або переносять у `scripts/pre-squash.sh`, а не піднімають timeout.
-На кожен run паралельні job ids `lint`/`typecheck` (`icons:check` + `typecheck`)/`unit` (`test:unit:coverage`)/
-`build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy Supabase-кредами на Google Chrome
-раннера через `PLAYWRIGHT_CHANNEL=chrome`: без apt, який зависав на повільному дзеркалі). E2E (лише старт
-Supabase ~90 с, apt для WebKit зависав) і Visual винесені з CI в локальний `test:pre-squash` (рішення власника
-2026-10-27); Visual поки нестабільний, його збій - не дефект для рев'ю;
-деплою в CI немає. Прод збирає сам Netlify з репо (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env;
-job `build` збирає `dist` лише для `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
+На кожен run паралельні job ids `lint`/`typecheck` (`icons:check` + `typecheck`)/`unit`
+(`test:unit:coverage`)/ `build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
+Supabase-кредами на Google Chrome раннера через `PLAYWRIGHT_CHANNEL=chrome`: без apt, який зависав на
+повільному дзеркалі). Окремий job `review-workflow` (`Review workflow fixtures`) запускає parity self-test і
+дві Python unittest suites; він обов'язковий для gate авторевʼю. E2E (лише старт Supabase ~90 с, apt для
+WebKit зависав) і Visual винесені з CI в локальний `test:pre-squash` (рішення власника 2026-10-27); Visual
+поки нестабільний, його збій - не дефект для рев'ю; деплою в CI немає. Прод збирає сам Netlify з репо
+(`netlify.toml`, `command = "pnpm run build"`) зі своїм site env; job `build` збирає `dist` лише для
+`icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
 `.github/workflows/claude-review.yml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й
 прийняті компроміси - `.github/AGENTS.md`.
 

@@ -1,51 +1,76 @@
 # .github/AGENTS.md
 
-Авторев'ю PR (`workflows/claude-review.yml`). Загальний CI (`ci.yml`) описаний у корінному `AGENTS.md`.
+Авторевʼю PR (`workflows/claude-review.yml`). Загальний CI (`ci.yml`) описаний у корінному `AGENTS.md`.
 
-`.github/workflows/claude-review.yml` - не required: на не-draft PR після зеленого `CI` (а також на
-ready_for_review, запит рев'ю і `workflow_dispatch` з `pr_number`) Claude проходить `cr-request` і лишає PR review
-від `so-upstars` (секрети `SO_UPSTARS_PR_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`; модель - repo variable `CLAUDE_REVIEW_MODEL`).
-Автоматичний прогін рев'юїть head, коли на PR ще немає рев'ю бота з маркером `<!-- claude-review`, або коли в
-`### Summary` останнього такого рев'ю Critical чи Important > 0, воно було на іншому head і таких рев'ю менше 3;
-запит рев'ю в `so-upstars` і `workflow_dispatch` обходять цей ліміт, але зелений CI потрібен усім: запит чекає
-на нього, а dispatch на незеленому CI лише ставить статус `error`. Зелений тут - required jobs (`REQUIRED_JOBS`
-у гейті); E2E і Visual у CI немає (локальний `test:pre-squash`); гейт чекає кінця всього прогону
-`CI`. Мітка `skip-auto-review`
-вимикає будь-яке рев'ю PR (і на запит, і dispatch), PR від ботів і від `so-upstars` воркфлоу не рев'юїть.
-Скіл `cr-request` береться з `sentimony/agentic-workflow` на SHA з repo variable `REVIEW_SKILLS_REF` (дефолт у
-воркфлоу - повний SHA тегу `v0.0.6`, `1e151554…`) і копіюється в `~/.claude/skills`. Дія відновлює `.claude` з
-`main` лише на подіях `pull_request`, а не на `workflow_run`/`workflow_dispatch`, тож крок `Prepare review target`
-сам прибирає з checkout усі `.claude/` і `CLAUDE.local.md` (вкладені теж), `.mcp.json` і `.claude.json`; base-копії
-`.claude/` теж (вкладена тека теж вантажиться), обидві сторони змін є в `diff.patch` - це прийнятий компроміс, а не
-дефект для рев'ю.
-Агент не має shell (`--disallowedTools "Bash"`: read-only команди, як `printenv`, читають env)
-і `gh`, читає лише workspace і `~/.claude/skills` (`blockReadsOutsideWorkingDirectories`), `.git/` йому закритий
-(`Read(./.git/**)`: в `.git/config` лежить токен дії), а пише лише тіло у файл. Лог, дифф, base-копії, tree і
-`pr.json` (опис; рев'ю й коментарі лише OWNER/MEMBER/COLLABORATOR) йому готує `Prepare review target` в
-`auto-review-target/`; PR, що трекає цю теку чи `auto-review-out/`, валить job. Job `publish` перевіряє тіло й
-свіжість head, а PAT має тільки крок `post` (звіряє, що токен належить `so-upstars`) - гарантія лише для копії з
-`main`, прогони `pull_request` беруть воркфлоу з гілки PR. `publish` перевіряє структуру тіла (маркер, підпис з
-тривалістю кроку агента, яку дописує крок `Add review duration`, і `Next step` у форматі скіла останнім рядком;
-або підпис останнім - порядок до 0.0.6, для override `REVIEW_SKILLS_REF`; вердикти й лічильники з `### Summary`,
-розмір, токеноподібні рядки), а не його зміст: це прийнятий компроміс, а не дефект для рев'ю - статус дорадчий,
-рев'ю читає людина. Виняток для ` · ` «двох закриваючих рядків» у промпті - спільне формулювання чотирьох
-review-воркфлоу, хоч агент пише ` · ` лише в `Next step`: прийнятий компроміс, а не дефект для рев'ю;
-хід і підсумок - commit status `Claude review` на head PR. Повторне рев'ю - Request / Re-request review у
-`so-upstars` (за незеленого CI чекає на зелений). Правки воркфлоу для `workflow_run` діють лише після злиття
-(копія з `main`), для `pull_request`-подій - одразу з гілки PR, для `workflow_dispatch` - з ref, на якому його
-запущено. Щоб перевірити правку на копії з гілки PR, запитуй рев'ю `so-upstars` лише після кінця прогону `CI` на
-head і гейта `workflow_run` після нього: раніший запит гейт лише ставить у `pending`, а рев'ю потім робить
-`workflow_run` з копії `main`. Job `review` має групу `concurrency` за номером PR: новіший прогін після гейту (і dispatch чи запит на
-тому ж head) скасовує поточне рев'ю, старий head дістає `error`. Постить лише власник статусу (чий URL у
-статусі), тож dispatch і авторев'ю одного head, як і новий гейт між перевіркою власника й фінальним статусом
-старого прогону, можуть лишити `error` без рев'ю - прийнятий компроміс, а не дефект для рев'ю: хибного рев'ю
-немає, Re-request review лікує.
-Схвалення PAT в org бачить лише адмін (`so-upstars` - member, API дає `404`); працездатність перевіряй за
-прогоном `Claude review` і PR review `so-upstars` з `<!-- claude-review sha=`. Прогін гейта з `workflow_run`
-має `head_sha` вершини `main`, а не head PR: шукай його в `actions/workflows/claude-review.yml/runs` без фільтра
-`head_sha`, за `event` і часом. GitHub не дає запросити рев'ю в
-автора PR, а PR від `so-upstars` воркфлоу пропускає: шлях `review_requested` перевіряй на PR іншого акаунта.
-У `--allowedTools` агента `Write(./auto-review-out/review.md)` стоїть поруч з `Edit(...)`: `Edit` не створює файл,
-і без `Write` прогін іноді проходить, не записавши рев'ю. Пін action на SHA з коментарем `# vN` звіряй без API:
-`git ls-remote --tags https://github.com/<owner>/<action>.git </dev/null | grep <sha>` має дати `refs/tags/vN`;
-агент рев'ю мережі не має, тож результат впиши в опис PR.
+Workflow використовує спільний пакет ревʼю чотирьох репозиторіїв з адаптером акаунта
+`so-upstars`, секрету `SO_UPSTARS_PR_TOKEN` і CI Story Poker. Модель за замовчуванням -
+`claude-sonnet-5-5`, effort `medium`; repo variable `CLAUDE_REVIEW_MODEL` перевизначає модель.
+`REVIEW_SKILLS_REF` може закріпити повний SHA; без нього береться останній реліз `cr-request`.
+
+Автоматичні повтори вимагають нового head і нових або невирішених попередніх Critical чи Important
+в останньому маркованому огляді.
+Поріг за замовчуванням - 5 оглядів `so-upstars` на PR, включно з ручними. Одна валідна мітка
+`auto-review-rounds-N` перевизначає поріг; неоднозначні й невалідні мітки зупиняють гейт.
+Запит ревʼю `so-upstars` і `workflow_dispatch` обходять лічильник, зберігаючи решту перевірок.
+`skip-auto-review`, draft, fork, PR від ботів і самого `so-upstars` пропускаються. GitHub не дає
+запросити ревʼю в автора PR: live-перевірка `review_requested` потребує PR іншого акаунта.
+
+Зелений CI означає завершений `pull_request` run на повному head SHA, де успішні всі пʼять app jobs:
+`Lint`, `Typecheck`, `Unit tests`, `Build`, `Public pages load`, а також `Review workflow fixtures`.
+Відсутній job теж означає failure.
+E2E й Visual лишаються локальним `test:pre-squash`. `Claude review` - дорадчий статус.
+
+Read-only агент не має shell і `gh`, не читає `.git/`, отримує лише workspace та підготовлений
+скіл (`blockReadsOutsideWorkingDirectories`), без write PAT. Prepare прибирає локальну Claude
+конфігурацію на всіх глибинах, включно з base-копіями, й готує `.auto-review/`: diff, base,
+tree, PR metadata, огляди, коментарі та відповіді учасників; текст тредів агент вважає недовіреним.
+Цей шлях зарезервований: PR, що його трекає, зупиняє job. Агент пише лише `review.md`,
+`review-actions.json` і `comments.json`; для кожного дозволені точні `Edit` і `Write`,
+бо `Edit` сам не створює нового файла.
+
+Publish перевіряє head, структуру, вердикти, лічильники, footer і токеноподібні рядки; зміст прози
+читає людина. Це прийнятий компроміс, а не дефект для ревʼю: статус дорадчий. Footer приймає
+поточний порядок signature/Next step і старий signature-last для override скіла; прибирає причину
+після ` · `, зберігаючи chain і findings. Це прийнятий компроміс, а не дефект для ревʼю.
+PAT отримують лише довірені кроки публікації, які звіряють власника `so-upstars`; гарантія
+стосується копії workflow з main, бо PR-копію може змінити кожен, хто пушить гілку.
+
+`SO_UPSTARS_PR_TOKEN` і `CLAUDE_CODE_OAUTH_TOKEN` - чинні секрети. Review і reply потребують
+Pull requests RW; прийняті відкладення з issue також потребують Issues RW та схвалення org.
+Права PAT автоматично не розширювати; metadata GET не доводить права запису. Org approval
+бачить адміністратор; працездатність підтверджують фактичні дії й API readback.
+
+Ledger у тілі review зберігає структуровані знахідки, disposition і прогрес дій. Повторний запуск
+відновлює записані дії; complete незалежно читає їхні докази. Лише API-only job `resolve_threads`
+отримує короткоживучий GITHUB_TOKEN з `contents: write` і `pull-requests: write`: без checkout,
+PAT, артефактів або parser-а виводу моделі. Thread ID береться з GitHub metadata. Треди закриває
+`github-actions[bot]`; огляди, issue, reply, ledger і merged summary пише `so-upstars`. Це прийнятий
+компроміс, а не дефект для ревʼю: довгоживучий Contents-write PAT міг би пушити в main.
+Підсумок після merge читає історію GitHub без checkout і запуску моделі.
+
+`workflow_run` виконує копію з main, PR-події - копію з гілки PR, dispatch - із вибраного ref.
+Після створення PR зі зміною workflow дочекайся завершення CI й його `workflow_run`, потім
+запитуй `so-upstars` для перевірки PR-копії. Ранній запит може передати виконання старій main-копії.
+Звіряй source CI run і повний head PR у gate log: head самого `workflow_run` може бути main.
+Concurrency розділяє head SHA й скасовує застарілі ревʼю одного PR. Dispatch одночасно з подією
+того самого head може залишити error без огляду; Re-request review відновлює виконання. Це
+прийнятий компроміс, а не дефект для ревʼю: помилковий огляд не публікується.
+
+Usage limit акаунта `CLAUDE_CODE_OAUTH_TOKEN` з повідомленням про reset потребує очікування,
+потім remove/re-add запиту ревʼю. Це зовнішня квота; workflow через неї не змінювати.
+Пін action на SHA з коментарем `# vN` звіряй через `git ls-remote --tags`; reviewer мережі не має,
+тому результат додавай до опису PR.
+
+CI запускає фікстури фактичних workflow-кроків: гейти, ліміти, footer, ledger, resolver, recovery
+і merged summary. Локально: `python3 -m unittest discover -s scripts -p 'test_claude_review.py'`.
+Прямий запуск файла й unittest discovery збирають усі тестові класи.
+
+Невирішені попередні Critical/Important у canonical ledger також підтримують автоматичний повтор;
+REJECT і повністю підтверджене прийняте відкладення більше не блокують його. Прийняте відкладення
+звіряється зі знімком перед моделлю: зміна пропозиції після цього знімка зупиняє дію. Після помилки
+публікації фіналізатор завершує лише власний pending status; новіший run він не перезаписує.
+
+Спільний пакет контролює `scripts/check_review_parity.py` з явним адаптером у
+`scripts/review-parity.json`; локально запускай `python3 scripts/check_review_parity.py --self-test`
+і `python3 -m unittest discover -s scripts -p 'test_review_parity.py'`. Змінюючи спільну логіку,
+тести або fixtures, узгодь усі чотири копії; адаптер допускає лише перелічені проєктні відмінності.

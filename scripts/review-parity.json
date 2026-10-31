@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "adapter": {
+    "reviewer": "so-upstars",
+    "secret": "SO_UPSTARS_PR_TOKEN",
+    "workflow": ".github/workflows/claude-review.yml",
+    "name": "Claude review",
+    "dispatch": "pr_number",
+    "jobs": [
+      "Lint",
+      "Typecheck",
+      "Unit tests",
+      "Build",
+      "Public pages load",
+      "Review workflow fixtures"
+    ],
+    "events": [
+      "pull_request"
+    ],
+    "skippable_jobs": [],
+    "ci_description": "Lint, Typecheck, Unit tests, Build, Public pages load, and review-workflow fixtures"
+  },
+  "common": {
+    "workflow": "ece49f164ae0ae0e0bf95505f359680362b0c5758085b473bfbbd36b2d06472b",
+    "scripts/check_review_parity.py": "43ad6502b0c6422f450e14ccaed1be3109c490213bf63f1fc705e9803e69092b",
+    "scripts/test_review_parity.py": "a03655c50dd8b729cdcd3344c109d3db20c2fe5503c31e96ff5fb81913193716",
+    "scripts/test_claude_review.py": "29385f96a410df0562ba96f55692bdd8ba42640f99ed2276c8ee33110ddeb594",
+    "scripts/fixtures/claude-review/gh": "342b51b48b2bd7b3113264453b9b696e313ec3dc9de71f87fbfb6c91a1ebc66e",
+    "scripts/fixtures/claude-review/gh_defer": "82eb9b55cec0acabceb739c16c89f85f2f0c1d1333689b1e1f51bca6f4597926",
+    "scripts/fixtures/claude-review/gh_summary": "e56914e70c36557ce421bed5fec8bd7e2db93fb458923842f0f9de0eccc83710"
+  }
+}
