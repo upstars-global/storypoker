@@ -268,4 +268,10 @@ Ruling: review R13 origin automatic - final combined integration check; addition
 Ruling: combined fresh checks PASS - test:ci562tests54files, rolebrowser24geometry/6modals/counts/specialdecks,18native submenu and108modalgeometry; public/icon Playwright39passed+1flaky(retryPASS); localgallery24cases carries12approved and12newpending, popup excludes collapsed cases; no owner decisions changed
 Verify: PASS full tree be9a0874760c4231da65a00beb96e56d71c16310 2026-11-01 00:57
 
+Review R14: Critical 0 | Important 0 | Minor 0 tree bcfdf66419db3582604727328aa1fe02c0dea8fb reviewer gpt-6.1-sol mode re-review
+Round review 14: scoped documentation fix re-review; R12-copilot-F1 ADDRESSED
+Ruling: review R14 origin automatic - fix mirrored into both reviewed trees; one shared docs-fix unit, additional automatic budget round13of15 across parent/child chain
+Ruling: docfix fresh proof - 562tests54files and all test:ci stages PASS on committed tree; production/test sources unchanged from latest full native/browser/pre-squash evidence, only3active docs and journal differ
+Verify: PASS full tree bcfdf66419db3582604727328aa1fe02c0dea8fb 2026-11-01 01:09
+
 ```
