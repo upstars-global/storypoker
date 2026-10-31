@@ -107,4 +107,19 @@ Ruling: browser fixture setup - use Vite-versioned router URL to share AppHeader
 Ruling: local review72order - manifest groups classic/dark,classic/light,cyberdeck/dark,cyberdeck/light,matcha/dark,matcha/light; original72IDs and reviewed head unchanged, persisted histories retained
 Ruling: scope - parent PR63 converted to draft at user's request; child PR targets2610291418-dev-session, no merge authorized
 
+Verify: PASS full tree e32c60ef5fa5b99ca02cbac0aef3f941a2f4811f 2026-10-31 16:11
+
+Review R1: Critical 0 | Important 1 | Minor 0 tree e32c60ef5fa5b99ca02cbac0aef3f941a2f4811f reviewer gpt-6.1-sol mode code
+Finding R1-F1: Important tests/visual/support/scene.spec.ts:25 - screenshot matrix self-check still expects light/dark after user-requested dark/light ordering
+Round review 1: independent code review; visual harness expected matrix not updated
+Ruling: review R1 origin automatic - implementation handoff dispatched fresh reviewer, automatic round1of3
+Ruling: R1 set aside local IDs/order artifacts - outside committed boundary; host independently validated unchanged72IDs/head and both local reports
+Ruling: R1 set aside actual PR base - finalize will independently verify GitHub base after creating authorized child PR
+Ruling: R1 set aside browser geometry/focus - host actual108case browser evidence retained; reviewer static coverage is separate
+Ruling: R1 set aside vertical slider arrows - preserve menu navigation with Left/Right/Home/End for native range; existing Playwright proves this reachable behavior
+Received R1: R1-F1 ACCEPT Re-review: not needed
+Ruling: R1-F1 remedy - change only existing expected THEMES sequence to dark/light; a small test-only fix with executable self-check, no application code changes; include scene.spec.ts under Task2 scope
+
+Ruling: R1-F1 proof - focused matrix self-check RED1failed on old expected order, then full scene.spec.ts GREEN12passed after one expected-sequence replacement at current line19; assertions retained, no runtime edits. Previous verification stale; full checks rerun on new committed tree
+
 ```
