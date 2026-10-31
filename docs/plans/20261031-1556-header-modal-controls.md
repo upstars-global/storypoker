@@ -39,6 +39,8 @@ AC6: test:ci та public-page/icon-delivery Playwright перевірки про
 AC7: Локальна сторінка зберігає рішення та чернетки; редагування коментаря оновлює той самий запис, кошик видаляє запис. Після рішення поле й кнопки ховаються; Reject перевіряє обов’язкову причину при натисканні. Передача JSON зберігає latest і timestamped snapshot.
 AC8: Повзунок без додаткового border/outline у всіх6темах; classic/dark має світлий fill оригіналу та цифру кольору хедера. Решта5тем зберігають fill/gradient хедера; digit із кожним gradient stop>=4.5.
 
+AC9: Кнопка mute й слайдер у меню користувача займають один рядок, без окремого видимого підпису; доступна назва, клавіатура та persistence збережені.
+
 ## Files
 
 | File | Change | Task |
@@ -205,5 +207,13 @@ Round review 6: owner visual R5-F1..F6 ADDRESSED; independent source trace of sh
 Ruling: review R6 origin automatic - fresh cr-request reviewer, additional round5of15; no new findings. Alpha-fill compositing is a test measurement limitation with no observed contrast failure; original light fill/dark digit retained
 Ruling: R6 runtime coverage - host fresh551unit/25public+icon/12scene/108modal checks PASS; local form, reload, export and actual submission-file integration PASS in isolated browser contexts; source reviewer did not run these checks
 Verify: PASS full tree 107f71a4adbcc52fcf0ec4f4ae4779fe1fc9f146 2026-10-31 19:27
+
+Review R7: Critical 0 | Important 0 | Minor 1 reviewer owner mode visual
+Ruling: review R7 origin user-started - submittedAt2026-10-31T21:14:42.191665+00:00; capture6359199be580ebb94467c9d8be09e079186b432e, current app72f15d63ce3b5300f188b2147268521b87da5304 has identical AppHeader to capture
+Finding R7-F1: Minor classic/dark AppHeader - owner asks mute icon and slider on one line like Before
+Received R7: R7-F1 ACCEPT Re-review: needed
+Ruling: R7-F1 remedy - one flex row containing existing mute Menu.Item and native range; mute width auto overrides full-width menu item, range occupies remaining width; retain accessible volume name, stores, shortcuts and R5 thumb colors
+Ruling: R7 focused evidence -6theme cases assert aligned centers, non-overlap and slider width>80; keyboard/mute/persistence suite rerun. Initial width-collapse failure reproduced and corrected by w-auto, not hidden by the assertions
+Ruling: local review protocol - prior Approved remains approved in later rounds and auto-collapsed, previous decisions read-only; popup navigation includes only expanded comparisons. Both12/72page browser checks PASS; owner's actual submitted JSON untouched
 
 ```

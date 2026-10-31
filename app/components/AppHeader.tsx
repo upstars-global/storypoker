@@ -166,50 +166,51 @@ export default function AppHeader({
               )}
         >
           <DropdownMenuGroup>
-            <AppMenuItem
-              className="whitespace-nowrap"
-              role="menuitemcheckbox"
-              aria-checked={volumePercent === 0}
-              closeOnClick={false}
-              data-testid="volume-button"
-              onClick={toggleMute}
-            >
-              <AppIcon className="mui-menu-icon" name={volumeIcon} />
-              <span className="flex-1">{t('header.volume')}</span>
-              <span>{volumeLevel}</span>
-            </AppMenuItem>
-            <div className="relative flex items-center px-4 py-2">
-              <MenuPrimitive.Item
+            <div className="flex items-center gap-2 px-2">
+              <AppMenuItem
+                className="w-auto shrink-0 px-2"
+                role="menuitemcheckbox"
+                aria-checked={volumePercent === 0}
                 closeOnClick={false}
-                label={t('header.volume')}
-                role="slider"
-                render={(
-                  <input
-                    type="range"
-                    className="mui-slider w-full"
-                    style={{ '--fill': `${volumePercent}%` } as CSSProperties}
-                    min="0"
-                    max="100"
-                    step="10"
-                    value={volumePercent}
-                    aria-label={t('header.volume')}
-                    aria-valuetext={String(volumeLevel)}
-                    data-testid="volume-slider"
-                    onChange={onVolumeInput}
-                    onKeyDown={(event) => {
-                      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) event.stopPropagation()
-                    }}
-                  />
-                )}
-              />
-              <span
-                className="mui-slider-knob"
-                style={{ left: `calc(28px + (100% - 56px) * ${volume})` }}
-                aria-hidden="true"
+                data-testid="volume-button"
+                onClick={toggleMute}
               >
-                <AppIcon name="tabler:percentage-100" />
-                <AppIcon className="mui-slider-value" name={volumeLevelIcon} />
-              </span>
+                <AppIcon className="mui-menu-icon" name={volumeIcon} />
+                <span className="sr-only">{t('header.volume')}</span>
+              </AppMenuItem>
+              <div className="relative flex min-w-0 flex-1 items-center py-2">
+                <MenuPrimitive.Item
+                  closeOnClick={false}
+                  label={t('header.volume')}
+                  role="slider"
+                  render={(
+                    <input
+                      type="range"
+                      className="mui-slider w-full min-w-0"
+                      style={{ '--fill': `${volumePercent}%` } as CSSProperties}
+                      min="0"
+                      max="100"
+                      step="10"
+                      value={volumePercent}
+                      aria-label={t('header.volume')}
+                      aria-valuetext={String(volumeLevel)}
+                      data-testid="volume-slider"
+                      onChange={onVolumeInput}
+                      onKeyDown={(event) => {
+                        if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) event.stopPropagation()
+                      }}
+                    />
+                  )}
+                />
+                <span
+                  className="mui-slider-knob"
+                  style={{ left: `calc(12px + (100% - 24px) * ${volume})` }}
+                  aria-hidden="true"
+                >
+                  <AppIcon name="tabler:percentage-100" />
+                  <AppIcon className="mui-slider-value" name={volumeLevelIcon} />
+                </span>
+              </div>
             </div>
             <AppMenuItem
               className="whitespace-nowrap"

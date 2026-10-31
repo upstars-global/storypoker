@@ -12,6 +12,13 @@ for (const palette of ['classic', 'cyberdeck', 'matcha']) {
       }, { palette, theme })
       await page.goto('/')
       await page.getByTestId('account-menu-button').click()
+      const mute = await page.getByTestId('volume-button').boundingBox()
+      const slider = await page.getByTestId('volume-slider').boundingBox()
+      expect(mute).not.toBeNull()
+      expect(slider).not.toBeNull()
+      expect(slider!.width).toBeGreaterThan(80)
+      expect(Math.abs(mute!.y + mute!.height / 2 - slider!.y - slider!.height / 2)).toBeLessThan(2)
+      expect(mute!.x + mute!.width).toBeLessThanOrEqual(slider!.x)
       const colors = await page.getByRole('menu').evaluate((menu) => {
         const rgb = (value: string) => value.match(/[\d.]+/g)!.map(Number)
         const blend = (foreground: number[], background: number[]) => {
