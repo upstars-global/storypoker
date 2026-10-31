@@ -234,4 +234,11 @@ Ruling: R9 owner request supersedes R7 remaining-width range and Task3 header-fi
 Ruling: R9 focused proof -25public/icon tests PASS;6cases assert96px width, one row, nonoverlap, original dark fill/digit and no gradient; all prior contrast/focus/persistence assertions retained
 Ruling: local collapse UI - both controls live under Visual review in left header column; collapse-approved hides only approved cases, preserves rejected/pending, counters and popup skip rules. Both12/72page browser tests PASS
 
+Review R10: Critical 0 | Important 0 | Minor 0 tree 9855235ae607ffc74ac630f9abf96001bf44eda0 reviewer gpt-6.1-sol mode re-review
+Round review 10: R9-F1..F3 ADDRESSED; width96 and all3dark original token colors traced to sole renderer
+Ruling: review R10 origin automatic - additional round7of15; no findings. Existing alpha contrast helper limitation is a coverage caveat, no identified regression; source reviewer did not execute tests
+Ruling: R9 committed proof -551unit/53files, lint/typecheck/build/icon audit,25public/icon cases PASS with no retries in final run;108modal checks and12theme-ordered pairs PASS. Gallery After URLs contain newcapturea9c50e5 and live HTTP bytes match regenerated screenshots, no-store headers verified
+Ruling: R9 local verification - left-column collapse-all and collapse-approved controls PASS, collapse-approved preserves rejected/pending; prior approvals carry and remain read-only; expanded-only gallery PASS12/72pages. Updated HTML opened at requested localURL
+Verify: PASS full tree 9855235ae607ffc74ac630f9abf96001bf44eda0 2026-10-31 23:47
+
 ```
