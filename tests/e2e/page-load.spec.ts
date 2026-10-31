@@ -1,6 +1,37 @@
 import { expect, openScene, ROOM_ID, ROOM_SLUG, settleScene, test, type SceneRole } from '../visual/support/scene'
+import { colorContrast } from '../support/helpers/colorContrast'
 
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/forgot-password', '/ffc']
+
+for (const palette of ['classic', 'cyberdeck', 'matcha']) {
+  for (const theme of ['dark', 'light']) {
+    test(`account volume slider contrast: ${palette} ${theme}`, async ({ page }) => {
+      await page.addInitScript(({ palette, theme }) => {
+        localStorage.setItem('sp-palette', palette)
+        localStorage.setItem('sp-theme', theme)
+      }, { palette, theme })
+      await page.goto('/')
+      await page.getByTestId('account-menu-button').click()
+      const colors = await page.getByRole('menu').evaluate((menu) => {
+        const rgb = (value: string) => value.match(/[\d.]+/g)!.map(Number)
+        const blend = (foreground: number[], background: number[]) => {
+          const alpha = foreground[3] ?? 1
+          return foreground.slice(0, 3).map((value, index) => value * alpha + background[index]! * (1 - alpha))
+        }
+        const hex = (channels: number[]) => `#${channels.map(value => Math.round(value).toString(16).padStart(2, '0')).join('')}`
+        const style = getComputedStyle(menu)
+        let background = rgb(style.backgroundColor)
+        const overlay = style.backgroundImage.match(/rgba?\([^)]*\)/)?.[0]
+        if (overlay) background = blend(rgb(overlay), background)
+        const thumb = blend(rgb(getComputedStyle(menu.querySelector('.mui-slider-knob')!).color), background)
+        const digit = blend(rgb(getComputedStyle(menu.querySelector('.mui-slider-value')!).color), thumb)
+        return { background: hex(background), thumb: hex(thumb), digit: hex(digit) }
+      })
+      expect(colorContrast(colors.thumb, colors.background), 'thumb against menu').toBeGreaterThanOrEqual(3)
+      expect(colorContrast(colors.digit, colors.thumb), 'digit against thumb').toBeGreaterThanOrEqual(4.5)
+    })
+  }
+}
 
 for (const route of PUBLIC_ROUTES) {
   test(`loads ${route} without console errors`, async ({ page }) => {
