@@ -16,7 +16,7 @@ for (const palette of ['classic', 'cyberdeck', 'matcha']) {
       const slider = await page.getByTestId('volume-slider').boundingBox()
       expect(mute).not.toBeNull()
       expect(slider).not.toBeNull()
-      expect(slider!.width).toBeGreaterThan(80)
+      expect(slider!.width).toBe(96)
       expect(Math.abs(mute!.y + mute!.height / 2 - slider!.y - slider!.height / 2)).toBeLessThan(2)
       expect(mute!.x + mute!.width).toBeLessThanOrEqual(slider!.x)
       const colors = await page.getByRole('menu').evaluate((menu) => {
@@ -41,12 +41,14 @@ for (const palette of ['classic', 'cyberdeck', 'matcha']) {
         return {
           outline: knob.outlineStyle, border: knob.borderTopWidth, originalFill,
           fill: fill.backgroundColor, gradient: fill.backgroundImage,
+          digitColor: getComputedStyle(menu.querySelector('.mui-slider-value')!).color,
           headerFill: header.backgroundColor, headerGradient: header.backgroundImage,
           pairs: surfaces.map(surface => ({ thumb: hex(surface), digit: hex(blend(digit, surface)) })),
         }
       })
-      expect(colors.fill).toBe(palette === 'classic' && theme === 'dark' ? colors.originalFill : colors.headerFill)
-      expect(colors.gradient).toBe(colors.headerGradient)
+      expect(colors.fill).toBe(theme === 'dark' ? colors.originalFill : colors.headerFill)
+      expect(colors.gradient).toBe(theme === 'dark' ? 'none' : colors.headerGradient)
+      if (theme === 'dark') expect(colors.digitColor).toBe(colors.headerFill)
       expect(colors.outline).toBe('none')
       expect(colors.border).toBe('0px')
       for (const pair of colors.pairs) {

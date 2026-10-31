@@ -37,9 +37,9 @@ AC5: Локальні Before/After впорядковані за вказани�
 AC6: test:ci та public-page/icon-delivery Playwright перевірки проходять; новий PR має base гілки PR63.
 
 AC7: Локальна сторінка зберігає рішення та чернетки; редагування коментаря оновлює той самий запис, кошик видаляє запис. Після рішення поле й кнопки ховаються; Reject перевіряє обов’язкову причину при натисканні. Передача JSON зберігає latest і timestamped snapshot.
-AC8: Повзунок без додаткового border/outline у всіх6темах; classic/dark має світлий fill оригіналу та цифру кольору хедера. Решта5тем зберігають fill/gradient хедера; digit із кожним gradient stop>=4.5.
+AC8: Повзунок без додаткового border/outline у всіх6темах; усі3темні теми мають fill і цифру оригінального хедерного повзунка, без gradient. Усі3світлі теми зберігають fill/gradient хедера; digit контраст>=4.5.
 
-AC9: Кнопка mute й слайдер у меню користувача займають один рядок, без окремого видимого підпису; доступна назва, клавіатура та persistence збережені.
+AC9: Кнопка mute й слайдер шириною96px у меню користувача займають один рядок, без окремого видимого підпису; доступна назва, клавіатура та persistence збережені.
 
 ## Files
 
@@ -222,5 +222,16 @@ Ruling: review R8 origin automatic - additional round6of15; scoped source review
 Ruling: R7 final proof -551unit/53files plus lint/typecheck/build/icon audit PASS;25public/icon cases pass including6one-row geometry cases. Final rerun has24first-pass plus1skip-link retry PASS; identical skip-link focus flake observed before this fix, unchanged source retained
 Ruling: R7 browser proof -108modal geometry cases and12scene pairs in requested order PASS;6new header After images captured. Local prior-approval carry/progress/read-only history and expanded-only gallery navigation checks PASS12/72pages; last filtered gallery item approval closes safely
 Verify: PASS full tree 06faf810a79cb4708cb190dddced1b1d41b033e1 2026-10-31 23:20
+
+Review R9: Critical 0 | Important 0 | Minor 3 reviewer owner mode visual
+Ruling: review R9 origin user-started - submittedAt2026-10-31T21:43:33.902896+00:00, capture94130b0d38956ce7447f4989d5d01ccef59503f4; current1450145 has identical app code to capture
+Finding R9-F1: Minor classic/dark AppHeader - slider too long; match Before width96px
+Finding R9-F2: Minor cyberdeck/dark AppHeader - preserve original header thumb color
+Finding R9-F3: Minor matcha/dark AppHeader - preserve original header thumb color
+Received R9: R9-F1 ACCEPT; R9-F2 ACCEPT; R9-F3 ACCEPT Re-review: needed
+Ruling: R9 shared remedy - use96px fixed nonshrinking range wrapper; all dark themes use original appbar-emphasis fill and appbar-background digit without gradient. Light-theme colors and all borderless/keyboard/state behavior retained
+Ruling: R9 owner request supersedes R7 remaining-width range and Task3 header-filled thumb in cyberdeck/dark and matcha/dark; exact96px and original dark-token equality now tested across6themes
+Ruling: R9 focused proof -25public/icon tests PASS;6cases assert96px width, one row, nonoverlap, original dark fill/digit and no gradient; all prior contrast/focus/persistence assertions retained
+Ruling: local collapse UI - both controls live under Visual review in left header column; collapse-approved hides only approved cases, preserves rejected/pending, counters and popup skip rules. Both12/72page browser tests PASS
 
 ```

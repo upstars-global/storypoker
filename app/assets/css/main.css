@@ -825,10 +825,11 @@ body {
     color: var(--text-inverse);
   }
 
-  html[data-palette="classic"][data-theme="dark"] .mui-slider-knob > :first-child {
+  html[data-theme="dark"] .mui-slider-knob > :first-child {
     background-color: var(--color-appbar-emphasis);
+    background-image: none;
   }
-  html[data-palette="classic"][data-theme="dark"] .mui-slider-value {
+  html[data-theme="dark"] .mui-slider-value {
     color: var(--bg-appbar);
   }
 

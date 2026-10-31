@@ -178,7 +178,7 @@ export default function AppHeader({
                 <AppIcon className="mui-menu-icon" name={volumeIcon} />
                 <span className="sr-only">{t('header.volume')}</span>
               </AppMenuItem>
-              <div className="relative flex min-w-0 flex-1 items-center py-2">
+              <div className="relative flex w-24 shrink-0 items-center py-2">
                 <MenuPrimitive.Item
                   closeOnClick={false}
                   label={t('header.volume')}
