@@ -68,7 +68,7 @@ Claude Code підвантажує вкладені `CLAUDE.md`, які імпо
 | `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
 | `tests/` | Vitest unit + Playwright e2e і `visual` | `tests/AGENTS.md` |
 | `scripts/` | lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
-| `.github/` | CI-воркфлоу, авторев'ю `claude-review.yml` | `.github/AGENTS.md` |
+| `.github/` | CI-воркфлоу, авторев'ю `pr-auto-review.yml` | `.github/AGENTS.md` |
 
 Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
@@ -125,7 +125,7 @@ WebKit зависав) і Visual винесені з CI в локальний `t
 поки нестабільний, його збій - не дефект для рев'ю; деплою в CI немає. Прод збирає сам Netlify з репо
 (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env; job `build` збирає `dist` лише для
 `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
-`.github/workflows/claude-review.yml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й
+`.github/workflows/pr-auto-review.yml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й
 прийняті компроміси - `.github/AGENTS.md`.
 
 ## Environment Setup
