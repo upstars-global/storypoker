@@ -128,9 +128,7 @@
       "no": "No"
     },
     "voteQuestionInfo": "Question and answers are configured in the voting area",
-    "alwaysIncluded": "Always included",
-    "resultCohorts": "Show results",
-    "qaCohortHint": "QA, GQA, AQA, PO and SM are always shown as separate circles"
+    "alwaysIncluded": "Always included"
   },
   "poll": {
     "thirdCard": "Third card",

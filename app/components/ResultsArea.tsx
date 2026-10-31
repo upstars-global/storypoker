@@ -83,7 +83,7 @@ export default function ResultsArea({
 
   const circles = groups
     ? groups.map(group => ({ ...group, average: averageOf(group.votes) }))
-    : [{ label: t('results.general'), votes, average: averageOf(votes) }]
+    : [{ key: undefined, label: t('results.general'), votes, average: averageOf(votes) }]
 
   const celebrate = !disableCelebration && shouldCelebrate(votes, groups?.map(group => group.votes))
   const [particles, setParticles] = useState<CelebrationParticle[]>([])
@@ -165,11 +165,11 @@ export default function ResultsArea({
       >
         {circles.map(g => (
           <div
-            key={g.label}
+            key={g.key ?? g.label}
             className="flex flex-col items-center gap-2"
-            style={{ flex: '0 1 240px' }}
+            style={{ flex: '0 1 240px', width: '100%', maxWidth: '240px', minWidth: 0 }}
           >
-            <span className="mui-h6 text-primary">
+            <span className="mui-h6 text-primary w-full min-w-0 text-center" style={{ overflowWrap: 'anywhere' }}>
               {g.label}
               {g.average !== null && `: ${g.average}`}
             </span>
