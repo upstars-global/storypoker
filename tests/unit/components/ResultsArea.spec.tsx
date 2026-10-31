@@ -3,10 +3,11 @@ import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { getInstanceByDom, use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import ResultsArea from '~/components/ResultsArea'
+import type { ResultGroup } from '~/utils/resultCohorts'
 
 function mountResults(props: {
   votes: Record<string, number>
-  groups?: { label: string; votes: Record<string, number> }[] | null
+  groups?: { key?: string; label: string; votes: Record<string, number> }[] | null
   disableCelebration?: boolean
 }) {
   return render(<ResultsArea showNewRound={false} {...props} />).container
@@ -52,6 +53,17 @@ describe('ResultsArea cohort circles', () => {
       groups: [{ label: role, votes: { '3': 2 } }, { label: 'DEV', votes: { '5': 1, '8': 1 } }],
     })
     expect(container.querySelector('.celebration-layer')).not.toBeNull()
+  })
+
+  it('celebrates a custom circle and preserves colliding label identities', () => {
+    const error = vi.spyOn(console, 'error')
+    const groups: ResultGroup[] = [{ key: 'DEV', label: 'DEV', votes: { '3': 1 } }, { key: 'custom:DEV', label: 'DEV', votes: { '5': 2 } }]
+    const view = render(<ResultsArea votes={{ '3': 1, '5': 2 }} groups={groups} showNewRound={false} />)
+    const first = view.container.querySelectorAll('.mui-h6')[0]!
+    view.rerender(<ResultsArea votes={{ '3': 1, '5': 2 }} groups={[groups[1]!, groups[0]!]} showNewRound={false} />)
+    expect(view.container.querySelectorAll('.mui-h6')[1]).toBe(first)
+    expect(view.container.querySelector('.celebration-layer')).not.toBeNull()
+    expect(error).not.toHaveBeenCalled()
   })
 
   it('does not celebrate when each role has only one vote', () => {
