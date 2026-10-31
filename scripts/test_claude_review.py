@@ -1404,5 +1404,54 @@ class SummaryRunTest(unittest.TestCase):
         self.assertIn('Rejected: 0\n',state['comments'][0]['body'])
 
 
+
+
+class ReviewSkillLayoutTest(unittest.TestCase):
+    def run_layout(self, layouts, empty=False):
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / 'home'
+            home.mkdir()
+            for layout in layouts:
+                skill = root / 'aw' / layout / 'cr-request'
+                skill.mkdir(parents=True)
+                if empty:
+                    continue
+                (skill / 'SKILL.md').write_text('---\nmetadata:\n  version: "0.0.11"\n---\n')
+            child_bin = root / 'bin'
+            child_bin.mkdir()
+            for name in ('mkdir', 'cp', 'sed', 'head'):
+                (child_bin / name).symlink_to(shutil.which(name))
+            self.assertIsNone(shutil.which('claude', path=str(child_bin)))
+            self.assertIsNone(shutil.which('codex', path=str(child_bin)))
+            source = step('Install cr-request skill')
+            source = source[source.index('mkdir -p ~/.claude/skills'):]
+            result = subprocess.run(['/bin/bash', '-e', '-c', source], cwd=root,
+                                    env={'HOME': str(home), 'PATH': str(child_bin),
+                                         'RUNNER_TEMP': str(root),
+                                         'GITHUB_OUTPUT': str(root / 'output')},
+                                    capture_output=True, text=True)
+            return result.returncode
+
+    def test_root_layout(self):
+        self.assertEqual(self.run_layout(['skills']), 0)
+
+    def test_historical_layout(self):
+        self.assertEqual(self.run_layout(['plugins/aw/skills']), 0)
+
+    def test_missing_source(self):
+        self.assertNotEqual(self.run_layout([]), 0)
+
+    def test_empty_source(self):
+        self.assertNotEqual(self.run_layout(['skills'], empty=True), 0)
+
+    def test_multiple_historical_sources(self):
+        self.assertNotEqual(self.run_layout(['plugins/aw/skills', 'plugins/awf/skills']), 0)
+
+    def test_ambiguous_sources(self):
+        self.assertNotEqual(self.run_layout(['skills', 'plugins/aw/skills']), 0)
+
+
 if __name__ == '__main__':
     unittest.main()
