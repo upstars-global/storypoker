@@ -31,8 +31,6 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 CI check = `pnpm run test:ci` - app-перевірки, обов'язкові перед завершенням задачі зі змінами в репозиторії.
 Після змін reviewer workflow, його helpers або CI окремо запускай parity і Python workflow fixtures;
 команди - `.github/AGENTS.md`. Для read-only аудитів дотримуйся обмежень викликаного скіла.
-- Перед початком роботи прочитай `@docs/session-learnings/AGENTS.md`, якщо файл існує: локальні gitignored нотатки
-  попередніх сесій (у бектиках навмисно - без автоімпорту).
 - **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
   `web-debug`; тести - `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verify` → CI check
@@ -96,6 +94,12 @@ Claude Code підвантажує вкладені `CLAUDE.md`, які імпо
   без optional deps лишає без нього typecheck і сканер. Lint - `oxlint --type-aware` (`oxlint-tsgolint`), ESLint немає
 
 ## Common Commands
+
+Перед локальними перевірками запускай `sh scripts/check-local.sh`: wrapper
+перевіряє Node до виклику pnpm і задає `CI=1`, щоб auto-install не запускав
+видалення локальних скілів через postinstall. Змінюй версію Node до wrapper;
+не викликай його через pnpm, який може почати auto-install раніше за перевірку.
+
 `package.json` - джерело правди для повного списку скриптів. Тут лише неочевидне:
 
 ```bash

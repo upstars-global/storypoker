@@ -62,6 +62,11 @@ eager-імпорт виводить entry за бюджет `icons:audit-build`.
 рендериться поза графіком одразу; під час завантаження чанка або його збою лишається порожнє місце того
 самого розміру без екранної помилки.
 
+Коли потрібен конкретний renderer, передай його явно третім аргументом
+`useEChart(containerRef, option, { renderer: "svg" })` або `"canvas"`.
+Реєстрація `SVGRenderer` через `use([...])` не задає renderer конкретного
+instance; ECharts за замовчуванням використовує Canvas.
+
 ## Side widget і слот
 
 `sp-side-widget` (`timer | slot`) - лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine).
