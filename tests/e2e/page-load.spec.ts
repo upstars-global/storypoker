@@ -5,7 +5,7 @@ const PUBLIC_ROUTES = ['/', '/login', '/signup', '/forgot-password', '/ffc']
 
 for (const palette of ['classic', 'cyberdeck', 'matcha']) {
   for (const theme of ['dark', 'light']) {
-    test(`account volume slider contrast: ${palette} ${theme}`, async ({ page }) => {
+    test(`account volume slider appearance: ${palette} ${theme}`, async ({ page }) => {
       await page.addInitScript(({ palette, theme }) => {
         localStorage.setItem('sp-palette', palette)
         localStorage.setItem('sp-theme', theme)
@@ -19,28 +19,29 @@ for (const palette of ['classic', 'cyberdeck', 'matcha']) {
           return foreground.slice(0, 3).map((value, index) => value * alpha + background[index]! * (1 - alpha))
         }
         const hex = (channels: number[]) => `#${channels.map(value => Math.round(value).toString(16).padStart(2, '0')).join('')}`
-        const style = getComputedStyle(menu)
-        let background = rgb(style.backgroundColor)
-        const overlay = style.backgroundImage.match(/rgba?\([^)]*\)/)?.[0]
-        if (overlay) background = blend(rgb(overlay), background)
         const knob = getComputedStyle(menu.querySelector('.mui-slider-knob')!)
         const fill = getComputedStyle(menu.querySelector('.mui-slider-knob > :first-child')!)
         const header = getComputedStyle(document.querySelector('header')!)
+        const original = document.createElement('span')
+        original.style.backgroundColor = header.getPropertyValue('--color-appbar-emphasis')
+        menu.append(original)
+        const originalFill = getComputedStyle(original).backgroundColor
+        original.remove()
         const base = rgb(fill.backgroundColor)
         const stops = fill.backgroundImage.match(/rgba?\([^)]*\)/g) ?? []
         const surfaces = [base, ...stops.map(stop => blend(rgb(stop), base))]
         const digit = rgb(getComputedStyle(menu.querySelector('.mui-slider-value')!).color)
         return {
-          background: hex(background), boundary: hex(rgb(knob.outlineColor)), outline: knob.outlineStyle,
+          outline: knob.outlineStyle, border: knob.borderTopWidth, originalFill,
           fill: fill.backgroundColor, gradient: fill.backgroundImage,
           headerFill: header.backgroundColor, headerGradient: header.backgroundImage,
           pairs: surfaces.map(surface => ({ thumb: hex(surface), digit: hex(blend(digit, surface)) })),
         }
       })
-      expect(colors.fill).toBe(colors.headerFill)
+      expect(colors.fill).toBe(palette === 'classic' && theme === 'dark' ? colors.originalFill : colors.headerFill)
       expect(colors.gradient).toBe(colors.headerGradient)
-      expect(colors.outline).toBe('solid')
-      expect(colorContrast(colors.boundary, colors.background), 'thumb boundary against menu').toBeGreaterThanOrEqual(3)
+      expect(colors.outline).toBe('none')
+      expect(colors.border).toBe('0px')
       for (const pair of colors.pairs) {
         expect(colorContrast(pair.digit, pair.thumb), 'digit against each gradient stop').toBeGreaterThanOrEqual(4.5)
       }

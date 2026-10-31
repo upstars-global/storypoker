@@ -36,8 +36,8 @@ AC4: У селекта колоди правий відступ стрілки �
 AC5: Локальні Before/After впорядковані за вказаними шістьма темами; існуючі audit histories прив'язані до незмінних screenshot IDs.
 AC6: test:ci та public-page/icon-delivery Playwright перевірки проходять; новий PR має base гілки PR63.
 
-AC7: Після Reject під Screenshot details є поле причини; чернетка й збережений текст переживають reload, Save reason додає новий timestamped запис, попередні рішення та IDs/key збережено.
-AC8: Fill повзунка має background-color та gradient хедера у всіх6темах; outline контрастує з меню>=3, digit із кожним gradient stop>=4.5.
+AC7: Локальна сторінка зберігає рішення та чернетки; редагування коментаря оновлює той самий запис, кошик видаляє запис. Після рішення поле й кнопки ховаються; Reject перевіряє обов’язкову причину при натисканні. Передача JSON зберігає latest і timestamped snapshot.
+AC8: Повзунок без додаткового border/outline у всіх6темах; classic/dark має світлий fill оригіналу та цифру кольору хедера. Решта5тем зберігають fill/gradient хедера; digit із кожним gradient stop>=4.5.
 
 ## Files
 
@@ -184,5 +184,20 @@ Ruling: review R4 origin automatic - fresh independent source reviewer; parentR8
 Ruling: R4 set aside old modal/table work and multi-tab atomicity - outside current delta; unchanged behavior, no new multi-tab requirement
 Ruling: R4 runtime gap - independent source review is distinct from host fresh551unit/33public/12scene/108modal and local reason/reload/export browser proof; all host checks PASS on matching compound identity
 Verify: PASS full tree e62aa7016947007bb42f33564800204a9a3ea5c0 2026-10-31 17:06
+
+Review R5: Critical 0 | Important 0 | Minor 6 reviewer owner mode visual
+Ruling: review R5 origin user-started - user requested processing submitted visual Rejects; source visual-review/pr-64/submissions/latest.json submittedAt2026-10-31T17:18:50.530272+00:00, capture68fd8849e18e39adf5b1312ccfb652583e131668, reviewed app HEAD2dd496cb286a16c650c314f59ab5f9fe7c5f759a unchanged since capture for slider styles
+Finding R5-F1: Minor classic/dark AppHeader - owner asks original Before thumb colors without extra border
+Finding R5-F2: Minor classic/light AppHeader - owner asks no rim/border
+Finding R5-F3: Minor cyberdeck/dark AppHeader - owner asks no rim/border
+Finding R5-F4: Minor cyberdeck/light AppHeader - owner asks no rim/border
+Finding R5-F5: Minor matcha/dark AppHeader - owner asks no rim/border
+Finding R5-F6: Minor matcha/light AppHeader - owner asks no rim/border
+Received R5: R5-F1 ACCEPT; R5-F2 ACCEPT; R5-F3 ACCEPT; R5-F4 ACCEPT; R5-F5 ACCEPT; R5-F6 ACCEPT Re-review: needed
+Ruling: R5 source IDs map to manifest themes in the order classic/dark, classic/light, cyberdeck/dark, cyberdeck/light, matcha/dark, matcha/light; historical empty Reject records are not additional findings
+Ruling: R5 shared cause - only AppHeader renders mui-slider-knob; CSS adds1px outline in every theme and inverts the classic/dark original colors. Remove outline and restore original classic/dark colors; leave other5header fills/gradients unchanged
+Ruling: R5 owner requirement supersedes Task3 outline>=3 and classic/dark header-fill decisions; visible native range focus and all6digit contrast>=4.5 remain tested. Old verification is stale for this explicit visual change
+Ruling: AC7 synchronized with owner's subsequent local-review UI requests; local artifacts remain gitignored, submission saved and consumed without changing the owner's decisions
+Ruling: R5 focused proof -25public/icon Playwright checks PASS, including all6appearance cases with no border/outline, classic/dark original-color equality, remaining5header-fill/gradient equality and digit contrast
 
 ```
