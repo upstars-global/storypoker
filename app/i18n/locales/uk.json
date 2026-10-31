@@ -130,7 +130,7 @@
     "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні",
     "alwaysIncluded": "Завжди включено",
     "resultCohorts": "Показувати результати",
-    "qaCohortHint": "QA, GQA і AQA завжди показуються одним колом"
+    "qaCohortHint": "QA, GQA, AQA, PO і SM завжди показуються окремими колами"
   },
   "poll": {
     "thirdCard": "Третя картка",

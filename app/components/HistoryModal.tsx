@@ -10,7 +10,7 @@ import { useRoomStore } from '~/stores/room'
 import type { RoundHistory } from '~/stores/types'
 import { DECK_PRESETS } from '~/utils/cardDecks'
 import { isNumericPreset, summarizeRound, voteToNumber, type RoundSummary } from '~/utils/roundStats'
-import { DEV_COHORT_LABEL, trendCohorts } from '~/utils/shields'
+import { COHORT_BADGE_TEXT_COLORS, COHORT_COLORS, ROLE_COHORTS, voteCohortFor } from '~/utils/resultCohorts'
 
 type HistoryModalProps = {
   onClose: () => void
@@ -19,9 +19,7 @@ type HistoryModalProps = {
 type EnrichedSummary = RoundSummary & {
   trend: 'up' | 'down' | 'flat' | null
   round: RoundHistory
-  devCounts: Record<string, number>
-  qaCounts: Record<string, number>
-  hasQa: boolean
+  roleRows: { role: string | null; counts: Record<string, number> }[]
 }
 
 const FILTER_ACTIVE = 'bg-elevated text-primary'
@@ -73,16 +71,23 @@ export default function HistoryModal({ onClose }: HistoryModalProps) {
         trend = s.alignment > older.alignment ? 'up' : s.alignment < older.alignment ? 'down' : 'flat'
       }
       const round = rounds[i]!
-      const devCounts: Record<string, number> = {}
-      const qaCounts: Record<string, number> = {}
-      const cohorts = trendCohorts(round.votes, shieldsMap)
+      const countsByRole = new Map<string | null, Record<string, number>>()
       for (const v of round.votes) {
-        const cohort = cohorts.get(v.player_id)
-        if (!cohort) continue
-        const target = cohort === 'QA' ? qaCounts : devCounts
-        target[v.vote] = (target[v.vote] ?? 0) + 1
+        const role = voteCohortFor(shieldsMap, v.player_id)
+        const counts = countsByRole.get(role) ?? {}
+        counts[v.vote] = (counts[v.vote] ?? 0) + 1
+        countsByRole.set(role, counts)
       }
-      return { ...s, trend, round, devCounts, qaCounts, hasQa: Object.keys(qaCounts).length > 0 }
+      const roleRows: EnrichedSummary['roleRows'] = ROLE_COHORTS.flatMap(role => {
+        const counts = countsByRole.get(role)
+        return counts ? [{ role, counts }] : []
+      })
+      if (roleRows.length < 2) {
+        return { ...s, trend, round, roleRows: [{ role: null, counts: s.counts }] }
+      }
+      const customCounts = countsByRole.get(null)
+      if (customCounts) roleRows.push({ role: null, counts: customCounts })
+      return { ...s, trend, round, roleRows }
     })
   }, [rounds, shieldsMap])
 
@@ -222,55 +227,31 @@ export default function HistoryModal({ onClose }: HistoryModalProps) {
                     </span>
                   </div>
                 </div>
-                {!r.hasQa
-                  ? (
-                      <div className="flex w-full flex-wrap gap-2">
-                        {sortedCounts(r.counts).map(([card, count]) => (
-                          <span
-                            key={card}
-                            className="rounded bg-elevated px-2 py-0.5 text-mui-caption text-body"
-                          >
-                            {`${cardLabel(card)} × ${count}`}
-                          </span>
-                        ))}
-                      </div>
-                    )
-                  : (
-                      <div className="flex w-full flex-col gap-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className="rounded px-1.5 py-0.5 text-mui-caption font-semibold text-white"
-                            style={{ backgroundColor: '#26a69a' }}
-                          >
-                            {DEV_COHORT_LABEL}
-                          </span>
-                          {sortedCounts(r.devCounts).map(([card, count]) => (
-                            <span
-                              key={card}
-                              className="rounded bg-elevated px-2 py-0.5 text-mui-caption text-body"
-                            >
-                              {`${cardLabel(card)} × ${count}`}
-                            </span>
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className="rounded px-1.5 py-0.5 text-mui-caption font-semibold text-white"
-                            style={{ backgroundColor: '#ffa726' }}
-                          >
-                            QA
-                          </span>
-                          {sortedCounts(r.qaCounts).map(([card, count]) => (
-                            <span
-                              key={card}
-                              className="rounded bg-elevated px-2 py-0.5 text-mui-caption text-body"
-                            >
-                              {`${cardLabel(card)} × ${count}`}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                <div className="flex w-full flex-col gap-1.5">
+                  {r.roleRows.map(({ role, counts }) => (
+                    <div
+                      key={role ?? 'all'}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      {role !== null && (
+                        <span
+                          className="rounded px-1.5 py-0.5 text-mui-caption font-semibold"
+                          style={{ backgroundColor: COHORT_COLORS[role], color: COHORT_BADGE_TEXT_COLORS[role] }}
+                        >
+                          {role}
+                        </span>
+                      )}
+                      {sortedCounts(counts).map(([card, count]) => (
+                        <span
+                          key={card}
+                          className="rounded bg-elevated px-2 py-0.5 text-mui-caption text-body"
+                        >
+                          {`${cardLabel(card)} × ${count}`}
+                        </span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </button>
             ))}
           </section>

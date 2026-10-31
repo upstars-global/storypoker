@@ -53,10 +53,19 @@ lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fal
 ## Діаграми
 
 Тільки ECharts: модулі через `echarts/core` + `use([...])` заради розміру бандла, рендер - хук
-`useEChart(containerRef, option)` (`app/hooks/useEChart.ts`: init, `ResizeObserver`, `setOption` з `notMerge`,
-dispose). Перед роботою з графіками активуй skill `echarts`. `AlignmentTrendsModal.tsx` вантажиться через `lazy()`
-у `[slug].tsx`: eager-імпорт виводить entry за бюджет `icons:audit-build`. Саморобний SVG лишився в `PieChart.tsx` -
-при дотику переписуй на ECharts.
+`useEChart(containerRef, option)` (`app/hooks/useEChart.ts`: init, `ResizeObserver`, `setOption` з
+`notMerge`, dispose). Перед роботою з графіками активуй skill `echarts`. `AlignmentTrendsModal.tsx`
+вантажиться через `lazy()` у `[slug].tsx`, `PieChart.tsx` - через `lazy()` у `ResultsArea.tsx`:
+eager-імпорт виводить entry за бюджет `icons:audit-build`. Кола використовують ECharts pie з
+`SVGRenderer` і явним `{ renderer: "svg" }`. Усі кола мають однакову ширину до 240 px і однаково
+звужуються; один голос дає суцільне коло, кілька - сектори з підписами карт. Підпис `<ROLE>: <середнє>`
+рендериться поза графіком одразу; під час завантаження чанка або його збою лишається порожнє місце того
+самого розміру без екранної помилки.
+
+Коли потрібен конкретний renderer, передай його явно третім аргументом
+`useEChart(containerRef, option, { renderer: "svg" })` або `"canvas"`.
+Реєстрація `SVGRenderer` через `use([...])` не задає renderer конкретного
+instance; ECharts за замовчуванням використовує Canvas.
 
 ## Side widget і слот
 

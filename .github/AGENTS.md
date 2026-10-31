@@ -74,3 +74,7 @@ REJECT і повністю підтверджене прийняте відкл�
 `scripts/review-parity.json`; локально запускай `python3 scripts/check_review_parity.py --self-test`
 і `python3 -m unittest discover -s scripts -p 'test_review_parity.py'`. Змінюючи спільну логіку,
 тести або fixtures, узгодь усі чотири копії; адаптер допускає лише перелічені проєктні відмінності.
+
+Назви в `docs/plans/` у двох стилях: скіли `plan-craft` і `verify` пишуть `YYYYMMDD-HHMM-<topic>.md`, старші
+плани - `YYYY-MM-DD-<slug>.md`. Це прийнятий компроміс, а не дефект для рев'ю: старі плани не перейменовуються,
+нові не підганяються під старий стиль.

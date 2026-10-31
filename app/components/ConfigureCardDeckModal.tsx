@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import { useCardLabel } from '~/hooks/useCardLabel'
 import { useRipple } from '~/hooks/useRipple'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
-import { ALWAYS_SHOWN_COHORT, RESULT_COHORTS } from '~/utils/resultCohorts'
+import { ALWAYS_SHOWN_COHORTS, normalizeCohorts, RESULT_COHORTS } from '~/utils/resultCohorts'
 
 export type CardDeckPayload = { deckPreset: DeckPresetId; cards: string[]; cohorts: string[] }
 
@@ -35,14 +35,14 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
   const ripple = useRipple<HTMLButtonElement>()
   const [presetId, setPresetId] = useState<DeckPresetId>(deckPreset)
   const [selected, setSelected] = useState<string[]>(() => [...activeCards])
-  const [cohorts, setCohorts] = useState<string[]>(() => [...resultCohorts])
+  const [cohorts, setCohorts] = useState<string[]>(() => normalizeCohorts(resultCohorts))
   const incoming = { deckPreset, cards: activeCards.join('\n'), cohorts: resultCohorts.join('\n') }
   const [synced, setSynced] = useState(incoming)
 
   if (synced.deckPreset !== incoming.deckPreset || synced.cards !== incoming.cards || synced.cohorts !== incoming.cohorts) {
     if (synced.deckPreset !== incoming.deckPreset) setPresetId(deckPreset)
     if (synced.cards !== incoming.cards) setSelected([...activeCards])
-    if (synced.cohorts !== incoming.cohorts) setCohorts([...resultCohorts])
+    if (synced.cohorts !== incoming.cohorts) setCohorts(normalizeCohorts(resultCohorts))
     setSynced(incoming)
   }
 
@@ -211,42 +211,41 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
               className="flex flex-wrap justify-center gap-2"
               data-testid="deck-result-cohorts"
             >
-              {RESULT_COHORTS.map(cohort => cohort === ALWAYS_SHOWN_COHORT
-                ? (
-                    <span
-                      key={cohort}
-                      className="mui-chip is-selected is-disabled is-locked"
-                      title={t('deck.qaCohortHint')}
-                    >
-                      <AppIcon
-                        className="mui-chip-check"
-                        name="ic:baseline-check"
-                      />
-                      {cohort}
-                    </span>
-                  )
-                : (
-                    <label
-                      key={cohort}
-                      className={cohorts.includes(cohort) ? 'mui-chip is-selected' : 'mui-chip'}
-                    >
-                      <input
-                        id={`deck-cohort-${cohort}`}
-                        type="checkbox"
-                        name={`deck-cohort-${cohort}`}
-                        checked={cohorts.includes(cohort)}
-                        className="sr-only"
-                        onChange={() => toggleCohort(cohort)}
-                      />
-                      {cohorts.includes(cohort) && (
-                        <AppIcon
-                          className="mui-chip-check"
-                          name="ic:baseline-check"
-                        />
-                      )}
-                      {cohort}
-                    </label>
-                  ))}
+              {RESULT_COHORTS.map(cohort => (
+                <label
+                  key={cohort}
+                  className={cohorts.includes(cohort) ? 'mui-chip is-selected' : 'mui-chip'}
+                >
+                  <input
+                    id={`deck-cohort-${cohort}`}
+                    type="checkbox"
+                    name={`deck-cohort-${cohort}`}
+                    checked={cohorts.includes(cohort)}
+                    className="sr-only"
+                    onChange={() => toggleCohort(cohort)}
+                  />
+                  {cohorts.includes(cohort) && (
+                    <AppIcon
+                      className="mui-chip-check"
+                      name="ic:baseline-check"
+                    />
+                  )}
+                  {cohort}
+                </label>
+              ))}
+              {ALWAYS_SHOWN_COHORTS.map(cohort => (
+                <span
+                  key={cohort}
+                  className="mui-chip is-selected is-disabled is-locked"
+                  title={t('deck.qaCohortHint')}
+                >
+                  <AppIcon
+                    className="mui-chip-check"
+                    name="ic:baseline-check"
+                  />
+                  {cohort}
+                </span>
+              ))}
             </div>
           </div>
         )}

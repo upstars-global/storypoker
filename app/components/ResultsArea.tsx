@@ -1,6 +1,5 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import PieChart from '~/components/PieChart'
 import { Button } from '~/components/ui/button'
 import { useCardLabel } from '~/hooks/useCardLabel'
 import { createCelebrationParticles, shouldCelebrate, type CelebrationParticle } from '~/utils/resultCelebration'
@@ -20,6 +19,12 @@ type ResultsAreaProps = {
   goalClarityScore?: boolean
   onStartNewRound?: () => void
 }
+
+function PiePlaceholder() {
+  return <div data-testid="result-pie-placeholder" style={{ width: '100%', aspectRatio: '1' }} />
+}
+
+const PieChart = lazy(() => import('~/components/PieChart').catch(() => ({ default: PiePlaceholder })))
 
 const BUBBLE_COLORS = ['#546e7a', '#e64a19', '#fbc02d', '#43a047', '#5e35b1']
 const BUBBLE_MIN = 60
@@ -168,7 +173,9 @@ export default function ResultsArea({
               {g.label}
               {g.average !== null && `: ${g.average}`}
             </span>
-            <PieChart votes={g.votes} />
+            <Suspense fallback={<PiePlaceholder />}>
+              <PieChart votes={g.votes} />
+            </Suspense>
           </div>
         ))}
       </div>

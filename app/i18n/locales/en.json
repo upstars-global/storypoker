@@ -130,7 +130,7 @@
     "voteQuestionInfo": "Question and answers are configured in the voting area",
     "alwaysIncluded": "Always included",
     "resultCohorts": "Show results",
-    "qaCohortHint": "QA, GQA and AQA are always shown as one circle"
+    "qaCohortHint": "QA, GQA, AQA, PO and SM are always shown as separate circles"
   },
   "poll": {
     "thirdCard": "Third card",

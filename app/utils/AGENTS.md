@@ -25,13 +25,21 @@ PieChart показує кольорове коло з середнім бало
 
 ## Формули узгодженості
 
-`alignmentScore`/`averageOf` (`app/utils/alignment.ts`, `roundStats.ts`) і DEV/QA-спліт (`shields.ts`) навмисно
-продубльовані в `netlify/functions/room-json.mts` - Netlify bundler не резолвить Vite alias `~/*`. Зміну формули
-синхронізувати вручну в обох місцях. Pipeline графіка узгодженості (`AlignmentTrendsModal.tsx`) - `DESIGN.md`
-§11.3-11.4.
+`alignmentScore`/`averageOf` (`alignment.ts`, `roundStats.ts`), визначення сирих рольових когорт
+(`resultCohorts.ts`) і фолбек колоди навмисно продубльовані в `netlify/functions/room-json.mts`: Netlify
+bundler не резолвить Vite alias `~/*`. Зміни синхронізувати вручну. Legacy-поля API мають окремий
+контракт для agilecharts (`netlify/AGENTS.md`). Pipeline трендів та історії - `DESIGN.md` §11.3-11.4.
 
 `isNumericPreset` вирішує, які колоди потрапляють в узгодженість: `scrum`/`fibonacci`/`hours`/`goal_clarity` +
 legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і нечислові (`tshirt`/`boolean`) виключені.
+
+`voteCohortFor()` визначає сиру роль у порядку DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM; кастомна роль дає
+`null`, відсутня роль або гравець - DEV. `COHORT_COLORS` - спільні кольори ліній трендів і бейджів
+історії та знімка. Чіпи впливають лише на кола через `resultCohortFor()`. `roleRoundAlignment()` рахує
+кожну роль окремо, включно з PO/SM. `summarizeRound()` бере середнє й узгодженість із
+`estimatorVotes()`: пул DEV/BE/FE/SRE/QA/GQA/AQA, а коли їхніх голосів немає - усі голоси.
+Узгодженість має ціле значення 0-100; менше двох карт колоди без `?`/`☕` дають `null`. Головна бере округлене середнє не-null
+загальних балів числових раундів; картки трендів - ті самі загальні бали у видимому періоді.
 
 ## Consensus
 
