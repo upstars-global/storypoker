@@ -102,4 +102,9 @@ Ruling: baseline environment - initial new-worktree install omitted native Rolld
 Task 1: done - RED3fail/548pass before moving controls; GREEN4header tests; Playwright27public/icon-delivery tests PASS, including ArrowDown to native range, Home/End, Escape focus return and appearance persistence
 Task 2: in progress - shared9modal selector and close style; select18px padding; six-theme order applied to visual fixtures and local72pair review, unchanged72screenshot IDs/head preserve stored decisions
 
+Task 2: done -108browser cases (9modals×6themes×375/1280) PASS: title text/close no intersection, close border0/shadow none, focus outline visible, close callback fires; select inset>=18px. Short812×375 account menu scrolls within viewport and Escape returns focus.12before/after pairs generated in requested order
+Ruling: browser fixture setup - use Vite-versioned router URL to share AppHeader context; initial unversioned import duplicated router context, no app change needed. Focus assertion waits for BaseUI restoration rather than reading synchronously
+Ruling: local review72order - manifest groups classic/dark,classic/light,cyberdeck/dark,cyberdeck/light,matcha/dark,matcha/light; original72IDs and reviewed head unchanged, persisted histories retained
+Ruling: scope - parent PR63 converted to draft at user's request; child PR targets2610291418-dev-session, no merge authorized
+
 ```

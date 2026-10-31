@@ -11,7 +11,7 @@ import {
 } from './fakeSupabase'
 
 export const PALETTES = ['classic', 'cyberdeck', 'matcha'] as const
-export const THEMES = ['light', 'dark'] as const
+export const THEMES = ['dark', 'light'] as const
 export const VIEWPORTS = [1280, 375] as const
 export const ROLES = ['guest', 'player', 'authorized-moderator'] as const
 export const FROZEN_NOW = '2026-09-09T09:05:00.000Z'
