@@ -1,7 +1,6 @@
 import { roleTagForShields } from './shields'
 
 export const RESULT_COHORTS: readonly string[] = ['DEV', 'BE', 'FE', 'SRE']
-export const ALWAYS_SHOWN_COHORT = 'QA'
 export const DEV_UMBRELLA_COHORT = 'DEV'
 export const DEFAULT_RESULT_COHORTS: readonly string[] = RESULT_COHORTS
 export const ALWAYS_SHOWN_COHORTS: readonly string[] = ['QA', 'GQA', 'AQA', 'PO', 'SM']
