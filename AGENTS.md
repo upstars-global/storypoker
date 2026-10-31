@@ -33,11 +33,11 @@ CI check = `pnpm run test:ci` - обов'язково перед заверше�
 - Перед початком роботи прочитай `@docs/session-learnings/AGENTS.md`, якщо файл існує: локальні gitignored нотатки
   попередніх сесій (у бектиках навмисно - без автоімпорту).
 - **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
-  `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
+  `web-debug`; тести - `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verify` → CI check
-- **Bug / regression:** `debugging` → `tdd` → `verify` → CI check
-- **Supabase (DB / Auth / RLS / Storage):** `tdd` → `/security-review` → CI check
-- **Refactoring:** `specify` → `tdd` → CI check
+- **Bug / regression:** `debugging` → `vitest` → `verify` → CI check
+- **Supabase (DB / Auth / RLS / Storage):** `vitest` → `/security-review` → CI check
+- **Refactoring:** `specify` → `vitest` → CI check
 - **Received code review:** `cr-received` → (fixes) → `verify` → CI check
 - **Prose (docs, README, UI copy, commits):** `dashfix` · `negafix`
 - **Закриття гілки:** `finalize`
