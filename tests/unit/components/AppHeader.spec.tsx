@@ -22,6 +22,11 @@ async function openFromKeyboard(trigger: HTMLElement) {
   return screen.findByRole('menu')
 }
 
+async function openPaletteSubmenu() {
+  await act(async () => { fireEvent.click(screen.getByTestId('palette-menu-trigger')) })
+  return screen.findByTestId('palette-option-classic')
+}
+
 beforeEach(() => {
   themeStore.setState({ palette: 'classic' })
 })
@@ -41,7 +46,10 @@ describe('AppHeader palette menu', () => {
     const menu = await screen.findByRole('menu')
     expect(menu.contains(screen.getByTestId('volume-slider'))).toBe(true)
     expect(menu.contains(screen.getByTestId('theme-toggle-button'))).toBe(true)
-    expect(menu.contains(screen.getByTestId('palette-option-classic'))).toBe(true)
+    expect(menu.contains(screen.getByTestId('palette-menu-trigger'))).toBe(true)
+    expect(screen.queryByTestId('palette-option-classic')).toBeNull()
+    await openPaletteSubmenu()
+    expect(screen.getByTestId('palette-option-classic')).toBeTruthy()
   })
 
   it('opens on click with radio items for every palette', async () => {
@@ -53,6 +61,7 @@ describe('AppHeader palette menu', () => {
     const menu = await screen.findByRole('menu')
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
     expect(menu.classList.contains('mui-menu')).toBe(true)
+    await openPaletteSubmenu()
     const classic = screen.getByTestId('palette-option-classic')
     expect(classic.getAttribute('role')).toBe('menuitemradio')
     expect(classic.getAttribute('aria-checked')).toBe('true')
@@ -62,8 +71,15 @@ describe('AppHeader palette menu', () => {
   it('picks a palette with Enter, closes and returns focus to the trigger', async () => {
     const trigger = mountHeader()
     await openFromKeyboard(trigger)
+    await act(async () => {
+      const submenu = screen.getByTestId('palette-menu-trigger')
+      submenu.focus()
+      fireEvent.keyDown(submenu, { key: 'ArrowRight' })
+    })
+    await screen.findByTestId('palette-option-matcha')
     const matcha = screen.getByTestId('palette-option-matcha')
     await act(async () => {
+      matcha.focus()
       fireEvent.keyDown(matcha, { key: 'Enter' })
     })
     expect(themeStore.getState().palette).toBe('matcha')

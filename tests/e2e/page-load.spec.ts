@@ -58,6 +58,60 @@ for (const palette of ['classic', 'cyberdeck', 'matcha']) {
   }
 }
 
+for (const palette of ['classic', 'cyberdeck', 'matcha']) {
+  for (const theme of ['dark', 'light']) {
+    test(`palette submenu: ${palette} ${theme}`, async ({ page }) => {
+      await page.addInitScript(({ palette, theme }) => {
+        localStorage.setItem('sp-palette', palette)
+        localStorage.setItem('sp-theme', theme)
+      }, { palette, theme })
+      await page.goto('/')
+      await page.getByTestId('account-menu-button').click()
+      expect(await page.getByRole('menu').evaluate(menu => menu.scrollWidth <= menu.clientWidth)).toBe(true)
+      await expect(page.getByTestId('palette-option-classic')).toHaveCount(0)
+      const trigger = page.getByTestId('palette-menu-trigger')
+      await trigger.click()
+      const submenu = page.getByTestId('palette-submenu')
+      await expect(submenu).toBeVisible()
+      expect(await submenu.evaluate(menu => menu.scrollWidth <= menu.clientWidth)).toBe(true)
+      await expect(submenu.getByRole('menuitemradio')).toHaveCount(3)
+      await expect(page.getByTestId(`palette-option-${palette}`)).toHaveAttribute('aria-checked', 'true')
+      await expect(submenu.locator('[aria-checked="true"]')).toHaveCount(1)
+      const box = await submenu.boundingBox()
+      expect(box!.x).toBeGreaterThanOrEqual(0)
+      expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+      await page.keyboard.press('Escape')
+      await expect(submenu).toHaveCount(0)
+      await expect(trigger).toBeFocused()
+      await page.keyboard.press('ArrowRight')
+      await expect(submenu).toBeVisible()
+      await page.getByTestId('palette-option-matcha').click()
+      await expect(page.getByRole('menu')).toHaveCount(0)
+      await expect(page.getByTestId('account-menu-button')).toBeFocused()
+      await expect(page.locator('html')).toHaveAttribute('data-palette', 'matcha')
+    })
+  }
+}
+
+test('palette submenu supports a complete keyboard selection', async ({ page }) => {
+  await page.goto('/')
+  const account = page.getByTestId('account-menu-button')
+  await account.focus()
+  await page.keyboard.press('ArrowDown')
+  await expect(page.getByTestId('volume-button')).toBeFocused()
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowDown')
+  await expect(page.getByTestId('palette-menu-trigger')).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByTestId('palette-option-classic')).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await expect(page.getByTestId('palette-option-cyberdeck')).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await expect(account).toBeFocused()
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'cyberdeck')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('sp-palette'))).toBe('cyberdeck')
+})
+
 for (const route of PUBLIC_ROUTES) {
   test(`loads ${route} without console errors`, async ({ page }) => {
     const response = await page.goto(route, { waitUntil: 'domcontentloaded' })
@@ -126,6 +180,7 @@ test('account menu reaches the slider with arrows and preserves appearance choic
   await page.getByTestId('theme-toggle-button').click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', oldTheme === 'light' ? 'dark' : 'light')
   await account.click()
+  await page.getByTestId('palette-menu-trigger').click()
   await page.getByTestId('palette-option-matcha').click()
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'matcha')

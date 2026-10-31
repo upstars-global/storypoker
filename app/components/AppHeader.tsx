@@ -1,7 +1,13 @@
 import { useEffect, useState, type ChangeEvent, type CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { Menu as MenuPrimitive } from '@base-ui/react/menu'
-import { DropdownMenuGroup, DropdownMenuLabel, DropdownMenuSeparator } from '~/components/ui/dropdown-menu'
+import {
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+} from '~/components/ui/dropdown-menu'
 import { useTranslation } from 'react-i18next'
 import AppIcon from '~/components/AppIcon'
 import { AppMenu, AppMenuItem } from '~/components/AppMenu'
@@ -225,39 +231,51 @@ export default function AppHeader({
             </AppMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuLabel className="flex items-center gap-2 px-4 text-muted">
-              <AppIcon name="ic:baseline-palette" />
-              {t('header.themePalette')}
-            </DropdownMenuLabel>
-            {PALETTES.map(p => (
-              <AppMenuItem
-                key={p.id}
-                className="whitespace-nowrap"
-                role="menuitemradio"
-                aria-checked={palette === p.id}
-                data-testid={`palette-option-${p.id}`}
-                onClick={() => setPalette(p.id)}
-              >
-                <span className="inline-flex items-center gap-1">
-                  {p.swatches.map((color, i) => (
-                    <span
-                      key={i}
-                      className="inline-block rounded-full"
-                      style={{ width: '12px', height: '12px', backgroundColor: color }}
-                    />
-                  ))}
-                </span>
-                <span className="flex-1">{t(`theme.${p.id}`)}</span>
-                {palette === p.id && (
-                  <AppIcon
-                    className="mui-menu-icon"
-                    name="ic:baseline-check"
-                  />
-                )}
-              </AppMenuItem>
-            ))}
-          </DropdownMenuGroup>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger
+              openOnHover={false}
+              data-testid="palette-menu-trigger"
+            >
+              <AppIcon className="mui-menu-icon" name="ic:baseline-palette" />
+              <span className="flex-1">{t('header.themePalette')}</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuContent
+              side="right"
+              sideOffset={4}
+              data-testid="palette-submenu"
+              style={{ minWidth: '180px' }}
+            >
+              <DropdownMenuGroup>
+                {PALETTES.map(p => (
+                  <AppMenuItem
+                    key={p.id}
+                    className="whitespace-nowrap"
+                    role="menuitemradio"
+                    aria-checked={palette === p.id}
+                    data-testid={`palette-option-${p.id}`}
+                    onClick={() => setPalette(p.id)}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {p.swatches.map((color, i) => (
+                        <span
+                          key={i}
+                          className="inline-block rounded-full"
+                          style={{ width: '12px', height: '12px', backgroundColor: color }}
+                        />
+                      ))}
+                    </span>
+                    <span className="flex-1">{t(`theme.${p.id}`)}</span>
+                    {palette === p.id && (
+                      <AppIcon
+                        className="mui-menu-icon"
+                        name="ic:baseline-check"
+                      />
+                    )}
+                  </AppMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenuSub>
           <DropdownMenuSeparator />
           {roomName && (
             <>

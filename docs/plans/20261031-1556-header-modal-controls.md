@@ -41,11 +41,14 @@ AC8: Повзунок без додаткового border/outline у всіх6�
 
 AC9: Кнопка mute й слайдер шириною96px у меню користувача займають один рядок, без окремого видимого підпису; доступна назва, клавіатура та persistence збережені.
 
+AC10: Один пункт «Кольорова тема» відкриває бічне підменю Classic/Cyberdeck/Matcha з однією активною галочкою; click, клавіатура, Escape і persistence працюють, підменю вміщується у viewport.
+
 ## Files
 
 | File | Change | Task |
 | --- | --- | --- |
 | app/components/AppHeader.tsx | Перенести controls | 1 |
+| app/components/ui/dropdown-menu.tsx | MUI submenu trigger і розділювачі без горизонтального overflow | 1 |
 | tests/unit/components/AppHeader.spec.tsx | Меню й поведінка controls | 1 |
 | tests/e2e/{page-load,icon-delivery}.spec.ts | Відкривати account menu перед controls | 1 |
 | app/components/AppModalPaper.tsx, app/assets/css/main.css | Спільні title/close стилі | 2 |
@@ -62,9 +65,9 @@ tests/e2e/page-load.spec.ts, tests/e2e/icon-delivery.spec.ts
 
 **Consumes:** Наявні AppMenu, useTheme, useSoundVolume.
 
-**Produces:** Controls у dropdown з незмінним persistence API.
+**Produces:** Controls у dropdown з незмінним persistence API та бічним вибором палітри.
 
-**Covers:** AC1, AC2, AC6
+**Covers:** AC1, AC2, AC6, AC10
 
 **Depends on:** none
 
@@ -240,5 +243,14 @@ Ruling: review R10 origin automatic - additional round7of15; no findings. Existi
 Ruling: R9 committed proof -551unit/53files, lint/typecheck/build/icon audit,25public/icon cases PASS with no retries in final run;108modal checks and12theme-ordered pairs PASS. Gallery After URLs contain newcapturea9c50e5 and live HTTP bytes match regenerated screenshots, no-store headers verified
 Ruling: R9 local verification - left-column collapse-all and collapse-approved controls PASS, collapse-approved preserves rejected/pending; prior approvals carry and remain read-only; expanded-only gallery PASS12/72pages. Updated HTML opened at requested localURL
 Verify: PASS full tree 9855235ae607ffc74ac630f9abf96001bf44eda0 2026-10-31 23:47
+
+Ruling: Task1 owner extension - user requests one palette menu item opening a side menu with checked active choice, using provided examples; direct inline UI change, no new spec/design decision. AC10 captures the supplied behavior; light/dark toggle remains separate
+Ruling: palette submenu implementation - reuse Base UI SubmenuRoot/Trigger and existing DropdownMenuContent; palette items/swatches/check and store unchanged. Sub-trigger adopts shared MUI menu styling, preserving inset support and keyboard focus; no new icons/dependencies
+Review R11: Critical 0 | Important 0 | Minor 1 tree 9855235ae607ffc74ac630f9abf96001bf44eda0 reviewer Copilot-model-unreported mode code
+Finding R11-copilot-F1: Minor app/components/ui/dropdown-menu.tsx:228 - horizontal account-menu overflow; source severity missing, host assesses Minor. Source review5725079703 on8e1f7c207f05b80d0ddd24072d8acb0330627766 says Needs a closer look for unpublished CSS overflow; no inline original_id available
+Ruling: review R11 origin external - configured Copilot review requested after prior authorized push; source key(upstars-global/storypoker,64,5725079703,unpublished-overflow). Separator unchanged on current tree; claim independently reproduced before fixing
+Received R11: R11-copilot-F1 ACCEPT Re-review: needed
+Ruling: R11-copilot-F1 proof - RED scrollWidth244/clientWidth240; shared separator -mx-1 expands beyond MUI popup padding0. Remove negative horizontal margins; GREEN18viewport/theme cases with no horizontal overflow, choices visible and lateral desktop placement
+Ruling: palette submenu focused proof -551unit PASS;32public/icon tests PASS with one known skip-link retry.6submenu cases cover one checked item, no root/child horizontal overflow, Escape/Right/open/select/focus; complete ArrowDown/Right/Enter selection persists palette;18native geometry cases cover1280x900/375x812/812x375
 
 ```
