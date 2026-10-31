@@ -11,7 +11,7 @@ function mountHeader() {
       <AppHeader />
     </MemoryRouter>,
   )
-  return screen.getByTestId('palette-menu-button')
+  return screen.getByTestId('account-menu-button')
 }
 
 async function openFromKeyboard(trigger: HTMLElement) {
@@ -32,6 +32,18 @@ afterEach(() => {
 })
 
 describe('AppHeader palette menu', () => {
+  it('keeps appearance and volume controls inside the account menu', async () => {
+    const trigger = mountHeader()
+    expect(screen.queryByTestId('volume-slider')).toBeNull()
+    expect(screen.queryByTestId('theme-toggle-button')).toBeNull()
+    expect(screen.queryByTestId('palette-option-classic')).toBeNull()
+    await act(async () => { fireEvent.click(trigger) })
+    const menu = await screen.findByRole('menu')
+    expect(menu.contains(screen.getByTestId('volume-slider'))).toBe(true)
+    expect(menu.contains(screen.getByTestId('theme-toggle-button'))).toBe(true)
+    expect(menu.contains(screen.getByTestId('palette-option-classic'))).toBe(true)
+  })
+
   it('opens on click with radio items for every palette', async () => {
     const trigger = mountHeader()
     expect(trigger.getAttribute('aria-expanded')).toBe('false')

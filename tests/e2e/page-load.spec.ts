@@ -38,6 +38,7 @@ test('feature flag switch toggles from the keyboard', async ({ page }) => {
 
 test('volume slider is keyboard reachable and persists its value', async ({ page }) => {
   await page.goto('/')
+  await page.getByTestId('account-menu-button').click()
   const trigger = page.getByTestId('volume-button')
   await expect(trigger).not.toHaveAccessibleName('')
   await trigger.click()
@@ -47,6 +48,32 @@ test('volume slider is keyboard reachable and persists its value', async ({ page
   await slider.focus()
   await page.keyboard.press('ArrowRight')
   await expect.poll(() => page.evaluate(() => localStorage.getItem('sp-volume'))).toBe('0.2')
+})
+
+test('account menu reaches the slider with arrows and preserves appearance choices', async ({ page }) => {
+  await page.goto('/')
+  const account = page.getByTestId('account-menu-button')
+  await account.focus()
+  await page.keyboard.press('ArrowDown')
+  await expect(page.getByTestId('volume-button')).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await expect(page.getByTestId('volume-slider')).toBeFocused()
+  await page.keyboard.press('End')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('sp-volume'))).toBe('1')
+  await page.keyboard.press('Home')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('sp-volume'))).toBe('0')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await expect(account).toBeFocused()
+  await account.click()
+  const oldTheme = await page.locator('html').getAttribute('data-theme')
+  await page.getByTestId('theme-toggle-button').click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', oldTheme === 'light' ? 'dark' : 'light')
+  await account.click()
+  await page.getByTestId('palette-option-matcha').click()
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'matcha')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', oldTheme === 'light' ? 'dark' : 'light')
 })
 
 test('stored theme and palette are on html at the first DOMContentLoaded', async ({ page }) => {
@@ -78,6 +105,7 @@ test('stored theme and palette are on html at the first DOMContentLoaded', async
   await expect(page.locator('#app')).not.toBeEmpty()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'cyberdeck')
+  await page.getByTestId('account-menu-button').click()
   await expect(page.getByTestId('theme-toggle-button')).toHaveAccessibleName(/./)
 })
 

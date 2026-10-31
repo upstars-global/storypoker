@@ -1,5 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type CSSProperties } from 'react'
 import { Link } from 'react-router'
+import { Menu as MenuPrimitive } from '@base-ui/react/menu'
+import { DropdownMenuGroup, DropdownMenuLabel, DropdownMenuSeparator } from '~/components/ui/dropdown-menu'
 import { useTranslation } from 'react-i18next'
 import AppIcon from '~/components/AppIcon'
 import { AppMenu, AppMenuItem } from '~/components/AppMenu'
@@ -101,8 +103,6 @@ export default function AppHeader({
   const { volume, setVolume, toggleMute } = useSoundVolume()
   const { isLight, palette, toggle: toggleTheme, setPalette } = useTheme()
   const homeRipple = useRipple<HTMLAnchorElement>()
-  const volumeRipple = useRipple<HTMLButtonElement>()
-  const themeRipple = useRipple<HTMLButtonElement>()
   const volumePercent = Math.round(volume * 100)
   const volumeLevel = Math.round(volume * 10)
   const volumeLevelIcon = VOLUME_LEVEL_ICONS[volumeLevel]!
@@ -137,107 +137,6 @@ export default function AppHeader({
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2">
-          <button
-            ref={volumeRipple}
-            type="button"
-            className="mui-icon-btn text-appbar-emphasis"
-            style={ICON_BUTTON_HOVER}
-            aria-label={t('header.volume')}
-            aria-pressed={volumePercent === 0}
-            data-testid="volume-button"
-            onClick={toggleMute}
-          >
-            <AppIcon
-              name={volumeIcon}
-              style={{ fontSize: '1.5rem' }}
-            />
-          </button>
-          <div
-            className="relative inline-flex items-center"
-            style={{ width: '96px' }}
-          >
-            <input
-              type="range"
-              className="mui-slider w-full"
-              style={{ '--fill': `${volumePercent}%` } as CSSProperties}
-              min="0"
-              max="100"
-              step="10"
-              value={volumePercent}
-              aria-label={t('header.volume')}
-              aria-valuetext={String(volumeLevel)}
-              data-testid="volume-slider"
-              onChange={onVolumeInput}
-            />
-            <span
-              className="mui-slider-knob"
-              style={{ left: `calc(12px + (100% - 24px) * ${volume})` }}
-              aria-hidden="true"
-            >
-              <AppIcon name="tabler:percentage-100" />
-              <AppIcon
-                className="mui-slider-value"
-                name={volumeLevelIcon}
-              />
-            </span>
-          </div>
-        </div>
-        <AppMenu
-          label={t('header.themePalette')}
-          testId="palette-menu-button"
-          triggerClassName="mui-icon-btn text-appbar-emphasis"
-          triggerStyle={ICON_BUTTON_HOVER}
-          minWidth="200px"
-          trigger={(
-            <AppIcon
-              name="ic:baseline-palette"
-              style={{ fontSize: '1.5rem' }}
-            />
-          )}
-        >
-          {PALETTES.map(p => (
-            <AppMenuItem
-              key={p.id}
-              className="whitespace-nowrap"
-              role="menuitemradio"
-              aria-checked={palette === p.id}
-              data-testid={`palette-option-${p.id}`}
-              onClick={() => setPalette(p.id)}
-            >
-              <span className="inline-flex items-center gap-1">
-                {p.swatches.map((color, i) => (
-                  <span
-                    key={i}
-                    className="inline-block rounded-full"
-                    style={{ width: '12px', height: '12px', backgroundColor: color }}
-                  />
-                ))}
-              </span>
-              <span className="flex-1">{t(`theme.${p.id}`)}</span>
-              {palette === p.id && (
-                <AppIcon
-                  className="mui-menu-icon"
-                  name="ic:baseline-check"
-                />
-              )}
-            </AppMenuItem>
-          ))}
-        </AppMenu>
-        <button
-          ref={themeRipple}
-          type="button"
-          className="mui-icon-btn text-appbar-emphasis"
-          style={ICON_BUTTON_HOVER}
-          aria-label={isLight ? t('header.darkTheme') : t('header.lightTheme')}
-          data-testid="theme-toggle-button"
-          onClick={event => toggleTheme(event)}
-        >
-          <AppIcon
-            name={isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'}
-            style={{ fontSize: '1.5rem' }}
-          />
-        </button>
         {headerLabel && (
           <span className="text-sm text-appbar-emphasis">
             {headerLabel}
@@ -266,6 +165,99 @@ export default function AppHeader({
                 />
               )}
         >
+          <DropdownMenuGroup>
+            <AppMenuItem
+              className="whitespace-nowrap"
+              role="menuitemcheckbox"
+              aria-checked={volumePercent === 0}
+              closeOnClick={false}
+              data-testid="volume-button"
+              onClick={toggleMute}
+            >
+              <AppIcon className="mui-menu-icon" name={volumeIcon} />
+              <span className="flex-1">{t('header.volume')}</span>
+              <span>{volumeLevel}</span>
+            </AppMenuItem>
+            <div className="relative flex items-center px-4 py-2">
+              <MenuPrimitive.Item
+                closeOnClick={false}
+                label={t('header.volume')}
+                role="slider"
+                render={(
+                  <input
+                    type="range"
+                    className="mui-slider w-full"
+                    style={{ '--fill': `${volumePercent}%` } as CSSProperties}
+                    min="0"
+                    max="100"
+                    step="10"
+                    value={volumePercent}
+                    aria-label={t('header.volume')}
+                    aria-valuetext={String(volumeLevel)}
+                    data-testid="volume-slider"
+                    onChange={onVolumeInput}
+                    onKeyDown={(event) => {
+                      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) event.stopPropagation()
+                    }}
+                  />
+                )}
+              />
+              <span
+                className="mui-slider-knob"
+                style={{ left: `calc(28px + (100% - 56px) * ${volume})` }}
+                aria-hidden="true"
+              >
+                <AppIcon name="tabler:percentage-100" />
+                <AppIcon className="mui-slider-value" name={volumeLevelIcon} />
+              </span>
+            </div>
+            <AppMenuItem
+              className="whitespace-nowrap"
+              data-testid="theme-toggle-button"
+              onClick={event => toggleTheme(event)}
+            >
+              <AppIcon
+                className="mui-menu-icon"
+                name={isLight ? 'ic:baseline-light-mode' : 'ic:baseline-dark-mode'}
+              />
+              {isLight ? t('header.darkTheme') : t('header.lightTheme')}
+            </AppMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="flex items-center gap-2 px-4 text-muted">
+              <AppIcon name="ic:baseline-palette" />
+              {t('header.themePalette')}
+            </DropdownMenuLabel>
+            {PALETTES.map(p => (
+              <AppMenuItem
+                key={p.id}
+                className="whitespace-nowrap"
+                role="menuitemradio"
+                aria-checked={palette === p.id}
+                data-testid={`palette-option-${p.id}`}
+                onClick={() => setPalette(p.id)}
+              >
+                <span className="inline-flex items-center gap-1">
+                  {p.swatches.map((color, i) => (
+                    <span
+                      key={i}
+                      className="inline-block rounded-full"
+                      style={{ width: '12px', height: '12px', backgroundColor: color }}
+                    />
+                  ))}
+                </span>
+                <span className="flex-1">{t(`theme.${p.id}`)}</span>
+                {palette === p.id && (
+                  <AppIcon
+                    className="mui-menu-icon"
+                    name="ic:baseline-check"
+                  />
+                )}
+              </AppMenuItem>
+            ))}
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
           {roomName && (
             <>
               <AppMenuItem

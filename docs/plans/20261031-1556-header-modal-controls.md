@@ -98,4 +98,8 @@ Commits: allowed
 Initial dirty state: none
 Task 1: pending
 Task 2: pending
+Ruling: baseline environment - initial new-worktree install omitted native Rolldown binding under a mismatched runtime; explicit Node24.15 install restored it, no source workaround
+Task 1: done - RED3fail/548pass before moving controls; GREEN4header tests; Playwright27public/icon-delivery tests PASS, including ArrowDown to native range, Home/End, Escape focus return and appearance persistence
+Task 2: in progress - shared9modal selector and close style; select18px padding; six-theme order applied to visual fixtures and local72pair review, unchanged72screenshot IDs/head preserve stored decisions
+
 ```
