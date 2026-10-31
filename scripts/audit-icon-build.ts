@@ -1,11 +1,13 @@
 import { readdirSync, readFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
+import { createHash } from 'node:crypto'
 
 const root = resolve(import.meta.dirname, '..')
 const reportDir = join(root, 'test-results/icon-rendering')
 const baselinePath = join(root, 'docs/audits/icon-bundle-baseline.json')
 const budgetGzipBytes = 25 * 1024
+const MAPLESS_ROLLDOWN_RUNTIME_SHA256 = '548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7'
 
 const FORBIDDEN_SOURCES = [
   /@iconify-json\/[^/]+\/icons\.json/,
@@ -46,6 +48,8 @@ for (const file of artifacts) {
   const mapPath = `${file}.map`
   if (!existsSync(mapPath)) {
     if (['registerSW.js', 'sw-reload-clients.js'].includes(relative(distDir, file))) continue
+    if (/^assets\/rolldown-runtime-[A-Za-z0-9_-]+\.js$/.test(relative(distDir, file))
+      && createHash('sha256').update(readFileSync(file)).digest('hex') === MAPLESS_ROLLDOWN_RUNTIME_SHA256) continue
     console.error(`missing sourcemap for ${relative(distDir, file)}`)
     process.exit(1)
   }

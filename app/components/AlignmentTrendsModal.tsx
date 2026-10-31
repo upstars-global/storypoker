@@ -162,7 +162,7 @@ export default function AlignmentTrendsModal({ roomName, onClose }: AlignmentTre
           })
           .map((r) => {
             const alignments = roleRoundAlignment(r, shieldsRef.current)
-            const overall = average(Object.values(alignments))
+            const overall = summarizeRound(r, shieldsRef.current).alignment
             return { date: new Date(r.revealed_at), alignments, overall, deckPreset: r.deck_preset, round: r }
           })
           .sort((a, b) => a.date.getTime() - b.date.getTime()))

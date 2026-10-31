@@ -331,7 +331,7 @@ sequenceDiagram
   Note over App,RT: tab hidden > 5 min closes Presence, visible again refetches state
   AC->>API: GET /api/<room>.json (Authorization: Bearer)
   API->>DB: rooms + round_history + players
-  API-->>AC: rounds with average, DEV/QA alignment, per-player votes
+  API-->>AC: rounds with role alignments + roleVotes and legacy agilecharts fields
 ```
 
 Have fun! ;)

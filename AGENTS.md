@@ -9,11 +9,12 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 - **Тільки англійська:** `README.md`, commit messages, назви й описи PR, коментарі в PR та issues, коментарі в коді,
   CI-артефакти. Українською лишається спілкування в чаті й внутрішня документація (`AGENTS.md`, `DESIGN.md`, `docs/`).
 - **Constraint:** `project_doc_max_bytes` обмежує проєктний ланцюг `AGENTS.md` від кореня до стартового cwd; домашній
-  файл Codex до цього бюджету не входить. `.codex/config.toml` задає 64 KiB; стандарт Codex - 32 KiB. Ланцюжки
-  перевіряй проти `project_doc_max_bytes` з `.codex/config.toml`. При перевищенні ліміту Codex мовчки обрізає текст.
-  `CLAUDE.md` інлайнить цей файл цілком, тож кожен корінний байт - always-loaded. Деталь, що стосується лише одного
-  каталогу, живе у файлі того каталогу (див. Repository map), а не тут. Перед додаванням нової секції - винести
-  наявну. Детальна продуктова специфікація - `DESIGN.md`.
+  файл Codex до цього бюджету не входить. `.codex/config.toml` задає 64 KiB (стандарт Codex - 32 KiB): недовірений
+  проєкт Codex не відкриває, тож цей config діє в кожній сесії. Ланцюжки перевіряй проти `project_doc_max_bytes` з
+  `.codex/config.toml`. При перевищенні ліміту Codex мовчки обрізає текст. `CLAUDE.md` інлайнить цей файл цілком,
+  тож кожен корінний байт - always-loaded. Деталь, що стосується лише одного каталогу, живе у файлі того каталогу
+  (див. Repository map), а не тут. Перед додаванням нової секції - винести наявну. Детальна продуктова
+  специфікація - `DESIGN.md`.
 
 ## Workflow
 - **`main` захищений:** тільки PR зі squash-merge, прямий push заборонено й адмінам (`enforce_admins`); розв'язані
@@ -30,14 +31,12 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 CI check = `pnpm run test:ci` - app-перевірки, обов'язкові перед завершенням задачі зі змінами в репозиторії.
 Після змін reviewer workflow, його helpers або CI окремо запускай parity і Python workflow fixtures;
 команди - `.github/AGENTS.md`. Для read-only аудитів дотримуйся обмежень викликаного скіла.
-- Перед початком роботи прочитай `@docs/session-learnings/AGENTS.md`, якщо файл існує: локальні gitignored нотатки
-  попередніх сесій (у бектиках навмисно - без автоімпорту).
 - **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
-  `web-debug`; тести - `tdd` + `vitest` і/або `web-debug`; фініш - `cr-request` →
+  `web-debug`; тести - `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verify` → CI check
-- **Bug / regression:** `debugging` → `tdd` → `verify` → CI check
-- **Supabase (DB / Auth / RLS / Storage):** `tdd` → `/security-review` → CI check
-- **Refactoring:** `specify` → `tdd` → CI check
+- **Bug / regression:** `debugging` → `vitest` → `verify` → CI check
+- **Supabase (DB / Auth / RLS / Storage):** `vitest` → `/security-review` → CI check
+- **Refactoring:** `specify` → `vitest` → CI check
 - **Received code review:** `cr-received` → (fixes) → `verify` → CI check
 - **Prose (docs, README, UI copy, commits):** `dashfix` · `negafix`
 - **Закриття гілки:** `finalize`
@@ -95,6 +94,12 @@ Claude Code підвантажує вкладені `CLAUDE.md`, які імпо
   без optional deps лишає без нього typecheck і сканер. Lint - `oxlint --type-aware` (`oxlint-tsgolint`), ESLint немає
 
 ## Common Commands
+
+Перед локальними перевірками запускай `sh scripts/check-local.sh`: wrapper
+перевіряє Node до виклику pnpm і задає `CI=1`, щоб auto-install не запускав
+видалення локальних скілів через postinstall. Змінюй версію Node до wrapper;
+не викликай його через pnpm, який може почати auto-install раніше за перевірку.
+
 `package.json` - джерело правди для повного списку скриптів. Тут лише неочевидне:
 
 ```bash
@@ -176,19 +181,25 @@ VITE_SUPABASE_KEY=...        # publishable client key
   `CardsArea.tsx` і prop `canControl={isModerator}` у `Timer.tsx`, client-side only (RLS `using (true)`)
 - **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
   Детальна матриця - `DESIGN.md` §11.1-11.2
-- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.tsx` (спільний селектор у
-  JoinOverlay+PlayerEditModal) на базі `RoleBadge.tsx` (те саме відображення у PlayerRow) і пишеться як один shield у
-  `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи
-  role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` дає DEV/QA-спліт
-  для історії, трендів і API
-- **Кола результатів:** після reveal - коло на когорту DEV/BE/FE/SRE/QA (QA = QA+GQA+AQA, завжди показується),
-  набір - чіпи «Показувати результати» в «Налаштувати колоду» (`room_state.result_cohorts`, `null` = усі). DEV увімкнено
-  - загальне коло: вимкнені BE/FE/SRE зливаються в нього; DEV вимкнено - голоси DEV і вимкнених ролей приховані, бейдж
-  червоний. PO і SM - завжди власні кола (не в чіпах); кастомні - поза колами й трендами; без ролі й ті, хто вийшов, -
-  DEV. Графік трендів - лінія на кожну роль (`roleRoundAlignment()`), історія й API - DEV/QA-спліт
-  (`resultCohortFor()` у `resultCohorts.ts`, `trendCohorts()` у `shields.ts`)
-- **Consensus:** салют + decision-sound, коли хоча б одне коло результатів одноголосне з ≥ 2 голосами. Деталі -
-  `app/utils/AGENTS.md`
+- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.tsx` (JoinOverlay +
+  PlayerEditModal) на базі `RoleBadge.tsx` і пишеться в `players.shields` як один shield через `shieldForRoleTag()`;
+  кастомні ролі мають префікс `custom:`, навіть коли назва збігається зі стандартною роллю.
+  `SHIELD_CATALOG` (role/focus/stack/qa/lead) лишився для лукапу, icon-picker прибрано. Сиру роль визначає
+  `voteCohortFor()` у
+  `app/utils/resultCohorts.ts`; без ролі й ті, хто вийшов, - DEV
+
+1. **Кола результатів:** `groupResultVotes()` автоматично групує лише фактичні голоси після reveal. Вбудовані
+   ролі йдуть у порядку DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM; кастомні - після них за першим проголосувавшим
+   учасником у списку кімнати. Ключ кастомної групи - повний shield `custom:...`, підпис - назва без префікса;
+   `custom:DEV` і DEV мають різні кола. Розміри й детальний контракт - `DESIGN.md` §11.9.
+2. **Налаштування кіл:** секції «Показувати результати» й чіпів немає. Збережений `room_state.result_cohorts`
+   ігнорується, збереження колоди його не змінює; налаштування не приховує голосів і не робить бейдж червоним.
+3. **Статистика:** історія, тренди, головна й нові поля API беруть сиру вбудовану роль; кастомні ролі лишаються
+   поза рольовими трендами. Загальний бал - пул оцінювачів DEV/BE/FE/SRE/QA/GQA/AQA; без їхніх голосів - усі
+   голоси. Головна й тренди беруть числові раунди. Формули - `app/utils/AGENTS.md`, legacy-контракт API для
+   agilecharts - `netlify/AGENTS.md`.
+4. **Consensus:** салют + decision-sound, коли хоча б одне коло результатів, включно з кастомним, одноголосне
+   з ≥ 2 голосами. Деталі - `app/utils/AGENTS.md`.
 
 ## Code Style
 - Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline

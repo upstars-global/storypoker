@@ -1,6 +1,5 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import PieChart from '~/components/PieChart'
 import { Button } from '~/components/ui/button'
 import { useCardLabel } from '~/hooks/useCardLabel'
 import { createCelebrationParticles, shouldCelebrate, type CelebrationParticle } from '~/utils/resultCelebration'
@@ -20,6 +19,12 @@ type ResultsAreaProps = {
   goalClarityScore?: boolean
   onStartNewRound?: () => void
 }
+
+function PiePlaceholder() {
+  return <div data-testid="result-pie-placeholder" style={{ width: '100%', aspectRatio: '1' }} />
+}
+
+const PieChart = lazy(() => import('~/components/PieChart').catch(() => ({ default: PiePlaceholder })))
 
 const BUBBLE_COLORS = ['#546e7a', '#e64a19', '#fbc02d', '#43a047', '#5e35b1']
 const BUBBLE_MIN = 60
@@ -78,7 +83,7 @@ export default function ResultsArea({
 
   const circles = groups
     ? groups.map(group => ({ ...group, average: averageOf(group.votes) }))
-    : [{ label: t('results.general'), votes, average: averageOf(votes) }]
+    : [{ key: undefined, label: t('results.general'), votes, average: averageOf(votes) }]
 
   const celebrate = !disableCelebration && shouldCelebrate(votes, groups?.map(group => group.votes))
   const [particles, setParticles] = useState<CelebrationParticle[]>([])
@@ -160,15 +165,17 @@ export default function ResultsArea({
       >
         {circles.map(g => (
           <div
-            key={g.label}
+            key={g.key ?? g.label}
             className="flex flex-col items-center gap-2"
-            style={{ flex: '0 1 240px' }}
+            style={{ flex: '0 1 240px', width: '100%', maxWidth: '240px', minWidth: 0 }}
           >
-            <span className="mui-h6 text-primary">
+            <span className="mui-h6 text-primary w-full min-w-0 text-center" style={{ overflowWrap: 'anywhere' }}>
               {g.label}
               {g.average !== null && `: ${g.average}`}
             </span>
-            <PieChart votes={g.votes} />
+            <Suspense fallback={<PiePlaceholder />}>
+              <PieChart votes={g.votes} />
+            </Suspense>
           </div>
         ))}
       </div>

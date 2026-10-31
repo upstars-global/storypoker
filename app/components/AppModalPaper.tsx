@@ -23,7 +23,7 @@ export default function AppModalPaper({ className, style, onClose, children }: A
       <button
         ref={ripple}
         type="button"
-        className="mui-icon-btn absolute"
+        className="mui-icon-btn mui-modal-close absolute"
         style={{ top: '12px', right: '12px' }}
         aria-label={t('common.close')}
         onClick={onClose}

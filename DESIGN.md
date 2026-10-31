@@ -331,7 +331,7 @@ const isAuthorizedModerator = isModerator && !!user
 | Запустити відлік розкриття | `CardsArea.tsx` hold-to-start (силент/зі звуком/з атмосферою) → `broadcastCountdownStart` - деталі §11.6 |
 | Почати новий раунд | `ResultsArea.tsx`, `showNewRound={isModerator}` → `roomStore.startNewRound()` |
 | Налаштувати опитування (`voting`/`vote_question`) | `CardsArea.tsx`, умова `... && isModerator` → `setPollQuestion`/`startVoteQuestion` |
-| Налаштувати колоду карт і кола результатів | `AppHeader.tsx` меню → `ConfigureCardDeckModal` (чіпи «Показувати результати», §11.9) |
+| Налаштувати колоду карт | `AppHeader.tsx` меню → `ConfigureCardDeckModal` (пресет і карти; кола автоматичні, §11.9) |
 | Виключити гравця (kick) | `PlayerRow.tsx`, гейт `currentUserIsModerator` → `playersStore.kick` |
 | Керування таймером (reset/pause/resume/±30s) | `Timer.tsx`, `canControl={isModerator}` (саме `isModerator`, **не** `isAuthorizedModerator`) |
 
@@ -357,11 +357,19 @@ const isAuthorizedModerator = isModerator && !!user
 
 ### 11.3 Графік узгодженості та тренди (`AlignmentTrendsModal.tsx`)
 
-**Джерело даних:** один запит `roomStore.fetchHistory()` в `useEffect` при відкритті - увесь `round_history` кімнати (без пагінації/дат-фільтра на рівні БД). Раунди з нечисловою колодою (`voting`/`vote_question`, перевірка `isNumericPreset` + fallback "чи є хоч один числовий голос") відфільтровуються одразу.
+**Джерело даних:** один запит `roomStore.fetchHistory()` в `useEffect` при відкритті - увесь
+`round_history` кімнати (без пагінації/дат-фільтра на рівні БД). `isNumericPreset()` лишає
+`scrum`/`fibonacci`/`hours`/`goal_clarity` і раунди без пресету; для останніх додатково потрібен хоча б
+один числовий голос.
 
-**Гранулярність - один раунд = одна точка графіка.** Жодного агрегування по днях/тижнях немає: кожен запис `round_history` мапиться 1:1 у `ChartPoint {date, devAlignment, qaAlignment, deckPreset}` через `splitRoundAlignment(round, shieldsMap)`.
+**Гранулярність - один раунд = одна точка графіка.** Кожен відфільтрований запис `round_history`
+мапиться 1:1 у `ChartPoint {date, alignments, overall, deckPreset, round}`:
+`roleRoundAlignment(round, shieldsMap)` дає бали ролей, `summarizeRound(round, shieldsMap).alignment` -
+загальний бал. Агрегування по днях/тижнях немає.
 
-> ⚠️ `shieldsMap` будується з **поточних** shields гравців (`visiblePlayers` на момент відкриття модалки), не з тих, що були на момент голосування. Якщо гравець змінив QA/DEV роль пізніше - стара точка на графіку перерахується під нову роль.
+> ⚠️ `shieldsMap` будується з поточних shields видимих гравців на момент відкриття модалки. Зміна ролі
+перераховує минулі раунди під нову роль; без ролі й гравці, яких уже немає серед видимих, рахуються як
+DEV. Роль на момент голосування у snapshot не зберігається.
 
 **Фільтри:**
 - Часове вікно: `30D` / `90D` / `6M` (default) / `1Y` - `cutoff` рахується від `Date.now()`
@@ -375,13 +383,36 @@ const isAuthorizedModerator = isModerator && !!user
 5. `spread = max(індекс) - min(індекс)` серед голосів
 6. **`score = round(100 * (1 - spread / span))`** - 100 = усі обрали одну картку (або сусідні), 0 = найдальші картки колоди одночасно проголосовані
 
-Графік трендів малює окрему лінію на кожну роль DEV/BE/FE/SRE/QA/PO/SM (`roleRoundAlignment()` у `roundStats.ts`, когорта гравця - `voteCohortFor()` з `resultCohorts.ts`, кольори - `COHORT_COLORS`); картки «Поточний»/«Середній бал» і тренд беруть середнє ролей раунду. Історія й API лишаються на DEV/QA-спліті: DEV/QA рахуються окремо (`splitRoundAlignment` ділить голоси через `trendCohorts()` з `utils/shields.ts`), кожен - той самий `alignmentScore` над своєю підмножиною. DEV = ролі DEV/BE/FE/SRE, QA = QA/GQA/AQA; голоси PO/SM і кастомних ролей в тренди, середнє й узгодженість історії не йдуть. Гравці без ролі й ті, хто вже вийшов з кімнати, рахуються як DEV. Виняток - раунд, де голосували лише PO/SM і кастомні ролі: тоді всі його голоси рахуються як DEV. Чіпи «Показувати результати» (§11.9) на тренди не впливають.
+Графік трендів малює окрему лінію на кожну з ролей DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM, що має
+не-null бал у видимому періоді (`roleRoundAlignment()` у `roundStats.ts`, сира роль - `voteCohortFor()`
+з `resultCohorts.ts`). Кожна лінія перемикається в легенді. `COHORT_COLORS` - спільна мапа для ліній і
+бейджів історії та знімка; GQA - `#ff7043`, AQA - `#fdd835`, QA - `#ffa726`. Автоматичні кола поточного
+раунду (§11.9), включно з кастомними, не змінюють історію, тренди, головну й нові поля API. Кастомні ролі
+не мають рольових ліній.
 
-**Legacy rounds без `active_cards`/`deck_preset`** (виправлено 2026-07-26): `alignmentScore` повертає `null`, якщо `deckOrder` порожній - а раунди, записані до міграції `010_round_history_deck.sql`, мають `active_cards = null` (і найстаріші - ще й `deck_preset = null`), тому їхній alignment мовчки випадав з графіка, хоча голоси в них цілком реальні й числові. `resolveActiveCards(activeCards, deckPreset)` (`app/utils/roundStats.ts`) підставляє `defaultActive` відповідного пресету з `cardDecks.ts`, а якщо навіть `deck_preset` відсутній - `DEFAULT_PRESET_ID` (`'scrum'`); це наближення (реальна колода на момент раунду могла бути звуженою), але краще за повне випадання точки. Викликається в `splitRoundAlignment`/`roundAlignment`/`summarizeRound` - тому й `AlignmentTrendsModal`, і `HistoryModal` тепер бачать ці раунди. **Дзеркалить** `resolveActiveCards` у `netlify/functions/room-json.mts` (комміти `e1dcf02`/`beca0e5`) - синхронізувати вручну при зміні формули в обох місцях.
+**Legacy rounds без `active_cards`/`deck_preset`** (виправлено 2026-07-26): `alignmentScore` повертає
+`null`, якщо `deckOrder` порожній - а раунди, записані до міграції `010_round_history_deck.sql`, мають
+`active_cards = null` (і найстаріші - ще й `deck_preset = null`), тому їхній alignment мовчки випадав з
+графіка, хоча голоси в них цілком реальні й числові. `resolveActiveCards(activeCards, deckPreset)`
+(`app/utils/roundStats.ts`) підставляє `defaultActive` відповідного пресету з `cardDecks.ts`, а якщо
+навіть `deck_preset` відсутній - `DEFAULT_PRESET_ID` (`'scrum'`); це наближення (реальна колода на
+момент раунду могла бути звуженою), але краще за повне випадання точки. Викликається в
+`roleRoundAlignment`/`summarizeRound` - тому й `AlignmentTrendsModal`, і `HistoryModal` тепер бачать ці
+раунди. **Дзеркалить** `resolveActiveCards` у `netlify/functions/room-json.mts` (комміти
+`e1dcf02`/`beca0e5`) - синхронізувати вручну при зміні формули в обох місцях.
 
-**Агрегати поверх відфільтрованих точок:**
-- Поточний бал / середній бал - останнє непусте значення / середнє арифметичне
-- Тренд - тільки якщо ≥4 точок: `pct = (середнє нової половини - середнє старої половини) / стара половина × 100`; `up` якщо `pct > 1`, `down` якщо `< -1`, інакше `stable`
+**Загальний бал раунду:** історія, головна й картки трендів рахують `alignmentScore` одним пулом голосів
+оцінювачів DEV/BE/FE/SRE/QA/GQA/AQA, без PO/SM і кастомних ролей (`estimatorVotes()`). Якщо жоден
+оцінювач не голосував, пул - усі голоси. Середнє оцінок рахується з того самого пулу. Бал - ціле 0-100,
+`null` при менше ніж двох голосах картами колоди без `?`/`☕`. Головна показує округлене середнє не-null
+загальних балів числових раундів; poll- і нечислові колоди виключені. Legacy-поля API для agilecharts
+зберігають свій контракт (`netlify/AGENTS.md`).
+
+**Агрегати поверх відфільтрованих точок** беруть загальні бали раундів:
+
+- Поточний бал - останній не-null бал у видимому періоді; середній - округлене середнє не-null балів
+- Тренд - тільки якщо ≥4 не-null балів: `pct = (середнє нової половини - середнє старої половини) / стара половина × 100`;
+  `up` якщо `pct > 1`, `down` якщо `< -1`, інакше `stable`
 
 **Бейджі рівня (`alignmentLevel`/`levelColor`):** `Perfect ≥90` (зелений), `High ≥75` (зелений), `Medium ≥40` (жовтий), `Low <40` (червоний).
 
@@ -393,13 +424,28 @@ const isAuthorizedModerator = isModerator && !!user
 
 **dataZoom-таймлайн знизу** - слайдер (`type: 'slider'`) під графіком з міні-превʼю форми лінії (`dataBackground`) + `type: 'inside'` для zoom/pan колесом миші чи pinch; дозволяє наблизити довільний відрізок часового вікна, обраного кнопками `30D/90D/6M/1Y`, не змінюючи сам фільтр.
 
-**Reference lines** (100/75/50/25%) - окрема невидима серія `__refLines` (`data: []`, `silent: true`, `tooltip.show: false`) з `markLine`, завжди в `series` незалежно від toggle DEV/QA, щоб орієнтири не зникали разом із лінією.
+**Reference lines** (100/75/50/25%) - окрема невидима серія `__refLines` (`data: []`, `silent: true`,
+`tooltip.show: false`) з `markLine`, завжди в `series` незалежно від перемикачів ролей, щоб орієнтири не
+зникали разом із лініями.
 
-**Tooltip** - `trigger: 'item'`, **`triggerOn: 'click'`** (клік на крапку показує і "пришпилює" tooltip; ховається лише повторним кліком чи по порожньому місцю графіка - на відміну від строгого hover, це дає час дотягнутись курсором до кнопки "Деталі", особливо на крайніх точках), `enterable: true` (можна навести на сам tooltip не закривши його). Контент - `formatter()` повертає HTML: лейбл серії + значення (`%`), дата, кнопка-закриття `×` (`data-close-tooltip`) і клікабельний рядок `trends.viewDetails` (`data-view-details`, `data-index`). Лейбл серії - `series.name`: `QA` лишається `QA`, DEV-когорта підписана `DEV/FE/BE/SRE`, щоб не читалось як "тільки роль DEV" (колір ліній не змінювався: жовта `#ffa726` - QA, бірюзова `#26a69a` - DEV/FE/BE).
+**Tooltip** - `trigger: 'item'`, **`triggerOn: 'click'`** (клік на крапку показує і "пришпилює" tooltip;
+ховається лише повторним кліком чи по порожньому місцю графіка - на відміну від строгого hover, це дає
+час дотягнутись курсором до кнопки "Деталі", особливо на крайніх точках), `enterable: true` (можна
+навести на сам tooltip не закривши його). Контент - `formatter()` повертає HTML: лейбл серії + значення
+(`%`), дата, кнопка-закриття `×` (`data-close-tooltip`) і клікабельний рядок `trends.viewDetails`
+(`data-view-details`, `data-index`). Лейбл серії - тег сирої ролі з `series.name`, колір - з
+`COHORT_COLORS`.
 
-**Round snapshot** - клік на `data-view-details` у tooltip ловиться делегованим `document`-listener'ом (ECharts рендерить tooltip у `document.body`, не всередині компонента), звідти `points[dataIndex].round` → `selectedRound` → `RoundSnapshotModal.tsx` (рендериться всередині поточної модалки, щоб Tab не виходив зі знімка) зі списком `{ім'я, голос}` усіх гравців того раунду (`round_history.votes`, повний знімок, не лише агреговані `counts`). Поруч з іменем - `RoleBadge` з тегом ролі (`roleTagForShields(shieldsMap.get(player_id))`, той самий `shieldsMap` з **поточних** shields, що й для DEV/QA split вище - те саме застереження про неактуальність ролі на момент голосування).
+**Round snapshot** - клік на `data-view-details` у tooltip ловиться делегованим `document`-listener-ом
+(ECharts рендерить tooltip у `document.body`), звідти `points[dataIndex].round` → `selectedRound` →
+`RoundSnapshotModal.tsx`. Модалка рендериться всередині поточної, щоб Tab не виходив зі знімка; показує
+імена й голоси зі snapshot `round_history.votes`, поруч - `RoleBadge` з поточних shields. Роль береться
+з того самого `shieldsMap`, тому діє застереження про зміну ролей після голосування.
 
-**Когорта в round snapshot** - `data-view-details` несе ще й `data-cohort` (`'DEV'`/`'QA'`, з `params.seriesName` серії, на якій клікнули); прокидається як `selectedCohort` у prop `cohort` `RoundSnapshotModal`. Модалка фільтрує `round.votes` через `trendCohorts()` під обрану когорту (лише QA / лише DEV/BE/FE/SRE), у заголовку - кольоровий бейдж когорти (`QA` жовтий `#ffa726` / `DEV_COHORT_LABEL` бірюзовий `#26a69a`, константа винесена в `utils/shields.ts`, бо тепер спільна для `AlignmentTrendsModal` і `RoundSnapshotModal`). Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
+**Когорта в round snapshot** - `data-view-details` несе `data-cohort` з тегом ролі лінії
+(`params.seriesName`), який передається як `cohort` у `RoundSnapshotModal`. Модалка фільтрує
+`round.votes` через `voteCohortFor()` і показує лише голоси цієї сирої ролі; у заголовку - її бейдж
+кольору з `COHORT_COLORS`. Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
 
 ### 11.4 Історія раундів (`round_history`)
 
@@ -421,7 +467,15 @@ round_history (
 
 `?` і `☕` рахуються як повноцінні голоси для запису, але виключаються з `alignmentScore`/`averageOf` (нечислові). `name` у snapshot дублюється, щоб історія лишалась читабельною після rename/kick/leave гравця.
 
-**`HistoryModal.tsx`** читає весь `fetchHistory()`, групує по рік/квартал, фільтрує по колоді; для кожного раунду показує `summarizeRound()` (`app/utils/roundStats.ts`): `average` (зважене середнє числових голосів, `.toFixed(1)`), `alignment` (`alignmentScore`), `counts` (кількість голосів по кожному значенню), `voterCount`. Для poll-колод (`voting`/`vote_question`) `average`/`alignment` - завжди `null`.
+**`HistoryModal.tsx`** читає весь `fetchHistory()`, групує по рік/квартал, фільтрує по колоді; для
+кожного раунду показує `summarizeRound()` (`app/utils/roundStats.ts`): `average` (зважене середнє
+числових голосів, `.toFixed(1)`), `alignment` (`alignmentScore`), `counts` (кількість голосів по кожному
+значенню), `voterCount`. Для poll-колод (`voting`/`vote_question`) `average`/`alignment` - завжди
+`null`. Середнє й узгодженість беруть пул оцінювачів (§11.3); counts і voterCount охоплюють усі голоси.
+Якщо голоси з когортою належать двом і більше ролям, показується рядок на роль у порядку DEV, BE, FE,
+SRE, QA, GQA, AQA, PO, SM; кастомні голоси - останнім рядком без бейджа. Якщо роль одна або голосували
+лише кастомні ролі, показується один рядок усіх голосів. Групування бере сиру поточну роль незалежно від
+чіпів кімнати.
 
 ### 11.5 Export (видалено)
 
@@ -496,18 +550,34 @@ round_history (
 
 ### 11.9 Кола результатів і когорти (`resultCohorts.ts`)
 
-Після reveal `ResultsArea.tsx` малює окреме коло (PieChart + середнє) на кожну когорту, що має голоси. Когорти - `RESULT_COHORTS = DEV, BE, FE, SRE, QA`; `cohortForShields()` бере тег ролі гравця (`roleTagForShields`) і зводить QA/GQA/AQA в одне коло `QA`.
+Після reveal `ResultsArea.tsx` малює окреме коло (PieChart + середнє) на кожну роль із голосами.
+`groupResultVotes()` повертає групи `{ key, label, votes }`: вбудовані DEV, BE, FE, SRE, QA, GQA, AQA,
+PO, SM у порядку `ROLE_COHORTS`, потім кастомні за першим проголосувавшим учасником у поточному списку
+кімнати. Учасник без голосу не створює кола; до reveal голоси приховані, без голосів рольових кіл немає.
 
-- **Тренди** не залежать від чіпів: усі DEV/BE/FE/SRE завжди сумуються в загальну когорту DEV (§11.3)
-- **PO і SM:** кожна роль має власне коло (`PRODUCT_COHORTS`), завжди увімкнене й поза чіпами та `result_cohorts`; у трендах їх немає.
-- **Хто не показується:** кастомні ролі - їхні голоси в колах, узгодженості й салюті не враховуються. Гравці без ролі йдуть у DEV. Якщо голосували лише кастомні ролі, `ResultsArea` показує одне загальне коло з усіх голосів; якщо ж усі голоси когорт приховані чіпами, кіл і салюту немає
-- **Налаштування:** модератор у `ConfigureCardDeckModal` вмикає/вимикає чіпи DEV/BE/FE/SRE у рядку «Показувати результати» (той самий Save, що й колода). QA - завжди увімкнений, неактивний і блідий чіп (`is-locked`). Для колод без PieChart (`voting`, `vote_question`, `goal_clarity`) чіпи не показуються
-- **DEV як загальне коло** (`resultCohortFor()`): якщо DEV увімкнено, увімкнені BE/FE/SRE мають окремі кола, а вимкнені зливаються в коло DEV (лише DEV увімкнено - усі розробники в одному колі). Якщо DEV вимкнено, показуються лише увімкнені ролі, а голоси гравців з роллю DEV і з вимкненими ролями не рахуються
-- **Збереження:** `room_state.result_cohorts text[]` (міграція `017`, check-констрейнт на `DEV/BE/FE/SRE/QA`); `null` (старі й нові кімнати, поки модератор нічого не змінив) = усі когорти: кожна роль розробника має власне коло. `normalizeCohorts()` завжди додає `QA` і впорядковує теги. До накату міграції вибір не зберігається (помилка лише в консоль), діє дефолт з усіма когортами
-- **Підсвітка в списку гравців:** якщо голос гравця не потрапляє в жодне коло (DEV вимкнено, а його роль - DEV або вимкнена BE/FE/SRE), `RoleBadge` у `PlayerRow` стає червоним (`is-excluded`), tooltip додає «голос не показується в результатах» (`hiddenVotePlayerIds` у `[slug].tsx`)
-- **Консенсус:** `shouldCelebrate(votes, groups)` - салют і decision-sound, якщо хоча б одне показане коло одноголосне з ≥ 2 голосами
-- **Узгодженість на екрані результатів** (`AlignmentCard`) рахується по тих самих колах
-- **Попередній раунд** (`lastRound` snapshot) зберігає вже підписані групи на момент reveal
+1. **Кастомні ролі:** ключ групи - повний збережений shield із префіксом `custom:`, підпис - назва без
+   префікса як звичайний текст. Однакові shields групуються, різні мають окремі кола; `custom:DEV` і DEV
+   лишаються різними групами навіть з однаковим підписом. Для legacy-масиву shields перша розпізнана
+   вбудована або кастомна роль визначає групу; без розпізнаної ролі - DEV.
+2. **Кола:** `PieChart.tsx` використовує ECharts pie з `SVGRenderer` і явним `{ renderer: "svg" }`,
+   завантажується через `lazy()` у `ResultsArea`. Усі кола однакової ширини до 240 px, переносяться на нові
+   рядки й однаково звужуються до ширини контейнера; довгі підписи переносяться. Зміна ширини перемальовує
+   графік без перезавантаження. Один голос дає суцільне коло з підписом карти, кілька - сектори з підписами
+   й тією самою палітрою. `<ROLE>: <середнє>` видно одразу поза графіком. Під час завантаження чанка або його
+   збою лишається порожнє місце розміру кола без екранної помилки; ECharts не входить в entry-чанк.
+3. **Колода й збережені налаштування:** у `ConfigureCardDeckModal` немає секції «Показувати результати»,
+   чіпів чи підказки. Save зберігає пресет і карти та не змінює `room_state.result_cohorts`. Це поле
+   `text[]` (міграція `017`), його check-констрейнт на `DEV/BE/FE/SRE/QA` і старі дані лишаються сумісними;
+   будь-яке допустиме значення ігнорується під час показу. Старе налаштування не приховує голосів і не
+   робить `RoleBadge` червоним. `voting`, `vote_question`, `goal_clarity` зберігають бульбашки або бал ясності.
+4. **Історія, тренди, головна й нові поля API:** беруть сиру вбудовану роль через `cohortForShields()` і
+   `voteCohortFor()` (§11.3-11.4). Кастомні ролі лишаються поза рольовими трендами; гравці без ролі й ті,
+   хто вийшов, рахуються як DEV. Автоматичні кола не змінюють статистичних формул, пулу оцінювачів або
+   API; legacy-контракт API для agilecharts - `netlify/AGENTS.md`.
+5. **Консенсус:** `shouldCelebrate(votes, groups)` запускає салют і decision-sound, якщо хоча б одне
+   коло має ≥ 2 голоси й одну оцінку. Це стосується кожної вбудованої та кастомної ролі.
+6. **Узгодженість на екрані результатів** (`AlignmentCard`) рахується по автоматичних групах.
+7. **Попередній раунд** (`lastRound` snapshot) зберігає ключі, підписи й голоси груп на момент reveal.
 
 ### 11.10 Фон кімнати (`RoomBackgroundModal.tsx`)
 

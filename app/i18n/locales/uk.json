@@ -128,9 +128,7 @@
       "no": "Ні"
     },
     "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні",
-    "alwaysIncluded": "Завжди включено",
-    "resultCohorts": "Показувати результати",
-    "qaCohortHint": "QA, GQA і AQA завжди показуються одним колом"
+    "alwaysIncluded": "Завжди включено"
   },
   "poll": {
     "thirdCard": "Третя картка",
