@@ -10,7 +10,7 @@
 
 **Stack:** React, Base UI, Tailwind, Vitest, Playwright.
 
-**Execution:** inline - two tasks
+**Execution:** inline
 
 ## Global constraints
 
@@ -60,8 +60,8 @@ AC10: Один пункт «Кольорова тема» відкриває б�
 
 ### Task 1: Account menu controls
 
-**Files:** app/components/AppHeader.tsx, tests/unit/components/AppHeader.spec.tsx,
-tests/e2e/page-load.spec.ts, tests/e2e/icon-delivery.spec.ts
+**Files:** app/components/AppHeader.tsx, app/components/ui/dropdown-menu.tsx,
+tests/unit/components/AppHeader.spec.tsx, tests/e2e/page-load.spec.ts, tests/e2e/icon-delivery.spec.ts
 
 **Consumes:** Наявні AppMenu, useTheme, useSoundVolume.
 
@@ -75,7 +75,7 @@ tests/e2e/page-load.spec.ts, tests/e2e/icon-delivery.spec.ts
 
 **GREEN:** Та сама команда -> усі тести PASS; Playwright доводить keyboard/persistence.
 
-**Commit:** `git add -A -- app/components/AppHeader.tsx tests/unit/components/AppHeader.spec.tsx tests/e2e/page-load.spec.ts tests/e2e/icon-delivery.spec.ts docs/plans/20261031-1556-header-modal-controls.md`
+**Commit:** `git add -A -- app/components/AppHeader.tsx app/components/ui/dropdown-menu.tsx tests/unit/components/AppHeader.spec.tsx tests/e2e/page-load.spec.ts tests/e2e/icon-delivery.spec.ts docs/plans/20261031-1556-header-modal-controls.md`
 
 ### Task 2: Modal geometry and visual evidence
 
@@ -252,5 +252,13 @@ Ruling: review R11 origin external - configured Copilot review requested after p
 Received R11: R11-copilot-F1 ACCEPT Re-review: needed
 Ruling: R11-copilot-F1 proof - RED scrollWidth244/clientWidth240; shared separator -mx-1 expands beyond MUI popup padding0. Remove negative horizontal margins; GREEN18viewport/theme cases with no horizontal overflow, choices visible and lateral desktop placement
 Ruling: palette submenu focused proof -551unit PASS;32public/icon tests PASS with one known skip-link retry.6submenu cases cover one checked item, no root/child horizontal overflow, Escape/Right/open/select/focus; complete ArrowDown/Right/Enter selection persists palette;18native geometry cases cover1280x900/375x812/812x375
+
+Review R12: Critical 0 | Important 0 | Minor 0 tree 21dbb6d837e72b14e395b6ccc1634e281e9631b1 reviewer gpt-6.1-sol mode code
+Round review 12: palette side submenu and R11-copilot-F1 ADDRESSED; all axes PASS, no findings
+Ruling: review R12 origin automatic - additional round8of15; shared trigger/separator consumers and Base UI context reviewed. Source reviewer did not run browser/tests; host runtime proof remains separate
+Ruling: AC10 and R11 final proof -551unit/53files plus lint/typecheck/build/icon audit PASS.32public/icon tests PASS with1known skip-link retry.18native submenu cases PASS across6themes and desktop/mobile/landscape; root scrollWidth now240/clientWidth240, flyout on screen, check/keyboard/focus/storage work
+Ruling: remaining criteria proof -108modal geometry cases and12ordered Before/After pairs PASS;6newAfter captures show opened side menu with active check. Live no-store image bytes match capture27cabc5, old IDs/namespace retained; current local carry/collapse/gallery checks PASS12/72pages
+Ruling: runtime scope - Desktop Chrome plus native Chromium mobile viewport checks; WebKit remains in repository pre-squash gate, no squash requested
+Verify: PASS full tree 21dbb6d837e72b14e395b6ccc1634e281e9631b1 2026-11-01 00:06
 
 ```
