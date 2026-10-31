@@ -35,6 +35,21 @@ describe('cohortForShields', () => {
     expect(cohortForShields([])).toBe('DEV')
     expect(cohortForShields(null)).toBe('DEV')
   })
+
+  it.each(['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM', ''])(
+    'keeps the custom role "%s" outside all cohorts',
+    (tag) => {
+      expect(cohortForShields([`custom:${tag}`])).toBeNull()
+    },
+  )
+
+  it('uses the first recognized role shield when legacy players have several shields', () => {
+    expect(cohortForShields(['unknown', 'custom:DEV', 'qa'])).toBeNull()
+    expect(cohortForShields(['unknown', 'custom:', 'qa'])).toBeNull()
+    expect(cohortForShields(['unknown', 'qa', 'custom:DEV'])).toBe('QA')
+    expect(cohortForShields(['unknown', 'gqa', 'custom:'])).toBe('GQA')
+    expect(cohortForShields(['unknown'])).toBe('DEV')
+  })
 })
 
 describe('groupVotesByCohort', () => {
@@ -167,6 +182,11 @@ describe('role cohort contract', () => {
     const players = ['dev', 'be', 'fe', 'sre', 'custom:Design'].map(role => ({ shields: [role], vote: '3' }))
     expect(groupVotesByCohort(players, [])).toEqual([])
   })
+
+  it('does not create role circles for custom roles named after built-in roles', () => {
+    const players = ['DEV', 'QA', 'GQA', 'PO'].map(role => ({ shields: [`custom:${role}`], vote: '3' }))
+    expect(groupVotesByCohort(players, normalizeCohorts(null))).toEqual([])
+  })
 })
 
 describe('estimatorVotes', () => {
@@ -189,5 +209,18 @@ describe('estimatorVotes', () => {
   it('treats unknown players as estimators when no shields map is available', () => {
     const votes = [{ player_id: 'departed', vote: '5' }]
     expect(estimatorVotes(votes, undefined)).toEqual(votes)
+  })
+
+  it('excludes custom roles with built-in names when an estimator has voted', () => {
+    const votes = ['dev', 'customDev', 'customQa', 'customGqa', 'customPo', 'customEmpty'].map(player_id => ({ player_id, vote: '5' }))
+    const shieldsByPlayer = new Map([
+      ['dev', ['dev']],
+      ['customDev', ['custom:DEV']],
+      ['customQa', ['custom:QA']],
+      ['customGqa', ['custom:GQA']],
+      ['customPo', ['custom:PO']],
+      ['customEmpty', ['custom:']],
+    ])
+    expect(estimatorVotes(votes, shieldsByPlayer)).toEqual([votes[0]])
   })
 })
