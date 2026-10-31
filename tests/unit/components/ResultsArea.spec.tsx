@@ -46,6 +46,23 @@ describe('ResultsArea celebration without a qa split', () => {
 })
 
 describe('ResultsArea cohort circles', () => {
+  it.each(['PO', 'GQA'])('celebrates a unanimous %s circle alongside mixed votes', (role) => {
+    const container = mountResults({
+      votes: { '3': 2, '5': 1, '8': 1 },
+      groups: [{ label: role, votes: { '3': 2 } }, { label: 'DEV', votes: { '5': 1, '8': 1 } }],
+    })
+    expect(container.querySelector('.celebration-layer')).not.toBeNull()
+  })
+
+  it('does not celebrate when each role has only one vote', () => {
+    const container = mountResults({
+      votes: { '3': 9 },
+      groups: ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM'].map(label => ({ label, votes: { '3': 1 } })),
+    })
+    expect(pieCharts(container)).toHaveLength(9)
+    expect(container.querySelector('.celebration-layer')).toBeNull()
+  })
+
   it('renders one circle per cohort group with its label and average', () => {
     const container = mountResults({
       votes: { '3': 2, '5': 1, '8': 2 },
