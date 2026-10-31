@@ -21,7 +21,7 @@ type ConfigureCardDeckModalProps = {
 const PRESET_ITEMS = DECK_PRESETS.map(p => ({ value: p.id, label: p.name }))
 
 const PRESET_TRIGGER_CLASS = [
-  'mui-input w-full gap-0 rounded-(--radius-input) border-input bg-transparent py-[17.5px] pr-0 pl-[18px]',
+  'mui-input w-full gap-0 rounded-(--radius-input) border-input bg-transparent py-[17.5px] px-[18px]',
   'text-[1rem] leading-[normal] data-[size=default]:h-auto cursor-pointer',
   'focus-visible:ring-0 focus-visible:border-(--primary) dark:bg-transparent dark:hover:bg-transparent',
   '[&>svg]:text-(--text-primary) [&>svg]:stroke-[3]',
