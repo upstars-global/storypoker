@@ -26,6 +26,8 @@ rm -rf "${src:?}" "${out:?}"
 trap 'rm -rf "${src:?}"' EXIT
 # Without a tty the docker CLI does not stop the container on Ctrl-C, and sh runs a trap only after its
 # foreground command returns, so the container runs in the background and the trap removes it.
+# A process-group SIGINT also stops the backgrounded docker CLI (checked on docker CLI 29.9.2), so the trap
+# does not kill "$!".
 name="storypoker-pre-squash-$$"
 trap 'docker rm -f "$name" >/dev/null 2>&1; exit 130' INT TERM
 trap 'docker rm -f "$name" >/dev/null 2>&1; exit 129' HUP

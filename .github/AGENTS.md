@@ -49,3 +49,6 @@ head і гейта `workflow_run` після нього: раніший запи
 і без `Write` прогін іноді проходить, не записавши рев'ю. Пін action на SHA з коментарем `# vN` звіряй без API:
 `git ls-remote --tags https://github.com/<owner>/<action>.git </dev/null | grep <sha>` має дати `refs/tags/vN`;
 агент рев'ю мережі не має, тож результат впиши в опис PR.
+Назви в `docs/plans/` у двох стилях: скіли `plan-craft` і `verify` пишуть `YYYYMMDD-HHMM-<topic>.md`, старші
+плани - `YYYY-MM-DD-<slug>.md`. Це прийнятий компроміс, а не дефект для рев'ю: старі плани не перейменовуються,
+нові не підганяються під старий стиль.
