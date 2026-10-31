@@ -216,4 +216,11 @@ Ruling: R7-F1 remedy - one flex row containing existing mute Menu.Item and nativ
 Ruling: R7 focused evidence -6theme cases assert aligned centers, non-overlap and slider width>80; keyboard/mute/persistence suite rerun. Initial width-collapse failure reproduced and corrected by w-auto, not hidden by the assertions
 Ruling: local review protocol - prior Approved remains approved in later rounds and auto-collapsed, previous decisions read-only; popup navigation includes only expanded comparisons. Both12/72page browser checks PASS; owner's actual submitted JSON untouched
 
+Review R8: Critical 0 | Important 0 | Minor 0 tree 06faf810a79cb4708cb190dddced1b1d41b033e1 reviewer gpt-6.1-sol mode re-review
+Round review 8: R7-F1 ADDRESSED; source CSS width/thumb geometry and installed Base UI roving registration traced
+Ruling: review R8 origin automatic - additional round6of15; scoped source review clean, runtime evidence separate
+Ruling: R7 final proof -551unit/53files plus lint/typecheck/build/icon audit PASS;25public/icon cases pass including6one-row geometry cases. Final rerun has24first-pass plus1skip-link retry PASS; identical skip-link focus flake observed before this fix, unchanged source retained
+Ruling: R7 browser proof -108modal geometry cases and12scene pairs in requested order PASS;6new header After images captured. Local prior-approval carry/progress/read-only history and expanded-only gallery navigation checks PASS12/72pages; last filtered gallery item approval closes safely
+Verify: PASS full tree 06faf810a79cb4708cb190dddced1b1d41b033e1 2026-10-31 23:20
+
 ```
