@@ -173,17 +173,20 @@ VITE_SUPABASE_KEY=...        # publishable client key
   `CardsArea.tsx` і prop `canControl={isModerator}` у `Timer.tsx`, client-side only (RLS `using (true)`)
 - **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
   Детальна матриця - `DESIGN.md` §11.1-11.2
-- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.tsx` (спільний селектор у
-  JoinOverlay+PlayerEditModal) на базі `RoleBadge.tsx` (те саме відображення у PlayerRow) і пишеться як один shield у
-  `players.shields` через `shieldForRoleTag()` (кастомні - префікс `custom:`); `SHIELD_CATALOG` (групи
-  role/focus/stack/qa/lead) лишився тільки для лукапу, icon-picker з UI прибрано; `isQaPlayer()` дає DEV/QA-спліт
-  для історії, трендів і API
-- **Кола результатів:** після reveal - коло на когорту DEV/BE/FE/SRE/QA (QA = QA+GQA+AQA, завжди показується),
-  набір - чіпи «Показувати результати» в «Налаштувати колоду» (`room_state.result_cohorts`, `null` = усі). DEV увімкнено
-  - загальне коло: вимкнені BE/FE/SRE зливаються в нього; DEV вимкнено - голоси DEV і вимкнених ролей приховані, бейдж
-  червоний. PO і SM - завжди власні кола (не в чіпах); кастомні - поза колами й трендами; без ролі й ті, хто вийшов, -
-  DEV. Графік трендів - лінія на кожну роль (`roleRoundAlignment()`), історія й API - DEV/QA-спліт
-  (`resultCohortFor()` у `resultCohorts.ts`, `trendCohorts()` у `shields.ts`)
+- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.tsx` (JoinOverlay +
+  PlayerEditModal) на базі `RoleBadge.tsx` і пишеться в `players.shields` як один shield через `shieldForRoleTag()`;
+  кастомні ролі мають префікс `custom:`, навіть коли назва збігається зі стандартною роллю.
+  `SHIELD_CATALOG` (role/focus/stack/qa/lead) лишився для лукапу, icon-picker прибрано. Сиру роль визначає
+  `voteCohortFor()` у
+  `app/utils/resultCohorts.ts`; без ролі й ті, хто вийшов, - DEV
+- **Кола результатів:** порядок - DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM. Чіпи «Показувати результати» в
+  «Налаштувати колоду»: DEV/BE/FE/SRE перемикаються, QA/GQA/AQA/PO/SM завжди увімкнені й заблоковані.
+  `room_state.result_cohorts`: `null` = чотири чіпи розробників, `[]` = жодного; старе значення `QA` ігнорується.
+  DEV увімкнено - вимкнені BE/FE/SRE зливаються в нього; DEV вимкнено - голоси DEV і вимкнених ролей приховані,
+  бейдж червоний. Кастомні ролі - поза колами й рольовими трендами; коли голосували лише вони - одне загальне коло.
+  Історія, тренди, головна й нові поля API беруть сиру роль незалежно від чіпів. Загальний бал - пул оцінювачів
+  DEV/BE/FE/SRE/QA/GQA/AQA; без їхніх голосів - усі голоси. Головна й тренди беруть числові раунди.
+  Формули - `app/utils/AGENTS.md`, legacy-контракт API для agilecharts - `netlify/AGENTS.md`
 - **Consensus:** салют + decision-sound, коли хоча б одне коло результатів одноголосне з ≥ 2 голосами. Деталі -
   `app/utils/AGENTS.md`
 
