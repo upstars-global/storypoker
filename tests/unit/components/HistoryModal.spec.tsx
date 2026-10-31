@@ -89,6 +89,8 @@ describe('HistoryModal', () => {
       'GQA3 × 1', 'AQA3 × 1', 'PO3 × 1', 'SM3 × 1',
     ])
     expect(screen.getByText('AQA').style.backgroundColor).toBe('#fdd835')
+    expect(screen.getByText('GQA').style.color).toBe('#212121')
+    expect(screen.getByText('AQA').style.color).toBe('#212121')
   })
 
   it.each<{

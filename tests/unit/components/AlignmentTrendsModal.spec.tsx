@@ -167,6 +167,7 @@ describe('AlignmentTrendsModal role lines and details', () => {
         expect(snapshot.queryByText(`${other}-2`)).toBeNull()
       }
       expect(within(title).getByText(role).style.backgroundColor).toBe(color)
+      expect(within(title).getByText(role).style.color).toBe('#212121')
       expect(chart.dispatchAction).toHaveBeenCalledWith({ type: 'hideTip' })
     },
   )

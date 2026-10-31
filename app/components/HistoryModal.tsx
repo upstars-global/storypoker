@@ -236,7 +236,7 @@ export default function HistoryModal({ onClose }: HistoryModalProps) {
                       {role !== null && (
                         <span
                           className="rounded px-1.5 py-0.5 text-mui-caption font-semibold text-white"
-                          style={{ backgroundColor: COHORT_COLORS[role] }}
+                          style={{ backgroundColor: COHORT_COLORS[role], color: role === 'GQA' || role === 'AQA' ? '#212121' : undefined }}
                         >
                           {role}
                         </span>

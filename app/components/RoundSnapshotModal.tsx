@@ -45,7 +45,7 @@ export default function RoundSnapshotModal({ round, shieldsMap, cohort = null, o
           {cohort && (
             <span
               className="rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
-              style={{ backgroundColor: COHORT_COLORS[cohort] }}
+              style={{ backgroundColor: COHORT_COLORS[cohort], color: cohort === 'GQA' || cohort === 'AQA' ? '#212121' : undefined }}
             >
               {cohort}
             </span>
