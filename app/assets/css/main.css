@@ -809,10 +809,14 @@ body {
     line-height: 0;
     font-size: 1.5rem;
     color: var(--text-primary);
+    border-radius: 50%;
+    outline: 1px solid var(--text-primary);
   }
   .mui-slider-knob > :first-child {
     position: relative;
     display: block;
+    background-color: var(--bg-appbar);
+    background-image: var(--appbar-gradient, none);
   }
   .mui-slider-value {
     position: absolute;
@@ -820,7 +824,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 1.5rem;
-    color: var(--bg-elevated);
+    color: var(--text-inverse);
   }
 
   .mui-card {

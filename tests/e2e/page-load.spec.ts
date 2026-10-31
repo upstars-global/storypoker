@@ -23,12 +23,27 @@ for (const palette of ['classic', 'cyberdeck', 'matcha']) {
         let background = rgb(style.backgroundColor)
         const overlay = style.backgroundImage.match(/rgba?\([^)]*\)/)?.[0]
         if (overlay) background = blend(rgb(overlay), background)
-        const thumb = blend(rgb(getComputedStyle(menu.querySelector('.mui-slider-knob')!).color), background)
-        const digit = blend(rgb(getComputedStyle(menu.querySelector('.mui-slider-value')!).color), thumb)
-        return { background: hex(background), thumb: hex(thumb), digit: hex(digit) }
+        const knob = getComputedStyle(menu.querySelector('.mui-slider-knob')!)
+        const fill = getComputedStyle(menu.querySelector('.mui-slider-knob > :first-child')!)
+        const header = getComputedStyle(document.querySelector('header')!)
+        const base = rgb(fill.backgroundColor)
+        const stops = fill.backgroundImage.match(/rgba?\([^)]*\)/g) ?? []
+        const surfaces = [base, ...stops.map(stop => blend(rgb(stop), base))]
+        const digit = rgb(getComputedStyle(menu.querySelector('.mui-slider-value')!).color)
+        return {
+          background: hex(background), boundary: hex(rgb(knob.outlineColor)), outline: knob.outlineStyle,
+          fill: fill.backgroundColor, gradient: fill.backgroundImage,
+          headerFill: header.backgroundColor, headerGradient: header.backgroundImage,
+          pairs: surfaces.map(surface => ({ thumb: hex(surface), digit: hex(blend(digit, surface)) })),
+        }
       })
-      expect(colorContrast(colors.thumb, colors.background), 'thumb against menu').toBeGreaterThanOrEqual(3)
-      expect(colorContrast(colors.digit, colors.thumb), 'digit against thumb').toBeGreaterThanOrEqual(4.5)
+      expect(colors.fill).toBe(colors.headerFill)
+      expect(colors.gradient).toBe(colors.headerGradient)
+      expect(colors.outline).toBe('solid')
+      expect(colorContrast(colors.boundary, colors.background), 'thumb boundary against menu').toBeGreaterThanOrEqual(3)
+      for (const pair of colors.pairs) {
+        expect(colorContrast(pair.digit, pair.thumb), 'digit against each gradient stop').toBeGreaterThanOrEqual(4.5)
+      }
     })
   }
 }

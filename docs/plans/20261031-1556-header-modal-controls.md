@@ -36,6 +36,9 @@ AC4: У селекта колоди правий відступ стрілки �
 AC5: Локальні Before/After впорядковані за вказаними шістьма темами; існуючі audit histories прив'язані до незмінних screenshot IDs.
 AC6: test:ci та public-page/icon-delivery Playwright перевірки проходять; новий PR має base гілки PR63.
 
+AC7: Після Reject під Screenshot details є поле причини; чернетка й збережений текст переживають reload, Save reason додає новий timestamped запис, попередні рішення та IDs/key збережено.
+AC8: Fill повзунка має background-color та gradient хедера у всіх6темах; outline контрастує з меню>=3, digit із кожним gradient stop>=4.5.
+
 ## Files
 
 | File | Change | Task |
@@ -87,6 +90,28 @@ app/components/ConfigureCardDeckModal.tsx, tests/visual/support/scene.ts;
 border/box-shadow close нульові, select arrow inset>=16px. test:ci PASS.
 
 **Commit:** `git add -A -- app/components/AppModalPaper.tsx app/assets/css/main.css app/components/ConfigureCardDeckModal.tsx tests/visual/support/scene.ts docs/plans/20261031-1556-header-modal-controls.md`
+
+
+### Task 3: Rejection reasons and header-colored volume thumb
+
+**Files:** app/assets/css/main.css, tests/e2e/page-load.spec.ts;
+локальні visual-review/pr-{63,64}/ HTML і capture artifacts у головному checkout.
+
+**Consumes:** Наявні slider mask/number і header CSS tokens; локальні JSON histories із необов'язковим reason.
+
+**Produces:** Header fill/gradient на thumb, контрастний outline та білий digit;
+textarea після details, draft persistence й append-only reason records, старі ID/storage keys незмінні.
+
+**Covers:** AC2, AC7, AC8
+
+**Depends on:** Task 2
+
+**RED:** Six-theme slider Playwright matrix ->6failed on header-style equality.
+
+**GREEN:** Same33public/icon cases ->33passed; local page check proves legacy Reject03,
+reason draft/reload,5append events, plain-text rendering and JSON export on12/72pair pages.
+
+**Commit:** `git add -A -- app/assets/css/main.css tests/e2e/page-load.spec.ts docs/plans/20261031-1556-header-modal-controls.md`
 
 ## Execution record
 
@@ -144,5 +169,10 @@ Ruling: R3 set aside record/archive and old feature boundary - excluded as scope
 Ruling: R3 set aside R1-F1 - already resolved, current12scene tests prove no regression
 Ruling: R3 set aside runtime/CI - host fresh33public/icon,551unit,12scene and108modal checks PASS on identical tree; reviewer read-only evidence remains separate
 Verify: PASS full tree 2af82c4ea6d9b95a906e71f130b5a53fa6b23ada 2026-10-31 16:30
+
+Task 3: done - user explicitly requested rejection reason input and header-color/gradient thumb for rejected03; local4HTML variants updated without changing manifests/keys; browser legacy03/draft/save/reload/5history events/export/plain-text/mobile checks PASS. Slider RED6then GREEN33 including all6header-style/gradient checks
+Ruling: R2-copilot-F1 superseded by Task 3 - owner's explicit header-fill/gradient choice replaces uniform semantic fill; semantic outline>=3 and white digit>=4.5 against all gradient stops preserve the original visibility requirement
+Ruling: approval history identity - current PR64 screenshot IDs and storage key remain stable while captureRevision records changed image versions; earlier decisions stay visible and are labelled previous capture after new images arrive
+Ruling: automatic review budget reconciliation - user's15additional rounds remain authorized across the parent/child chain; parentR8 used1, childR1/R3 used2, next scopedR4 will be additional round4of15. Earlier child default-of3 annotations were conservative, not a revocation of user authorization
 
 ```
