@@ -8,6 +8,7 @@ import type { Player, RoundHistory } from '~/stores/types'
 import { COHORT_COLORS } from '~/utils/resultCohorts'
 import { shieldForRoleTag } from '~/utils/shields'
 import { resetStores } from '../../support/helpers/resetStores'
+import { colorContrast } from '../../support/helpers/colorContrast'
 
 const chart = vi.hoisted(() => ({
   setOption: vi.fn(),
@@ -148,7 +149,7 @@ describe('AlignmentTrendsModal role lines and details', () => {
     expect(latestOption().series.find(item => item.name === 'AQA')!.itemStyle?.color).toBe('#fdd835')
   })
 
-  it.each([['GQA', '#ff7043'], ['AQA', '#fdd835']])(
+  it.each(roles.map(role => [role, COHORT_COLORS[role]!]))(
     'opens the real %s snapshot from the chart tooltip and filters other roles',
     async (role, color) => {
       await mount(allRoleRounds())
@@ -167,7 +168,8 @@ describe('AlignmentTrendsModal role lines and details', () => {
         expect(snapshot.queryByText(`${other}-2`)).toBeNull()
       }
       expect(within(title).getByText(role).style.backgroundColor).toBe(color)
-      expect(within(title).getByText(role).style.color).toBe('#212121')
+      const badge = within(title).getByText(role)
+      expect(colorContrast(badge.style.color || '#fff', badge.style.backgroundColor), role).toBeGreaterThanOrEqual(4.5)
       expect(chart.dispatchAction).toHaveBeenCalledWith({ type: 'hideTip' })
     },
   )

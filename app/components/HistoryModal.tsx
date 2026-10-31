@@ -10,7 +10,7 @@ import { useRoomStore } from '~/stores/room'
 import type { RoundHistory } from '~/stores/types'
 import { DECK_PRESETS } from '~/utils/cardDecks'
 import { isNumericPreset, summarizeRound, voteToNumber, type RoundSummary } from '~/utils/roundStats'
-import { COHORT_COLORS, ROLE_COHORTS, voteCohortFor } from '~/utils/resultCohorts'
+import { COHORT_BADGE_TEXT_COLORS, COHORT_COLORS, ROLE_COHORTS, voteCohortFor } from '~/utils/resultCohorts'
 
 type HistoryModalProps = {
   onClose: () => void
@@ -235,8 +235,8 @@ export default function HistoryModal({ onClose }: HistoryModalProps) {
                     >
                       {role !== null && (
                         <span
-                          className="rounded px-1.5 py-0.5 text-mui-caption font-semibold text-white"
-                          style={{ backgroundColor: COHORT_COLORS[role], color: role === 'GQA' || role === 'AQA' ? '#212121' : undefined }}
+                          className="rounded px-1.5 py-0.5 text-mui-caption font-semibold"
+                          style={{ backgroundColor: COHORT_COLORS[role], color: COHORT_BADGE_TEXT_COLORS[role] }}
                         >
                           {role}
                         </span>

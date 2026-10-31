@@ -17,6 +17,18 @@ export const COHORT_COLORS: Record<string, string> = {
   PO: '#ec407a',
   SM: '#9ccc65',
 }
+export const COHORT_BADGE_TEXT_COLORS: Record<string, string> = {
+  DEV: '#111111',
+  BE: '#111111',
+  FE: '#fff',
+  SRE: '#fff',
+  QA: '#111111',
+  GQA: '#111111',
+  AQA: '#111111',
+  PO: '#111111',
+  SM: '#111111',
+}
+
 const DEV_SUBCOHORTS = new Set(['BE', 'FE', 'SRE'])
 
 export type VoteCounts = Record<string, number>

@@ -7,6 +7,7 @@ import { usePlayersStore } from '~/stores/players'
 import type { RoundHistory } from '~/stores/types'
 import { shieldForRoleTag } from '~/utils/shields'
 import { resetStores } from '../../support/helpers/resetStores'
+import { colorContrast } from '../../support/helpers/colorContrast'
 
 function round(id: string, revealedAt: string, votes: [string, string][]): RoundHistory {
   return {
@@ -89,8 +90,10 @@ describe('HistoryModal', () => {
       'GQA3 × 1', 'AQA3 × 1', 'PO3 × 1', 'SM3 × 1',
     ])
     expect(screen.getByText('AQA').style.backgroundColor).toBe('#fdd835')
-    expect(screen.getByText('GQA').style.color).toBe('#212121')
-    expect(screen.getByText('AQA').style.color).toBe('#212121')
+    for (const role of roles) {
+      const badge = screen.getByText(role)
+      expect(colorContrast(badge.style.color || '#fff', badge.style.backgroundColor), role).toBeGreaterThanOrEqual(4.5)
+    }
   })
 
   it.each<{
