@@ -85,6 +85,8 @@ export default function ResultsArea({
     ? groups.map(group => ({ ...group, average: averageOf(group.votes) }))
     : [{ key: undefined, label: t('results.general'), votes, average: averageOf(votes) }]
 
+  const expandedLayout = circles.length <= 2
+
   const celebrate = !disableCelebration && shouldCelebrate(votes, groups?.map(group => group.votes))
   const [particles, setParticles] = useState<CelebrationParticle[]>([])
   const celebrating = useRef(false)
@@ -167,14 +169,14 @@ export default function ResultsArea({
           <div
             key={g.key ?? g.label}
             className="flex flex-col items-center gap-2"
-            style={{ flex: '0 1 240px', width: '100%', maxWidth: '240px', minWidth: 0 }}
+            style={{ flex: expandedLayout ? '1 1 280px' : '0 1 240px', width: '100%', maxWidth: expandedLayout ? '500px' : '240px', minWidth: 0 }}
           >
             <span className="mui-h6 text-primary w-full min-w-0 text-center" style={{ overflowWrap: 'anywhere' }}>
               {g.label}
               {g.average !== null && `: ${g.average}`}
             </span>
             <Suspense fallback={<PiePlaceholder />}>
-              <PieChart votes={g.votes} />
+              <PieChart votes={g.votes} expanded={expandedLayout} />
             </Suspense>
           </div>
         ))}
