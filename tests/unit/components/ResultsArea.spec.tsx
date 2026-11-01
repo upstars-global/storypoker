@@ -25,6 +25,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
   vi.doUnmock('~/components/PieChart')
 })
 
@@ -136,6 +137,44 @@ describe('ResultsArea pie chart', () => {
 
     view.rerender(<ResultsArea showNewRound={false} votes={votes} groups={[...groups, { key: 'Designer', label: 'Designer', votes }]} disableCelebration />)
     await waitFor(() => expect(getInstanceByDom(pies[0]!)?.getOption()).toMatchObject({ series: [{ label: { fontSize: '5' in votes ? 29 : 14 } }] }))
+  })
+
+  it.each<{ votes: Record<string, number>; before: number; after: number }>([
+    { votes: { '3': 1, '8': 1 }, before: 28.38, after: 20.58 },
+    { votes: { '5': 2 }, before: 56.76, after: 41.16 },
+  ])('updates expanded labels on resize without replacing charts: $before to $after px', async ({ votes, before, after }) => {
+    const observers: ResizeObserverStub[] = []
+    class ResizeObserverStub implements ResizeObserver {
+      targets = new Set<Element>()
+      callback: ResizeObserverCallback
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback
+        observers.push(this)
+      }
+      observe(target: Element) { this.targets.add(target) }
+      unobserve(target: Element) { this.targets.delete(target) }
+      disconnect() { this.targets.clear() }
+    }
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub)
+    const width = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(473)
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(473)
+    const groups = ['DEV', 'QA'].map(label => ({ key: label, label, votes }))
+    const view = render(<ResultsArea showNewRound={false} votes={votes} groups={groups} disableCelebration />)
+    const pies = await screen.findAllByTestId('result-pie')
+    const charts = pies.map(pie => getInstanceByDom(pie))
+    await waitFor(() => charts.forEach(chart => expect(chart?.getOption()).toMatchObject({ series: [{ label: { fontSize: before } }] })))
+
+    width.mockReturnValue(343)
+    await act(() => {
+      for (const observer of observers) {
+        if (pies.some(pie => observer.targets.has(pie))) observer.callback([], observer)
+      }
+    })
+    await waitFor(() => charts.forEach(chart => expect(chart?.getOption()).toMatchObject({ series: [{ label: { fontSize: after } }] })))
+    expect(screen.getAllByTestId('result-pie')).toHaveLength(2)
+    pies.forEach((pie, index) => expect(getInstanceByDom(pie)).toBe(charts[index]))
+    view.unmount()
+    expect(observers.every(observer => observer.targets.size === 0)).toBe(true)
   })
 
   it('updates circle proportions as voting groups appear and disappear', async () => {
