@@ -123,6 +123,21 @@ describe('ResultsArea pie chart', () => {
     expect(pie.querySelector('svg text')?.textContent).toBe('☕')
   })
 
+  it.each<{ votes: Record<string, number>; fontSize: number }>([
+    { votes: { '3': 1, '8': 1 }, fontSize: 28.38 },
+    { votes: { '5': 2 }, fontSize: 56.76 },
+  ])('scales expanded chart labels to the historical proportions: $fontSize px', async ({ votes, fontSize }) => {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(473)
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(473)
+    const groups = ['DEV', 'QA'].map(label => ({ key: label, label, votes }))
+    const view = render(<ResultsArea showNewRound={false} votes={votes} groups={groups} disableCelebration />)
+    const pies = await screen.findAllByTestId('result-pie')
+    await waitFor(() => expect(getInstanceByDom(pies[0]!)?.getOption()).toMatchObject({ series: [{ label: { fontSize } }] }))
+
+    view.rerender(<ResultsArea showNewRound={false} votes={votes} groups={[...groups, { key: 'Designer', label: 'Designer', votes }]} disableCelebration />)
+    await waitFor(() => expect(getInstanceByDom(pies[0]!)?.getOption()).toMatchObject({ series: [{ label: { fontSize: '5' in votes ? 29 : 14 } }] }))
+  })
+
   it('updates circle proportions as voting groups appear and disappear', async () => {
     const groups = ['DEV', 'QA', 'Designer'].map(label => ({ key: label, label, votes: { '5': 2 } }))
     const view = render(<ResultsArea showNewRound={false} votes={{ '5': 2 }} groups={groups.slice(0, 1)} disableCelebration />)
