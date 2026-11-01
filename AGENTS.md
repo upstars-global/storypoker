@@ -212,3 +212,9 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - Не друкувати секрети або повні env values; у прикладах - placeholders
 - `SUPABASE_SECRET_KEY` / `sb_secret_...` і `STORYPOKER_API_TOKEN` - тільки server-side, ніколи в client bundle
   (без `VITE_` префіксу; `STORYPOKER_API_TOKEN` ставиться в Netlify site env, не в `/.env/`)
+
+Перед архітектурною зміною прочитай релевантні чинні рішення в `docs/adr/`
+(створюється з першим справжнім ADR), [політику ADR](docs/adr-adoption/policy.md)
+та [шаблон](docs/adr-adoption/templates/adr.md). Важливі погоджені рішення
+фіксуй за цією політикою; суперечність із чинним рішенням покажи власнику
+до реалізації. Звичайна локальна правка ADR не потребує.
