@@ -165,7 +165,7 @@ describe('ResultsArea pie chart', () => {
     await waitFor(() => charts.forEach(chart => expect(chart?.getOption()).toMatchObject({ series: [{ label: { fontSize: before } }] })))
 
     width.mockReturnValue(343)
-    await act(() => {
+    act(() => {
       for (const observer of observers) {
         if (pies.some(pie => observer.targets.has(pie))) observer.callback([], observer)
       }
