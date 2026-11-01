@@ -36,12 +36,18 @@ legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і не�
 `voteCohortFor()` визначає сиру роль у порядку DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM; кастомна роль дає
 `null`, відсутня роль або гравець - DEV. `COHORT_COLORS` - спільні кольори ліній трендів і бейджів
 історії та знімка. `roleRoundAlignment()` рахує кожну роль окремо, включно з PO/SM.
+Гравці, які вийшли, теж отримують фолбек DEV.
 `summarizeRound()` бере середнє й узгодженість із
 `estimatorVotes()`: пул DEV/BE/FE/SRE/QA/GQA/AQA, а коли їхніх голосів немає - усі голоси.
 Узгодженість має ціле значення 0-100; менше двох карт колоди без `?`/`☕` дають `null`. Головна бере округлене середнє не-null
 загальних балів числових раундів; картки трендів - ті самі загальні бали у видимому періоді.
 
 ## Автоматичні групи результатів
+
+Роль обирається з `PLAYER_ROLES` (`shields.ts`) через `RolePicker.tsx` (JoinOverlay + PlayerEditModal)
+на базі `RoleBadge.tsx` і пишеться в `players.shields` як один shield через `shieldForRoleTag()`.
+Кастомні ролі мають префікс `custom:`, навіть коли назва збігається зі стандартною роллю.
+`SHIELD_CATALOG` (role/focus/stack/qa/lead) лишився для лукапу, icon-picker прибрано.
 
 `groupResultVotes(players)` повертає `{ key, label, votes }[]` лише для ролей із голосами. Вбудовані ролі
 йдуть у порядку `ROLE_COHORTS`, кастомні - після них за першим проголосувавшим учасником у списку кімнати.
@@ -53,6 +59,8 @@ legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і не�
 історії, трендів, головної та API лишаються незмінними. `normalizeCohorts()`, `resultCohortFor()` і
 `groupVotesByCohort()` збережені для сумісності; UI кіл їх не використовує. `room_state.result_cohorts`
 ігнорується під час показу, збереження колоди його не змінює.
+Секції «Показувати результати» й чіпів немає; збережене налаштування не приховує голосів
+і не робить бейдж червоним. Розміри кіл і детальний контракт - `DESIGN.md` §11.9.
 
 ## Consensus
 

@@ -81,9 +81,8 @@ Claude Code підвантажує вкладені `CLAUDE.md`, які імпо
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
 - **PWA:** `vite-plugin-pwa` (Workbox, `prompt`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
   файл); нову версію застосовує `app/pwa.ts` за правилами `useAppUpdate` (прихована вкладка, простій, тост);
-  `skipWaiting: true` і `importScripts: ['sw-reload-clients.js']` (`public/`: новий worker при активації
-  перезавантажує вкладки, бо старий `autoUpdate`-бандл сам не перезавантажується) - тимчасово, прибрати
-  наступним релізом разом із винятком у `scripts/audit-icon-build.ts`;
+  перехідні `skipWaiting` і `sw-reload-clients.js` поки примусово перезавантажують вкладки.
+  Обсяг видалення й перевірки готовності - [sw-transition-cleanup](docs/initiatives/sw-transition-cleanup.md);
   splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
 - **UI:** shadcn/ui (style `base-nova` на `@base-ui/react`) у `app/components/ui/`, локальні іконки через CSS mask
   (`app/components/AGENTS.md`), ripple - власний хук `useRipple`, DiceBear, Roboto 300-700;
@@ -162,44 +161,23 @@ VITE_SUPABASE_KEY=...        # publishable client key
 вводь префікс.
 
 ## LocalStorage
-| Ключ | Значення |
-| --- | --- |
-| `storypoker_session_<roomId>` | `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms |
-| `sp-theme` / `sp-palette` | `light\|dark` / `classic\|cyberdeck\|matcha` - деталі `app/assets/AGENTS.md` |
-| `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
-| `sp-lang` | `uk \| en`; читається в `app/i18n.tsx`, пишеться `persistLocale()`. Дефолт - `uk` |
-| `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
-| `sp-volume` | `0`-`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
-| `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
+
+Перед зміною збереженого стану прочитай контракт ключів у `app/AGENTS.md`, секція LocalStorage.
 
 ## Roles
-- **Player:** vote, rename self, set own shields, leave room, **toggle own moderator flag** (self-promote/demote -
-  доступно будь-кому, не лише поточному модератору); history/trends/theme/language/widget/slot - без ролевих обмежень
-- **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
-  start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s),
-  будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `isModerator` у
-  `CardsArea.tsx` і prop `canControl={isModerator}` у `Timer.tsx`, client-side only (RLS `using (true)`)
-- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
-  Детальна матриця - `DESIGN.md` §11.1-11.2
-- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.tsx` (JoinOverlay +
-  PlayerEditModal) на базі `RoleBadge.tsx` і пишеться в `players.shields` як один shield через `shieldForRoleTag()`;
-  кастомні ролі мають префікс `custom:`, навіть коли назва збігається зі стандартною роллю.
-  `SHIELD_CATALOG` (role/focus/stack/qa/lead) лишився для лукапу, icon-picker прибрано. Сиру роль визначає
-  `voteCohortFor()` у
-  `app/utils/resultCohorts.ts`; без ролі й ті, хто вийшов, - DEV
 
-1. **Кола результатів:** `groupResultVotes()` автоматично групує лише фактичні голоси після reveal. Вбудовані
-   ролі йдуть у порядку DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM; кастомні - після них за першим проголосувавшим
-   учасником у списку кімнати. Ключ кастомної групи - повний shield `custom:...`, підпис - назва без префікса;
-   `custom:DEV` і DEV мають різні кола. Розміри й детальний контракт - `DESIGN.md` §11.9.
-2. **Налаштування кіл:** секції «Показувати результати» й чіпів немає. Збережений `room_state.result_cohorts`
-   ігнорується, збереження колоди його не змінює; налаштування не приховує голосів і не робить бейдж червоним.
-3. **Статистика:** історія, тренди, головна й нові поля API беруть сиру вбудовану роль; кастомні ролі лишаються
-   поза рольовими трендами. Загальний бал - пул оцінювачів DEV/BE/FE/SRE/QA/GQA/AQA; без їхніх голосів - усі
-   голоси. Головна й тренди беруть числові раунди. Формули - `app/utils/AGENTS.md`, legacy-контракт API для
-   agilecharts - `netlify/AGENTS.md`.
-4. **Consensus:** салют + decision-sound, коли хоча б одне коло результатів, включно з кастомним, одноголосне
-   з ≥ 2 голосами. Деталі - `app/utils/AGENTS.md`.
+1. **Player:** vote, rename self, set own shields, leave room, **toggle own moderator flag** (self-promote/demote -
+   доступно будь-кому, не лише поточному модератору); history/trends/theme/language/widget/slot - без ролевих обмежень.
+2. **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
+   start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s),
+   будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `isModerator` у
+   `CardsArea.tsx` і prop `canControl={isModerator}` у `Timer.tsx`, client-side only (RLS `using (true)`).
+3. **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players
+   і set їхні shields. Детальна матриця - `DESIGN.md` §11.1-11.2.
+
+Перед зміною ролей, груп результатів, статистики чи consensus прочитай `app/utils/AGENTS.md`.
+Кола автоматично включають проголосовані вбудовані й кастомні ролі; їхній показ не налаштовується.
+Геометрія кіл - `app/components/AGENTS.md`, legacy-контракт API - `netlify/AGENTS.md`.
 
 ## Code Style
 - Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline
@@ -212,3 +190,11 @@ VITE_SUPABASE_KEY=...        # publishable client key
 - Не друкувати секрети або повні env values; у прикладах - placeholders
 - `SUPABASE_SECRET_KEY` / `sb_secret_...` і `STORYPOKER_API_TOKEN` - тільки server-side, ніколи в client bundle
   (без `VITE_` префіксу; `STORYPOKER_API_TOKEN` ставиться в Netlify site env, не в `/.env/`)
+
+Перед архітектурною зміною прочитай релевантні чинні рішення в `docs/adr/`
+(створюється з першим справжнім ADR), [політику ADR](docs/adr-adoption/policy.md)
+та [шаблон](docs/adr-adoption/templates/adr.md). Важливі погоджені рішення
+фіксуй за цією політикою; суперечність із чинним рішенням покажи власнику
+до реалізації. Звичайна локальна правка ADR не потребує.
+
+1. Невідсортовані висновки попередніх сесій, прочитай перед роботою: @docs/session-learnings/AGENTS.md

@@ -50,6 +50,17 @@ VITE_SUPABASE_KEY=sb_publishable_dummy_key_for_page_load_smoke_only pnpm run tes
 еталоном стає новий `main`. Скріншоти сервісу, що надихнув Story Poker, у цей публічний репо не комітити: вони
 живуть в окремому приватному репо.
 
+1. Після зміни visual helpers окремо перевіряй `tests/visual/support/scene.spec.ts`
+   у проєкті `visual` без повторів. Загальний app CI та public-page smoke цей
+   self-check не замінюють; спершу вибери підтримуваний проєктом Node.
+2. У browser-фікстурі, яка монтує React-компонент у Vite dev page, бери URL router
+   із transformed import самого компонента разом із `?v=`. Окремий unversioned
+   import створює інший router context.
+3. У порівняннях історичних SVG нормалізуй шрифт до екранних CSS px: для SVG
+   з `viewBox` діли `svg.getBoundingClientRect().width` на `svg.viewBox.baseVal.width`.
+   Сам `getComputedStyle(text).fontSize` може бути у внутрішньому масштабі;
+   для ECharts SVG без `viewBox` множник дорівнює 1.
+
 ## Icon rendering harness (`tests/icon-rendering/`)
 
 Ізольований стенд рендеру іконок; у production-збірку не потрапляє, власного роуту не додає. Має власні

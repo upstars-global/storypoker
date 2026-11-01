@@ -44,5 +44,14 @@ snapshot, включно з PO/SM; кастомних ролей немає. С�
 формул синхронізувати вручну. Споживач - `agilecharts` (сусідній репо, Nuxt), вкладка
 "Estimation Trends" (`app/components/team/TeamConsistencyTrends.vue`).
 
-Функція виходить разом із prod-білдом Netlify з `main`, окремого деплою не треба. Перевірка -
-`netlify api listSiteDeploys` (`commit_ref`, `available_functions`) і живий запит із Bearer-токеном.
+Функція виходить разом із prod-білдом Netlify з `main`, окремого деплою не треба.
+
+1. Поточну production-публікацію підтверджуй через `getSite.published_deploy`:
+   `state=ready`, `branch=main`, `commit_ref` дорівнює очікуваному повному squash SHA.
+   Історичний ready deploy зі списку не доводить, що саме він зараз опублікований.
+2. `netlify api listSiteDeploys` використовуй для історії деплоїв (`commit_ref`,
+   `available_functions`). Після підтвердження поточної публікації виконай дозволений
+   живий запит із Bearer-токеном.
+3. Порожні GitHub commit statuses або deployments не доводять відсутності Netlify
+   публікації. JSON Netlify CLI API фільтруй у пам'яті до потрібних URL, ID та
+   перевірюваних полів.

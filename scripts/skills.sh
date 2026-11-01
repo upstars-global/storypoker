@@ -8,14 +8,19 @@ npx -y --prefer-online skl-x rm . -y -m sm
 
 # A "\ name" line disables that skill on purpose: skl-x gets " name" and skips it
 
+# SENTIMONY CROSS-AGENT https://github.com/sentimony/cross-agent
+npx -y --prefer-online skl-x add sentimony/cross-agent -s \
+  cross-agent \
+  -a codex claude-code -y -m sm
+
 # SENTIMONY AGENTIC WORKFLOW https://github.com/sentimony/agentic-workflow
 npx -y --prefer-online skl-x add sentimony/agentic-workflow -s \
+  resolve-issue \
   specify \
   plan-craft \
   implement \
   verify \
   cr-request \
-  cross-cr \
   cr-received \
   finalize \
   session-learnings \
@@ -82,6 +87,14 @@ npx -y --prefer-online skl-x add shadcn/ui -s \
   \ migrate-radix-to-base \
   shadcn \
   -a codex claude-code -y -m sm
+
+# # CLOUDFLARE SKILLS https://github.com/cloudflare/skills
+# npx -y --prefer-online skl-x add cloudflare/skills -s \
+#   wrangler \
+#   cloudflare-one \
+#   workers-best-practices \
+#   \ durable-objects \
+#   -a codex claude-code -y -m sm
 
 # npx -y --prefer-online skl-x -v
 npx -y --prefer-online skl-x ls -g -m sm
