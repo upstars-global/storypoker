@@ -123,6 +123,24 @@ describe('ResultsArea pie chart', () => {
     expect(pie.querySelector('svg text')?.textContent).toBe('☕')
   })
 
+  it('updates circle proportions as voting groups appear and disappear', async () => {
+    const groups = ['DEV', 'QA', 'Designer'].map(label => ({ key: label, label, votes: { '5': 2 } }))
+    const view = render(<ResultsArea showNewRound={false} votes={{ '5': 2 }} groups={groups.slice(0, 1)} disableCelebration />)
+    const firstPie = await screen.findByTestId('result-pie')
+    const chart = getInstanceByDom(firstPie)
+    await waitFor(() => expect(chart?.getOption()).toMatchObject({ series: [{ radius: '98%' }] }))
+
+    for (const count of [3, 2]) {
+      view.rerender(<ResultsArea showNewRound={false} votes={{ '5': count * 2 }} groups={groups.slice(0, count)} disableCelebration />)
+      await waitFor(() => expect(screen.getAllByTestId('result-pie')).toHaveLength(count))
+      expect(getInstanceByDom(firstPie)).toBe(chart)
+      await waitFor(() => expect(chart?.getOption()).toMatchObject({ series: [{ radius: count === 3 ? '80%' : '98%' }] }))
+    }
+
+    view.rerender(<ResultsArea showNewRound={false} votes={{ '3': 1, '8': 1 }} groups={[{ key: 'DEV', label: 'DEV', votes: { '3': 1, '8': 1 } }]} disableCelebration />)
+    await waitFor(() => expect(chart?.getOption()).toMatchObject({ series: [{ radius: '80%' }] }))
+  })
+
   it('updates the existing ECharts instance and disposes it on unmount', async () => {
     const view = render(<ResultsArea showNewRound={false} votes={{ '3': 2 }} disableCelebration />)
     const pie = await screen.findByTestId('result-pie')

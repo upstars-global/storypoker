@@ -9,7 +9,7 @@ registerCharts([EChartsPieChart, SVGRenderer])
 
 const COLORS = ['#546e7a', '#e64a19', '#fbc02d', '#388e3c', '#7b1fa2', '#0288d1', '#00796b', '#f57c00']
 
-export default function PieChart({ votes }: { votes: Record<string, number> }) {
+export default function PieChart({ votes, expanded = false }: { votes: Record<string, number>; expanded?: boolean }) {
   const cardLabel = useCardLabel()
   const container = useRef<HTMLDivElement>(null)
   const option = useMemo<ComposeOption<PieSeriesOption>>(() => {
@@ -20,7 +20,7 @@ export default function PieChart({ votes }: { votes: Record<string, number> }) {
       color: COLORS,
       series: [{
         type: 'pie',
-        radius: '80%',
+        radius: expanded && single ? '98%' : '80%',
         silent: true,
         label: {
           position: single ? 'center' : 'inside',
@@ -34,7 +34,7 @@ export default function PieChart({ votes }: { votes: Record<string, number> }) {
         data: entries.map(([card, count]) => ({ name: cardLabel(card), value: count })),
       }],
     }
-  }, [votes, cardLabel])
+  }, [votes, cardLabel, expanded])
   useEChart(container, option, { renderer: 'svg' })
   return (
     <div
