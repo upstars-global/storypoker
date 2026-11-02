@@ -33,8 +33,8 @@ bundler не резолвить Vite alias `~/*`. Зміни синхроніз�
 `isNumericPreset` вирішує, які колоди потрапляють в узгодженість: `scrum`/`fibonacci`/`hours`/`goal_clarity` +
 legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і нечислові (`tshirt`/`boolean`) виключені.
 
-`voteCohortFor()` визначає сиру роль у порядку DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM; кастомна роль дає
-`null`, відсутня роль або гравець - DEV. `COHORT_COLORS` - спільні кольори ліній трендів і бейджів
+`voteCohortFor()` визначає сиру роль у порядку DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM; legacy `custom:*`,
+відсутня роль або гравець - DEV. `COHORT_COLORS` - спільні кольори ліній трендів і бейджів
 історії та знімка. `roleRoundAlignment()` рахує кожну роль окремо, включно з PO/SM.
 `summarizeRound()` бере середнє й узгодженість із
 `estimatorVotes()`: пул DEV/BE/FE/SRE/QA/GQA/AQA, а коли їхніх голосів немає - усі голоси.
@@ -47,10 +47,8 @@ legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і не�
 `selected` - збережений `result_cohorts`; `resultKeyFor(shields, selected)` за `RESULT_CHIP_GROUPS` повертає коло або
 `null` (голос не рахується): група DEV/QA без вибраних чіпів - загальне коло, з вибраними - лише вибрані; PO/SM -
 лише з чіпом. `reveal()` пише в `round_history` тільки голоси з не-`null` колом. Вбудовані ролі
-йдуть у порядку `ROLE_COHORTS`, кастомні - після них за першим проголосувавшим учасником у списку кімнати.
-Ключ кастомної ролі - повний shield `custom:...`, підпис - назва без префікса. Однакові shields групуються;
-`custom:DEV` і DEV мають різні ключі й кола. Перша розпізнана вбудована або кастомна роль у shields визначає
-групу; без неї - DEV. Порожні голоси не створюють груп.
+йдуть у порядку `ROLE_COHORTS`. Перша розпізнана вбудована роль у shields визначає групу; без неї (зокрема
+legacy `custom:*`) - DEV. Порожні голоси не створюють груп.
 
 Групування кіл відокремлене від `voteCohortFor()`, `roleRoundAlignment()` і `estimatorVotes()`: контракти
 історії, трендів, головної та API лишаються незмінними. `normalizeCohorts()`, `resultCohortFor()` і
@@ -60,6 +58,6 @@ legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і не�
 
 `resultCelebration.ts → shouldCelebrate(votes, groups)` - єдиний предикат для салюту (`ResultsArea.tsx`) і звуку
 (`isConsensus` у `pages/[slug].tsx`); `groups` - кола з `groupResultVotes()` (`resultCohorts.ts`),
-включно з кастомними. Одноголосною вважається група з рівно однією унікальною оцінкою **і** ≥ 2 голосами.
+Одноголосною вважається група з рівно однією унікальною оцінкою **і** ≥ 2 голосами.
 Без груп те саме правило застосовується до всіх голосів.
 Поріг ≥ 2 узгоджений з `DESIGN.md` §11: рядок `round_history` теж пишеться лише при `votes.length >= 2`.

@@ -172,7 +172,7 @@ describe('roundAlignment', () => {
         { player_id: 'ux', name: 'UX', vote: '3' },
       ],
     })
-    const shields = new Map([['po', ['po']], ['sm', ['sm']], ['ux', ['custom:UX']]])
+    const shields = new Map([['po', ['po']], ['sm', ['sm']], ['ux', ['sm']]])
     const summary = summarizeRound(history, shields)
     expect(summary.average).toBe('4.7')
     expect(summary.alignment).toBe(60)
@@ -198,7 +198,7 @@ describe('roleRoundAlignment', () => {
     expect(roleRoundAlignment(history, shields)).toEqual({ QA: 100, GQA: 100, AQA: 100 })
   })
 
-  it('scores every role on its own and skips custom roles', () => {
+  it('scores every role on its own and counts custom roles as DEV', () => {
     const round = {
       id: 'r', room_id: 'x', started_at: '', revealed_at: '', created_at: null,
       active_cards: ['1', '2', '3', '5', '8'], deck_preset: 'scrum',
@@ -211,6 +211,6 @@ describe('roleRoundAlignment', () => {
       ],
     }
     const shields = new Map([['b1', ['be']], ['b2', ['be']], ['po', ['po']], ['ux', ['custom:UX']]])
-    expect(roleRoundAlignment(round as never, shields)).toEqual({ BE: 100, PO: null, DEV: null })
+    expect(roleRoundAlignment(round as never, shields)).toEqual({ BE: 100, PO: null, DEV: 25 })
   })
 })

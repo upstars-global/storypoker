@@ -548,11 +548,10 @@ describe('room page results', () => {
     expect(lastProps(AlignmentCard).blocks).toEqual([{ key: 'DEV', label: 'DEV', value: alignmentScore({ '3': 1, '5': 1 }, deck) }])
   })
 
-  it('shows separate custom-only circles', async () => {
+  it('folds custom-only voters into the DEV circle', async () => {
     await mountRoom({ players: [me, fakePlayer('dan', ['custom:Design'], '3'), fakePlayer('erin', ['custom:UX'], '5')] })
     expect(lastProps(ResultsArea).groups).toEqual([
-      { key: 'custom:Design', label: 'Design', votes: { '3': 1 } },
-      { key: 'custom:UX', label: 'UX', votes: { '5': 1 } },
+      { key: 'DEV', label: 'DEV', votes: { '3': 1, '5': 1 } },
     ])
   })
 
@@ -561,12 +560,12 @@ describe('room page results', () => {
     expect(lastProps(ResultsArea).groups).toEqual([])
   })
 
-  it('preserves colliding custom keys in current and last-round alignments', async () => {
+  it('merges custom roles named DEV into the DEV circle in current and last-round alignments', async () => {
     const players = [me, fakePlayer('d1', ['dev'], '3'), fakePlayer('d2', ['dev'], '3'), fakePlayer('c1', ['custom:DEV'], '5'), fakePlayer('c2', ['custom:DEV'], '5')]
     await mountRoom({ players, state: fakeState({ phase: 'voting' }) })
     await act(async () => { useRoomStore.setState({ roomState: fakeState({ phase: 'revealed' }) }) })
-    const groups = [{ key: 'DEV', label: 'DEV', votes: { '3': 2 } }, { key: 'custom:DEV', label: 'DEV', votes: { '5': 2 } }]
-    const blocks = [{ key: 'DEV', label: 'DEV', value: 100 }, { key: 'custom:DEV', label: 'DEV', value: 100 }]
+    const groups = [{ key: 'DEV', label: 'DEV', votes: { '3': 2, '5': 2 } }]
+    const blocks = [{ key: 'DEV', label: 'DEV', value: alignmentScore({ '3': 2, '5': 2 }, ['1', '2', '3', '5', '8']) }]
     expect(lastProps(ResultsArea).groups).toEqual(groups)
     expect(lastProps(AlignmentCard).blocks).toEqual(blocks)
     await act(async () => {

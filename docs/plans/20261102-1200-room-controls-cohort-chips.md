@@ -274,4 +274,5 @@ Task 10: done - moderator panel fixed to viewport bottom, page main reserves bot
 Task 11: done - GQA/AQA chips, migration 021 written (not applied); vitest tests/unit 597 passed, lint + typecheck clean
 Ruling: plan revised after spec re-approval - docs/specs/2026-11-02-room-controls-cohort-chips-design.md
 Task 12: done - chip filter (resultKeyFor), uncounted voters red, reveal writes counted votes only, migration 021 with 9 roles (not applied); vitest tests/unit 594 passed, lint + typecheck clean
+Task 13: done - legacy custom:* treated as no role (DEV) in app, API unchanged; vitest tests/unit 592 passed, lint + typecheck clean
 ```

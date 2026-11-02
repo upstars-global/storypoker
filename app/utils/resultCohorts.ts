@@ -1,4 +1,4 @@
-import { CUSTOM_SHIELD_PREFIX, roleTagForShields } from './shields'
+import { roleTagForShields } from './shields'
 
 export const RESULT_COHORTS: readonly string[] = ['DEV', 'BE', 'FE', 'SRE']
 export const DEV_UMBRELLA_COHORT = 'DEV'
@@ -75,12 +75,8 @@ export function normalizeCohorts(value: readonly string[] | null | undefined): s
 }
 
 export function cohortForShields(shields: string[] | null | undefined): string | null {
-  for (const shield of shields ?? []) {
-    if (shield.startsWith(CUSTOM_SHIELD_PREFIX)) return null
-    const tag = roleTagForShields([shield])
-    if (tag) return COHORT_BY_TAG.get(tag) ?? null
-  }
-  return DEV_UMBRELLA_COHORT
+  const tag = roleTagForShields(shields)
+  return (tag && COHORT_BY_TAG.get(tag)) || DEV_UMBRELLA_COHORT
 }
 
 export function voteCohortFor(shieldsByPlayer: ReadonlyMap<string, string[]> | undefined, playerId: string): string | null {
@@ -117,12 +113,8 @@ export function selectedSplitCohorts(value: readonly string[] | null | undefined
 }
 
 function roleKeyForShields(shields: readonly string[] | null | undefined): string {
-  for (const shield of shields ?? []) {
-    if (shield.startsWith(CUSTOM_SHIELD_PREFIX)) return shield
-    const tag = roleTagForShields([shield])
-    if (tag && COHORT_BY_TAG.has(tag)) return tag
-  }
-  return DEV_UMBRELLA_COHORT
+  const tag = roleTagForShields(shields)
+  return tag && COHORT_BY_TAG.has(tag) ? tag : DEV_UMBRELLA_COHORT
 }
 
 export function resultKeyFor(
@@ -157,7 +149,7 @@ export function groupResultVotes(
     .filter(([, votes]) => Object.keys(votes).length > 0)
     .map(([key, votes]) => ({
       key,
-      label: key.startsWith(CUSTOM_SHIELD_PREFIX) ? key.slice(CUSTOM_SHIELD_PREFIX.length) : key,
+      label: key,
       votes,
     }))
 }
