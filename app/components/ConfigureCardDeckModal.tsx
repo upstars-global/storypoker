@@ -23,6 +23,7 @@ type ConfigureCardDeckModalProps = {
 function chipGroupClass(index: number): string {
   if (index === 0) return 'flex items-center gap-1.5'
   if (index === 1) return 'flex items-center gap-1.5 lg:pl-2 lg:ml-2 lg:border-l border-input'
+  if (RESULT_CHIP_GROUPS[index - 1]?.umbrella === null) return 'flex items-center gap-1.5 ml-1.5'
   return 'flex items-center gap-1.5 pl-2 ml-2 border-l border-input'
 }
 

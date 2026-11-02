@@ -52,6 +52,13 @@ describe('ConfigureCardDeckModal result cohort chips', () => {
     expect(rowBreak.nextElementSibling?.textContent).toBe('QAAQAGQA')
   })
 
+  it('shows PO and SM side by side without a divider between them', () => {
+    mountModal()
+    const groups = screen.getAllByTestId('deck-result-cohort-group')
+    expect(groups[2]!.className).toContain('border-l')
+    expect(groups[3]!.className).not.toContain('border-l')
+  })
+
   it('saves the toggled subset in canonical order', () => {
     const { onSave } = mountModal({ resultCohorts: ['SRE', 'QA'] })
     expect(cohortChips().map(chip => chip.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'false', 'true', 'true', 'false', 'false', 'false', 'false'])
