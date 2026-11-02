@@ -128,7 +128,8 @@
       "no": "No"
     },
     "voteQuestionInfo": "Question and answers are configured in the voting area",
-    "alwaysIncluded": "Always included"
+    "alwaysIncluded": "Always included",
+    "resultCohorts": "Separate result circles"
   },
   "poll": {
     "thirdCard": "Third card",

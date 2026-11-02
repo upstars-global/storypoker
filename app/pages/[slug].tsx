@@ -625,6 +625,7 @@ export default function RoomPage() {
       await room.setDeckPreset(payload.deckPreset)
     }
     await room.saveCardDeck(payload.cards)
+    await room.setResultCohorts(payload.resultCohorts)
     setShowCardDeck(false)
   }
 
@@ -893,6 +894,7 @@ export default function RoomPage() {
         <ConfigureCardDeckModal
           deckPreset={roomState.deck_preset ?? DEFAULT_PRESET_ID}
           activeCards={activeCards}
+          resultCohorts={roomState.result_cohorts}
           onClose={() => setShowCardDeck(false)}
           onSave={payload => void handleSaveCardDeck(payload)}
         />

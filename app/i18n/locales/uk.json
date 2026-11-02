@@ -128,7 +128,8 @@
       "no": "Ні"
     },
     "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні",
-    "alwaysIncluded": "Завжди включено"
+    "alwaysIncluded": "Завжди включено",
+    "resultCohorts": "Окремі кола результатів"
   },
   "poll": {
     "thirdCard": "Третя картка",

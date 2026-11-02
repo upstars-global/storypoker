@@ -7,13 +7,15 @@ import { Button } from '~/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { useCardLabel } from '~/hooks/useCardLabel'
 import { useRipple } from '~/hooks/useRipple'
+import { SPLITTABLE_COHORTS, selectedSplitCohorts } from '~/utils/resultCohorts'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
 
-export type CardDeckPayload = { deckPreset: DeckPresetId; cards: string[] }
+export type CardDeckPayload = { deckPreset: DeckPresetId; cards: string[]; resultCohorts: string[] }
 
 type ConfigureCardDeckModalProps = {
   deckPreset: DeckPresetId
   activeCards: string[]
+  resultCohorts: readonly string[] | null | undefined
   onSave: (payload: CardDeckPayload) => void
   onClose: () => void
 }
@@ -27,12 +29,13 @@ const PRESET_TRIGGER_CLASS = [
   '[&>svg]:text-(--text-primary) [&>svg]:stroke-[3]',
 ].join(' ')
 
-export default function ConfigureCardDeckModal({ deckPreset, activeCards, onSave, onClose }: ConfigureCardDeckModalProps) {
+export default function ConfigureCardDeckModal({ deckPreset, activeCards, resultCohorts, onSave, onClose }: ConfigureCardDeckModalProps) {
   const { t } = useTranslation()
   const cardLabel = useCardLabel()
   const ripple = useRipple<HTMLButtonElement>()
   const [presetId, setPresetId] = useState<DeckPresetId>(deckPreset)
   const [selected, setSelected] = useState<string[]>(() => [...activeCards])
+  const [splitCohorts, setSplitCohorts] = useState<string[]>(() => selectedSplitCohorts(resultCohorts))
   const incoming = { deckPreset, cards: activeCards.join('\n') }
   const [synced, setSynced] = useState(incoming)
 
@@ -53,6 +56,12 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, onSave
       const order = currentDeck.cards
       return [...current, card].sort((a, b) => order.indexOf(a) - order.indexOf(b))
     })
+  }
+
+  function toggleCohort(cohort: string) {
+    setSplitCohorts(current => selectedSplitCohorts(
+      current.includes(cohort) ? current.filter(c => c !== cohort) : [...current, cohort],
+    ))
   }
 
   function applyPreset(id: DeckPresetId) {
@@ -191,10 +200,39 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, onSave
                 </div>
               )}
 
+        <div
+          className="flex flex-col items-center gap-2 mt-8"
+          data-testid="deck-result-cohorts"
+        >
+          <span className="text-mui-caption font-semibold uppercase tracking-wide text-primary">
+            {t('deck.resultCohorts')}
+          </span>
+          <div className="flex flex-wrap justify-center gap-2">
+            {SPLITTABLE_COHORTS.map(cohort => (
+              <button
+                key={cohort}
+                type="button"
+                className={splitCohorts.includes(cohort) ? 'mui-chip is-selected' : 'mui-chip'}
+                aria-pressed={splitCohorts.includes(cohort)}
+                data-testid="deck-result-cohort"
+                onClick={() => toggleCohort(cohort)}
+              >
+                {splitCohorts.includes(cohort) && (
+                  <AppIcon
+                    className="mui-chip-check"
+                    name="ic:baseline-check"
+                  />
+                )}
+                {cohort}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex justify-center mt-8">
           <Button
             ref={ripple}
-            onClick={() => onSave({ deckPreset: presetId, cards: selected })}
+            onClick={() => onSave({ deckPreset: presetId, cards: selected, resultCohorts: splitCohorts })}
           >
             {t('deck.save')}
           </Button>

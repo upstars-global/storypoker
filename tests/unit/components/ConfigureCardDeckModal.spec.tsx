@@ -4,13 +4,14 @@ import { i18n } from '~/i18n'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal'
 import type { DeckPresetId } from '~/utils/cardDecks'
 
-function mountModal(props: { deckPreset?: DeckPresetId } = {}) {
+function mountModal(props: { deckPreset?: DeckPresetId; resultCohorts?: string[] | null } = {}) {
   const onSave = vi.fn()
   const onClose = vi.fn()
   const view = render(
     <ConfigureCardDeckModal
       deckPreset={props.deckPreset ?? 'scrum'}
       activeCards={['1', '2', '3']}
+      resultCohorts={props.resultCohorts ?? null}
       onSave={onSave}
       onClose={onClose}
     />,
@@ -31,12 +32,25 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('ConfigureCardDeckModal automatic results', () => {
-  it('removes result selection and saves only the preset and cards', () => {
+function cohortChips() {
+  return [...document.querySelectorAll<HTMLButtonElement>('[data-testid="deck-result-cohort"]')]
+}
+
+describe('ConfigureCardDeckModal result cohort chips', () => {
+  it('shows exactly the BE, FE and SRE chips, none selected by default', () => {
     const { onSave } = mountModal()
-    expect(document.querySelector('[data-testid="deck-result-cohorts"]')).toBeNull()
+    expect(cohortChips().map(chip => chip.textContent)).toEqual(['BE', 'FE', 'SRE'])
+    expect(cohortChips().every(chip => chip.getAttribute('aria-pressed') === 'false')).toBe(true)
     fireEvent.click(saveButton())
-    expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'] })
+    expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'], resultCohorts: [] })
+  })
+
+  it('saves the toggled subset in canonical order', () => {
+    const { onSave } = mountModal({ resultCohorts: ['SRE', 'QA'] })
+    expect(cohortChips().map(chip => chip.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'true'])
+    fireEvent.click(cohortChips()[0]!)
+    fireEvent.click(saveButton())
+    expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'], resultCohorts: ['BE', 'SRE'] })
   })
 })
 

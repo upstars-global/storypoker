@@ -586,7 +586,7 @@ describe('room page results', () => {
     expect(screen.getByTestId('history-modal')).toBeTruthy()
   })
 
-  it('saves a changed deck preset, cards without changing result settings from the deck modal', async () => {
+  it('saves a changed deck preset, cards and result chips from the deck modal', async () => {
     await mountRoom({ state: fakeState({ phase: 'voting' }) })
     const setDeckPreset = vi.fn().mockResolvedValue(undefined)
     const saveCardDeck = vi.fn().mockResolvedValue(undefined)
@@ -597,11 +597,11 @@ describe('room page results', () => {
     })
     expect(lastProps(ConfigureCardDeckModal)).toMatchObject({ deckPreset: 'scrum', activeCards: ['1', '2', '3', '5', '8'] })
     await act(async () => {
-      lastProps(ConfigureCardDeckModal).onSave({ deckPreset: 'fibonacci', cards: ['1', '2'] })
+      lastProps(ConfigureCardDeckModal).onSave({ deckPreset: 'fibonacci', cards: ['1', '2'], resultCohorts: ['FE'] })
     })
     expect(setDeckPreset).toHaveBeenCalledWith('fibonacci')
     expect(saveCardDeck).toHaveBeenCalledWith(['1', '2'])
-    expect(setResultCohorts).not.toHaveBeenCalled()
+    expect(setResultCohorts).toHaveBeenCalledWith(['FE'])
     expect(screen.queryByTestId('card-deck-modal')).toBeNull()
   })
 
