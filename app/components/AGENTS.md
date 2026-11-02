@@ -53,10 +53,25 @@ lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fal
 ## Діаграми
 
 Тільки ECharts: модулі через `echarts/core` + `use([...])` заради розміру бандла, рендер - хук
-`useEChart(containerRef, option)` (`app/hooks/useEChart.ts`: init, `ResizeObserver`, `setOption` з `notMerge`,
-dispose). Перед роботою з графіками активуй skill `echarts`. `AlignmentTrendsModal.tsx` вантажиться через `lazy()`
-у `[slug].tsx`: eager-імпорт виводить entry за бюджет `icons:audit-build`. Саморобний SVG лишився в `PieChart.tsx` -
-при дотику переписуй на ECharts.
+`useEChart(containerRef, option)` (`app/hooks/useEChart.ts`: init, `ResizeObserver`, `setOption` з
+`notMerge`, dispose). Перед роботою з графіками активуй skill `echarts`. `AlignmentTrendsModal.tsx`
+вантажиться через `lazy()` у `[slug].tsx`, `PieChart.tsx` - через `lazy()` у `ResultsArea.tsx`:
+eager-імпорт виводить entry за бюджет `icons:audit-build`. Кола використовують ECharts pie з
+`SVGRenderer` і явним `{ renderer: "svg" }`. За однієї чи двох груп контейнери ростуть до 500 px
+(`flex: 1 1 280px`); діаметр кола - 80% контейнера для різних оцінок і 98% для однієї унікальної оцінки.
+У великих контейнерах розмір цифр - 6% ширини для секторів і 12% для суцільного кола.
+За трьох і більше груп контейнери мають ширину до 240 px, діаметр - 80%. Контейнери звужуються до
+доступної ширини й переносяться на нові рядки; довгі назви ролей переносяться без накладень.
+Одна унікальна оцінка дає суцільне коло, кілька - сектори з підписами карт. Групи з `groupResultVotes()` включають
+проголосовані вбудовані й кастомні ролі; `ResultsArea` та `AlignmentCard` використовують стабільний ключ
+групи окремо від підпису (для legacy-викликів - fallback на підпис). Підпис `<ROLE>: <середнє>`
+рендериться поза графіком одразу; під час завантаження чанка або його збою лишається порожнє місце того
+самого розміру без екранної помилки.
+
+Коли потрібен конкретний renderer, передай його явно третім аргументом
+`useEChart(containerRef, option, { renderer: "svg" })` або `"canvas"`.
+Реєстрація `SVGRenderer` через `use([...])` не задає renderer конкретного
+instance; ECharts за замовчуванням використовує Canvas.
 
 ## Side widget і слот
 

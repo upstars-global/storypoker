@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 type AlignmentCardProps = {
-  blocks: { label: string; value: number }[]
+  blocks: { key?: string; label: string; value: number }[]
 }
 
 function alignmentColor(a: number): string {
@@ -23,11 +23,11 @@ export default function AlignmentCard({ blocks }: AlignmentCardProps) {
       <div className="px-4 py-3 flex flex-col gap-2">
         {blocks.map(b => (
           <div
-            key={b.label}
-            className="flex items-center justify-between"
+            key={b.key ?? b.label}
+            className="flex min-w-0 items-center justify-between gap-3"
           >
-            <span className="text-mui-body text-body">{b.label}</span>
-            <span className="flex items-center gap-2">
+            <span className="text-mui-body text-body min-w-0" style={{ overflowWrap: 'anywhere' }}>{b.label}</span>
+            <span className="flex shrink-0 items-center gap-2">
               <span
                 className="inline-block rounded-full"
                 style={{ width: '10px', height: '10px', backgroundColor: alignmentColor(b.value) }}

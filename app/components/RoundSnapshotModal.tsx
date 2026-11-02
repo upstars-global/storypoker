@@ -5,7 +5,7 @@ import RoleBadge from '~/components/RoleBadge'
 import { useCardLabel } from '~/hooks/useCardLabel'
 import type { RoundHistory } from '~/stores/types'
 import { DECK_PRESETS } from '~/utils/cardDecks'
-import { COHORT_COLORS, voteCohortFor } from '~/utils/resultCohorts'
+import { COHORT_BADGE_TEXT_COLORS, COHORT_COLORS, voteCohortFor } from '~/utils/resultCohorts'
 import { roleTagForShields, roleTagOrder } from '~/utils/shields'
 
 type RoundSnapshotModalProps = {
@@ -44,8 +44,8 @@ export default function RoundSnapshotModal({ round, shieldsMap, cohort = null, o
           {t('trends.roundSnapshotTitle')}
           {cohort && (
             <span
-              className="rounded px-2 py-0.5 text-mui-caption font-semibold text-white"
-              style={{ backgroundColor: COHORT_COLORS[cohort] }}
+              className="rounded px-2 py-0.5 text-mui-caption font-semibold"
+              style={{ backgroundColor: COHORT_COLORS[cohort], color: COHORT_BADGE_TEXT_COLORS[cohort] }}
             >
               {cohort}
             </span>

@@ -808,11 +808,13 @@ body {
     display: block;
     line-height: 0;
     font-size: 1.5rem;
-    color: var(--color-appbar-emphasis);
+    color: var(--text-primary);
   }
   .mui-slider-knob > :first-child {
     position: relative;
     display: block;
+    background-color: var(--bg-appbar);
+    background-image: var(--appbar-gradient, none);
   }
   .mui-slider-value {
     position: absolute;
@@ -820,6 +822,14 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 1.5rem;
+    color: var(--text-inverse);
+  }
+
+  html[data-theme="dark"] .mui-slider-knob > :first-child {
+    background-color: var(--color-appbar-emphasis);
+    background-image: none;
+  }
+  html[data-theme="dark"] .mui-slider-value {
     color: var(--bg-appbar);
   }
 
@@ -889,6 +899,8 @@ body {
     box-shadow: var(--shadow-8);
     padding: 8px 0;
     min-width: 180px;
+    max-height: var(--available-height);
+    overflow-y: auto;
     list-style: none;
     margin: 0;
   }
@@ -1011,6 +1023,17 @@ body {
     width: 100%;
     max-width: 28rem;
     position: relative;
+  }
+
+  .mui-modal-paper > :is(h2, h3):first-child {
+    margin-inline: 16px;
+    padding-inline: 16px;
+    overflow-wrap: anywhere;
+  }
+
+  .mui-modal-close {
+    border: none;
+    box-shadow: none;
   }
 
   .mui-h6 {

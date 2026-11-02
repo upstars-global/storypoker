@@ -1,20 +1,33 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, render } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { getInstanceByDom, use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
 import ResultsArea from '~/components/ResultsArea'
+import type { ResultGroup } from '~/utils/resultCohorts'
 
 function mountResults(props: {
   votes: Record<string, number>
-  groups?: { label: string; votes: Record<string, number> }[] | null
+  groups?: { key?: string; label: string; votes: Record<string, number> }[] | null
   disableCelebration?: boolean
 }) {
   return render(<ResultsArea showNewRound={false} {...props} />).container
 }
 
 function pieCharts(container: HTMLElement) {
-  return container.querySelectorAll('svg[viewBox="0 0 100 100"]')
+  return container.querySelectorAll('[data-testid="result-pie"], [data-testid="result-pie-placeholder"]')
 }
 
-afterEach(() => cleanup())
+beforeEach(() => {
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(240)
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(240)
+})
+
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+  vi.doUnmock('~/components/PieChart')
+})
 
 describe('ResultsArea celebration without a qa split', () => {
   it('celebrates when every vote matches and grouped votes are absent', () => {
@@ -35,6 +48,34 @@ describe('ResultsArea celebration without a qa split', () => {
 })
 
 describe('ResultsArea cohort circles', () => {
+  it.each(['PO', 'GQA'])('celebrates a unanimous %s circle alongside mixed votes', (role) => {
+    const container = mountResults({
+      votes: { '3': 2, '5': 1, '8': 1 },
+      groups: [{ label: role, votes: { '3': 2 } }, { label: 'DEV', votes: { '5': 1, '8': 1 } }],
+    })
+    expect(container.querySelector('.celebration-layer')).not.toBeNull()
+  })
+
+  it('celebrates a custom circle and preserves colliding label identities', () => {
+    const error = vi.spyOn(console, 'error')
+    const groups: ResultGroup[] = [{ key: 'DEV', label: 'DEV', votes: { '3': 1 } }, { key: 'custom:DEV', label: 'DEV', votes: { '5': 2 } }]
+    const view = render(<ResultsArea votes={{ '3': 1, '5': 2 }} groups={groups} showNewRound={false} />)
+    const first = view.container.querySelectorAll('.mui-h6')[0]!
+    view.rerender(<ResultsArea votes={{ '3': 1, '5': 2 }} groups={[groups[1]!, groups[0]!]} showNewRound={false} />)
+    expect(view.container.querySelectorAll('.mui-h6')[1]).toBe(first)
+    expect(view.container.querySelector('.celebration-layer')).not.toBeNull()
+    expect(error).not.toHaveBeenCalled()
+  })
+
+  it('does not celebrate when each role has only one vote', () => {
+    const container = mountResults({
+      votes: { '3': 9 },
+      groups: ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM'].map(label => ({ label, votes: { '3': 1 } })),
+    })
+    expect(pieCharts(container)).toHaveLength(9)
+    expect(container.querySelector('.celebration-layer')).toBeNull()
+  })
+
   it('renders one circle per cohort group with its label and average', () => {
     const container = mountResults({
       votes: { '3': 2, '5': 1, '8': 2 },
@@ -65,12 +106,144 @@ describe('ResultsArea cohort circles', () => {
 })
 
 describe('ResultsArea pie chart', () => {
-  it('draws one slice per voted card and a full circle for a single card', () => {
-    const split = mountResults({ votes: { '3': 1, '5': 1 } })
-    expect(split.querySelectorAll('svg path')).toHaveLength(2)
-    cleanup()
-    const single = mountResults({ votes: { '5': 2 }, disableCelebration: true })
-    expect(single.querySelectorAll('svg circle')).toHaveLength(1)
-    expect(single.querySelector('svg text')?.textContent).toBe('5')
+  it('draws ECharts SVG slices even when the trends canvas renderer is registered', async () => {
+    use([CanvasRenderer])
+    mountResults({ votes: { '3': 1, '5': 1 } })
+    const pie = await screen.findByTestId('result-pie')
+    await waitFor(() => expect(pie.querySelectorAll('svg path[fill="#546e7a"], svg path[fill="#e64a19"]')).toHaveLength(2))
+    expect(pie.querySelector('canvas')).toBeNull()
+    expect(Array.from(pie.querySelectorAll('svg text')).map(text => text.textContent)).toEqual(['3', '5'])
+    expect(pie.style.width).toBe('100%')
+    expect(pie.style.aspectRatio).toBe('1 / 1')
+  })
+
+  it('draws a single full sector with its card label', async () => {
+    mountResults({ votes: { '☕': 2 }, disableCelebration: true })
+    const pie = await screen.findByTestId('result-pie')
+    await waitFor(() => expect(pie.querySelectorAll('svg path[fill="#546e7a"]')).toHaveLength(1))
+    expect(pie.querySelector('svg text')?.textContent).toBe('☕')
+  })
+
+  it.each<{ votes: Record<string, number>; fontSize: number }>([
+    { votes: { '3': 1, '8': 1 }, fontSize: 28.38 },
+    { votes: { '5': 2 }, fontSize: 56.76 },
+  ])('scales expanded chart labels to the historical proportions: $fontSize px', async ({ votes, fontSize }) => {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(473)
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(473)
+    const groups = ['DEV', 'QA'].map(label => ({ key: label, label, votes }))
+    const view = render(<ResultsArea showNewRound={false} votes={votes} groups={groups} disableCelebration />)
+    const pies = await screen.findAllByTestId('result-pie')
+    await waitFor(() => expect(getInstanceByDom(pies[0]!)?.getOption()).toMatchObject({ series: [{ label: { fontSize } }] }))
+
+    view.rerender(<ResultsArea showNewRound={false} votes={votes} groups={[...groups, { key: 'Designer', label: 'Designer', votes }]} disableCelebration />)
+    await waitFor(() => expect(getInstanceByDom(pies[0]!)?.getOption()).toMatchObject({ series: [{ label: { fontSize: '5' in votes ? 29 : 14 } }] }))
+  })
+
+  it.each<{ votes: Record<string, number>; before: number; after: number }>([
+    { votes: { '3': 1, '8': 1 }, before: 28.38, after: 20.58 },
+    { votes: { '5': 2 }, before: 56.76, after: 41.16 },
+  ])('updates expanded labels on resize without replacing charts: $before to $after px', async ({ votes, before, after }) => {
+    const observers: ResizeObserverStub[] = []
+    class ResizeObserverStub implements ResizeObserver {
+      targets = new Set<Element>()
+      callback: ResizeObserverCallback
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback
+        observers.push(this)
+      }
+      observe(target: Element) { this.targets.add(target) }
+      unobserve(target: Element) { this.targets.delete(target) }
+      disconnect() { this.targets.clear() }
+    }
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub)
+    const width = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(473)
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(473)
+    const groups = ['DEV', 'QA'].map(label => ({ key: label, label, votes }))
+    const view = render(<ResultsArea showNewRound={false} votes={votes} groups={groups} disableCelebration />)
+    const pies = await screen.findAllByTestId('result-pie')
+    const charts = pies.map(pie => getInstanceByDom(pie))
+    await waitFor(() => charts.forEach(chart => expect(chart?.getOption()).toMatchObject({ series: [{ label: { fontSize: before } }] })))
+
+    width.mockReturnValue(343)
+    act(() => {
+      for (const observer of observers) {
+        if (pies.some(pie => observer.targets.has(pie))) observer.callback([], observer)
+      }
+    })
+    await waitFor(() => charts.forEach(chart => expect(chart?.getOption()).toMatchObject({ series: [{ label: { fontSize: after } }] })))
+    expect(screen.getAllByTestId('result-pie')).toHaveLength(2)
+    pies.forEach((pie, index) => expect(getInstanceByDom(pie)).toBe(charts[index]))
+    view.unmount()
+    expect(observers.every(observer => observer.targets.size === 0)).toBe(true)
+  })
+
+  it('updates circle proportions as voting groups appear and disappear', async () => {
+    const groups = ['DEV', 'QA', 'Designer'].map(label => ({ key: label, label, votes: { '5': 2 } }))
+    const view = render(<ResultsArea showNewRound={false} votes={{ '5': 2 }} groups={groups.slice(0, 1)} disableCelebration />)
+    const firstPie = await screen.findByTestId('result-pie')
+    const chart = getInstanceByDom(firstPie)
+    await waitFor(() => expect(chart?.getOption()).toMatchObject({ series: [{ radius: '98%' }] }))
+
+    for (const count of [3, 2]) {
+      view.rerender(<ResultsArea showNewRound={false} votes={{ '5': count * 2 }} groups={groups.slice(0, count)} disableCelebration />)
+      await waitFor(() => expect(screen.getAllByTestId('result-pie')).toHaveLength(count))
+      expect(getInstanceByDom(firstPie)).toBe(chart)
+      await waitFor(() => expect(chart?.getOption()).toMatchObject({ series: [{ radius: count === 3 ? '80%' : '98%' }] }))
+    }
+
+    view.rerender(<ResultsArea showNewRound={false} votes={{ '3': 1, '8': 1 }} groups={[{ key: 'DEV', label: 'DEV', votes: { '3': 1, '8': 1 } }]} disableCelebration />)
+    await waitFor(() => expect(chart?.getOption()).toMatchObject({ series: [{ radius: '80%' }] }))
+  })
+
+  it('updates the existing ECharts instance and disposes it on unmount', async () => {
+    const view = render(<ResultsArea showNewRound={false} votes={{ '3': 2 }} disableCelebration />)
+    const pie = await screen.findByTestId('result-pie')
+    const chart = getInstanceByDom(pie)
+    expect(chart).toBeDefined()
+    view.rerender(<ResultsArea showNewRound={false} votes={{ '8': 2 }} disableCelebration />)
+    expect(getInstanceByDom(pie)).toBe(chart)
+    await waitFor(() => expect(pie.querySelector('svg text')?.textContent).toBe('8'))
+    view.unmount()
+    expect(chart?.isDisposed()).toBe(true)
+  })
+
+  it('keeps voting bubbles and the goal clarity score outside the lazy chart', () => {
+    const view = render(<ResultsArea showNewRound={false} votes={{ yes: 2, no: 1 }} activeCards={['yes', 'no']} disableCelebration />)
+    expect(pieCharts(view.container)).toHaveLength(0)
+    expect(view.container.querySelectorAll('.rounded-full')).toHaveLength(2)
+    view.rerender(<ResultsArea showNewRound={false} votes={{ '3': 2, '5': 1 }} goalClarityScore />)
+    expect(pieCharts(view.container)).toHaveLength(0)
+    expect(view.container.querySelector('.rounded-full')?.textContent).toBe('3.7')
+  })
+
+  it('keeps a square placeholder and the cohort label while the chunk loads', async () => {
+    vi.resetModules()
+    let finishImport!: (module: typeof import('~/components/PieChart')) => void
+    vi.doMock('~/components/PieChart', () => new Promise(resolve => { finishImport = resolve }))
+    const { default: PendingResultsArea } = await import('~/components/ResultsArea')
+    render(<PendingResultsArea showNewRound={false} votes={{ '3': 2 }} groups={[{ label: 'BE', votes: { '3': 2 } }]} />)
+    const placeholder = screen.getByTestId('result-pie-placeholder')
+    expect(screen.getByText('BE: 3.0')).toBeDefined()
+    expect(placeholder.style.width).toBe('100%')
+    expect(placeholder.style.aspectRatio).toBe('1 / 1')
+    await waitFor(() => expect(finishImport).toBeDefined())
+    const actual = await vi.importActual<typeof import('~/components/PieChart')>('~/components/PieChart')
+    await act(async () => finishImport(actual))
+    expect(await screen.findByTestId('result-pie')).toBeDefined()
+    expect(screen.queryByTestId('result-pie-placeholder')).toBeNull()
+  })
+
+  it('keeps the same empty placeholder and cohort label when the chunk fails', async () => {
+    vi.resetModules()
+    vi.doMock('~/components/PieChart', () => { throw new Error('chunk unavailable') })
+    const { default: FailedResultsArea } = await import('~/components/ResultsArea')
+    render(<FailedResultsArea showNewRound={false} votes={{ '5': 2 }} groups={[{ label: 'QA', votes: { '5': 2 } }]} />)
+    await act(async () => { await Promise.resolve() })
+    const placeholder = await screen.findByTestId('result-pie-placeholder')
+    expect(placeholder.style.width).toBe('100%')
+    expect(placeholder.style.aspectRatio).toBe('1 / 1')
+    expect(placeholder.childElementCount).toBe(0)
+    expect(screen.getByText('QA: 5.0')).toBeDefined()
+    expect(screen.queryByText(/chunk unavailable|error/i)).toBeNull()
   })
 })

@@ -17,6 +17,7 @@ for (const iconsLucide of [false, true]) {
         await route.abort()
       })
       await page.goto('/')
+      await page.getByTestId('account-menu-button').click()
       const volume = page.getByTestId('volume-button')
       const icon = volume.locator('span.sp-icon-root')
       await expect(icon).toBeVisible()

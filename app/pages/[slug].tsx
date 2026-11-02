@@ -35,7 +35,7 @@ import { backgroundTint } from '~/utils/backgroundImage'
 import { DEFAULT_PRESET_ID, activeCardsForDeck } from '~/utils/cardDecks'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { shouldCelebrate } from '~/utils/resultCelebration'
-import { cohortForShields, groupVotesByCohort, normalizeCohorts, resultCohortFor, type ResultGroup } from '~/utils/resultCohorts'
+import { groupResultVotes, type ResultGroup } from '~/utils/resultCohorts'
 import { isValidRoomSlug, normalizeRoomSlug } from '~/utils/roomId'
 import { roleTagForShields, roleTagOrder } from '~/utils/shields'
 import { isRoundTimerStale, type AlarmSettings } from '~/utils/timerAlarm'
@@ -245,22 +245,8 @@ export default function RoomPage() {
       }, {})
     : {}
 
-  const resultCohorts = normalizeCohorts(roomState?.result_cohorts)
-
-  const resultGroups: ResultGroup[] | null = roomState && visiblePlayers.some(p => p.vote && cohortForShields(p.shields))
-    ? groupVotesByCohort(visiblePlayers, resultCohorts).map(group => ({ label: group.key, votes: group.votes }))
-    : null
-
-  const hiddenVotePlayerIds = (() => {
-    const preset = roomState?.deck_preset
-    if (!preset || isPollDeck || preset === 'goal_clarity') return new Set<string>()
-    return new Set(visiblePlayers
-      .filter((p) => {
-        const cohort = cohortForShields(p.shields)
-        return cohort !== null && resultCohortFor(cohort, resultCohorts) === null
-      })
-      .map(p => p.id))
-  })()
+  const resultGroups: ResultGroup[] = roomState ? groupResultVotes(visiblePlayers) : []
+  const hiddenVotePlayerIds = new Set<string>()
 
   const activeCards = roomState
     ? activeCardsForDeck(roomState.deck_preset ?? DEFAULT_PRESET_ID, roomState.active_cards ?? [])
@@ -283,11 +269,11 @@ export default function RoomPage() {
     } else {
       return null
     }
-    const blocks: { label: string; value: number }[] = []
+    const blocks: { key?: string; label: string; value: number }[] = []
     if (groups) {
       for (const group of groups) {
         const value = alignmentScore(group.votes, deck)
-        if (value !== null) blocks.push({ label: group.label, value })
+        if (value !== null) blocks.push({ key: group.key, label: group.label, value })
       }
     } else {
       const all = alignmentScore(votes, deck)
@@ -299,7 +285,7 @@ export default function RoomPage() {
   function lastRoundSnapshot(): LastRoundSnapshot {
     return {
       votes: { ...voteCounts },
-      groups: resultGroups?.map(group => ({ label: group.label, votes: { ...group.votes } })) ?? null,
+      groups: resultGroups?.map(group => ({ key: group.key, label: group.label, votes: { ...group.votes } })) ?? null,
       playerVotes: visiblePlayers
         .filter(p => p.vote !== null)
         .map(p => ({ id: p.id, name: p.name, vote: p.vote as string })),
@@ -639,9 +625,6 @@ export default function RoomPage() {
       await room.setDeckPreset(payload.deckPreset)
     }
     await room.saveCardDeck(payload.cards)
-    if (payload.cohorts.join() !== resultCohorts.join()) {
-      await room.setResultCohorts(payload.cohorts).catch(error => console.error('[deck] result cohorts save failed:', error))
-    }
     setShowCardDeck(false)
   }
 
@@ -910,7 +893,6 @@ export default function RoomPage() {
         <ConfigureCardDeckModal
           deckPreset={roomState.deck_preset ?? DEFAULT_PRESET_ID}
           activeCards={activeCards}
-          resultCohorts={resultCohorts}
           onClose={() => setShowCardDeck(false)}
           onSave={payload => void handleSaveCardDeck(payload)}
         />

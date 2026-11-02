@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { averageOf, voteToNumber, summarizeRound, isNumericPreset, roleRoundAlignment, splitRoundAlignment } from '~/utils/roundStats'
+import { averageOf, voteToNumber, summarizeRound, isNumericPreset, roleRoundAlignment, roundAlignment } from '~/utils/roundStats'
 import type { RoundHistory } from '~/stores/types'
 
 const FIB = ['1', '2', '3', '5', '8', '13', '21', '?', '☕']
@@ -133,23 +133,71 @@ describe('isNumericPreset', () => {
   })
 })
 
-describe('splitRoundAlignment without non-estimators', () => {
-  it('ignores PO votes when DEV and QA roles are present', () => {
-    const round = {
-      id: 'r', room_id: 'x', started_at: '', revealed_at: '', created_at: null,
-      active_cards: ['1', '2', '3', '5', '8'], deck_preset: 'scrum',
+describe('roundAlignment', () => {
+  it('scores the pooled estimator votes instead of averaging role scores', () => {
+    const history = round({
+      active_cards: ['1', '2', '3', '5', '8', '13'],
       votes: [
-        { player_id: 'd1', name: 'D1', vote: '3' },
-        { player_id: 'd2', name: 'D2', vote: '3' },
-        { player_id: 'po', name: 'PO', vote: '8' },
+        { player_id: 'b1', name: 'B1', vote: '3' },
+        { player_id: 'b2', name: 'B2', vote: '3' },
+        { player_id: 'q1', name: 'Q1', vote: '3' },
+        { player_id: 'q2', name: 'Q2', vote: '8' },
+        { player_id: 'po', name: 'PO', vote: '13' },
       ],
-    }
-    const shields = new Map([['d1', ['be']], ['d2', ['fe']], ['po', ['po']]])
-    expect(splitRoundAlignment(round as never, shields)).toEqual({ dev: 100, qa: null })
+    })
+    const shields = new Map([['b1', ['be']], ['b2', ['be']], ['q1', ['qa']], ['q2', ['qa']], ['po', ['po']]])
+    expect(roundAlignment(history, shields)).toBe(60)
+    expect(summarizeRound(history, shields).average).toBe('4.3')
+    expect(summarizeRound(history, shields).alignment).toBe(60)
+  })
+
+  it.each(['voting', 'vote_question', 'tshirt', 'boolean'])('excludes the %s preset', deckPreset => {
+    const history = round({
+      deck_preset: deckPreset,
+      active_cards: ['1', '2', '3'],
+      votes: [
+        { player_id: 'p1', name: 'A', vote: '3' },
+        { player_id: 'p2', name: 'B', vote: '3' },
+      ],
+    })
+    expect(roundAlignment(history, new Map())).toBeNull()
+  })
+
+  it('falls back to all votes when every voter is a non-estimator', () => {
+    const history = round({
+      active_cards: ['1', '2', '3', '5', '8', '13'],
+      votes: [
+        { player_id: 'po', name: 'PO', vote: '3' },
+        { player_id: 'sm', name: 'SM', vote: '8' },
+        { player_id: 'ux', name: 'UX', vote: '3' },
+      ],
+    })
+    const shields = new Map([['po', ['po']], ['sm', ['sm']], ['ux', ['custom:UX']]])
+    const summary = summarizeRound(history, shields)
+    expect(summary.average).toBe('4.7')
+    expect(summary.alignment).toBe(60)
+    expect(roundAlignment(history, shields)).toBe(60)
   })
 })
 
 describe('roleRoundAlignment', () => {
+  it('keeps GQA and AQA scores separate from QA', () => {
+    const history = round({
+      votes: [
+        { player_id: 'q1', name: 'QA1', vote: '3' },
+        { player_id: 'q2', name: 'QA2', vote: '3' },
+        { player_id: 'g1', name: 'GQA1', vote: '5' },
+        { player_id: 'g2', name: 'GQA2', vote: '5' },
+        { player_id: 'a1', name: 'AQA1', vote: '8' },
+        { player_id: 'a2', name: 'AQA2', vote: '8' },
+      ],
+    })
+    const shields = new Map([
+      ['q1', ['qa']], ['q2', ['qa']], ['g1', ['gqa']], ['g2', ['gqa']], ['a1', ['aqa']], ['a2', ['aqa']],
+    ])
+    expect(roleRoundAlignment(history, shields)).toEqual({ QA: 100, GQA: 100, AQA: 100 })
+  })
+
   it('scores every role on its own and skips custom roles', () => {
     const round = {
       id: 'r', room_id: 'x', started_at: '', revealed_at: '', created_at: null,

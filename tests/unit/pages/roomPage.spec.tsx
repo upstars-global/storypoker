@@ -421,23 +421,76 @@ describe('room page side widget', () => {
 })
 
 describe('room page results', () => {
+  it('shows all nine role circles in canonical order with separate QA disciplines', async () => {
+    const roles = ['sm', 'gqa', 'be', 'qa', 'sre', 'dev', 'aqa', 'fe', 'po']
+    await mountRoom({ players: [me, ...roles.map(role => fakePlayer(role, [role], '3'))] })
+    expect(lastProps(ResultsArea).groups).toEqual(
+      ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM'].map(label => ({ key: label, label, votes: { '3': 1 } })),
+    )
+    expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
+  })
+
+  it.each([null, [], ['DEV'], ['BE']])('ignores saved result settings %j', async (result_cohorts) => {
+    await mountRoom({
+      players: [me, ...['dev', 'be', 'fe', 'sre', 'qa'].map(role => fakePlayer(role, [role], '3'))],
+      state: fakeState({ phase: 'revealed', result_cohorts }),
+    })
+    expect(lastProps(ResultsArea).groups).toEqual(
+      ['DEV', 'BE', 'FE', 'SRE', 'QA'].map(label => ({ key: label, label, votes: { '3': 1 } })),
+    )
+    expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
+  })
+
+  it('ignores a saved QA chip and assigns a roleless voter to DEV', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('roleless', [], '3'), fakePlayer('tester', ['gqa'], '5')],
+      state: fakeState({ phase: 'revealed', result_cohorts: ['DEV', 'QA'] }),
+    })
+    expect(lastProps(ResultsArea).groups).toEqual([
+      { key: 'DEV', label: 'DEV', votes: { '3': 1 } },
+      { key: 'GQA', label: 'GQA', votes: { '5': 1 } },
+    ])
+  })
+
   it('splits revealed votes into cohort groups for ResultsArea and AlignmentCard', async () => {
     await mountRoom()
     expect(lastProps(ResultsArea).groups).toEqual([
-      { label: 'DEV', votes: { '3': 1, '5': 1 } },
-      { label: 'QA', votes: { '5': 1 } },
+      { key: 'DEV', label: 'DEV', votes: { '3': 1, '5': 1 } },
+      { key: 'QA', label: 'QA', votes: { '5': 1 } },
     ])
     expect(lastProps(ResultsArea).votes).toEqual({ '3': 1, '5': 2 })
     const deck = ['1', '2', '3', '5', '8']
-    expect(lastProps(AlignmentCard).blocks).toEqual([{ label: 'DEV', value: alignmentScore({ '3': 1, '5': 1 }, deck) }])
+    expect(lastProps(AlignmentCard).blocks).toEqual([{ key: 'DEV', label: 'DEV', value: alignmentScore({ '3': 1, '5': 1 }, deck) }])
   })
 
-  it('falls back to a single all-votes circle when no voter has a cohort', async () => {
-    await mountRoom({
-      players: [me, fakePlayer('dan', ['custom:Design'], '3'), fakePlayer('erin', ['custom:UX'], '5')],
+  it('shows separate custom-only circles', async () => {
+    await mountRoom({ players: [me, fakePlayer('dan', ['custom:Design'], '3'), fakePlayer('erin', ['custom:UX'], '5')] })
+    expect(lastProps(ResultsArea).groups).toEqual([
+      { key: 'custom:Design', label: 'Design', votes: { '3': 1 } },
+      { key: 'custom:UX', label: 'UX', votes: { '5': 1 } },
+    ])
+  })
+
+  it('shows no circles without votes', async () => {
+    await mountRoom({ players: [me] })
+    expect(lastProps(ResultsArea).groups).toEqual([])
+  })
+
+  it('preserves colliding custom keys in current and last-round alignments', async () => {
+    const players = [me, fakePlayer('d1', ['dev'], '3'), fakePlayer('d2', ['dev'], '3'), fakePlayer('c1', ['custom:DEV'], '5'), fakePlayer('c2', ['custom:DEV'], '5')]
+    await mountRoom({ players, state: fakeState({ phase: 'voting' }) })
+    await act(async () => { useRoomStore.setState({ roomState: fakeState({ phase: 'revealed' }) }) })
+    const groups = [{ key: 'DEV', label: 'DEV', votes: { '3': 2 } }, { key: 'custom:DEV', label: 'DEV', votes: { '5': 2 } }]
+    const blocks = [{ key: 'DEV', label: 'DEV', value: 100 }, { key: 'custom:DEV', label: 'DEV', value: 100 }]
+    expect(lastProps(ResultsArea).groups).toEqual(groups)
+    expect(lastProps(AlignmentCard).blocks).toEqual(blocks)
+    await act(async () => {
+      usePlayersStore.setState({ players: players.map(p => ({ ...p, vote: null })) })
+      useRoomStore.setState({ roomState: fakeState({ phase: 'voting' }) })
     })
-    expect(lastProps(ResultsArea).groups).toBeNull()
-    expect(blockLabels()).toEqual([i18n.t('results.general')])
+    await act(async () => { lastProps(CardsArea).onToggleLastRound() })
+    expect(lastProps(ResultsArea).groups).toEqual(groups)
+    expect(lastProps(AlignmentCard).blocks).toEqual(blocks)
   })
 
   it('shows PO and SM in their own circles', async () => {
@@ -445,8 +498,8 @@ describe('room page results', () => {
       players: [me, fakePlayer('dan', ['po'], '3'), fakePlayer('erin', ['sm'], '5')],
     })
     expect(lastProps(ResultsArea).groups).toEqual([
-      { label: 'PO', votes: { '3': 1 } },
-      { label: 'SM', votes: { '5': 1 } },
+      { key: 'PO', label: 'PO', votes: { '3': 1 } },
+      { key: 'SM', label: 'SM', votes: { '5': 1 } },
     ])
   })
 
@@ -455,14 +508,14 @@ describe('room page results', () => {
       players: [me, fakePlayer('frank', [], '3'), fakePlayer('bob', ['qa'], '5')],
     })
     expect(lastProps(ResultsArea).groups).toEqual([
-      { label: 'DEV', votes: { '3': 1 } },
-      { label: 'QA', votes: { '5': 1 } },
+      { key: 'DEV', label: 'DEV', votes: { '3': 1 } },
+      { key: 'QA', label: 'QA', votes: { '5': 1 } },
     ])
   })
 
-  it('hides votes of players whose cohort is not shown', async () => {
+  it('keeps every role badge visible regardless of saved settings', async () => {
     await mountRoom({ state: fakeState({ phase: 'revealed', result_cohorts: ['QA'] }) })
-    expect(Array.from(lastProps(PlayersList).hiddenVotePlayerIds ?? []).sort()).toEqual(['alice', 'carol', 'me'])
+    expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
   })
 
   it('keeps the revealed groups for the last-round view after a new round starts', async () => {
@@ -482,18 +535,18 @@ describe('room page results', () => {
     })
     const lastRound = lastProps(ResultsArea)
     expect(lastRound.groups).toEqual([
-      { label: 'DEV', votes: { '3': 1, '5': 1 } },
-      { label: 'QA', votes: { '5': 1 } },
+      { key: 'DEV', label: 'DEV', votes: { '3': 1, '5': 1 } },
+      { key: 'QA', label: 'QA', votes: { '5': 1 } },
     ])
     expect(lastRound.showNewRound).toBe(false)
     expect(blockLabels()).toContain('DEV')
   })
 
-  it('plays the decision sound when a round is revealed with consensus', async () => {
+  it.each(['dev', 'custom:Design'])('plays the decision sound for a unanimous %s circle alongside mixed votes', async (role) => {
     const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
     await mountRoom({
       state: fakeState({ phase: 'voting' }),
-      players: [me, fakePlayer('alice', ['dev'], '5'), fakePlayer('carol', ['dev'], '5')],
+      players: [me, fakePlayer('alice', [role], '5'), fakePlayer('carol', [role], '5'), fakePlayer('bob', ['qa'], '3'), fakePlayer('dan', ['qa'], '8')],
     })
     expect(play).not.toHaveBeenCalled()
     await act(async () => {
@@ -511,7 +564,7 @@ describe('room page results', () => {
     expect(screen.getByTestId('history-modal')).toBeTruthy()
   })
 
-  it('saves a changed deck preset, cards and cohorts from the deck modal', async () => {
+  it('saves a changed deck preset, cards without changing result settings from the deck modal', async () => {
     await mountRoom({ state: fakeState({ phase: 'voting' }) })
     const setDeckPreset = vi.fn().mockResolvedValue(undefined)
     const saveCardDeck = vi.fn().mockResolvedValue(undefined)
@@ -522,11 +575,11 @@ describe('room page results', () => {
     })
     expect(lastProps(ConfigureCardDeckModal)).toMatchObject({ deckPreset: 'scrum', activeCards: ['1', '2', '3', '5', '8'] })
     await act(async () => {
-      lastProps(ConfigureCardDeckModal).onSave({ deckPreset: 'fibonacci', cards: ['1', '2'], cohorts: ['DEV', 'BE', 'QA'] })
+      lastProps(ConfigureCardDeckModal).onSave({ deckPreset: 'fibonacci', cards: ['1', '2'] })
     })
     expect(setDeckPreset).toHaveBeenCalledWith('fibonacci')
     expect(saveCardDeck).toHaveBeenCalledWith(['1', '2'])
-    expect(setResultCohorts).toHaveBeenCalledWith(['DEV', 'BE', 'QA'])
+    expect(setResultCohorts).not.toHaveBeenCalled()
     expect(screen.queryByTestId('card-deck-modal')).toBeNull()
   })
 

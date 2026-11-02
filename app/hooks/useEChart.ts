@@ -1,13 +1,18 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import { init, type EChartsCoreOption, type EChartsType } from 'echarts/core'
 
-export function useEChart(container: RefObject<HTMLElement | null>, option: EChartsCoreOption): RefObject<EChartsType | null> {
+export function useEChart(
+  container: RefObject<HTMLElement | null>,
+  option: EChartsCoreOption,
+  initOpts?: { renderer?: 'canvas' | 'svg' },
+): RefObject<EChartsType | null> {
   const chart = useRef<EChartsType | null>(null)
+  const renderer = initOpts?.renderer
 
   useEffect(() => {
     const el = container.current
     if (!el) return
-    const instance = init(el)
+    const instance = init(el, undefined, renderer ? { renderer } : undefined)
     chart.current = instance
     let lastSize = `${el.offsetWidth}x${el.offsetHeight}`
     const observer = new ResizeObserver(() => {
@@ -22,11 +27,11 @@ export function useEChart(container: RefObject<HTMLElement | null>, option: ECha
       instance.dispose()
       chart.current = null
     }
-  }, [container])
+  }, [container, renderer])
 
   useEffect(() => {
     chart.current?.setOption(option, { notMerge: true })
-  }, [option])
+  }, [option, renderer])
 
   return chart
 }

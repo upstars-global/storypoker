@@ -145,6 +145,76 @@ describe('home page', () => {
     expect(last[1]!.firstElementChild!.className).toBe('text-muted')
   })
 
+  it('scores recent rooms from the combined estimator votes without PO, SM or custom roles', async () => {
+    seedSession('aaaaaaaa', 'Ann')
+    const shields = ['be', 'be', 'qa', 'qa', 'po', 'sm', 'custom:Designer']
+    fakeTables({
+      players: shields.map((shield, i) => ({ id: `v${i}`, room_id: 'aaaaaaaa', name: `V${i}`, shields: [shield] })),
+      round_history: [{
+        ...round('aaaaaaaa', ['3', '3', '3', '8', '13', '1', '1']),
+        active_cards: ['1', '2', '3', '5', '8', '13', '?'],
+      }],
+    })
+
+    await mountHome()
+
+    const cells = within(screen.getAllByRole('row')[1]!).getAllByRole('cell')
+    expect(cells[3]!.textContent).toBe('60')
+  })
+
+  it('ignores poll rounds and rounds with only one estimate in room alignment', async () => {
+    seedSession('aaaaaaaa', 'Ann')
+    fakeTables({
+      round_history: [
+        round('aaaaaaaa', ['3', '3']),
+        { ...round('aaaaaaaa', ['Yes', 'No']), deck_preset: 'voting', active_cards: ['Yes', 'No'] },
+        { ...round('aaaaaaaa', ['Yes', 'No']), deck_preset: 'vote_question', active_cards: ['Yes', 'No'] },
+        round('aaaaaaaa', ['8']),
+      ],
+    })
+
+    await mountHome()
+
+    const cells = within(screen.getAllByRole('row')[1]!).getAllByRole('cell')
+    expect(cells[2]!.textContent).toBe('4')
+    expect(cells[3]!.textContent).toBe('100')
+  })
+
+  it('rounds the mean of the non-null numeric round scores', async () => {
+    seedSession('aaaaaaaa', 'Ann')
+    fakeTables({
+      round_history: [
+        { ...round('aaaaaaaa', ['3', '3']), active_cards: ['1', '2', '3', '5', '8', '?'] },
+        { ...round('aaaaaaaa', ['3', '5']), active_cards: ['1', '2', '3', '5', '8', '?'] },
+        round('aaaaaaaa', ['8']),
+      ],
+    })
+
+    await mountHome()
+
+    const cells = within(screen.getAllByRole('row')[1]!).getAllByRole('cell')
+    expect(cells[3]!.textContent).toBe('88')
+  })
+
+  it('shows no alignment when every round is a poll or has too few estimates', async () => {
+    seedSession('aaaaaaaa', 'Ann')
+    fakeTables({
+      round_history: [
+        { ...round('aaaaaaaa', ['Yes', 'Yes']), deck_preset: 'voting', active_cards: ['Yes', 'No'] },
+        { ...round('aaaaaaaa', ['Yes', 'Yes']), deck_preset: 'vote_question', active_cards: ['Yes', 'No'] },
+        round('aaaaaaaa', ['8']),
+        round('aaaaaaaa', ['?', '☕']),
+      ],
+    })
+
+    await mountHome()
+
+    const cells = within(screen.getAllByRole('row')[1]!).getAllByRole('cell')
+    expect(cells[2]!.textContent).toBe('4')
+    expect(cells[3]!.textContent).toBe('-')
+    expect(cells[3]!.firstElementChild!.className).toBe('text-muted')
+  })
+
   it('flags an empty name and does not create a room', async () => {
     fakeTables({})
     const create = vi.fn()

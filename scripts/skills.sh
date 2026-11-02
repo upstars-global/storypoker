@@ -15,7 +15,7 @@ npx -y --prefer-online skl-x add sentimony/agentic-workflow -s \
   implement \
   verify \
   cr-request \
-  \ cross-cr \
+  cross-cr \
   cr-received \
   finalize \
   session-learnings \
@@ -24,23 +24,21 @@ npx -y --prefer-online skl-x add sentimony/agentic-workflow -s \
 # SENTIMONY SKILLS https://github.com/sentimony/skills
 npx -y --prefer-online skl-x add sentimony/skills -s \
   \ scope-triage \
-  scope-check \
+  \ scope-check \
   \ plan-crafting \
   \ inline-plan-dev \
   \ subagent-plan-dev \
-  git-worktree-isolation \
-  \ parallel-agents \
-  tdd \
+  \ git-worktree-isolation \
+  parallel-agents \
+  \ tdd \
   \ review-request \
   \ cross-review \
   \ review-resolution \
   debugging \
   web-debug \
-  \ webapp-debugger \
+  webapp-debugger \
   \ verification-gate \
   \ branch-finish \
-  \ commit-all \
-  \ gh-switch \
   frontend-crafting \
   vitest \
   typescript \
@@ -49,6 +47,8 @@ npx -y --prefer-online skl-x add sentimony/skills -s \
   dashfix \
   negafix \
   maintaining-agent-context \
+  commit-all \
+  gh-switch \
   secret-hygiene \
   \ skill-crafting \
   -a codex claude-code -y -m sm
@@ -70,12 +70,12 @@ npx -y --prefer-online skl-x add supabase/agent-skills -s \
   supabase-postgres-best-practices \
   -a codex claude-code -y -m sm
 
-# NETLIFY CONTEXT-AND-TOOLS https://github.com/netlify/context-and-tools
-npx -y --prefer-online skl-x add netlify/context-and-tools -s \
-  netlify-config \
-  netlify-functions \
-  netlify-deploy \
-  -a codex claude-code -y -m sm
+# # NETLIFY CONTEXT-AND-TOOLS https://github.com/netlify/context-and-tools
+# npx -y --prefer-online skl-x add netlify/context-and-tools -s \
+#   netlify-config \
+#   netlify-functions \
+#   netlify-deploy \
+#   -a codex claude-code -y -m sm
 
 # SHADCN UI https://github.com/shadcn/ui
 npx -y --prefer-online skl-x add shadcn/ui -s \

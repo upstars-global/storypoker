@@ -1,6 +1,5 @@
 import { alignmentScore } from './alignment'
-import { trendCohorts } from './shields'
-import { voteCohortFor } from './resultCohorts'
+import { estimatorVotes, voteCohortFor } from './resultCohorts'
 import { DECK_PRESETS, DEFAULT_PRESET_ID } from './cardDecks'
 import type { RoundHistory } from '~/stores/types'
 
@@ -55,25 +54,6 @@ export interface RoundSummary {
   deckPreset: string | null
 }
 
-export function splitRoundAlignment(
-  round: RoundHistory,
-  shieldsByPlayer: Map<string, string[]>,
-): { dev: number | null; qa: number | null } {
-  const devCounts: Record<string, number> = {}
-  const qaCounts: Record<string, number> = {}
-  const cohorts = trendCohorts(round.votes, shieldsByPlayer)
-  for (const v of round.votes) {
-    const cohort = cohorts.get(v.player_id)
-    if (cohort === 'QA') qaCounts[v.vote] = (qaCounts[v.vote] ?? 0) + 1
-    else if (cohort === 'DEV') devCounts[v.vote] = (devCounts[v.vote] ?? 0) + 1
-  }
-  const activeCards = resolveActiveCards(round.active_cards, round.deck_preset)
-  return {
-    dev: alignmentScore(devCounts, activeCards),
-    qa: alignmentScore(qaCounts, activeCards),
-  }
-}
-
 export function roleRoundAlignment(
   round: RoundHistory,
   shieldsByPlayer: ReadonlyMap<string, string[]>,
@@ -93,21 +73,15 @@ export function roundAlignment(
   round: RoundHistory,
   shieldsByPlayer: Map<string, string[]>,
 ): number | null {
-  const { dev, qa } = splitRoundAlignment(round, shieldsByPlayer)
-  if (dev !== null && qa !== null) return Math.round((dev + qa) / 2)
-  if (dev !== null || qa !== null) return dev ?? qa
-  const counts: Record<string, number> = {}
-  for (const v of round.votes) counts[v.vote] = (counts[v.vote] ?? 0) + 1
-  return alignmentScore(counts, resolveActiveCards(round.active_cards, round.deck_preset))
+  return isNumericPreset(round.deck_preset) ? summarizeRound(round, shieldsByPlayer).alignment : null
 }
 
 export function summarizeRound(round: RoundHistory, shieldsByPlayer?: ReadonlyMap<string, string[]>): RoundSummary {
   const counts: Record<string, number> = {}
   for (const v of round.votes) counts[v.vote] = (counts[v.vote] ?? 0) + 1
-  const cohorts = trendCohorts(round.votes, shieldsByPlayer)
   const estimateCounts: Record<string, number> = {}
-  for (const v of round.votes) {
-    if (cohorts.has(v.player_id)) estimateCounts[v.vote] = (estimateCounts[v.vote] ?? 0) + 1
+  for (const v of estimatorVotes(round.votes, shieldsByPlayer)) {
+    estimateCounts[v.vote] = (estimateCounts[v.vote] ?? 0) + 1
   }
   const isPoll = isPollPreset(round.deck_preset)
   return {

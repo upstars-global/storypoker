@@ -4,25 +4,18 @@ import { i18n } from '~/i18n'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal'
 import type { DeckPresetId } from '~/utils/cardDecks'
 
-function mountModal(props: { deckPreset?: DeckPresetId; resultCohorts?: string[] } = {}) {
+function mountModal(props: { deckPreset?: DeckPresetId } = {}) {
   const onSave = vi.fn()
   const onClose = vi.fn()
   const view = render(
     <ConfigureCardDeckModal
       deckPreset={props.deckPreset ?? 'scrum'}
       activeCards={['1', '2', '3']}
-      resultCohorts={props.resultCohorts ?? ['DEV', 'BE', 'FE', 'SRE', 'QA']}
       onSave={onSave}
       onClose={onClose}
     />,
   )
   return { ...view, onSave, onClose }
-}
-
-function cohortCheckbox(cohort: string) {
-  const input = document.getElementById(`deck-cohort-${cohort}`)
-  if (!input) throw new Error(`cohort ${cohort} not found`)
-  return input
 }
 
 function saveButton() {
@@ -38,31 +31,12 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('ConfigureCardDeckModal result cohorts', () => {
-  it('lists the cohorts next to the cards and saves the chosen ones in canonical order', () => {
-    const { onSave } = mountModal({ resultCohorts: ['QA'] })
-    const chips = Array.from(document.querySelectorAll('[data-testid="deck-result-cohorts"] .mui-chip'))
-    expect(chips.map(chip => chip.textContent?.trim())).toEqual(['DEV', 'BE', 'FE', 'SRE', 'QA'])
-    expect(document.getElementById('deck-cohort-QA')).toBeNull()
-    fireEvent.click(cohortCheckbox('FE'))
-    fireEvent.click(cohortCheckbox('BE'))
-    fireEvent.click(saveButton())
-    expect(onSave.mock.calls[0]![0]).toMatchObject({ deckPreset: 'scrum', cohorts: ['BE', 'FE', 'QA'] })
-  })
-
-  it('unchecks a cohort', () => {
+describe('ConfigureCardDeckModal automatic results', () => {
+  it('removes result selection and saves only the preset and cards', () => {
     const { onSave } = mountModal()
-    fireEvent.click(cohortCheckbox('SRE'))
+    expect(document.querySelector('[data-testid="deck-result-cohorts"]')).toBeNull()
     fireEvent.click(saveButton())
-    expect(onSave.mock.calls[0]![0]).toMatchObject({ cohorts: ['DEV', 'BE', 'FE', 'QA'] })
-  })
-
-  it('hides cohorts for decks without pie results', () => {
-    mountModal({ deckPreset: 'voting' })
-    expect(document.querySelector('[data-testid="deck-result-cohorts"]')).toBeNull()
-    cleanup()
-    mountModal({ deckPreset: 'goal_clarity' })
-    expect(document.querySelector('[data-testid="deck-result-cohorts"]')).toBeNull()
+    expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'] })
   })
 })
 

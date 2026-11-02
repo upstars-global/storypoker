@@ -16,7 +16,7 @@ const ROOM_SCENES = [
 test.describe('openScene self-check', () => {
   test('exports the screenshot matrix', () => {
     expect(PALETTES).toEqual(['classic', 'cyberdeck', 'matcha'])
-    expect(THEMES).toEqual(['light', 'dark'])
+    expect(THEMES).toEqual(['dark', 'light'])
     expect(VIEWPORTS).toEqual([1280, 375])
   })
 

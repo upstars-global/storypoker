@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import process from 'node:process'
 
 // Same alignment/average scoring as app/utils/alignment.ts + app/utils/roundStats.ts,
 // duplicated here (not imported) so this function has no dependency on Vite path
@@ -82,15 +83,24 @@ function resolveActiveCards(activeCards: string[] | null, deckPreset: string | n
   return DEFAULT_ACTIVE_CARDS[deckPreset ?? LEGACY_DEFAULT_PRESET] ?? null
 }
 
-// QA disciplines route a player's vote into the separate QA pile (mirrors
-// QA_SHIELDS/isQaPlayer in app/utils/shields.ts).
+// Mirrors cohortForShields() in app/utils/resultCohorts.ts.
+const ROLE_COHORTS = ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM']
+const ROLE_BY_SHIELD = new Map(ROLE_COHORTS.map(role => [role.toLowerCase(), role]))
+
+function cohortForShields(shields: string[] | undefined): string | null {
+  const role = shields?.find(id => ROLE_BY_SHIELD.has(id) || id.startsWith('custom:'))
+  return role ? ROLE_BY_SHIELD.get(role) ?? null : 'DEV'
+}
+
+// Legacy DEV/QA scoring is the agilecharts contract; keep this split unchanged.
+// QA disciplines route a player's vote into the separate QA pile.
 const QA_SHIELDS = new Set(['qa', 'aqa', 'gqa'])
 
 function isQaPlayer(shields: string[] | null | undefined): boolean {
   return Boolean(shields?.some(id => QA_SHIELDS.has(id)))
 }
 
-// Mirrors trendCohorts() in app/utils/shields.ts: PO/SM and custom roles are not estimators;
+// Legacy agilecharts contract: PO/SM and custom roles are not estimators;
 // players without a role, players who left the room and rounds of non-estimators only count as DEV.
 const DEV_ROLE_SHIELDS = new Set(['dev', 'be', 'fe', 'sre'])
 const ROLE_SHIELDS = new Set([...DEV_ROLE_SHIELDS, ...QA_SHIELDS, 'po', 'sm'])
@@ -115,8 +125,7 @@ function trendCohorts(
   return cohorts
 }
 
-// Mirrors splitRoundAlignment() in app/utils/roundStats.ts: same per-round
-// DEV/QA split shown in the storypoker app's own Alignment Trends modal.
+// Legacy agilecharts contract: the per-round DEV/QA split stays unchanged.
 function splitAlignment(
   votes: { player_id: string; vote: string }[],
   shieldsByPlayer: Map<string, string[]>,
@@ -197,6 +206,18 @@ async function buildRoomPayload(supabase: SupabaseClient, room: RoomRow) {
       for (const v of estimateVotes) counts[v.vote] = (counts[v.vote] ?? 0) + 1
       const date = new Date(r.revealed_at as string)
       const { dev, qa } = splitAlignment(r.votes ?? [], shieldsByPlayer, resolveActiveCards(r.active_cards, r.deck_preset))
+      const roleCounts = new Map<string, Record<string, number>>()
+      const roleVotes = (r.votes ?? []).flatMap(v => {
+        const role = cohortForShields(shieldsByPlayer.get(v.player_id))
+        if (!role) return []
+        const counts = roleCounts.get(role) ?? {}
+        counts[v.vote] = (counts[v.vote] ?? 0) + 1
+        roleCounts.set(role, counts)
+        return [{ name: v.name, vote: v.vote, role }]
+      })
+      const alignments = Object.fromEntries(ROLE_COHORTS
+        .filter(role => roleCounts.has(role))
+        .map(role => [role, alignmentScore(roleCounts.get(role)!, resolveActiveCards(r.active_cards, r.deck_preset))]))
       return {
         id: r.id,
         date: r.revealed_at,
@@ -212,6 +233,8 @@ async function buildRoomPayload(supabase: SupabaseClient, room: RoomRow) {
         // them here is no wider than that, and this endpoint is already gated by
         // STORYPOKER_API_TOKEN.
         votes: estimateVotes.map(v => ({ name: v.name, vote: v.vote, cohort: cohorts.get(v.player_id)! })),
+        alignments,
+        roleVotes,
       }
     })
     .filter(r => r.average !== null && (r.devAlignment !== null || r.qaAlignment !== null))

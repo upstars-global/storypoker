@@ -25,14 +25,15 @@ allowed»), тож delete-політику так не перевірити - л
 таблиці з колонкою `name` (`rooms`) пиши `objects.name`: некваліфікований `name` береться з таблиці підзапиту
 (так зламався `016`, виправив `019`).
 Таблиці:
-- `rooms (id text PK, slug text unique, name text, background_url, background_updated_at, background_opacity,
-  background_owner_id, created_at)`
-- `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms,
-  poll_question, result_cohorts[], alarm_minutes, alarm_muted)` - `result_cohorts` з `017`, check-констрейнт на
-  `DEV/BE/FE/SRE/QA`, `null` = усі; будильник таймера з `018` (`alarm_minutes` 3-20, `null` = 5 хв)
-- `players (id uuid PK, room_id, name, is_moderator, vote, user_id, shields text[], created_at, left_at)`
-- `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, deck_preset, created_at)`
-- `user_profiles (user_id uuid PK, avatar_style, avatar_seed, avatar_url, updated_at)`
+1. `rooms (id text PK, slug text unique, name text, background_url, background_updated_at, background_opacity, background_owner_id, created_at)`
+2. `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms, poll_question, result_cohorts[], alarm_minutes, alarm_muted)`
+  (`result_cohorts` з `017`), check-констрейнт на `DEV/BE/FE/SRE/QA` збережений без змін для сумісності.
+  Поточний UI ігнорує всі збережені значення цього поля; збереження колоди його не змінює. Кола автоматично
+  формуються з фактичних голосів кожної вбудованої й кастомної ролі (`groupResultVotes()`); налаштувань
+  вибору кіл немає. Схема й дані не мігруються. Будильник таймера з `018` (`alarm_minutes` 3-20, `null` = 5 хв)
+3. `players (id uuid PK, room_id, name, is_moderator, vote, user_id, shields text[], created_at, left_at)`
+4. `round_history (id uuid PK, room_id, started_at, revealed_at, votes jsonb, deck_preset, created_at)`
+5. `user_profiles (user_id uuid PK, avatar_style, avatar_seed, avatar_url, updated_at)`
 
 RLS зараз public read/write для anon key; логіка в клієнті. Виняток - `user_profiles`: select лишається public, а
 insert/update з `014` тільки `to authenticated` для власного рядка (`auth.uid() = user_id`); з `015` `avatar_url`

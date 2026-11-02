@@ -8,14 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import { useCardLabel } from '~/hooks/useCardLabel'
 import { useRipple } from '~/hooks/useRipple'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
-import { ALWAYS_SHOWN_COHORT, RESULT_COHORTS } from '~/utils/resultCohorts'
 
-export type CardDeckPayload = { deckPreset: DeckPresetId; cards: string[]; cohorts: string[] }
+export type CardDeckPayload = { deckPreset: DeckPresetId; cards: string[] }
 
 type ConfigureCardDeckModalProps = {
   deckPreset: DeckPresetId
   activeCards: string[]
-  resultCohorts: string[]
   onSave: (payload: CardDeckPayload) => void
   onClose: () => void
 }
@@ -23,40 +21,31 @@ type ConfigureCardDeckModalProps = {
 const PRESET_ITEMS = DECK_PRESETS.map(p => ({ value: p.id, label: p.name }))
 
 const PRESET_TRIGGER_CLASS = [
-  'mui-input w-full gap-0 rounded-(--radius-input) border-input bg-transparent py-[17.5px] pr-0 pl-[18px]',
+  'mui-input w-full gap-0 rounded-(--radius-input) border-input bg-transparent py-[17.5px] px-[18px]',
   'text-[1rem] leading-[normal] data-[size=default]:h-auto cursor-pointer',
   'focus-visible:ring-0 focus-visible:border-(--primary) dark:bg-transparent dark:hover:bg-transparent',
   '[&>svg]:text-(--text-primary) [&>svg]:stroke-[3]',
 ].join(' ')
 
-export default function ConfigureCardDeckModal({ deckPreset, activeCards, resultCohorts, onSave, onClose }: ConfigureCardDeckModalProps) {
+export default function ConfigureCardDeckModal({ deckPreset, activeCards, onSave, onClose }: ConfigureCardDeckModalProps) {
   const { t } = useTranslation()
   const cardLabel = useCardLabel()
   const ripple = useRipple<HTMLButtonElement>()
   const [presetId, setPresetId] = useState<DeckPresetId>(deckPreset)
   const [selected, setSelected] = useState<string[]>(() => [...activeCards])
-  const [cohorts, setCohorts] = useState<string[]>(() => [...resultCohorts])
-  const incoming = { deckPreset, cards: activeCards.join('\n'), cohorts: resultCohorts.join('\n') }
+  const incoming = { deckPreset, cards: activeCards.join('\n') }
   const [synced, setSynced] = useState(incoming)
 
-  if (synced.deckPreset !== incoming.deckPreset || synced.cards !== incoming.cards || synced.cohorts !== incoming.cohorts) {
+  if (synced.deckPreset !== incoming.deckPreset || synced.cards !== incoming.cards) {
     if (synced.deckPreset !== incoming.deckPreset) setPresetId(deckPreset)
     if (synced.cards !== incoming.cards) setSelected([...activeCards])
-    if (synced.cohorts !== incoming.cohorts) setCohorts([...resultCohorts])
     setSynced(incoming)
   }
 
   const currentDeck = getDeck(presetId)
   const isVoting = presetId === 'voting'
   const isVoteQuestion = presetId === 'vote_question'
-  const showsCohorts = !isVoting && !isVoteQuestion && presetId !== 'goal_clarity'
   const votingThird = selected.find(c => VOTING_THIRD_CARDS.includes(c)) ?? VOTING_THIRD_CARDS[0]!
-
-  function toggleCohort(cohort: string) {
-    setCohorts(current => current.includes(cohort)
-      ? current.filter(c => c !== cohort)
-      : RESULT_COHORTS.filter(c => c === cohort || current.includes(c)))
-  }
 
   function toggle(card: string) {
     setSelected((current) => {
@@ -202,59 +191,10 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
                 </div>
               )}
 
-        {showsCohorts && (
-          <div className="flex flex-col items-center gap-2 mt-6">
-            <span className="text-mui-caption font-semibold uppercase tracking-wide text-muted">
-              {t('deck.resultCohorts')}
-            </span>
-            <div
-              className="flex flex-wrap justify-center gap-2"
-              data-testid="deck-result-cohorts"
-            >
-              {RESULT_COHORTS.map(cohort => cohort === ALWAYS_SHOWN_COHORT
-                ? (
-                    <span
-                      key={cohort}
-                      className="mui-chip is-selected is-disabled is-locked"
-                      title={t('deck.qaCohortHint')}
-                    >
-                      <AppIcon
-                        className="mui-chip-check"
-                        name="ic:baseline-check"
-                      />
-                      {cohort}
-                    </span>
-                  )
-                : (
-                    <label
-                      key={cohort}
-                      className={cohorts.includes(cohort) ? 'mui-chip is-selected' : 'mui-chip'}
-                    >
-                      <input
-                        id={`deck-cohort-${cohort}`}
-                        type="checkbox"
-                        name={`deck-cohort-${cohort}`}
-                        checked={cohorts.includes(cohort)}
-                        className="sr-only"
-                        onChange={() => toggleCohort(cohort)}
-                      />
-                      {cohorts.includes(cohort) && (
-                        <AppIcon
-                          className="mui-chip-check"
-                          name="ic:baseline-check"
-                        />
-                      )}
-                      {cohort}
-                    </label>
-                  ))}
-            </div>
-          </div>
-        )}
-
         <div className="flex justify-center mt-8">
           <Button
             ref={ripple}
-            onClick={() => onSave({ deckPreset: presetId, cards: selected, cohorts })}
+            onClick={() => onSave({ deckPreset: presetId, cards: selected })}
           >
             {t('deck.save')}
           </Button>
