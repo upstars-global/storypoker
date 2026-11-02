@@ -86,6 +86,21 @@ describe('CardsArea voting', () => {
     expect(props.onVote).toHaveBeenCalledWith('3')
   })
 
+  it.each([
+    ['the last-round view', { showLastRound: true }],
+    ['fewer than two votes', { hasVotes: false }],
+    ['a running countdown', { countdownRunning: true }],
+  ])('keeps the reveal button in place but disabled during %s', (_name, overrides) => {
+    mountCards(overrides)
+    const reveal = screen.getByTestId('reveal-button') as HTMLButtonElement
+    expect(reveal.disabled).toBe(true)
+  })
+
+  it('enables the reveal button when votes can be revealed', () => {
+    mountCards()
+    expect((screen.getByTestId('reveal-button') as HTMLButtonElement).disabled).toBe(false)
+  })
+
   it('hides moderator controls from a plain player', () => {
     mountCards({ isModerator: false })
     expect(screen.queryByTestId('reveal-button')).toBeNull()

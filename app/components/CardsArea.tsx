@@ -403,16 +403,14 @@ export default function CardsArea({
             style={{ width: 0 }}
           />
           <div className="flex items-center gap-4">
-            {!showLastRound && (
-              <Button
+            <Button
               ref={ripple}
-                disabled={!hasVotes || countdownRunning || !canVote}
-                data-testid="reveal-button"
-                onClick={onReveal}
-              >
-                {t('cards.reveal')}
-              </Button>
-            )}
+              disabled={!hasVotes || countdownRunning || !canVote || showLastRound}
+              data-testid="reveal-button"
+              onClick={onReveal}
+            >
+              {t('cards.reveal')}
+            </Button>
             <div
               className={modeDisabled
                 ? 'mui-icon-group flex items-center justify-center pointer-events-none opacity-50'
