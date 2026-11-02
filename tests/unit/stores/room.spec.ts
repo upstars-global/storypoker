@@ -131,6 +131,26 @@ describe('roomStore actions', () => {
     ])
   })
 
+  it('reveal() keeps every vote of a voting deck in round_history', async () => {
+    const calls: Array<{ table: string; arg: Record<string, unknown> }> = []
+    setSupabase(asSupabase({
+      from: (table: string) => ({
+        update: () => updateQuery(),
+        insert: (arg: Record<string, unknown>) => {
+          calls.push({ table, arg })
+          return Promise.resolve({ error: null })
+        },
+      }),
+    }))
+    useRoomStore.setState({ roomId: 'r1', roomState: fakeRoomState({ deck_preset: 'voting', result_cohorts: ['BE'] }) })
+    usePlayersStore.setState({ players: [
+      fakePlayer({ id: 'p1', name: 'Fe', vote: 'yes', shields: ['fe'] }),
+      fakePlayer({ id: 'p2', name: 'Po', vote: 'no', shields: ['po'] }),
+    ] })
+    await state().reveal()
+    expect(calls.find(c => c.table === 'round_history')?.arg.votes).toHaveLength(2)
+  })
+
   it('reveal() writes round_history when votes>=2', async () => {
     const calls: Array<{ table: string; op: string; arg: Record<string, unknown> }> = []
     setSupabase(asSupabase({

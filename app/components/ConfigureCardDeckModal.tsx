@@ -207,6 +207,7 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
                 </div>
               )}
 
+        {!isVoting && !isVoteQuestion && (
         <div
           className="flex flex-col items-center gap-2 mt-8"
           data-testid="deck-result-cohorts"
@@ -251,6 +252,7 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
           ))}
           </div>
         </div>
+        )}
 
         <div className="flex justify-center mt-8">
           <Button

@@ -245,7 +245,7 @@ export default function RoomPage() {
   const isPollDeck = roomState?.deck_preset === 'voting' || roomState?.deck_preset === 'vote_question'
 
   const resultCohorts = roomState?.result_cohorts
-  const excludedVoters = visiblePlayers.filter(p => p.vote && resultKeyFor(p.shields, resultCohorts) === null)
+  const excludedVoters = isPollDeck ? [] : visiblePlayers.filter(p => p.vote && resultKeyFor(p.shields, resultCohorts) === null)
   const hiddenVotePlayerIds = new Set(excludedVoters.map(p => p.id))
   const voteCounts: Record<string, number> = roomState
     ? visiblePlayers.reduce<Record<string, number>>((acc, p) => {

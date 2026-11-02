@@ -531,6 +531,15 @@ describe('room page results', () => {
     expect([...lastProps(PlayersList).hiddenVotePlayerIds ?? []]).toEqual(['f'])
   })
 
+  it('counts every vote in voting decks regardless of chips', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('f', ['fe'], 'yes'), fakePlayer('p', ['po'], 'no')],
+      state: fakeState({ phase: 'revealed', deck_preset: 'voting', active_cards: ['yes', 'no'], result_cohorts: ['BE'] }),
+    })
+    expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
+    expect(lastProps(ResultsArea).votes).toEqual({ yes: 1, no: 1 })
+  })
+
   it('applies a realtime chip change without reload', async () => {
     await mountRoom({
       players: [me, fakePlayer('b', ['be'], '3'), fakePlayer('d', ['dev'], '5')],

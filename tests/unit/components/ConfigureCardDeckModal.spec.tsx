@@ -59,6 +59,13 @@ describe('ConfigureCardDeckModal result cohort chips', () => {
     expect(groups[3]!.className).not.toContain('border-l')
   })
 
+  it.each(['voting', 'vote_question'] as const)('hides the result chips for the %s deck', deckPreset => {
+    const { onSave } = mountModal({ deckPreset, resultCohorts: ['BE'] })
+    expect(screen.queryByTestId('deck-result-cohorts')).toBeNull()
+    fireEvent.click(saveButton())
+    expect(onSave.mock.calls[0]![0]).toMatchObject({ resultCohorts: ['BE'] })
+  })
+
   it('saves the toggled subset in canonical order', () => {
     const { onSave } = mountModal({ resultCohorts: ['SRE', 'QA'] })
     expect(cohortChips().map(chip => chip.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'false', 'true', 'true', 'false', 'false', 'false', 'false'])
