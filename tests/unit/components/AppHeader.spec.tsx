@@ -110,5 +110,7 @@ describe('AppHeader feedback button', () => {
     expect(`${url.origin}${url.pathname}`).toBe('https://github.com/upstars-global/storypoker/issues/new')
     expect(url.searchParams.get('title')).toBe('Feedback: ')
     expect(url.searchParams.get('body')).toBe('## What happened\n\n\n## What did you expect\n\n')
+    expect(link.nextElementSibling?.textContent).not.toBe('')
+    expect(link.compareDocumentPosition(screen.getByTestId('account-menu-button')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

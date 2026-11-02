@@ -155,11 +155,6 @@ export default function AppHeader({
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
-        {headerLabel && (
-          <span className="text-sm text-appbar-emphasis">
-            {headerLabel}
-          </span>
-        )}
         <AppTooltip
           side="bottom"
           trigger={(
@@ -182,6 +177,11 @@ export default function AppHeader({
         >
           {t('header.feedback')}
         </AppTooltip>
+        {headerLabel && (
+          <span className="text-sm text-appbar-emphasis">
+            {headerLabel}
+          </span>
+        )}
         <AppMenu
           label={t('header.currentUserAccount')}
           testId="account-menu-button"
