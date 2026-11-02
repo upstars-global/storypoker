@@ -42,7 +42,7 @@ describe('ReportIssueTab', () => {
   it('loads the preview from Storage only once the tab is hovered', () => {
     const tab = mountTab()
     expect(screen.queryByTestId('report-issue-preview')).toBeNull()
-    fireEvent.pointerEnter(tab.parentElement!)
+    fireEvent.pointerEnter(tab.parentElement!, { pointerType: 'mouse' })
     const preview = screen.getByTestId('report-issue-preview') as HTMLImageElement
     expect(preview.src).toBe(PREVIEW_URL)
     expect(requested).toEqual([`${REPORT_ISSUE_BUCKET}/${REPORT_ISSUE_PREVIEW_PATH}`])
@@ -66,5 +66,28 @@ describe('ReportIssueTab', () => {
     fireEvent.focus(tab)
     expect(screen.queryByTestId('report-issue-preview')).toBeNull()
     expect(requested).toEqual([])
+  })
+
+  it('does not render the preview for a touch pointer', () => {
+    const tab = mountTab()
+    fireEvent.pointerEnter(tab.parentElement!, { pointerType: 'touch' })
+    expect(screen.queryByTestId('report-issue-preview')).toBeNull()
+    expect(requested).toEqual([])
+  })
+
+  it('does not render the preview on focus when the device cannot hover', () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation(query => ({ matches: query === '(hover: none)' }) as MediaQueryList)
+    const tab = mountTab()
+    fireEvent.focus(tab)
+    expect(screen.queryByTestId('report-issue-preview')).toBeNull()
+    expect(requested).toEqual([])
+  })
+
+  it('shows only the icon below sm while keeping the localized accessible name', () => {
+    const tab = mountTab()
+    expect(tab.getAttribute('aria-label')).toBe(i18n.t('reportIssue.label'))
+    const label = screen.getByTestId('report-issue-label')
+    expect(label.className.split(' ')).toEqual(expect.arrayContaining(['sr-only', 'sm:not-sr-only']))
+    expect(screen.getByTestId('report-issue-icon').className.split(' ')).toContain('sm:hidden')
   })
 })

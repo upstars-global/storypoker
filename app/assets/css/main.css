@@ -556,10 +556,8 @@ body {
 
   .report-issue-tab {
     display: block;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    padding: 12px 6px;
-    border-radius: 0 8px 8px 0;
+    padding: 8px 6px;
+    border-radius: 8px 0 0 8px;
     background-color: var(--bg-appbar);
     color: #fff;
     font-size: 0.75rem;
@@ -569,6 +567,14 @@ body {
     box-shadow: var(--card-shadow, 0 2px 6px rgba(0, 0, 0, 0.3));
     opacity: 0.85;
     transition: opacity 150ms ease;
+  }
+  @media (min-width: 640px) {
+    .report-issue-tab {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding: 12px 6px;
+      border-radius: 0 8px 8px 0;
+    }
   }
   .report-issue-tab:hover,
   .report-issue-tab:focus-visible {
