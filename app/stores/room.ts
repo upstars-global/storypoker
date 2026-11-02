@@ -174,10 +174,12 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
       idsByVote.set(vote, [...(idsByVote.get(vote) ?? []), playerId])
     }
     const supabase = getSupabase()
-    await supabase.from('players').update({ vote: null }).eq('room_id', roomId)
     await Promise.all([...idsByVote].map(([vote, ids]) =>
       supabase.from('players').update({ vote }).eq('room_id', roomId).in('id', ids),
     ))
+    const restoredIds = [...idsByVote.values()].flat()
+    const clearOthers = supabase.from('players').update({ vote: null }).eq('room_id', roomId)
+    await (restoredIds.length ? clearOthers.not('id', 'in', `(${restoredIds.join(',')})`) : clearOthers)
     playersStore.clearPendingVotes()
   }
 

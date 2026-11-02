@@ -285,4 +285,11 @@ Task 20: done - poll decks hide chips and skip vote filtering (UI + round_histor
 Task 21: done - goal_clarity without chips via usesResultChips(); vitest 609 passed, lint + typecheck clean
 Task 22: done - single-vote circle alignment 100 on results screen; vitest 611 passed, lint + typecheck clean
 Task 23: done - below lg results layer in flow, cards layer hidden while results shown; vitest 613 passed, lint + typecheck clean
+Ruling: review R1 origin automatic - CI auto-review pr-auto-review.yml run 41535775033, PR #73 review 5744196776 on head eaa7efb1373ab670f6fcb0ca295baf4afa8fd669, dispatched after the user's merge plan
+Review R1: Intent PASS, System FINDINGS, Craft FINDINGS, 0/0/2, ready with fixes tree 18b4269d3cefc059ff6aa609ac24a4035d892449 reviewer so-upstars auto-review mode code
+Finding R1-F1: Minor app/stores/room.ts:177 - Undo clears votes cast after the reset and is not atomic
+Finding R1-F2: Minor supabase/AGENTS.md:31 - Stale doc says the UI ignores result_cohorts and has no circle settings
+Received R1: R1-F1 PARTIAL, R1-F2 ACCEPT Re-review: not needed
+Ruling: R1-F1 keep full rollback, write snapshot votes first and clear only the other players - spec decision 3 (owner chose full rollback over new votes winning) governs the semantics; the reorder removes the all-empty flash the review cites - a vote cast after reset is still lost on undo, as the owner decided
+Round review 1: undo write order and a stale schema note
 ```

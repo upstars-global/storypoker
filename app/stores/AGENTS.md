@@ -14,4 +14,8 @@ Zustand stores у `app/stores/`: дії й стан - `useXStore.getState()`, у
 - `types.ts` - спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `ConnectionStatus`);
   `UserProfile` живе в `profiles.ts`
 
+`room.restoreVotes()` спершу записує голоси знімка, потім обнуляє решту гравців кімнати: undo - повний відкат, і
+голос, поданий після reset, теж зникає. Це прийнятий компроміс за рішенням власника (спека
+`docs/specs/2026-11-02-room-controls-cohort-chips-design.md`, рішення 3), а не дефект для рев'ю.
+
 Інваріант доступу до Supabase-клієнта (`getSupabase()`/`initSupabase()`/`setSupabase(mock)`) - `app/AGENTS.md`.

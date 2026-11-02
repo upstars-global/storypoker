@@ -381,21 +381,30 @@ describe('roomStore.restoreVotes', () => {
     await resetStores()
   })
 
-  it('clears every vote, then restores the snapshot for players still in the room', async () => {
-    const calls: Array<{ arg: Record<string, unknown>; filters: [string, string, unknown][] }> = []
+  function recordUpdates() {
+    const calls: Array<{ arg: Record<string, unknown>; filters: unknown[][] }> = []
     setSupabase(asSupabase({
       from: () => ({
         update: (arg: Record<string, unknown>) => {
-          const filters: [string, string, unknown][] = []
+          const filters: unknown[][] = []
           calls.push({ arg, filters })
           const query = Object.assign(Promise.resolve({ error: null }), {
             eq: (column: string, value: unknown) => { filters.push(['eq', column, value]); return query },
             in: (column: string, value: unknown) => { filters.push(['in', column, value]); return query },
+            not: (column: string, operator: string, value: unknown) => {
+              filters.push(['not', column, operator, value])
+              return query
+            },
           })
           return query
         },
       }),
     }))
+    return calls
+  }
+
+  it('restores the snapshot for players still in the room, then clears every other vote', async () => {
+    const calls = recordUpdates()
     useRoomStore.setState({ roomId: 'r1' })
     usePlayersStore.setState({
       players: [
@@ -407,12 +416,20 @@ describe('roomStore.restoreVotes', () => {
       pendingVotes: { a: '13' },
     })
     await state().restoreVotes({ a: '3', b: '3', c: '5', gone: '8' })
-    expect(calls[0]).toEqual({ arg: { vote: null }, filters: [['eq', 'room_id', 'r1']] })
-    expect(calls.slice(1)).toEqual([
+    expect(calls).toEqual([
       { arg: { vote: '3' }, filters: [['eq', 'room_id', 'r1'], ['in', 'id', ['a', 'b']]] },
       { arg: { vote: '5' }, filters: [['eq', 'room_id', 'r1'], ['in', 'id', ['c']]] },
+      { arg: { vote: null }, filters: [['eq', 'room_id', 'r1'], ['not', 'id', 'in', '(a,b,c)']] },
     ])
     expect(usePlayersStore.getState().pendingVotes).toEqual({})
+  })
+
+  it('clears every vote when no snapshot player is still in the room', async () => {
+    const calls = recordUpdates()
+    useRoomStore.setState({ roomId: 'r1' })
+    usePlayersStore.setState({ players: [fakePlayer({ id: 'a', vote: '13' })] })
+    await state().restoreVotes({ gone: '8' })
+    expect(calls).toEqual([{ arg: { vote: null }, filters: [['eq', 'room_id', 'r1']] }])
   })
 })
 
