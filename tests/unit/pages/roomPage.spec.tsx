@@ -1,3 +1,4 @@
+import { isValidElement, type ComponentProps } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
@@ -187,6 +188,12 @@ function lastProps<P>(component: (props: P) => unknown): P {
   const call = vi.mocked(component).mock.lastCall
   if (!call) throw new Error('component was not rendered')
   return call[0]
+}
+
+function lastRoundViewProps() {
+  const view = lastProps(CardsArea).lastRoundView
+  if (!isValidElement<ComponentProps<typeof ResultsArea>>(view)) throw new Error('last-round view was not provided')
+  return view.props
 }
 
 function blockLabels() {
@@ -565,7 +572,7 @@ describe('room page results', () => {
       useRoomStore.setState({ roomState: fakeState({ phase: 'voting' }) })
     })
     await act(async () => { lastProps(CardsArea).onToggleLastRound() })
-    expect(lastProps(ResultsArea).groups).toEqual(groups)
+    expect(lastRoundViewProps().groups).toEqual(groups)
     expect(lastProps(AlignmentCard).blocks).toEqual(blocks)
   })
 
@@ -609,7 +616,8 @@ describe('room page results', () => {
     await act(async () => {
       lastProps(CardsArea).onToggleLastRound()
     })
-    const lastRound = lastProps(ResultsArea)
+    expect(lastProps(CardsArea).showLastRound).toBe(true)
+    const lastRound = lastRoundViewProps()
     expect(lastRound.groups).toEqual([
       { key: 'DEV', label: 'DEV', votes: { '3': 1, '5': 1 } },
       { key: 'QA', label: 'QA', votes: { '5': 1 } },

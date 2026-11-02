@@ -837,18 +837,6 @@ export default function RoomPage() {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-start">
-          {roomState?.phase === 'voting' && showLastRound && lastRound && (
-            <ResultsArea
-              votes={lastRound.votes}
-              groups={lastRound.groups}
-              showNewRound={false}
-              pollQuestion={lastRound.pollQuestion}
-              disableCelebration
-              showAlignment={!lastRound.isVotingDeck}
-              activeCards={lastRound.activeCards}
-              goalClarityScore={lastRound.deckPreset === 'goal_clarity'}
-            />
-          )}
           {roomState?.phase === 'revealed' && (
             <ResultsArea
               votes={voteCounts}
@@ -877,6 +865,18 @@ export default function RoomPage() {
               pollQuestion={roomState.poll_question ?? null}
               hasLastRound={!!lastRound}
               showLastRound={showLastRound}
+              lastRoundView={lastRound && (
+                <ResultsArea
+                  votes={lastRound.votes}
+                  groups={lastRound.groups}
+                  showNewRound={false}
+                  pollQuestion={lastRound.pollQuestion}
+                  disableCelebration
+                  showAlignment={!lastRound.isVotingDeck}
+                  activeCards={lastRound.activeCards}
+                  goalClarityScore={lastRound.deckPreset === 'goal_clarity'}
+                />
+              )}
               onVote={card => void handleVote(card)}
               onReveal={() => void useRoomStore.getState().reveal()}
               onReset={() => void handleResetToggle()}

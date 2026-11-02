@@ -109,6 +109,18 @@ describe('CardsArea voting', () => {
     expect(slot.className).toContain('lg:w-[151.66px]')
   })
 
+  it.each([false, true])('stacks cards and the last-round view in one cell (showLastRound=%s)', showLastRound => {
+    mountCards({ showLastRound, lastRoundView: <div data-testid="last-round-content" /> })
+    const cards = screen.getByTestId('cards-layer')
+    const lastRound = screen.getByTestId('last-round-layer')
+    expect(cards.parentElement).toBe(lastRound.parentElement)
+    expect(cards.className.split(' ')).toContain('[grid-area:1/1]')
+    expect(lastRound.className.split(' ')).toContain('[grid-area:1/1]')
+    expect(cards.classList.contains('invisible')).toBe(showLastRound)
+    expect(lastRound.classList.contains('invisible')).toBe(!showLastRound)
+    expect(screen.getByTestId('reveal-button')).toBeTruthy()
+  })
+
   it('hides moderator controls from a plain player', () => {
     mountCards({ isModerator: false })
     expect(screen.queryByTestId('reveal-button')).toBeNull()

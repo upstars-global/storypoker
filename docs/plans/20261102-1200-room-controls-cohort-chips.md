@@ -265,8 +265,8 @@ Task 1: done - vitest tests/unit 575 passed, lint + typecheck clean; RED written
 Task 2: done - vitest tests/unit 576 passed, lint + typecheck clean; AC14 realtime test landed in Task 1
 Task 3: done - vitest tests/unit 584 passed, icons:check up to date, lint + typecheck clean; Ruling: icon ic:baseline-undo added to manifest + MDI_TO_LUCIDE (undo-2) over reusing lucide:undo - Lucide hardcode is forbidden - low cost
 Task 4: done - vitest tests/unit 588 passed, lint + typecheck clean
-Task 5: pending
-Task 6: done - vitest CardsArea 14 passed; browser row check pending (run with Task 5 browser pass)
+Task 5: done - vitest tests/unit 591 passed, lint + typecheck clean; Ruling: AC11 narrowed to voting screen by user ("ні, тільки екран 1"), spec re-approved; cards and last-round view stacked in one grid cell over fixed-height zone - panel cannot move on toggle; browser y-check of panel not run (harness has no last-round view)
+Task 6: done - vitest CardsArea 14 passed; browser (icon harness, Chrome) cards per row: 375 [3,3,3,1], 768 [3,3,3,1], 1023 [3,3,3,1], 1280 [5,5]
 Task 7: done - RED spinsLeft 5 != 3, GREEN vitest tests/unit 589 passed, lint + typecheck clean
 Task 8: pending
 ```

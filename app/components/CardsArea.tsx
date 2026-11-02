@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import AppIcon from '~/components/AppIcon'
@@ -21,6 +22,7 @@ type CardsAreaProps = {
   pollQuestion: string | null
   hasLastRound?: boolean
   showLastRound?: boolean
+  lastRoundView?: ReactNode
   onVote: (card: string) => void
   onReveal: () => void
   onReset: () => void
@@ -53,6 +55,7 @@ export default function CardsArea({
   pollQuestion,
   hasLastRound,
   showLastRound,
+  lastRoundView,
   onVote,
   onReveal,
   onReset,
@@ -301,13 +304,18 @@ export default function CardsArea({
 
   return (
     <div className="flex flex-col items-center w-full rounded">
-      {(pollMode || voteQuestionMode || !!pollQuestion) && !showLastRound && (
+      <div className="grid w-full">
+        <div
+          className={showLastRound ? 'invisible [grid-area:1/1] flex flex-col items-center w-full' : '[grid-area:1/1] flex flex-col items-center w-full'}
+          aria-hidden={showLastRound ? 'true' : undefined}
+          data-testid="cards-layer"
+        >
+      {(pollMode || voteQuestionMode || !!pollQuestion) && (
         <div className="w-full max-w-[640px] mx-auto mb-8">
           {pollSection()}
         </div>
       )}
 
-      {!showLastRound && (
         <div className={canVote
           ? 'flex flex-wrap justify-center gap-3 sm:gap-4 w-full lg:w-auto max-w-[480px] lg:max-w-[1240px] mx-auto'
           : 'flex flex-wrap justify-center gap-3 sm:gap-4 w-full lg:w-auto max-w-[480px] lg:max-w-[1240px] mx-auto pointer-events-none opacity-40'}
@@ -337,7 +345,17 @@ export default function CardsArea({
             </div>
           ))}
         </div>
-      )}
+        </div>
+        {lastRoundView && (
+          <div
+            className={showLastRound ? '[grid-area:1/1] w-full' : 'invisible [grid-area:1/1] w-full'}
+            aria-hidden={showLastRound ? undefined : 'true'}
+            data-testid="last-round-layer"
+          >
+            {lastRoundView}
+          </div>
+        )}
+      </div>
 
       {isModerator && (
         <div className="flex flex-wrap items-center justify-center gap-6 pt-8">
