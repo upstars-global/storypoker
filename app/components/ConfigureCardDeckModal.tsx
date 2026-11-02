@@ -7,7 +7,7 @@ import { Button } from '~/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { useCardLabel } from '~/hooks/useCardLabel'
 import { useRipple } from '~/hooks/useRipple'
-import { SPLITTABLE_COHORTS, selectedSplitCohorts } from '~/utils/resultCohorts'
+import { DEV_SPLIT_COHORTS, QA_SPLIT_COHORTS, selectedSplitCohorts } from '~/utils/resultCohorts'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
 
 export type CardDeckPayload = { deckPreset: DeckPresetId; cards: string[]; resultCohorts: string[] }
@@ -19,6 +19,8 @@ type ConfigureCardDeckModalProps = {
   onSave: (payload: CardDeckPayload) => void
   onClose: () => void
 }
+
+const COHORT_CHIP_GROUPS: readonly (readonly [string, readonly string[]])[] = [['DEV', DEV_SPLIT_COHORTS], ['QA', QA_SPLIT_COHORTS]]
 
 const PRESET_ITEMS = DECK_PRESETS.map(p => ({ value: p.id, label: p.name }))
 
@@ -207,26 +209,35 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
           <span className="text-mui-caption font-semibold uppercase tracking-wide text-primary">
             {t('deck.resultCohorts')}
           </span>
-          <div className="flex flex-wrap justify-center gap-2">
-            {SPLITTABLE_COHORTS.map(cohort => (
-              <button
-                key={cohort}
-                type="button"
-                className={splitCohorts.includes(cohort) ? 'mui-chip is-selected' : 'mui-chip'}
-                aria-pressed={splitCohorts.includes(cohort)}
-                data-testid="deck-result-cohort"
-                onClick={() => toggleCohort(cohort)}
-              >
-                {splitCohorts.includes(cohort) && (
-                  <AppIcon
-                    className="mui-chip-check"
-                    name="ic:baseline-check"
-                  />
-                )}
-                {cohort}
-              </button>
-            ))}
-          </div>
+          {COHORT_CHIP_GROUPS.map(([umbrella, cohorts]) => (
+            <div
+              key={umbrella}
+              className="flex flex-wrap items-center justify-center gap-2"
+              data-testid={`deck-result-cohorts-${umbrella}`}
+            >
+              <span className="text-mui-caption font-semibold text-muted w-10 text-right">
+                {umbrella}
+              </span>
+              {cohorts.map(cohort => (
+                <button
+                  key={cohort}
+                  type="button"
+                  className={splitCohorts.includes(cohort) ? 'mui-chip is-selected' : 'mui-chip'}
+                  aria-pressed={splitCohorts.includes(cohort)}
+                  data-testid="deck-result-cohort"
+                  onClick={() => toggleCohort(cohort)}
+                >
+                  {splitCohorts.includes(cohort) && (
+                    <AppIcon
+                      className="mui-chip-check"
+                      name="ic:baseline-check"
+                    />
+                  )}
+                  {cohort}
+                </button>
+              ))}
+            </div>
+          ))}
         </div>
 
         <div className="flex justify-center mt-8">

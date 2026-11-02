@@ -271,4 +271,5 @@ Task 7: done - RED spinsLeft 5 != 3, GREEN vitest tests/unit 589 passed, lint + 
 Task 8: done - AGENTS.md 21507 bytes, no "ігнорується" for result_cohorts; app/utils, app/components AGENTS.md and DESIGN.md updated
 Task 9: done - revealed results rendered in the CardsArea results layer with disabled panel; vitest tests/unit 593 passed, lint + typecheck clean
 Task 10: done - moderator panel fixed to viewport bottom, page main reserves bottom padding; vitest tests/unit 595 passed, lint + typecheck clean; harness Chrome: panel y=683 (375x812), y=725 (1280x800)
+Task 11: done - GQA/AQA chips, migration 021 written (not applied); vitest tests/unit 597 passed, lint + typecheck clean
 ```

@@ -29,9 +29,11 @@ export const COHORT_BADGE_TEXT_COLORS: Record<string, string> = {
   SM: '#111111',
 }
 
-export const SPLITTABLE_COHORTS: readonly string[] = ['BE', 'FE', 'SRE']
-const DEV_SUBCOHORTS = new Set(SPLITTABLE_COHORTS)
-const QA_SUBCOHORTS = new Set(['GQA', 'AQA'])
+export const DEV_SPLIT_COHORTS: readonly string[] = ['BE', 'FE', 'SRE']
+export const QA_SPLIT_COHORTS: readonly string[] = ['GQA', 'AQA']
+export const SPLITTABLE_COHORTS: readonly string[] = [...DEV_SPLIT_COHORTS, ...QA_SPLIT_COHORTS]
+const DEV_SUBCOHORTS = new Set(DEV_SPLIT_COHORTS)
+const QA_SUBCOHORTS = new Set(QA_SPLIT_COHORTS)
 
 export type VoteCounts = Record<string, number>
 
@@ -126,7 +128,7 @@ export function groupResultVotes(
       }
     }
     if (DEV_SUBCOHORTS.has(key) && !split.has(key)) key = DEV_UMBRELLA_COHORT
-    else if (QA_SUBCOHORTS.has(key)) key = 'QA'
+    else if (QA_SUBCOHORTS.has(key) && !split.has(key)) key = 'QA'
     let bucket = buckets.get(key)
     if (!bucket) {
       bucket = Object.create(null) as VoteCounts

@@ -144,6 +144,7 @@ Trusted inputs: рішення користувача в цій розмові, 
 ```text
 Ruling: AC11 narrowed to the voting screen - user: "ні, тільки екран 1" (2026-11-02); revealed screen keeps its layout
 Ruling: spec re-approved - 2026-11-02
+Ruling: GQA and AQA chips added, migration 021 widens the result_cohorts check - user: "додай чіпси qa ... якщо обирається якась чіпса - то під нього малюється окреме коло" (2026-11-02)
 Ruling: panel pinned to the viewport bottom (fixed) over reserved-height zone - user: "смужка і кнопки - завжди на одному місці. в будь якому сценаріі" (2026-11-02)
 Ruling: AC11 extended to the revealed screen - user: "коли натискаю показати результати - кнопки підскакують вверх до кіл" (2026-11-02)
 ```

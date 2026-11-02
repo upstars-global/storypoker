@@ -37,9 +37,9 @@ function cohortChips() {
 }
 
 describe('ConfigureCardDeckModal result cohort chips', () => {
-  it('shows exactly the BE, FE and SRE chips, none selected by default', () => {
+  it('shows BE, FE, SRE, GQA and AQA chips, none selected by default', () => {
     const { onSave } = mountModal()
-    expect(cohortChips().map(chip => chip.textContent)).toEqual(['BE', 'FE', 'SRE'])
+    expect(cohortChips().map(chip => chip.textContent)).toEqual(['BE', 'FE', 'SRE', 'GQA', 'AQA'])
     expect(cohortChips().every(chip => chip.getAttribute('aria-pressed') === 'false')).toBe(true)
     fireEvent.click(saveButton())
     expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'], resultCohorts: [] })
@@ -47,10 +47,11 @@ describe('ConfigureCardDeckModal result cohort chips', () => {
 
   it('saves the toggled subset in canonical order', () => {
     const { onSave } = mountModal({ resultCohorts: ['SRE', 'QA'] })
-    expect(cohortChips().map(chip => chip.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'true'])
+    expect(cohortChips().map(chip => chip.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'true', 'false', 'false'])
+    fireEvent.click(cohortChips()[4]!)
     fireEvent.click(cohortChips()[0]!)
     fireEvent.click(saveButton())
-    expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'], resultCohorts: ['BE', 'SRE'] })
+    expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'], resultCohorts: ['BE', 'SRE', 'AQA'] })
   })
 })
 

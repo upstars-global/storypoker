@@ -226,6 +226,7 @@ describe('estimatorVotes', () => {
 })
 
 const ALL_SPLIT = ['BE', 'FE', 'SRE']
+const ALL_SPLIT_WITH_QA = [...ALL_SPLIT, 'GQA', 'AQA']
 
 describe('groupResultVotes', () => {
   it('orders split built-in roles canonically and folds GQA and AQA into QA', () => {
@@ -266,9 +267,28 @@ describe('groupResultVotes', () => {
     ])
   })
 
-  it('ignores legacy values outside BE, FE and SRE', () => {
+  it('ignores legacy values outside the splittable roles', () => {
     const players = [{ shields: ['be'], vote: '3' }, { shields: ['gqa'], vote: '5' }]
-    expect(groupResultVotes(players, ['DEV', 'QA', 'GQA'])).toEqual(groupResultVotes(players, []))
+    expect(groupResultVotes(players, ['DEV', 'QA'])).toEqual(groupResultVotes(players, []))
+  })
+
+  it('shows all nine built-in roles separately when every chip is selected', () => {
+    const players = ['sm', 'po', 'aqa', 'gqa', 'qa', 'sre', 'fe', 'be', 'dev']
+      .map(role => ({ shields: [role], vote: '3' }))
+    expect(groupResultVotes(players, ALL_SPLIT_WITH_QA).map(group => group.key)).toEqual(
+      ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM'],
+    )
+  })
+
+  it('splits a selected QA discipline and keeps the rest in QA', () => {
+    expect(groupResultVotes([
+      { shields: ['qa'], vote: '3' },
+      { shields: ['gqa'], vote: '5' },
+      { shields: ['aqa'], vote: '8' },
+    ], ['AQA'])).toEqual([
+      { key: 'QA', label: 'QA', votes: { '3': 1, '5': 1 } },
+      { key: 'AQA', label: 'AQA', votes: { '8': 1 } },
+    ])
   })
 
   it('creates three circles for three voted roles', () => {
