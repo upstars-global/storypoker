@@ -45,6 +45,13 @@ describe('ConfigureCardDeckModal result cohort chips', () => {
     expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'], resultCohorts: [] })
   })
 
+  it('breaks the chips into two rows below the lg breakpoint after the DEV group', () => {
+    mountModal()
+    const rowBreak = screen.getByTestId('deck-result-cohort-break')
+    expect(rowBreak.className.split(' ')).toEqual(expect.arrayContaining(['basis-full', 'lg:hidden']))
+    expect(rowBreak.nextElementSibling?.textContent).toBe('QAAQAGQA')
+  })
+
   it('saves the toggled subset in canonical order', () => {
     const { onSave } = mountModal({ resultCohorts: ['SRE', 'QA'] })
     expect(cohortChips().map(chip => chip.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'false', 'true', 'true', 'false', 'false', 'false', 'false'])

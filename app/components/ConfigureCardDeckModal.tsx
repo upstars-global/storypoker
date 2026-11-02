@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AppIcon from '~/components/AppIcon'
 import AppModal from '~/components/AppModal'
@@ -18,6 +18,12 @@ type ConfigureCardDeckModalProps = {
   resultCohorts: readonly string[] | null | undefined
   onSave: (payload: CardDeckPayload) => void
   onClose: () => void
+}
+
+function chipGroupClass(index: number): string {
+  if (index === 0) return 'flex items-center gap-1.5'
+  if (index === 1) return 'flex items-center gap-1.5 lg:pl-2 lg:ml-2 lg:border-l border-input'
+  return 'flex items-center gap-1.5 pl-2 ml-2 border-l border-input'
 }
 
 const PRESET_ITEMS = DECK_PRESETS.map(p => ({ value: p.id, label: p.name }))
@@ -207,13 +213,18 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
           <span className="text-mui-caption font-semibold uppercase tracking-wide text-primary">
             {t('deck.resultCohorts')}
           </span>
-          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-y-2">
+          <div className="flex flex-wrap lg:flex-nowrap items-center justify-center gap-y-2">
           {RESULT_CHIP_GROUPS.map((group, index) => (
+            <Fragment key={group.chips[0]}>
+            {index === 1 && (
+              <span
+                aria-hidden="true"
+                className="basis-full h-0 lg:hidden"
+                data-testid="deck-result-cohort-break"
+              />
+            )}
             <div
-              key={group.chips[0]}
-              className={index > 0
-                ? 'flex items-center gap-1.5 pl-2 ml-2 border-l border-input'
-                : 'flex items-center gap-1.5'}
+              className={chipGroupClass(index)}
               data-testid="deck-result-cohort-group"
             >
               {group.chips.map(cohort => (
@@ -235,6 +246,7 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
                 </button>
               ))}
             </div>
+            </Fragment>
           ))}
           </div>
         </div>

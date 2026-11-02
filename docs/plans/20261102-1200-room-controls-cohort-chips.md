@@ -280,4 +280,5 @@ Task 15: done - ResultsLayer scales up to 6 circles to fit, scrolls from 7; vite
 Task 16: done - only circles scale via --result-circle-scale; vitest tests/unit 596 passed, lint + typecheck clean
 Task 17: done - one panel button: reveal in voting, new round after reveal; vitest tests/unit 596 passed, lint + typecheck clean
 Task 18: done - result chips in one row (modal 760px, compact chips, group dividers; wraps below sm); vitest tests/unit 596 passed, lint + typecheck clean; browser check not run
+Task 19: done - below lg chips break into two rows (DEV group | QA, PO, SM); vitest 597 passed, lint + typecheck clean; browser check not run
 ```
