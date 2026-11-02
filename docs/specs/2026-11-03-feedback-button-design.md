@@ -1,4 +1,4 @@
-# Feedback button
+# Report issue tab
 
 Status: approved
 Route: note
@@ -6,24 +6,29 @@ Date: 2026-11-03
 
 ## Goal
 
-Будь-який відвідувач (гравець, модератор, гість) може залишити фідбек про Story Poker в один клік з хедера.
-Фідбек потрапляє в GitHub Issues репозиторію `upstars-global/storypoker`.
+Будь-який відвідувач може відкрити GitHub Issues проєкту з постійної вкладки Report issue на правому краю екрана
+(issue #65); при наведенні або фокусі вкладка показує GIF-прев'ю зі Storage Story Poker.
 
 ## Decisions
 
-1. Фідбек - нове GitHub Issue. Кнопка відкриває у новій вкладці сторінку
-   `https://github.com/upstars-global/storypoker/issues/new` з префілом заголовка й тексту. Take посилання на
-   issue over таблицю в Supabase чи зовнішню форму: рішення користувача; без змін БД і без секретів у клієнті.
-   Ціна: потрібен акаунт GitHub, а репозиторій публічний, тож текст фідбеку видно всім.
-2. Кнопка - іконка в `AppHeader` праворуч, поруч з меню акаунта, на всіх сторінках, з підказкою й aria-label
-   «Залишити фідбек» / «Send feedback» (i18n).
-3. Префіл: заголовок `Feedback: `, тіло - лише короткий шаблон (що сталося, що очікували). Технічного контексту
-   (шлях сторінки, id чи назва кімнати, мова, тема, імена, голоси) немає - рішення користувача.
-4. Окремий PR від `main`, незалежний від PR #73.
+1. Вкладка Report issue (issue #65) замінює кнопку фідбеку в хедері - рішення користувача: «роби #65 замість кнопки
+   в хедері». Посилання - `https://github.com/upstars-global/storypoker/issues`, нова вкладка.
+2. Вкладка - вертикальна, `fixed` на правому краю посередині вікна, на всіх сторінках, підпис з i18n.
+3. GIF зберігається в новому публічному бакеті `app-assets` (міграція `022`: public read, 6 MB, лише `image/gif`,
+   без клієнтських write-політик) за шляхом `report-issue/nice.gif`. Take новий бакет over наявні `avatars` /
+   `room-backgrounds`: їхні політики й MIME-ліміти прив'язані до одного об'єкта користувача чи кімнати.
+4. GIF (5,5 MB) вантажиться лише після першого наведення чи фокусу, не з першим рендером.
+5. Окремий PR від `main`, незалежний від PR #73.
 
 ## Acceptance criteria
 
-- AC1: У хедері на головній і в кімнаті є кнопка-іконка з aria-label і підказкою з i18n (uk/en).
-- AC2: Натискання відкриває у новій вкладці (`target="_blank"`, `rel="noopener noreferrer"`) URL
-  `https://github.com/upstars-global/storypoker/issues/new` з параметрами `title` і `body`.
-- AC3: `title` дорівнює `Feedback: `, `body` - фіксований шаблон без даних сторінки, кімнати чи гравця.
+- AC1: На кожній сторінці є вкладка Report issue на правому краю, що відкриває `https://github.com/upstars-global/storypoker/issues` у новій вкладці (`noopener noreferrer`).
+- AC2: Наведення або фокус клавіатурою показує GIF з public URL `app-assets/report-issue/nice.gif`; до першої взаємодії запиту за GIF немає.
+- AC3: Вкладка має видимий стан фокусу й лишається клікабельною на 375 px і 1280 px.
+
+## Verification record
+
+```text
+Ruling: header feedback button replaced by the issue #65 right-edge tab - user: "роби #65 замість кнопки в хедері" (2026-11-03)
+Ruling: spec re-approved - 2026-11-03
+```
