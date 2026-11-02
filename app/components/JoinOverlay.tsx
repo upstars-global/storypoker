@@ -32,7 +32,7 @@ export default function JoinOverlay({ roomName, onJoin, onClose }: JoinOverlayPr
       return
     }
     const role = tag.trim()
-    onJoin({ name: name.trim(), shields: role ? [shieldForRoleTag(role)] : [] })
+    onJoin({ name: name.trim(), shields: [shieldForRoleTag(role)].filter((shield): shield is string => !!shield) })
   }
 
   return (

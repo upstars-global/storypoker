@@ -1,3 +1,4 @@
+import { isValidElement, type ComponentProps, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
@@ -28,7 +29,7 @@ import { resetStores } from '../../support/helpers/resetStores'
 
 vi.mock('~/components/AppHeader', () => ({ default: vi.fn(() => <header data-testid="app-header" />) }))
 vi.mock('~/components/AlignmentCard', () => ({ default: vi.fn(() => <div data-testid="alignment-card" />) }))
-vi.mock('~/components/CardsArea', () => ({ default: vi.fn(() => <div data-testid="cards-area" />) }))
+vi.mock('~/components/CardsArea', () => ({ default: vi.fn((props: { lastRoundView?: ReactNode }) => <div data-testid="cards-area">{props.lastRoundView}</div>) }))
 vi.mock('~/components/JoinOverlay', () => ({ default: vi.fn(() => <div data-testid="join-overlay" />) }))
 vi.mock('~/components/PlayersList', () => ({ default: vi.fn(() => <div data-testid="players-list" />) }))
 vi.mock('~/components/ResultsArea', () => ({ default: vi.fn(() => <div data-testid="results-area" />) }))
@@ -187,6 +188,12 @@ function lastProps<P>(component: (props: P) => unknown): P {
   const call = vi.mocked(component).mock.lastCall
   if (!call) throw new Error('component was not rendered')
   return call[0]
+}
+
+function lastRoundViewProps() {
+  const view = lastProps(CardsArea).lastRoundView
+  if (!isValidElement<ComponentProps<typeof ResultsArea>>(view)) throw new Error('last-round view was not provided')
+  return view.props
 }
 
 function blockLabels() {
@@ -394,11 +401,11 @@ describe('room page side widget', () => {
     expect(lastProps(SlotMachine).spinsLeft).toBe(3)
   })
 
-  it('gives PO and SM five spins and lets them spin regardless of votes', async () => {
+  it('gives PO and SM the same three spins and lets them spin regardless of votes', async () => {
     localStorage.setItem('sp-side-widget', 'slot')
     const po = fakePlayer('me', ['po'], null, { is_moderator: true })
     await mountRoom({ state: fakeState({ phase: 'revealed' }), players: [po, fakePlayer('alice', ['dev'], null)], rejoin: async () => po, existing: po })
-    expect(lastProps(SlotMachine)).toMatchObject({ spinsLeft: 5, canSpin: true })
+    expect(lastProps(SlotMachine)).toMatchObject({ spinsLeft: 3, canSpin: true })
   })
 
   it('lets other players spin only after their own vote while someone has not voted', async () => {
@@ -420,36 +427,153 @@ describe('room page side widget', () => {
   })
 })
 
-describe('room page results', () => {
-  it('shows all nine role circles in canonical order with separate QA disciplines', async () => {
-    const roles = ['sm', 'gqa', 'be', 'qa', 'sre', 'dev', 'aqa', 'fe', 'po']
-    await mountRoom({ players: [me, ...roles.map(role => fakePlayer(role, [role], '3'))] })
-    expect(lastProps(ResultsArea).groups).toEqual(
-      ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM'].map(label => ({ key: label, label, votes: { '3': 1 } })),
-    )
-    expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
+describe('room page revealed layout', () => {
+  it('renders the revealed results inside CardsArea so the moderator panel stays in place', async () => {
+    await mountRoom({ state: fakeState({ phase: 'revealed' }) })
+    const startNewRound = vi.fn().mockResolvedValue(undefined)
+    useRoomStore.setState({ startNewRound })
+    expect(lastProps(CardsArea)).toMatchObject({ revealed: true, showLastRound: false })
+    expect(lastRoundViewProps()).toMatchObject({ showNewRound: false })
+    await act(async () => { lastProps(CardsArea).onStartNewRound?.() })
+    expect(startNewRound).toHaveBeenCalledTimes(1)
   })
 
-  it.each([null, [], ['DEV'], ['BE']])('ignores saved result settings %j', async (result_cohorts) => {
+  it.each([[6, true], [7, false]])('fits up to six circles and scrolls beyond (%i circles)', async (count, fits) => {
+    const roles = ['dev', 'be', 'fe', 'sre', 'qa', 'gqa', 'aqa'].slice(0, count)
     await mountRoom({
-      players: [me, ...['dev', 'be', 'fe', 'sre', 'qa'].map(role => fakePlayer(role, [role], '3'))],
-      state: fakeState({ phase: 'revealed', result_cohorts }),
+      players: [me, ...roles.map(role => fakePlayer(role, [role], '3'))],
+      state: fakeState({ phase: 'revealed', result_cohorts: ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA'] }),
     })
-    expect(lastProps(ResultsArea).groups).toEqual(
-      ['DEV', 'BE', 'FE', 'SRE', 'QA'].map(label => ({ key: label, label, votes: { '3': 1 } })),
-    )
-    expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
+    expect(lastProps(CardsArea).lastRoundFits).toBe(fits)
+  })
+})
+
+describe('room page reset undo', () => {
+  const partial = [...estimators, fakePlayer('dave', ['dev'], null)]
+
+  async function mountWithStoreSpies(players: Player[] = partial) {
+    await mountRoom({ players, state: fakeState({ phase: 'voting' }) })
+    const resetVotes = vi.fn().mockResolvedValue(undefined)
+    const restoreVotes = vi.fn().mockResolvedValue(undefined)
+    useRoomStore.setState({ resetVotes, restoreVotes })
+    return { resetVotes, restoreVotes }
+  }
+
+  async function clickReset() {
+    await act(async () => { lastProps(CardsArea).onReset() })
+  }
+
+  it('resets, then restores exactly the votes from the moment of reset', async () => {
+    const { resetVotes, restoreVotes } = await mountWithStoreSpies()
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(false)
+    await clickReset()
+    expect(resetVotes).toHaveBeenCalledTimes(1)
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(true)
+    await act(async () => {
+      usePlayersStore.setState({ players: partial.map(p => ({ ...p, vote: p.id === 'dave' ? '13' : null })) })
+    })
+    await clickReset()
+    expect(restoreVotes).toHaveBeenCalledWith({ alice: '3', carol: '5', bob: '5' })
+    expect(resetVotes).toHaveBeenCalledTimes(1)
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(false)
   })
 
-  it('ignores a saved QA chip and assigns a roleless voter to DEV', async () => {
+  it('keeps undo through a countdown', async () => {
+    await mountWithStoreSpies()
+    await clickReset()
+    await act(async () => {
+      broadcastHandlers.get('start')?.({ payload: { initiatorId: me.id, mode: 'silent' } })
+    })
+    expect(lastProps(CardsArea).countdownRunning).toBe(true)
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(true)
+  })
+
+  it.each([
+    ['reveal', () => useRoomStore.setState({ roomState: fakeState({ phase: 'revealed' }) })],
+    ['a new round', () => useRoomStore.setState({ roomState: fakeState({ phase: 'voting', round_started_at: '2026-05-05T00:00:00Z' }) })],
+    ['losing the moderator flag', () => usePlayersStore.setState({ players: partial.map(p => (p.id === 'me' ? { ...p, is_moderator: false } : p)) })],
+  ])('drops undo after %s', async (_name, change) => {
+    await mountWithStoreSpies()
+    await clickReset()
+    await act(async () => { change() })
+    await act(async () => { useRoomStore.setState({ roomState: fakeState({ phase: 'voting', round_started_at: useRoomStore.getState().roomState?.round_started_at }) }) })
+    await act(async () => { usePlayersStore.setState({ players: partial }) })
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(false)
+  })
+})
+
+describe('room page results', () => {
+  it('shows only the DEV and QA umbrella circles without chips and leaves PO and SM uncounted', async () => {
+    const roles = ['sm', 'gqa', 'be', 'qa', 'sre', 'dev', 'aqa', 'fe', 'po']
     await mountRoom({
-      players: [me, fakePlayer('roleless', [], '3'), fakePlayer('tester', ['gqa'], '5')],
-      state: fakeState({ phase: 'revealed', result_cohorts: ['DEV', 'QA'] }),
+      players: [me, ...roles.map(role => fakePlayer(role, [role], '3'))],
+      state: fakeState({ phase: 'revealed', result_cohorts: [] }),
     })
     expect(lastProps(ResultsArea).groups).toEqual([
-      { key: 'DEV', label: 'DEV', votes: { '3': 1 } },
-      { key: 'GQA', label: 'GQA', votes: { '5': 1 } },
+      { key: 'DEV', label: 'DEV', votes: { '3': 4 } },
+      { key: 'QA', label: 'QA', votes: { '3': 3 } },
     ])
+    expect(lastProps(ResultsArea).votes).toEqual({ '3': 7 })
+    expect([...lastProps(PlayersList).hiddenVotePlayerIds ?? []].sort()).toEqual(['po', 'sm'])
+  })
+
+  it('shows only the selected chip circles and marks the other voters as uncounted', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('b', ['be'], '3'), fakePlayer('f', ['fe'], '8'), fakePlayer('q', ['qa'], '5'), fakePlayer('p', ['po'], '5')],
+      state: fakeState({ phase: 'revealed', result_cohorts: ['BE', 'PO'] }),
+    })
+    expect(lastProps(ResultsArea).groups).toEqual([
+      { key: 'BE', label: 'BE', votes: { '3': 1 } },
+      { key: 'QA', label: 'QA', votes: { '5': 1 } },
+      { key: 'PO', label: 'PO', votes: { '5': 1 } },
+    ])
+    expect(lastProps(ResultsArea).votes).toEqual({ '3': 1, '5': 2 })
+    expect([...lastProps(PlayersList).hiddenVotePlayerIds ?? []]).toEqual(['f'])
+  })
+
+  it('counts every vote in voting decks regardless of chips', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('f', ['fe'], 'yes'), fakePlayer('p', ['po'], 'no')],
+      state: fakeState({ phase: 'revealed', deck_preset: 'voting', active_cards: ['yes', 'no'], result_cohorts: ['BE'] }),
+    })
+    expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
+    expect(lastProps(ResultsArea).votes).toEqual({ yes: 1, no: 1 })
+  })
+
+  it('shows every role as its own circle in goal clarity regardless of chips', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('f', ['fe'], '3'), fakePlayer('p', ['po'], '4')],
+      state: fakeState({ phase: 'revealed', deck_preset: 'goal_clarity', active_cards: ['1', '2', '3', '4', '5'], result_cohorts: ['BE'] }),
+    })
+    expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
+    expect(lastProps(ResultsArea).groups?.map(group => group.key)).toEqual(['FE', 'PO'])
+  })
+
+  it('shows a full alignment for a cohort with a single vote', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('d1', ['dev'], '3'), fakePlayer('d2', ['dev'], '8'), fakePlayer('q', ['qa'], '5')],
+      state: fakeState({ phase: 'revealed', result_cohorts: [] }),
+    })
+    expect(blockLabels()).toEqual(['DEV', 'QA'])
+    expect(lastProps(AlignmentCard).blocks.find(block => block.label === 'QA')?.value).toBe(100)
+  })
+
+  it('shows no alignment for a single non-estimate vote', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('d1', ['dev'], '3'), fakePlayer('d2', ['dev'], '3'), fakePlayer('q', ['qa'], '?')],
+      state: fakeState({ phase: 'revealed', active_cards: ['1', '2', '3', '5', '8', '?'], result_cohorts: [] }),
+    })
+    expect(blockLabels()).toEqual(['DEV'])
+  })
+
+  it('applies a realtime chip change without reload', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('b', ['be'], '3'), fakePlayer('d', ['dev'], '5')],
+      state: fakeState({ phase: 'revealed', result_cohorts: [] }),
+    })
+    expect(lastProps(ResultsArea).groups?.map(group => group.key)).toEqual(['DEV'])
+    await act(async () => { useRoomStore.setState({ roomState: fakeState({ phase: 'revealed', result_cohorts: ['BE'] }) }) })
+    expect(lastProps(ResultsArea).groups?.map(group => group.key)).toEqual(['BE'])
   })
 
   it('splits revealed votes into cohort groups for ResultsArea and AlignmentCard', async () => {
@@ -460,14 +584,16 @@ describe('room page results', () => {
     ])
     expect(lastProps(ResultsArea).votes).toEqual({ '3': 1, '5': 2 })
     const deck = ['1', '2', '3', '5', '8']
-    expect(lastProps(AlignmentCard).blocks).toEqual([{ key: 'DEV', label: 'DEV', value: alignmentScore({ '3': 1, '5': 1 }, deck) }])
+    expect(lastProps(AlignmentCard).blocks).toEqual([
+      { key: 'DEV', label: 'DEV', value: alignmentScore({ '3': 1, '5': 1 }, deck) },
+      { key: 'QA', label: 'QA', value: 100 },
+    ])
   })
 
-  it('shows separate custom-only circles', async () => {
+  it('folds custom-only voters into the DEV circle', async () => {
     await mountRoom({ players: [me, fakePlayer('dan', ['custom:Design'], '3'), fakePlayer('erin', ['custom:UX'], '5')] })
     expect(lastProps(ResultsArea).groups).toEqual([
-      { key: 'custom:Design', label: 'Design', votes: { '3': 1 } },
-      { key: 'custom:UX', label: 'UX', votes: { '5': 1 } },
+      { key: 'DEV', label: 'DEV', votes: { '3': 1, '5': 1 } },
     ])
   })
 
@@ -476,12 +602,12 @@ describe('room page results', () => {
     expect(lastProps(ResultsArea).groups).toEqual([])
   })
 
-  it('preserves colliding custom keys in current and last-round alignments', async () => {
+  it('merges custom roles named DEV into the DEV circle in current and last-round alignments', async () => {
     const players = [me, fakePlayer('d1', ['dev'], '3'), fakePlayer('d2', ['dev'], '3'), fakePlayer('c1', ['custom:DEV'], '5'), fakePlayer('c2', ['custom:DEV'], '5')]
     await mountRoom({ players, state: fakeState({ phase: 'voting' }) })
     await act(async () => { useRoomStore.setState({ roomState: fakeState({ phase: 'revealed' }) }) })
-    const groups = [{ key: 'DEV', label: 'DEV', votes: { '3': 2 } }, { key: 'custom:DEV', label: 'DEV', votes: { '5': 2 } }]
-    const blocks = [{ key: 'DEV', label: 'DEV', value: 100 }, { key: 'custom:DEV', label: 'DEV', value: 100 }]
+    const groups = [{ key: 'DEV', label: 'DEV', votes: { '3': 2, '5': 2 } }]
+    const blocks = [{ key: 'DEV', label: 'DEV', value: alignmentScore({ '3': 2, '5': 2 }, ['1', '2', '3', '5', '8']) }]
     expect(lastProps(ResultsArea).groups).toEqual(groups)
     expect(lastProps(AlignmentCard).blocks).toEqual(blocks)
     await act(async () => {
@@ -489,13 +615,14 @@ describe('room page results', () => {
       useRoomStore.setState({ roomState: fakeState({ phase: 'voting' }) })
     })
     await act(async () => { lastProps(CardsArea).onToggleLastRound() })
-    expect(lastProps(ResultsArea).groups).toEqual(groups)
+    expect(lastRoundViewProps().groups).toEqual(groups)
     expect(lastProps(AlignmentCard).blocks).toEqual(blocks)
   })
 
-  it('shows PO and SM in their own circles', async () => {
+  it('shows PO and SM circles with their chips', async () => {
     await mountRoom({
       players: [me, fakePlayer('dan', ['po'], '3'), fakePlayer('erin', ['sm'], '5')],
+      state: fakeState({ phase: 'revealed', result_cohorts: ['PO', 'SM'] }),
     })
     expect(lastProps(ResultsArea).groups).toEqual([
       { key: 'PO', label: 'PO', votes: { '3': 1 } },
@@ -513,8 +640,8 @@ describe('room page results', () => {
     ])
   })
 
-  it('keeps every role badge visible regardless of saved settings', async () => {
-    await mountRoom({ state: fakeState({ phase: 'revealed', result_cohorts: ['QA'] }) })
+  it('marks no voter as uncounted without chips when only DEV and QA roles vote', async () => {
+    await mountRoom({ state: fakeState({ phase: 'revealed', result_cohorts: null }) })
     expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
   })
 
@@ -528,12 +655,13 @@ describe('room page results', () => {
       usePlayersStore.setState({ players: estimators.map(p => ({ ...p, vote: null })) })
       useRoomStore.setState({ roomState: fakeState({ phase: 'voting' }) })
     })
-    expect(screen.queryByTestId('results-area')).toBeNull()
+    expect(lastProps(CardsArea).showLastRound).toBe(false)
 
     await act(async () => {
       lastProps(CardsArea).onToggleLastRound()
     })
-    const lastRound = lastProps(ResultsArea)
+    expect(lastProps(CardsArea).showLastRound).toBe(true)
+    const lastRound = lastRoundViewProps()
     expect(lastRound.groups).toEqual([
       { key: 'DEV', label: 'DEV', votes: { '3': 1, '5': 1 } },
       { key: 'QA', label: 'QA', votes: { '5': 1 } },
@@ -564,7 +692,7 @@ describe('room page results', () => {
     expect(screen.getByTestId('history-modal')).toBeTruthy()
   })
 
-  it('saves a changed deck preset, cards without changing result settings from the deck modal', async () => {
+  it('saves a changed deck preset, cards and result chips from the deck modal', async () => {
     await mountRoom({ state: fakeState({ phase: 'voting' }) })
     const setDeckPreset = vi.fn().mockResolvedValue(undefined)
     const saveCardDeck = vi.fn().mockResolvedValue(undefined)
@@ -575,11 +703,11 @@ describe('room page results', () => {
     })
     expect(lastProps(ConfigureCardDeckModal)).toMatchObject({ deckPreset: 'scrum', activeCards: ['1', '2', '3', '5', '8'] })
     await act(async () => {
-      lastProps(ConfigureCardDeckModal).onSave({ deckPreset: 'fibonacci', cards: ['1', '2'] })
+      lastProps(ConfigureCardDeckModal).onSave({ deckPreset: 'fibonacci', cards: ['1', '2'], resultCohorts: ['FE'] })
     })
     expect(setDeckPreset).toHaveBeenCalledWith('fibonacci')
     expect(saveCardDeck).toHaveBeenCalledWith(['1', '2'])
-    expect(setResultCohorts).not.toHaveBeenCalled()
+    expect(setResultCohorts).toHaveBeenCalledWith(['FE'])
     expect(screen.queryByTestId('card-deck-modal')).toBeNull()
   })
 

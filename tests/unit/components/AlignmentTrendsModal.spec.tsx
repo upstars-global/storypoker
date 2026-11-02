@@ -50,7 +50,7 @@ function setPlayers() {
     id: `${role}-${index}`,
     room_id: 'room',
     name: `${role}-${index}`,
-    shields: [shieldForRoleTag(role)],
+    shields: [shieldForRoleTag(role)].filter(shield => shield !== null),
     is_moderator: false,
     vote: null,
     user_id: null,

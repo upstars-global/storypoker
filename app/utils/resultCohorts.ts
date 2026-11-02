@@ -1,4 +1,4 @@
-import { CUSTOM_SHIELD_PREFIX, roleTagForShields } from './shields'
+import { roleTagForShields } from './shields'
 
 export const RESULT_COHORTS: readonly string[] = ['DEV', 'BE', 'FE', 'SRE']
 export const DEV_UMBRELLA_COHORT = 'DEV'
@@ -29,7 +29,20 @@ export const COHORT_BADGE_TEXT_COLORS: Record<string, string> = {
   SM: '#111111',
 }
 
-const DEV_SUBCOHORTS = new Set(['BE', 'FE', 'SRE'])
+const LEGACY_DEV_SUBCOHORTS = new Set(['BE', 'FE', 'SRE'])
+
+export interface ResultChipGroup {
+  umbrella: string | null
+  chips: readonly string[]
+}
+
+export const RESULT_CHIP_GROUPS: readonly ResultChipGroup[] = [
+  { umbrella: 'DEV', chips: ['DEV', 'BE', 'FE', 'SRE'] },
+  { umbrella: 'QA', chips: ['QA', 'AQA', 'GQA'] },
+  { umbrella: null, chips: ['PO'] },
+  { umbrella: null, chips: ['SM'] },
+]
+export const SPLITTABLE_COHORTS: readonly string[] = RESULT_CHIP_GROUPS.flatMap(group => group.chips)
 
 export type VoteCounts = Record<string, number>
 
@@ -62,12 +75,8 @@ export function normalizeCohorts(value: readonly string[] | null | undefined): s
 }
 
 export function cohortForShields(shields: string[] | null | undefined): string | null {
-  for (const shield of shields ?? []) {
-    if (shield.startsWith(CUSTOM_SHIELD_PREFIX)) return null
-    const tag = roleTagForShields([shield])
-    if (tag) return COHORT_BY_TAG.get(tag) ?? null
-  }
-  return DEV_UMBRELLA_COHORT
+  const tag = roleTagForShields(shields)
+  return (tag && COHORT_BY_TAG.get(tag)) || DEV_UMBRELLA_COHORT
 }
 
 export function voteCohortFor(shieldsByPlayer: ReadonlyMap<string, string[]> | undefined, playerId: string): string | null {
@@ -78,7 +87,7 @@ export function voteCohortFor(shieldsByPlayer: ReadonlyMap<string, string[]> | u
 export function resultCohortFor(cohort: string | null, selected: readonly string[]): string | null {
   if (!cohort) return null
   if (selected.includes(cohort) || ALWAYS_SHOWN_COHORTS.includes(cohort)) return cohort
-  return DEV_SUBCOHORTS.has(cohort) && selected.includes(DEV_UMBRELLA_COHORT) ? DEV_UMBRELLA_COHORT : null
+  return LEGACY_DEV_SUBCOHORTS.has(cohort) && selected.includes(DEV_UMBRELLA_COHORT) ? DEV_UMBRELLA_COHORT : null
 }
 
 export function groupVotesByCohort(
@@ -98,24 +107,37 @@ export function groupVotesByCohort(
     .map(([key, votes]) => ({ key, votes }))
 }
 
+export function selectedSplitCohorts(value: readonly string[] | null | undefined): string[] {
+  const chosen = new Set(value ?? [])
+  return SPLITTABLE_COHORTS.filter(tag => chosen.has(tag))
+}
+
+function roleKeyForShields(shields: readonly string[] | null | undefined): string {
+  const tag = roleTagForShields(shields)
+  return tag && COHORT_BY_TAG.has(tag) ? tag : DEV_UMBRELLA_COHORT
+}
+
+export function resultKeyFor(
+  shields: readonly string[] | null | undefined,
+  selected: readonly string[] | null | undefined,
+): string | null {
+  const key = roleKeyForShields(shields)
+  const group = RESULT_CHIP_GROUPS.find(candidate => candidate.chips.includes(key))
+  if (!group) return key
+  const chosen = new Set(selectedSplitCohorts(selected))
+  if (!group.chips.some(chip => chosen.has(chip))) return group.umbrella
+  return chosen.has(key) ? key : null
+}
+
 export function groupResultVotes(
   players: readonly { shields: string[] | null; vote: string | null }[],
+  selected: readonly string[] | null | undefined,
 ): (ResultGroup & { key: string })[] {
   const buckets = new Map<string, VoteCounts>(ROLE_COHORTS.map(key => [key, Object.create(null) as VoteCounts]))
   for (const player of players) {
     if (!player.vote) continue
-    let key = DEV_UMBRELLA_COHORT
-    for (const shield of player.shields ?? []) {
-      if (shield.startsWith(CUSTOM_SHIELD_PREFIX)) {
-        key = shield
-        break
-      }
-      const tag = roleTagForShields([shield])
-      if (tag && COHORT_BY_TAG.has(tag)) {
-        key = tag
-        break
-      }
-    }
+    const key = resultKeyFor(player.shields, selected)
+    if (!key) continue
     let bucket = buckets.get(key)
     if (!bucket) {
       bucket = Object.create(null) as VoteCounts
@@ -127,7 +149,7 @@ export function groupResultVotes(
     .filter(([, votes]) => Object.keys(votes).length > 0)
     .map(([key, votes]) => ({
       key,
-      label: key.startsWith(CUSTOM_SHIELD_PREFIX) ? key.slice(CUSTOM_SHIELD_PREFIX.length) : key,
+      label: key,
       votes,
     }))
 }

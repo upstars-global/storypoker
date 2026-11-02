@@ -145,7 +145,7 @@ describe('home page', () => {
     expect(last[1]!.firstElementChild!.className).toBe('text-muted')
   })
 
-  it('scores recent rooms from the combined estimator votes without PO, SM or custom roles', async () => {
+  it('scores recent rooms from the combined estimator votes without PO or SM, counting custom roles as DEV', async () => {
     seedSession('aaaaaaaa', 'Ann')
     const shields = ['be', 'be', 'qa', 'qa', 'po', 'sm', 'custom:Designer']
     fakeTables({
@@ -159,7 +159,7 @@ describe('home page', () => {
     await mountHome()
 
     const cells = within(screen.getAllByRole('row')[1]!).getAllByRole('cell')
-    expect(cells[3]!.textContent).toBe('60')
+    expect(cells[3]!.textContent).toBe('20')
   })
 
   it('ignores poll rounds and rounds with only one estimate in room alignment', async () => {

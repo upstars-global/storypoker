@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { i18n } from '~/i18n'
-import CardsArea from '~/components/CardsArea'
+import CardsArea, { ResultsLayer } from '~/components/CardsArea'
+import iconClasses from '~/generated/iconClasses.json'
+import { mapIconName } from '~/utils/iconMap'
 
 type CardsAreaProps = ComponentProps<typeof CardsArea>
 
@@ -45,6 +47,25 @@ describe('CardsArea moderator icon buttons', () => {
     expect(screen.getByTestId('reset-button').getAttribute('aria-label')).toBe(i18n.t('cards.reset'))
   })
 
+  it('switches the reset button to an enabled undo state', () => {
+    mountCards({ canReset: false, resetUndoAvailable: true })
+    const button = screen.getByTestId('reset-button') as HTMLButtonElement
+    expect(button.getAttribute('aria-label')).toBe(i18n.t('cards.undoReset'))
+    expect(button.getAttribute('aria-pressed')).toBe('true')
+    expect(button.disabled).toBe(false)
+    const icon = button.querySelector<HTMLElement>(`.${(iconClasses as Record<string, string>)[mapIconName('ic:baseline-restart-alt')]}`)
+    expect(icon?.style.transform).toBe('scaleX(-1)')
+  })
+
+  it('shows the reset icon outside the undo state', () => {
+    mountCards()
+    const button = screen.getByTestId('reset-button')
+    expect(button.getAttribute('aria-pressed')).toBe('false')
+    const icon = button.querySelector<HTMLElement>(`.${(iconClasses as Record<string, string>)[mapIconName('ic:baseline-restart-alt')]}`)
+    expect(icon).not.toBeNull()
+    expect(icon?.style.transform).toBe('')
+  })
+
   it('exposes the last-round toggle as a pressed button', () => {
     mountCards()
     const off = screen.getByTestId('last-round-button')
@@ -66,6 +87,69 @@ describe('CardsArea voting', () => {
     expect(cards[1]!.getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(cards[2]!)
     expect(props.onVote).toHaveBeenCalledWith('3')
+  })
+
+  it.each([
+    ['the last-round view', { showLastRound: true }],
+    ['fewer than two votes', { hasVotes: false }],
+    ['a running countdown', { countdownRunning: true }],
+  ])('keeps the reveal button in place but disabled during %s', (_name, overrides) => {
+    mountCards(overrides)
+    const reveal = screen.getByTestId('reveal-button') as HTMLButtonElement
+    expect(reveal.disabled).toBe(true)
+  })
+
+  it('enables the reveal button when votes can be revealed', () => {
+    mountCards()
+    expect((screen.getByTestId('reveal-button') as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('sizes cards to a third of the row below the lg breakpoint and keeps the desktop width', () => {
+    mountCards()
+    const slot = screen.getAllByTestId('vote-card')[0]!.parentElement!
+    expect(slot.className).toContain('w-[calc((100%-1.5rem)/3)]')
+    expect(slot.className).toContain('sm:w-[calc((100%-2rem)/3)]')
+    expect(slot.className).toContain('lg:w-[151.66px]')
+  })
+
+  it('hides the cards layer below lg while results are shown so the panel sits under the circles', () => {
+    mountCards({ revealed: true, lastRoundView: <div /> })
+    expect(screen.getByTestId('cards-layer').className.split(' ')).toEqual(expect.arrayContaining(['hidden', 'lg:flex']))
+  })
+
+  it.each([false, true])('stacks cards and the last-round view in one cell (showLastRound=%s)', showLastRound => {
+    mountCards({ showLastRound, lastRoundView: <div data-testid="last-round-content" /> })
+    const cards = screen.getByTestId('cards-layer')
+    const lastRound = screen.getByTestId('last-round-layer')
+    expect(cards.parentElement).toBe(lastRound.parentElement)
+    expect(cards.classList.contains('invisible')).toBe(showLastRound)
+    expect(lastRound.classList.contains('invisible')).toBe(!showLastRound)
+    expect(screen.getByTestId('reveal-button')).toBeTruthy()
+  })
+
+  it('turns the reveal button into an enabled new-round button after reveal', () => {
+    const onStartNewRound = vi.fn()
+    mountCards({ revealed: true, resetUndoAvailable: true, lastRoundView: <div />, onStartNewRound })
+    expect(screen.getByTestId('cards-layer').classList.contains('invisible')).toBe(true)
+    expect(screen.getByTestId('last-round-layer').classList.contains('invisible')).toBe(false)
+    expect(screen.queryByTestId('reveal-button')).toBeNull()
+    const newRound = screen.getByTestId('new-round-button') as HTMLButtonElement
+    expect(newRound.textContent).toBe(i18n.t('cards.startNewRound'))
+    expect(newRound.disabled).toBe(false)
+    fireEvent.click(newRound)
+    expect(onStartNewRound).toHaveBeenCalledTimes(1)
+    for (const id of ['reset-button', 'last-round-button']) {
+      expect((screen.getByTestId(id) as HTMLButtonElement).disabled).toBe(true)
+    }
+  })
+
+  it('keeps the moderator panel below a cards zone whose height comes from the cards only', () => {
+    mountCards({ showLastRound: true, lastRoundView: <div /> })
+    const zone = screen.getByTestId('cards-zone')
+    const lastRound = screen.getByTestId('last-round-layer')
+    expect(lastRound.className.split(' ')).toEqual(expect.arrayContaining(['lg:absolute', 'lg:inset-0']))
+    expect(zone.contains(screen.getByTestId('cards-layer'))).toBe(true)
+    expect(zone.nextElementSibling).toBe(screen.getByTestId('moderator-panel'))
   })
 
   it('hides moderator controls from a plain player', () => {
@@ -100,5 +184,60 @@ describe('CardsArea voting', () => {
     mountCards({ countdownRunning: true, countdownCounter: 7 })
     expect(screen.getByTestId('countdown-ticker').textContent).toBe('7')
     expect(screen.queryAllByTestId('countdown-mode-option')).toHaveLength(0)
+  })
+})
+
+describe('ResultsLayer', () => {
+  function mockHeights(zone: number, content: number, charts: number) {
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(zone)
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.hasAttribute('data-result-charts') ? charts : content
+    })
+  }
+
+  function results() {
+    return (
+      <div>
+        <div data-result-charts />
+        <p>alignment</p>
+      </div>
+    )
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('lets the results set the zone height below the lg breakpoint', () => {
+    mockHeights(400, 600, 400)
+    vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList)
+    render(<ResultsLayer visible fits>{results()}</ResultsLayer>)
+    const layer = screen.getByTestId('last-round-layer')
+    expect(layer.dataset.scale).toBe('1')
+    expect(layer.className.split(' ')).not.toContain('absolute')
+  })
+
+  it('shrinks only the circles so the results fit the cards zone', () => {
+    mockHeights(400, 600, 400)
+    render(<ResultsLayer visible fits>{results()}</ResultsLayer>)
+    const layer = screen.getByTestId('last-round-layer')
+    expect(layer.dataset.scale).toBe('0.5')
+    expect(layer.style.getPropertyValue('--result-circle-scale')).toBe('0.5')
+    expect((layer.firstElementChild as HTMLElement).style.transform).toBe('')
+    expect(layer.className.split(' ')).toContain('lg:overflow-hidden')
+  })
+
+  it('keeps full size when the results already fit', () => {
+    mockHeights(800, 600, 400)
+    render(<ResultsLayer visible fits>{results()}</ResultsLayer>)
+    expect(screen.getByTestId('last-round-layer').dataset.scale).toBe('1')
+  })
+
+  it('scrolls at full size when too many circles are shown', () => {
+    mockHeights(400, 600, 400)
+    render(<ResultsLayer visible fits={false}>{results()}</ResultsLayer>)
+    const layer = screen.getByTestId('last-round-layer')
+    expect(layer.dataset.scale).toBe('1')
+    expect(layer.className.split(' ')).toContain('lg:overflow-y-auto')
   })
 })

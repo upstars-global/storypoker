@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import AppIcon from '~/components/AppIcon'
 import AppTooltip from '~/components/AppTooltip'
@@ -13,6 +13,7 @@ type CardsAreaProps = {
   isModerator: boolean
   hasVotes: boolean
   canReset: boolean
+  resetUndoAvailable?: boolean
   countdownCounter: number
   countdownRunning: boolean
   pollMode: boolean
@@ -20,8 +21,12 @@ type CardsAreaProps = {
   pollQuestion: string | null
   hasLastRound?: boolean
   showLastRound?: boolean
+  lastRoundView?: ReactNode
+  lastRoundFits?: boolean
+  revealed?: boolean
   onVote: (card: string) => void
   onReveal: () => void
+  onStartNewRound?: () => void
   onReset: () => void
   onStartCountdown: (mode: CountdownMode) => void
   onSetPollQuestion: (question: string) => void
@@ -38,12 +43,74 @@ const COUNTDOWN_MODE_OPTIONS: { value: CountdownMode; icon: string; label: strin
   { value: 'wet', icon: 'app:town-hall', label: 'cards.countdownWet' },
 ]
 
+const MIN_RESULT_CIRCLE_SCALE = 0.2
+
+export function ResultsLayer({ visible, fits, children }: { visible: boolean; fits: boolean; children: ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null)
+  const inner = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+  const scaleRef = useRef(1)
+
+  useLayoutEffect(() => {
+    const zone = outer.current
+    const content = inner.current
+    const apply = (next: number) => {
+      scaleRef.current = next
+      setScale(next)
+    }
+    if (!fits || !zone || !content) {
+      apply(1)
+      return
+    }
+    const update = () => {
+      const desktop = typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1024px)').matches
+      if (!desktop) {
+        if (scaleRef.current !== 1) apply(1)
+        return
+      }
+      const charts = content.querySelector<HTMLElement>('[data-result-charts]')
+      const chartsHeight = charts?.offsetHeight ?? 0
+      if (chartsHeight <= 0) return
+      const fixedHeight = content.offsetHeight - chartsHeight
+      const target = scaleRef.current * (zone.clientHeight - fixedHeight) / chartsHeight
+      const next = Math.max(MIN_RESULT_CIRCLE_SCALE, Math.min(1, target))
+      if (Math.abs(next - scaleRef.current) > 0.01) apply(next)
+    }
+    update()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(update)
+    observer.observe(zone)
+    observer.observe(content)
+    return () => observer.disconnect()
+  }, [fits])
+
+  const base = fits ? 'lg:absolute lg:inset-0 lg:overflow-hidden w-full' : 'lg:absolute lg:inset-0 lg:overflow-y-auto w-full'
+  return (
+    <div
+      ref={outer}
+      className={visible ? base : `invisible hidden lg:block ${base}`}
+      aria-hidden={visible ? undefined : 'true'}
+      data-testid="last-round-layer"
+      data-scale={scale}
+      style={{ '--result-circle-scale': scale } as CSSProperties}
+    >
+      <div
+        ref={inner}
+        className="w-full"
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function CardsArea({
   activeCards,
   selectedVote,
   isModerator,
   hasVotes,
   canReset,
+  resetUndoAvailable = false,
   countdownCounter,
   countdownRunning,
   pollMode,
@@ -51,8 +118,12 @@ export default function CardsArea({
   pollQuestion,
   hasLastRound,
   showLastRound,
+  lastRoundView,
+  lastRoundFits = true,
+  revealed = false,
   onVote,
   onReveal,
+  onStartNewRound,
   onReset,
   onStartCountdown,
   onSetPollQuestion,
@@ -74,7 +145,7 @@ export default function CardsArea({
   const live = useRef({ countdownRunning, showLastRound, canVote, onStartCountdown })
 
   useEffect(() => {
-    live.current = { countdownRunning, showLastRound, canVote, onStartCountdown }
+    live.current = { countdownRunning, showLastRound: showLastRound || revealed, canVote, onStartCountdown }
   })
 
   const [lastPollQuestion, setLastPollQuestion] = useState(pollQuestion)
@@ -172,9 +243,11 @@ export default function CardsArea({
     if (event.key === 'Enter' || event.key === ' ') cancelHold(mode)
   }
 
-  const lastRoundDisabled = (!hasLastRound && !showLastRound) || countdownRunning
-  const resetDisabled = !canReset || countdownRunning
-  const modeDisabled = showLastRound || !canVote
+  const resultsShown = showLastRound || revealed
+  const lastRoundDisabled = (!hasLastRound && !showLastRound) || countdownRunning || revealed
+  const resetDisabled = (!canReset && !resetUndoAvailable) || countdownRunning || revealed
+  const resetLabel = resetUndoAvailable ? t('cards.undoReset') : t('cards.reset')
+  const modeDisabled = resultsShown || !canVote
 
   function pollSection() {
     if (pollQuestion) {
@@ -298,21 +371,26 @@ export default function CardsArea({
 
   return (
     <div className="flex flex-col items-center w-full rounded">
-      {(pollMode || voteQuestionMode || !!pollQuestion) && !showLastRound && (
+      <div className="relative w-full" data-testid="cards-zone">
+        <div
+          className={resultsShown ? 'invisible hidden lg:flex flex-col items-center w-full' : 'flex flex-col items-center w-full'}
+          aria-hidden={resultsShown ? 'true' : undefined}
+          data-testid="cards-layer"
+        >
+      {(pollMode || voteQuestionMode || !!pollQuestion) && (
         <div className="w-full max-w-[640px] mx-auto mb-8">
           {pollSection()}
         </div>
       )}
 
-      {!showLastRound && (
         <div className={canVote
-          ? 'flex flex-wrap justify-center gap-3 sm:gap-4 max-w-[1240px] mx-auto'
-          : 'flex flex-wrap justify-center gap-3 sm:gap-4 max-w-[1240px] mx-auto pointer-events-none opacity-40'}
+          ? 'flex flex-wrap justify-center gap-3 sm:gap-4 w-full lg:w-auto max-w-[480px] lg:max-w-[1240px] mx-auto'
+          : 'flex flex-wrap justify-center gap-3 sm:gap-4 w-full lg:w-auto max-w-[480px] lg:max-w-[1240px] mx-auto pointer-events-none opacity-40'}
         >
           {activeCards.map(card => (
             <div
               key={card}
-              className="relative w-[100px] sm:w-[151.66px] aspect-[2/3] flex-none"
+              className="relative w-[calc((100%-1.5rem)/3)] sm:w-[calc((100%-2rem)/3)] lg:w-[151.66px] aspect-[2/3] flex-none"
             >
               <button
                 ref={ripple}
@@ -334,10 +412,22 @@ export default function CardsArea({
             </div>
           ))}
         </div>
-      )}
+        </div>
+        {lastRoundView && (
+          <ResultsLayer
+            visible={resultsShown}
+            fits={lastRoundFits}
+          >
+            {lastRoundView}
+          </ResultsLayer>
+        )}
+      </div>
 
       {isModerator && (
-        <div className="flex flex-wrap items-center justify-center gap-6 pt-8">
+        <div
+          className="flex flex-wrap items-center justify-center gap-6 pt-8"
+          data-testid="moderator-panel"
+        >
           <div className="flex items-center gap-2">
             <AppTooltip
               side="top"
@@ -371,18 +461,19 @@ export default function CardsArea({
                   className="mui-icon-btn"
                   disabled={resetDisabled}
                   style={{ color: resetDisabled ? 'var(--text-disabled)' : undefined }}
-                  aria-label={t('cards.reset')}
+                  aria-label={resetLabel}
+                  aria-pressed={resetUndoAvailable ? 'true' : 'false'}
                   data-testid="reset-button"
                   onClick={onReset}
                 >
                   <AppIcon
                     name="ic:baseline-restart-alt"
-                    style={{ fontSize: '1.5rem' }}
+                    style={{ fontSize: '1.5rem', transform: resetUndoAvailable ? 'scaleX(-1)' : undefined }}
                   />
                 </button>
               )}
             >
-              {t('cards.reset')}
+              {resetLabel}
             </AppTooltip>
           </div>
           <div
@@ -390,16 +481,27 @@ export default function CardsArea({
             style={{ width: 0 }}
           />
           <div className="flex items-center gap-4">
-            {!showLastRound && (
-              <Button
-              ref={ripple}
-                disabled={!hasVotes || countdownRunning || !canVote}
-                data-testid="reveal-button"
-                onClick={onReveal}
-              >
-                {t('cards.reveal')}
-              </Button>
-            )}
+            {revealed
+              ? (
+                  <Button
+                    ref={ripple}
+                    disabled={!onStartNewRound}
+                    data-testid="new-round-button"
+                    onClick={onStartNewRound}
+                  >
+                    <span>{t('cards.startNewRound')}</span>
+                  </Button>
+                )
+              : (
+                  <Button
+                    ref={ripple}
+                    disabled={!hasVotes || countdownRunning || !canVote || showLastRound}
+                    data-testid="reveal-button"
+                    onClick={onReveal}
+                  >
+                    <span>{t('cards.reveal')}</span>
+                  </Button>
+                )}
             <div
               className={modeDisabled
                 ? 'mui-icon-group flex items-center justify-center pointer-events-none opacity-50'

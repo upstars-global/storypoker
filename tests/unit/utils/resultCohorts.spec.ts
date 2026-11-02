@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ALWAYS_SHOWN_COHORTS, COHORT_COLORS, ESTIMATOR_COHORTS, ROLE_COHORTS, cohortForShields, estimatorVotes, groupResultVotes, groupVotesByCohort, normalizeCohorts, resultCohortFor, voteCohortFor } from '~/utils/resultCohorts'
+import { ALWAYS_SHOWN_COHORTS, COHORT_COLORS, ESTIMATOR_COHORTS, ROLE_COHORTS, cohortForShields, estimatorVotes, groupResultVotes, resultKeyFor, groupVotesByCohort, normalizeCohorts, resultCohortFor, voteCohortFor } from '~/utils/resultCohorts'
 
 describe('normalizeCohorts', () => {
   it('defaults to every configurable developer role', () => {
@@ -25,10 +25,10 @@ describe('cohortForShields', () => {
     expect(cohortForShields(['aqa'])).toBe('AQA')
   })
 
-  it('gives PO and SM their own cohorts and leaves custom roles outside', () => {
+  it('gives PO and SM their own cohorts and counts custom roles as DEV', () => {
     expect(cohortForShields(['po'])).toBe('PO')
     expect(cohortForShields(['sm'])).toBe('SM')
-    expect(cohortForShields(['custom:Design'])).toBeNull()
+    expect(cohortForShields(['custom:Design'])).toBe('DEV')
   })
 
   it('counts players without a role as DEV', () => {
@@ -37,15 +37,15 @@ describe('cohortForShields', () => {
   })
 
   it.each(['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM', ''])(
-    'keeps the custom role "%s" outside all cohorts',
+    'counts the custom role "%s" as DEV',
     (tag) => {
-      expect(cohortForShields([`custom:${tag}`])).toBeNull()
+      expect(cohortForShields([`custom:${tag}`])).toBe('DEV')
     },
   )
 
   it('uses the first recognized role shield when legacy players have several shields', () => {
-    expect(cohortForShields(['unknown', 'custom:DEV', 'qa'])).toBeNull()
-    expect(cohortForShields(['unknown', 'custom:', 'qa'])).toBeNull()
+    expect(cohortForShields(['unknown', 'custom:DEV', 'qa'])).toBe('QA')
+    expect(cohortForShields(['unknown', 'custom:', 'qa'])).toBe('QA')
     expect(cohortForShields(['unknown', 'qa', 'custom:DEV'])).toBe('QA')
     expect(cohortForShields(['unknown', 'gqa', 'custom:'])).toBe('GQA')
     expect(cohortForShields(['unknown'])).toBe('DEV')
@@ -67,7 +67,7 @@ describe('groupVotesByCohort', () => {
 
   it('shows every role in its own circle by default', () => {
     expect(groupVotesByCohort([...players, { shields: ['sre'], vote: '5' }, { shields: ['sm'], vote: '1' }], normalizeCohorts(null))).toEqual([
-      { key: 'DEV', votes: { '3': 1 } },
+      { key: 'DEV', votes: { '2': 1, '3': 1 } },
       { key: 'BE', votes: { '5': 1 } },
       { key: 'FE', votes: { '3': 1, '5': 1 } },
       { key: 'SRE', votes: { '5': 1 } },
@@ -78,9 +78,9 @@ describe('groupVotesByCohort', () => {
     ])
   })
 
-  it('keeps PO in its own circle and ignores custom roles', () => {
+  it('keeps PO in its own circle and counts custom roles as DEV', () => {
     expect(groupVotesByCohort(players, ['DEV', 'BE', 'FE', 'SRE'])).toEqual([
-      { key: 'DEV', votes: { '3': 1 } },
+      { key: 'DEV', votes: { '2': 1, '3': 1 } },
       { key: 'BE', votes: { '5': 1 } },
       { key: 'FE', votes: { '3': 1, '5': 1 } },
       { key: 'QA', votes: { '8': 1 } },
@@ -91,7 +91,7 @@ describe('groupVotesByCohort', () => {
 
   it('folds every developer into DEV when only DEV is selected', () => {
     expect(groupVotesByCohort([...players, { shields: ['sre'], vote: '5' }], ['DEV'])).toEqual([
-      { key: 'DEV', votes: { '3': 2, '5': 3 } },
+      { key: 'DEV', votes: { '2': 1, '3': 2, '5': 3 } },
       { key: 'QA', votes: { '8': 1 } },
       { key: 'AQA', votes: { '8': 1 } },
       { key: 'PO', votes: { '2': 1 } },
@@ -100,7 +100,7 @@ describe('groupVotesByCohort', () => {
 
   it('keeps selected developer roles apart and folds the rest into DEV', () => {
     expect(groupVotesByCohort([...players, { shields: ['sre'], vote: '5' }], ['DEV', 'FE'])).toEqual([
-      { key: 'DEV', votes: { '3': 1, '5': 2 } },
+      { key: 'DEV', votes: { '2': 1, '3': 1, '5': 2 } },
       { key: 'FE', votes: { '3': 1, '5': 1 } },
       { key: 'QA', votes: { '8': 1 } },
       { key: 'AQA', votes: { '8': 1 } },
@@ -163,7 +163,7 @@ describe('role cohort contract', () => {
     expect(voteCohortFor(shields, 'roleless')).toBe('DEV')
     expect(voteCohortFor(shields, 'departed')).toBe('DEV')
     expect(voteCohortFor(undefined, 'departed')).toBe('DEV')
-    expect(voteCohortFor(shields, 'custom')).toBeNull()
+    expect(voteCohortFor(shields, 'custom')).toBe('DEV')
   })
 
   it('orders all nine circles canonically regardless of player order', () => {
@@ -183,9 +183,9 @@ describe('role cohort contract', () => {
     expect(groupVotesByCohort(players, [])).toEqual([])
   })
 
-  it('does not create role circles for custom roles named after built-in roles', () => {
+  it('counts custom roles named after built-in roles as DEV', () => {
     const players = ['DEV', 'QA', 'GQA', 'PO'].map(role => ({ shields: [`custom:${role}`], vote: '3' }))
-    expect(groupVotesByCohort(players, normalizeCohorts(null))).toEqual([])
+    expect(groupVotesByCohort(players, normalizeCohorts(null))).toEqual([{ key: 'DEV', votes: { '3': 4 } }])
   })
 })
 
@@ -193,15 +193,15 @@ describe('estimatorVotes', () => {
   const roles = ['dev', 'be', 'fe', 'sre', 'qa', 'gqa', 'aqa', 'po', 'sm', 'custom:Design']
   const shields = new Map(roles.map(role => [role, [role]]))
 
-  it('keeps estimator votes with their fields and omits product and custom roles', () => {
+  it('keeps estimator votes with their fields, omits product roles and counts custom roles as DEV', () => {
     const votes = [...roles, 'roleless', 'departed'].map(player_id => ({ player_id, vote: '3' }))
     shields.set('roleless', [])
     expect(estimatorVotes(votes, shields).map(vote => vote.player_id))
-      .toEqual(['dev', 'be', 'fe', 'sre', 'qa', 'gqa', 'aqa', 'roleless', 'departed'])
+      .toEqual(['dev', 'be', 'fe', 'sre', 'qa', 'gqa', 'aqa', 'custom:Design', 'roleless', 'departed'])
   })
 
   it('falls back to all votes when every voter is outside the estimator pool', () => {
-    const votes = ['po', 'sm', 'custom:Design'].map(player_id => ({ player_id, vote: '8' }))
+    const votes = ['po', 'sm'].map(player_id => ({ player_id, vote: '8' }))
     expect(estimatorVotes(votes, shields)).toEqual(votes)
     expect(estimatorVotes([], shields)).toEqual([])
   })
@@ -211,7 +211,7 @@ describe('estimatorVotes', () => {
     expect(estimatorVotes(votes, undefined)).toEqual(votes)
   })
 
-  it('excludes custom roles with built-in names when an estimator has voted', () => {
+  it('keeps custom roles with built-in names in the estimator pool as DEV', () => {
     const votes = ['dev', 'customDev', 'customQa', 'customGqa', 'customPo', 'customEmpty'].map(player_id => ({ player_id, vote: '5' }))
     const shieldsByPlayer = new Map([
       ['dev', ['dev']],
@@ -221,65 +221,84 @@ describe('estimatorVotes', () => {
       ['customPo', ['custom:PO']],
       ['customEmpty', ['custom:']],
     ])
-    expect(estimatorVotes(votes, shieldsByPlayer)).toEqual([votes[0]])
+    expect(estimatorVotes(votes, shieldsByPlayer)).toEqual(votes)
   })
 })
 
+const ALL_CHIPS = ['DEV', 'BE', 'FE', 'SRE', 'QA', 'AQA', 'GQA', 'PO', 'SM']
+const nine = ['sm', 'po', 'aqa', 'gqa', 'qa', 'sre', 'fe', 'be', 'dev'].map(role => ({ shields: [role], vote: '3' }))
+
 describe('groupResultVotes', () => {
-  it('orders all nine voted built-in roles canonically', () => {
-    const players = ['sm', 'po', 'aqa', 'gqa', 'qa', 'sre', 'fe', 'be', 'dev']
-      .map(role => ({ shields: [role], vote: '3' }))
-    expect(groupResultVotes(players)).toEqual([
-      'DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM',
-    ].map(key => ({ key, label: key, votes: { '3': 1 } })))
+  it.each([null, undefined, []])('shows only the DEV and QA umbrella circles with no chips (%s)', selected => {
+    expect(groupResultVotes(nine, selected)).toEqual([
+      { key: 'DEV', label: 'DEV', votes: { '3': 4 } },
+      { key: 'QA', label: 'QA', votes: { '3': 3 } },
+    ])
   })
 
-  it('creates three circles for three voted roles', () => {
+  it('shows all nine roles separately in canonical order when every chip is selected', () => {
+    expect(groupResultVotes(nine, ALL_CHIPS).map(group => group.key)).toEqual(
+      ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM'],
+    )
+  })
+
+  it('replaces the DEV umbrella with the selected chip and drops the rest of the group', () => {
     expect(groupResultVotes([
-      { shields: ['po'], vote: '2' },
-      { shields: ['be'], vote: '5' },
-      { shields: ['qa'], vote: '8' },
-    ])).toEqual([
-      { key: 'BE', label: 'BE', votes: { '5': 1 } },
-      { key: 'QA', label: 'QA', votes: { '8': 1 } },
-      { key: 'PO', label: 'PO', votes: { '2': 1 } },
+      { shields: ['be'], vote: '3' },
+      { shields: ['fe'], vote: '5' },
+      { shields: ['dev'], vote: '5' },
+      { shields: null, vote: '8' },
+      { shields: ['qa'], vote: '2' },
+    ], ['BE'])).toEqual([
+      { key: 'BE', label: 'BE', votes: { '3': 1 } },
+      { key: 'QA', label: 'QA', votes: { '2': 1 } },
     ])
   })
 
-  it('creates only two circles when two of eight present roles voted', () => {
-    const players = ['dev', 'be', 'fe', 'sre', 'qa', 'gqa', 'aqa', 'po']
-      .map(role => ({ shields: [role], vote: role === 'be' || role === 'po' ? '5' : null }))
-    expect(groupResultVotes(players)).toEqual([
-      { key: 'BE', label: 'BE', votes: { '5': 1 } },
-      { key: 'PO', label: 'PO', votes: { '5': 1 } },
-    ])
+  it('treats the DEV chip as DEV and roleless voters only', () => {
+    expect(groupResultVotes([
+      { shields: ['dev'], vote: '3' },
+      { shields: [], vote: '3' },
+      { shields: ['sre'], vote: '8' },
+    ], ['DEV'])).toEqual([{ key: 'DEV', label: 'DEV', votes: { '3': 2 } }])
   })
 
-  it('merges identical custom roles and orders them by first voting participant', () => {
+  it('replaces the QA umbrella with the selected chip', () => {
+    expect(groupResultVotes([
+      { shields: ['qa'], vote: '3' },
+      { shields: ['gqa'], vote: '5' },
+      { shields: ['aqa'], vote: '8' },
+    ], ['AQA'])).toEqual([{ key: 'AQA', label: 'AQA', votes: { '8': 1 } }])
+  })
+
+  it('shows PO and SM only with their chips', () => {
+    const players = [{ shields: ['po'], vote: '2' }, { shields: ['sm'], vote: '5' }]
+    expect(groupResultVotes(players, [])).toEqual([])
+    expect(groupResultVotes(players, ['PO'])).toEqual([{ key: 'PO', label: 'PO', votes: { '2': 1 } }])
+  })
+
+  it('ignores unknown saved values', () => {
+    expect(groupResultVotes(nine, ['XX', 'custom:DEV'])).toEqual(groupResultVotes(nine, []))
+  })
+
+  it('exposes whether a vote is counted', () => {
+    expect(resultKeyFor(['fe'], ['BE'])).toBeNull()
+    expect(resultKeyFor(['fe'], [])).toBe('DEV')
+    expect(resultKeyFor(['custom:Design'], ['BE'])).toBeNull()
+    expect(resultKeyFor(['custom:Design'], [])).toBe('DEV')
+    expect(resultKeyFor(['custom:Design'], ['DEV'])).toBe('DEV')
+  })
+
+  it('folds custom roles into the DEV circle', () => {
     expect(groupResultVotes([
       { shields: ['custom:Design'], vote: null },
-      { shields: ['custom:Research'], vote: '3' },
-      { shields: ['custom:Design'], vote: '5' },
-      { shields: ['custom:Research'], vote: '3' },
-      { shields: ['custom:design'], vote: '8' },
-    ])).toEqual([
-      { key: 'custom:Research', label: 'Research', votes: { '3': 2 } },
-      { key: 'custom:Design', label: 'Design', votes: { '5': 1 } },
-      { key: 'custom:design', label: 'design', votes: { '8': 1 } },
-    ])
-  })
-
-  it('keeps custom names separate from built-ins and follows built-ins with custom groups', () => {
-    expect(groupResultVotes([
       { shields: ['custom:DEV'], vote: '8' },
       { shields: ['custom:'], vote: '2' },
       { shields: ['dev'], vote: '3' },
       { shields: ['qa'], vote: '5' },
-    ])).toEqual([
-      { key: 'DEV', label: 'DEV', votes: { '3': 1 } },
+    ], ALL_CHIPS)).toEqual([
+      { key: 'DEV', label: 'DEV', votes: { '2': 1, '3': 1, '8': 1 } },
       { key: 'QA', label: 'QA', votes: { '5': 1 } },
-      { key: 'custom:DEV', label: 'DEV', votes: { '8': 1 } },
-      { key: 'custom:', label: '', votes: { '2': 1 } },
     ])
   })
 
@@ -288,35 +307,36 @@ describe('groupResultVotes', () => {
       { shields: null, vote: '3' },
       { shields: [], vote: '3' },
       { shields: ['unknown'], vote: '5' },
-    ])).toEqual([{ key: 'DEV', label: 'DEV', votes: { '3': 2, '5': 1 } }])
+    ], ALL_CHIPS)).toEqual([{ key: 'DEV', label: 'DEV', votes: { '3': 2, '5': 1 } }])
   })
 
-  it('uses the first recognized built-in or custom legacy shield', () => {
+  it('skips custom shields and uses the first recognized built-in legacy shield', () => {
     expect(groupResultVotes([
       { shields: ['unknown', 'custom:DEV', 'qa'], vote: '3' },
       { shields: ['unknown', 'qa', 'custom:DEV'], vote: '5' },
       { shields: ['unknown', 'custom:', 'gqa'], vote: '8' },
-    ])).toEqual([
-      { key: 'QA', label: 'QA', votes: { '5': 1 } },
-      { key: 'custom:DEV', label: 'DEV', votes: { '3': 1 } },
-      { key: 'custom:', label: '', votes: { '8': 1 } },
+      { shields: ['unknown', 'custom:QA'], vote: '1' },
+    ], ALL_CHIPS)).toEqual([
+      { key: 'DEV', label: 'DEV', votes: { '1': 1 } },
+      { key: 'QA', label: 'QA', votes: { '3': 1, '5': 1 } },
+      { key: 'GQA', label: 'GQA', votes: { '8': 1 } },
     ])
   })
 
   it('omits empty votes and produces no empty groups', () => {
-    expect(groupResultVotes([])).toEqual([])
+    expect(groupResultVotes([], ALL_CHIPS)).toEqual([])
     expect(groupResultVotes([
       { shields: ['dev'], vote: null },
       { shields: ['custom:Design'], vote: '' },
-    ])).toEqual([])
+    ], ALL_CHIPS)).toEqual([])
   })
 
   it('counts arbitrary card values without inheriting object properties', () => {
     const players = ['__proto__', 'constructor', 'toString', '__proto__', '0']
-      .map(vote => ({ shields: ['custom:Design'], vote }))
-    const groups = groupResultVotes(players)
+      .map(vote => ({ shields: ['dev'], vote }))
+    const groups = groupResultVotes(players, ALL_CHIPS)
     expect(groups).toEqual([{
-      key: 'custom:Design', label: 'Design',
+      key: 'DEV', label: 'DEV',
       votes: { ['__proto__']: 2, constructor: 1, toString: 1, '0': 1 },
     }])
     expect(Object.keys(groups[0]!.votes)).toHaveLength(4)

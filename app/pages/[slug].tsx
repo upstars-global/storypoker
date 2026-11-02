@@ -35,7 +35,8 @@ import { backgroundTint } from '~/utils/backgroundImage'
 import { DEFAULT_PRESET_ID, activeCardsForDeck } from '~/utils/cardDecks'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { shouldCelebrate } from '~/utils/resultCelebration'
-import { groupResultVotes, type ResultGroup } from '~/utils/resultCohorts'
+import { usesResultChips } from '~/utils/roundStats'
+import { SPLITTABLE_COHORTS, groupResultVotes, resultKeyFor, type ResultGroup } from '~/utils/resultCohorts'
 import { isValidRoomSlug, normalizeRoomSlug } from '~/utils/roomId'
 import { roleTagForShields, roleTagOrder } from '~/utils/shields'
 import { isRoundTimerStale, type AlarmSettings } from '~/utils/timerAlarm'
@@ -69,6 +70,12 @@ function readSideWidget(): SideWidget {
 
 const AlignmentTrendsModal = lazy(() => import('~/components/AlignmentTrendsModal'))
 
+const MAX_FITTED_RESULT_CIRCLES = 6
+
+function duplicateSingleVote(votes: Record<string, number>): Record<string, number> {
+  const entries = Object.entries(votes)
+  return entries.length === 1 && entries[0]![1] === 1 ? { [entries[0]![0]]: 2 } : {}
+}
 const EMPTY_BACKGROUND: RoomBackground = { background_url: null, background_updated_at: null, background_opacity: null }
 
 function readHeaderSeed(urlParam: string): HeaderSeed {
@@ -167,6 +174,7 @@ export default function RoomPage() {
   const [slotWinnerId, setSlotWinnerId] = useState<string | null>(null)
   const [sideWidget, setSideWidget] = useState<SideWidget>(readSideWidget)
   const [spinsUsed, setSpinsUsed] = useState(0)
+  const [resetSnapshot, setResetSnapshot] = useState<{ roundStartedAt: string | null | undefined; votes: Record<string, string> } | null>(null)
   const [spinsRoundStartedAt, setSpinsRoundStartedAt] = useState(roomState?.round_started_at)
 
   function setCurrentPlayerId(id: string | null) {
@@ -220,7 +228,7 @@ export default function RoomPage() {
 
   const currentRoleTag = roleTagForShields(currentPlayer?.shields)
   const isProductRole = currentRoleTag === 'PO' || currentRoleTag === 'SM'
-  const spinsPerRound = isProductRole ? 5 : 3
+  const spinsPerRound = 3
   const canSpinSlot = isProductRole || (
     roomState?.phase === 'voting'
     && !!currentPlayer
@@ -235,18 +243,24 @@ export default function RoomPage() {
 
   const votedCount = visiblePlayers.filter(p => voteOf(p.id) !== null).length
   const canReset = !showLastRound && votedCount > 0 && votedCount < visiblePlayers.length
+  if (resetSnapshot && (!isModerator || roomState?.phase !== 'voting' || resetSnapshot.roundStartedAt !== roomState.round_started_at)) {
+    setResetSnapshot(null)
+  }
+  const resetUndoAvailable = !!resetSnapshot && !showLastRound
 
   const isPollDeck = roomState?.deck_preset === 'voting' || roomState?.deck_preset === 'vote_question'
 
+  const resultCohorts = roomState?.result_cohorts
+  const excludedVoters = !usesResultChips(roomState?.deck_preset) ? [] : visiblePlayers.filter(p => p.vote && resultKeyFor(p.shields, resultCohorts) === null)
+  const hiddenVotePlayerIds = new Set(excludedVoters.map(p => p.id))
   const voteCounts: Record<string, number> = roomState
     ? visiblePlayers.reduce<Record<string, number>>((acc, p) => {
-        if (p.vote) acc[p.vote] = (acc[p.vote] ?? 0) + 1
+        if (p.vote && !hiddenVotePlayerIds.has(p.id)) acc[p.vote] = (acc[p.vote] ?? 0) + 1
         return acc
       }, {})
     : {}
 
-  const resultGroups: ResultGroup[] = roomState ? groupResultVotes(visiblePlayers) : []
-  const hiddenVotePlayerIds = new Set<string>()
+  const resultGroups: ResultGroup[] = roomState ? groupResultVotes(visiblePlayers, usesResultChips(roomState.deck_preset) ? roomState.result_cohorts : SPLITTABLE_COHORTS) : []
 
   const activeCards = roomState
     ? activeCardsForDeck(roomState.deck_preset ?? DEFAULT_PRESET_ID, roomState.active_cards ?? [])
@@ -272,7 +286,7 @@ export default function RoomPage() {
     const blocks: { key?: string; label: string; value: number }[] = []
     if (groups) {
       for (const group of groups) {
-        const value = alignmentScore(group.votes, deck)
+        const value = alignmentScore(group.votes, deck) ?? alignmentScore(duplicateSingleVote(group.votes), deck)
         if (value !== null) blocks.push({ key: group.key, label: group.label, value })
       }
     } else {
@@ -619,12 +633,29 @@ export default function RoomPage() {
     setEditTargetId(null)
   }
 
+  async function handleResetToggle() {
+    const room = useRoomStore.getState()
+    if (resetSnapshot) {
+      setResetSnapshot(null)
+      await room.restoreVotes(resetSnapshot.votes)
+      return
+    }
+    const votes: Record<string, string> = {}
+    for (const player of visiblePlayers) {
+      const vote = voteOf(player.id)
+      if (vote !== null) votes[player.id] = vote
+    }
+    setResetSnapshot({ roundStartedAt: roomState?.round_started_at, votes })
+    await room.resetVotes()
+  }
+
   async function handleSaveCardDeck(payload: CardDeckPayload) {
     const room = useRoomStore.getState()
     if (payload.deckPreset !== room.roomState?.deck_preset) {
       await room.setDeckPreset(payload.deckPreset)
     }
     await room.saveCardDeck(payload.cards)
+    await room.setResultCohorts(payload.resultCohorts)
     setShowCardDeck(false)
   }
 
@@ -815,48 +846,52 @@ export default function RoomPage() {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-start">
-          {roomState?.phase === 'voting' && showLastRound && lastRound && (
-            <ResultsArea
-              votes={lastRound.votes}
-              groups={lastRound.groups}
-              showNewRound={false}
-              pollQuestion={lastRound.pollQuestion}
-              disableCelebration
-              showAlignment={!lastRound.isVotingDeck}
-              activeCards={lastRound.activeCards}
-              goalClarityScore={lastRound.deckPreset === 'goal_clarity'}
-            />
-          )}
-          {roomState?.phase === 'revealed' && (
-            <ResultsArea
-              votes={voteCounts}
-              groups={resultGroups}
-              showNewRound={isModerator}
-              pollQuestion={roomState.poll_question ?? null}
-              disableCelebration={isPollDeck}
-              showAlignment={!isPollDeck}
-              activeCards={activeCards}
-              goalClarityScore={roomState.deck_preset === 'goal_clarity'}
-              onStartNewRound={() => void useRoomStore.getState().startNewRound()}
-            />
-          )}
-          {roomState?.phase === 'voting' && (
+          {roomState && (roomState.phase === 'voting' || roomState.phase === 'revealed') && (
             <CardsArea
+              revealed={roomState.phase === 'revealed'}
+              lastRoundFits={(roomState.phase === 'revealed' ? resultGroups.length : (lastRound?.groups?.length ?? 0)) <= MAX_FITTED_RESULT_CIRCLES}
               activeCards={activeCards}
               selectedVote={currentPlayer ? voteOf(currentPlayer.id) : null}
               isModerator={isModerator}
               hasVotes={hasVotes}
               canReset={canReset}
+              resetUndoAvailable={resetUndoAvailable}
               countdownCounter={countdownTimerCounter}
               countdownRunning={countdownRunning}
               pollMode={roomState.deck_preset === 'voting'}
               voteQuestionMode={roomState.deck_preset === 'vote_question'}
               pollQuestion={roomState.poll_question ?? null}
               hasLastRound={!!lastRound}
-              showLastRound={showLastRound}
+              showLastRound={roomState.phase === 'voting' && showLastRound}
+              lastRoundView={roomState.phase === 'revealed'
+                ? (
+                    <ResultsArea
+                      votes={voteCounts}
+                      groups={resultGroups}
+                      showNewRound={false}
+                      pollQuestion={roomState.poll_question ?? null}
+                      disableCelebration={isPollDeck}
+                      showAlignment={!isPollDeck}
+                      activeCards={activeCards}
+                      goalClarityScore={roomState.deck_preset === 'goal_clarity'}
+                    />
+                  )
+                : lastRound && (
+                <ResultsArea
+                  votes={lastRound.votes}
+                  groups={lastRound.groups}
+                  showNewRound={false}
+                  pollQuestion={lastRound.pollQuestion}
+                  disableCelebration
+                  showAlignment={!lastRound.isVotingDeck}
+                  activeCards={lastRound.activeCards}
+                  goalClarityScore={lastRound.deckPreset === 'goal_clarity'}
+                />
+              )}
               onVote={card => void handleVote(card)}
               onReveal={() => void useRoomStore.getState().reveal()}
-              onReset={() => void useRoomStore.getState().resetVotes()}
+              onStartNewRound={() => void useRoomStore.getState().startNewRound()}
+              onReset={() => void handleResetToggle()}
               onStartCountdown={broadcastCountdownStart}
               onSetPollQuestion={question => void useRoomStore.getState().setPollQuestion(question)}
               onStartVoteQuestion={(question, answers) => void handleStartVoteQuestion(question, answers)}
@@ -893,6 +928,7 @@ export default function RoomPage() {
         <ConfigureCardDeckModal
           deckPreset={roomState.deck_preset ?? DEFAULT_PRESET_ID}
           activeCards={activeCards}
+          resultCohorts={roomState.result_cohorts}
           onClose={() => setShowCardDeck(false)}
           onSave={payload => void handleSaveCardDeck(payload)}
         />

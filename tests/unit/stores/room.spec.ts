@@ -105,6 +105,52 @@ describe('roomStore actions', () => {
     expect(calls.find(c => c.table === 'round_history')).toBeUndefined()
   })
 
+  it('reveal() writes only votes counted by the result chips to round_history', async () => {
+    const calls: Array<{ table: string; op: string; arg: Record<string, unknown> }> = []
+    setSupabase(asSupabase({
+      from: (table: string) => ({
+        update: () => updateQuery(),
+        insert: (arg: Record<string, unknown>) => {
+          calls.push({ table, op: 'insert', arg })
+          return Promise.resolve({ error: null })
+        },
+      }),
+    }))
+    useRoomStore.setState({ roomId: 'r1', roomState: fakeRoomState({ result_cohorts: ['BE'] }) })
+    usePlayersStore.setState({ players: [
+      fakePlayer({ id: 'p1', name: 'Be', vote: '5', shields: ['be'] }),
+      fakePlayer({ id: 'p2', name: 'Fe', vote: '8', shields: ['fe'] }),
+      fakePlayer({ id: 'p3', name: 'Qa', vote: '3', shields: ['qa'] }),
+      fakePlayer({ id: 'p4', name: 'Po', vote: '1', shields: ['po'] }),
+    ] })
+    await state().reveal()
+    const hist = calls.find(c => c.table === 'round_history')
+    expect(hist?.arg.votes).toEqual([
+      { player_id: 'p1', name: 'Be', vote: '5' },
+      { player_id: 'p3', name: 'Qa', vote: '3' },
+    ])
+  })
+
+  it('reveal() keeps every vote of a voting deck in round_history', async () => {
+    const calls: Array<{ table: string; arg: Record<string, unknown> }> = []
+    setSupabase(asSupabase({
+      from: (table: string) => ({
+        update: () => updateQuery(),
+        insert: (arg: Record<string, unknown>) => {
+          calls.push({ table, arg })
+          return Promise.resolve({ error: null })
+        },
+      }),
+    }))
+    useRoomStore.setState({ roomId: 'r1', roomState: fakeRoomState({ deck_preset: 'voting', result_cohorts: ['BE'] }) })
+    usePlayersStore.setState({ players: [
+      fakePlayer({ id: 'p1', name: 'Fe', vote: 'yes', shields: ['fe'] }),
+      fakePlayer({ id: 'p2', name: 'Po', vote: 'no', shields: ['po'] }),
+    ] })
+    await state().reveal()
+    expect(calls.find(c => c.table === 'round_history')?.arg.votes).toHaveLength(2)
+  })
+
   it('reveal() writes round_history when votes>=2', async () => {
     const calls: Array<{ table: string; op: string; arg: Record<string, unknown> }> = []
     setSupabase(asSupabase({
@@ -326,6 +372,64 @@ describe('roomStore actions', () => {
       active_cards: ['1', '2', '3', '4', '5'],
       poll_question: 'Наскільки чітко я розумію Sprint Goals?',
     })
+  })
+})
+
+describe('roomStore.restoreVotes', () => {
+  beforeEach(async () => {
+    resetSupabase()
+    await resetStores()
+  })
+
+  function recordUpdates() {
+    const calls: Array<{ arg: Record<string, unknown>; filters: unknown[][] }> = []
+    setSupabase(asSupabase({
+      from: () => ({
+        update: (arg: Record<string, unknown>) => {
+          const filters: unknown[][] = []
+          calls.push({ arg, filters })
+          const query = Object.assign(Promise.resolve({ error: null }), {
+            eq: (column: string, value: unknown) => { filters.push(['eq', column, value]); return query },
+            in: (column: string, value: unknown) => { filters.push(['in', column, value]); return query },
+            not: (column: string, operator: string, value: unknown) => {
+              filters.push(['not', column, operator, value])
+              return query
+            },
+          })
+          return query
+        },
+      }),
+    }))
+    return calls
+  }
+
+  it('restores the snapshot for players still in the room, then clears every other vote', async () => {
+    const calls = recordUpdates()
+    useRoomStore.setState({ roomId: 'r1' })
+    usePlayersStore.setState({
+      players: [
+        fakePlayer({ id: 'a', vote: '13' }),
+        fakePlayer({ id: 'b' }),
+        fakePlayer({ id: 'c' }),
+        fakePlayer({ id: 'gone', left_at: '2026-05-04T01:00:00Z' }),
+      ],
+      pendingVotes: { a: '13' },
+    })
+    await state().restoreVotes({ a: '3', b: '3', c: '5', gone: '8' })
+    expect(calls).toEqual([
+      { arg: { vote: '3' }, filters: [['eq', 'room_id', 'r1'], ['in', 'id', ['a', 'b']]] },
+      { arg: { vote: '5' }, filters: [['eq', 'room_id', 'r1'], ['in', 'id', ['c']]] },
+      { arg: { vote: null }, filters: [['eq', 'room_id', 'r1'], ['not', 'id', 'in', '(a,b,c)']] },
+    ])
+    expect(usePlayersStore.getState().pendingVotes).toEqual({})
+  })
+
+  it('clears every vote when no snapshot player is still in the room', async () => {
+    const calls = recordUpdates()
+    useRoomStore.setState({ roomId: 'r1' })
+    usePlayersStore.setState({ players: [fakePlayer({ id: 'a', vote: '13' })] })
+    await state().restoreVotes({ gone: '8' })
+    expect(calls).toEqual([{ arg: { vote: null }, filters: [['eq', 'room_id', 'r1']] }])
   })
 })
 

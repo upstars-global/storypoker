@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createCelebrationParticles, shouldCelebrate } from '~/utils/resultCelebration'
+import { groupResultVotes } from '~/utils/resultCohorts'
 
 describe('resultCelebration', () => {
   it('celebrates when general and qa are both unanimous and match', () => {
@@ -93,5 +94,18 @@ describe('resultCelebration', () => {
       duration: 2520,
       hue: 34,
     })
+  })
+})
+
+describe('shouldCelebrate with chip grouping', () => {
+  const players = [{ shields: ['be'], vote: '3' }, { shields: ['fe'], vote: '3' }, { shields: ['qa'], vote: '5' }]
+  const votes = { '3': 2, '5': 1 }
+
+  it('celebrates when merged developer roles agree', () => {
+    expect(shouldCelebrate(votes, groupResultVotes(players, []).map(group => group.votes))).toBe(true)
+  })
+
+  it('does not celebrate when the agreeing roles are split into single-vote circles', () => {
+    expect(shouldCelebrate(votes, groupResultVotes(players, ['BE', 'FE']).map(group => group.votes))).toBe(false)
   })
 })
