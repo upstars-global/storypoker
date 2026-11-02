@@ -361,7 +361,10 @@ export default function CardsArea({
       </div>
 
       {isModerator && (
-        <div className="flex flex-wrap items-center justify-center gap-6 pt-8">
+        <div
+          className="fixed inset-x-0 bottom-0 z-20 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-(--bg-appbar) border-t border-input"
+          data-testid="moderator-panel"
+        >
           <div className="flex items-center gap-2">
             <AppTooltip
               side="top"

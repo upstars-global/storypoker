@@ -235,6 +235,7 @@ export default function RoomPage() {
   }
 
   const votedCount = visiblePlayers.filter(p => voteOf(p.id) !== null).length
+  const moderatorPanelShown = isModerator && (roomState?.phase === 'voting' || roomState?.phase === 'revealed')
   const canReset = !showLastRound && votedCount > 0 && votedCount < visiblePlayers.length
   if (resetSnapshot && (!isModerator || roomState?.phase !== 'voting' || resetSnapshot.roundStartedAt !== roomState.round_started_at)) {
     setResetSnapshot(null)
@@ -788,7 +789,10 @@ export default function RoomPage() {
       <main
         id="main"
         tabIndex={-1}
-        className="flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto outline-none"
+        className={moderatorPanelShown
+          ? 'flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 pb-40 sm:pb-32 md:pb-32 max-w-[1400px] w-full mx-auto outline-none'
+          : 'flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto outline-none'}
+        data-testid="room-main"
       >
         <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-6">
           <PlayersList

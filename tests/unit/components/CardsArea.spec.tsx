@@ -130,6 +130,13 @@ describe('CardsArea voting', () => {
     }
   })
 
+  it('pins the moderator panel to the bottom of the viewport', () => {
+    mountCards()
+    const panel = screen.getByTestId('moderator-panel')
+    expect(panel.className.split(' ')).toEqual(expect.arrayContaining(['fixed', 'inset-x-0', 'bottom-0']))
+    expect(panel.contains(screen.getByTestId('reveal-button'))).toBe(true)
+  })
+
   it('hides moderator controls from a plain player', () => {
     mountCards({ isModerator: false })
     expect(screen.queryByTestId('reveal-button')).toBeNull()

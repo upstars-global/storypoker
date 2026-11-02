@@ -433,6 +433,15 @@ describe('room page revealed layout', () => {
     expect(lastProps(CardsArea)).toMatchObject({ revealed: true, showLastRound: false })
     expect(lastRoundViewProps()).toMatchObject({ showNewRound: true })
   })
+
+  it('reserves bottom space for the pinned moderator panel only for moderators', async () => {
+    await mountRoom({ state: fakeState({ phase: 'voting' }) })
+    expect(screen.getByTestId('room-main').className).toContain('pb-40')
+    await act(async () => {
+      usePlayersStore.setState({ players: estimators.map(p => (p.id === 'me' ? { ...p, is_moderator: false } : p)) })
+    })
+    expect(screen.getByTestId('room-main').className).not.toContain('pb-40')
+  })
 })
 
 describe('room page reset undo', () => {
