@@ -37,6 +37,7 @@ interface RoomStoreState {
   fetchHistory: () => Promise<RoundHistory[]>
   startNewRound: () => Promise<void>
   resetVotes: () => Promise<void>
+  restoreVotes: (snapshot: Record<string, string>) => Promise<void>
   saveCardDeck: (cards: string[]) => Promise<void>
   setDeckPreset: (presetId: DeckPresetId) => Promise<void>
   setPollQuestion: (question: string | null) => Promise<void>
@@ -157,6 +158,24 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
     if (!roomId) return
     const playersStore = usePlayersStore.getState()
     await getSupabase().from('players').update({ vote: null }).eq('room_id', roomId)
+    playersStore.clearPendingVotes()
+  }
+
+  async function restoreVotes(snapshot: Record<string, string>) {
+    const { roomId } = get()
+    if (!roomId) return
+    const playersStore = usePlayersStore.getState()
+    const present = new Set(playersStore.players.filter(p => !p.left_at).map(p => p.id))
+    const idsByVote = new Map<string, string[]>()
+    for (const [playerId, vote] of Object.entries(snapshot)) {
+      if (!present.has(playerId)) continue
+      idsByVote.set(vote, [...(idsByVote.get(vote) ?? []), playerId])
+    }
+    const supabase = getSupabase()
+    await supabase.from('players').update({ vote: null }).eq('room_id', roomId)
+    await Promise.all([...idsByVote].map(([vote, ids]) =>
+      supabase.from('players').update({ vote }).eq('room_id', roomId).in('id', ids),
+    ))
     playersStore.clearPendingVotes()
   }
 
@@ -353,6 +372,7 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
     fetchHistory,
     startNewRound,
     resetVotes,
+    restoreVotes,
     saveCardDeck,
     setDeckPreset,
     setPollQuestion,

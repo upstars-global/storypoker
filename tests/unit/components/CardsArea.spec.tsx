@@ -3,6 +3,8 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { i18n } from '~/i18n'
 import CardsArea from '~/components/CardsArea'
+import iconClasses from '~/generated/iconClasses.json'
+import { mapIconName } from '~/utils/iconMap'
 
 type CardsAreaProps = ComponentProps<typeof CardsArea>
 
@@ -43,6 +45,22 @@ describe('CardsArea moderator icon buttons', () => {
   it('names the reset button', () => {
     mountCards()
     expect(screen.getByTestId('reset-button').getAttribute('aria-label')).toBe(i18n.t('cards.reset'))
+  })
+
+  it('switches the reset button to an enabled undo state', () => {
+    mountCards({ canReset: false, resetUndoAvailable: true })
+    const button = screen.getByTestId('reset-button') as HTMLButtonElement
+    expect(button.getAttribute('aria-label')).toBe(i18n.t('cards.undoReset'))
+    expect(button.getAttribute('aria-pressed')).toBe('true')
+    expect(button.disabled).toBe(false)
+    expect(button.querySelector(`.${(iconClasses as Record<string, string>)[mapIconName('ic:baseline-undo')]}`)).not.toBeNull()
+  })
+
+  it('shows the reset icon outside the undo state', () => {
+    mountCards()
+    const button = screen.getByTestId('reset-button')
+    expect(button.getAttribute('aria-pressed')).toBe('false')
+    expect(button.querySelector(`.${(iconClasses as Record<string, string>)[mapIconName('ic:baseline-restart-alt')]}`)).not.toBeNull()
   })
 
   it('exposes the last-round toggle as a pressed button', () => {

@@ -88,6 +88,7 @@
   "cards": {
     "reveal": "Reveal Estimates",
     "reset": "Reset Estimates",
+    "undoReset": "Restore Estimates",
     "countdownGroupLabel": "Please vote (hold)",
     "countdownSilent": "Countdown without sound",
     "countdownDry": "Countdown with sound",

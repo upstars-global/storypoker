@@ -167,6 +167,7 @@ export default function RoomPage() {
   const [slotWinnerId, setSlotWinnerId] = useState<string | null>(null)
   const [sideWidget, setSideWidget] = useState<SideWidget>(readSideWidget)
   const [spinsUsed, setSpinsUsed] = useState(0)
+  const [resetSnapshot, setResetSnapshot] = useState<{ roundStartedAt: string | null | undefined; votes: Record<string, string> } | null>(null)
   const [spinsRoundStartedAt, setSpinsRoundStartedAt] = useState(roomState?.round_started_at)
 
   function setCurrentPlayerId(id: string | null) {
@@ -235,6 +236,10 @@ export default function RoomPage() {
 
   const votedCount = visiblePlayers.filter(p => voteOf(p.id) !== null).length
   const canReset = !showLastRound && votedCount > 0 && votedCount < visiblePlayers.length
+  if (resetSnapshot && (!isModerator || roomState?.phase !== 'voting' || resetSnapshot.roundStartedAt !== roomState.round_started_at)) {
+    setResetSnapshot(null)
+  }
+  const resetUndoAvailable = !!resetSnapshot && !showLastRound
 
   const isPollDeck = roomState?.deck_preset === 'voting' || roomState?.deck_preset === 'vote_question'
 
@@ -619,6 +624,22 @@ export default function RoomPage() {
     setEditTargetId(null)
   }
 
+  async function handleResetToggle() {
+    const room = useRoomStore.getState()
+    if (resetSnapshot) {
+      setResetSnapshot(null)
+      await room.restoreVotes(resetSnapshot.votes)
+      return
+    }
+    const votes: Record<string, string> = {}
+    for (const player of visiblePlayers) {
+      const vote = voteOf(player.id)
+      if (vote !== null) votes[player.id] = vote
+    }
+    setResetSnapshot({ roundStartedAt: roomState?.round_started_at, votes })
+    await room.resetVotes()
+  }
+
   async function handleSaveCardDeck(payload: CardDeckPayload) {
     const room = useRoomStore.getState()
     if (payload.deckPreset !== room.roomState?.deck_preset) {
@@ -848,6 +869,7 @@ export default function RoomPage() {
               isModerator={isModerator}
               hasVotes={hasVotes}
               canReset={canReset}
+              resetUndoAvailable={resetUndoAvailable}
               countdownCounter={countdownTimerCounter}
               countdownRunning={countdownRunning}
               pollMode={roomState.deck_preset === 'voting'}
@@ -857,7 +879,7 @@ export default function RoomPage() {
               showLastRound={showLastRound}
               onVote={card => void handleVote(card)}
               onReveal={() => void useRoomStore.getState().reveal()}
-              onReset={() => void useRoomStore.getState().resetVotes()}
+              onReset={() => void handleResetToggle()}
               onStartCountdown={broadcastCountdownStart}
               onSetPollQuestion={question => void useRoomStore.getState().setPollQuestion(question)}
               onStartVoteQuestion={(question, answers) => void handleStartVoteQuestion(question, answers)}

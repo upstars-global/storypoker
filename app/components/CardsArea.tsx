@@ -13,6 +13,7 @@ type CardsAreaProps = {
   isModerator: boolean
   hasVotes: boolean
   canReset: boolean
+  resetUndoAvailable?: boolean
   countdownCounter: number
   countdownRunning: boolean
   pollMode: boolean
@@ -44,6 +45,7 @@ export default function CardsArea({
   isModerator,
   hasVotes,
   canReset,
+  resetUndoAvailable = false,
   countdownCounter,
   countdownRunning,
   pollMode,
@@ -173,7 +175,8 @@ export default function CardsArea({
   }
 
   const lastRoundDisabled = (!hasLastRound && !showLastRound) || countdownRunning
-  const resetDisabled = !canReset || countdownRunning
+  const resetDisabled = (!canReset && !resetUndoAvailable) || countdownRunning
+  const resetLabel = resetUndoAvailable ? t('cards.undoReset') : t('cards.reset')
   const modeDisabled = showLastRound || !canVote
 
   function pollSection() {
@@ -371,18 +374,28 @@ export default function CardsArea({
                   className="mui-icon-btn"
                   disabled={resetDisabled}
                   style={{ color: resetDisabled ? 'var(--text-disabled)' : undefined }}
-                  aria-label={t('cards.reset')}
+                  aria-label={resetLabel}
+                  aria-pressed={resetUndoAvailable ? 'true' : 'false'}
                   data-testid="reset-button"
                   onClick={onReset}
                 >
-                  <AppIcon
-                    name="ic:baseline-restart-alt"
-                    style={{ fontSize: '1.5rem' }}
-                  />
+                  {resetUndoAvailable
+                    ? (
+                        <AppIcon
+                          name="ic:baseline-undo"
+                          style={{ fontSize: '1.5rem' }}
+                        />
+                      )
+                    : (
+                        <AppIcon
+                          name="ic:baseline-restart-alt"
+                          style={{ fontSize: '1.5rem' }}
+                        />
+                      )}
                 </button>
               )}
             >
-              {t('cards.reset')}
+              {resetLabel}
             </AppTooltip>
           </div>
           <div

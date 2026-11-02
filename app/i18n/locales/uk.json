@@ -88,6 +88,7 @@
   "cards": {
     "reveal": "Показати оцінки",
     "reset": "Скинути оцінки",
+    "undoReset": "Повернути оцінки",
     "countdownGroupLabel": "Прошу голосувати (утримати)",
     "countdownSilent": "Відлік без звуку",
     "countdownDry": "Відлік зі звуком",

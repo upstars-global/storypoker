@@ -420,6 +420,60 @@ describe('room page side widget', () => {
   })
 })
 
+describe('room page reset undo', () => {
+  const partial = [...estimators, fakePlayer('dave', ['dev'], null)]
+
+  async function mountWithStoreSpies(players: Player[] = partial) {
+    await mountRoom({ players, state: fakeState({ phase: 'voting' }) })
+    const resetVotes = vi.fn().mockResolvedValue(undefined)
+    const restoreVotes = vi.fn().mockResolvedValue(undefined)
+    useRoomStore.setState({ resetVotes, restoreVotes })
+    return { resetVotes, restoreVotes }
+  }
+
+  async function clickReset() {
+    await act(async () => { lastProps(CardsArea).onReset() })
+  }
+
+  it('resets, then restores exactly the votes from the moment of reset', async () => {
+    const { resetVotes, restoreVotes } = await mountWithStoreSpies()
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(false)
+    await clickReset()
+    expect(resetVotes).toHaveBeenCalledTimes(1)
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(true)
+    await act(async () => {
+      usePlayersStore.setState({ players: partial.map(p => ({ ...p, vote: p.id === 'dave' ? '13' : null })) })
+    })
+    await clickReset()
+    expect(restoreVotes).toHaveBeenCalledWith({ alice: '3', carol: '5', bob: '5' })
+    expect(resetVotes).toHaveBeenCalledTimes(1)
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(false)
+  })
+
+  it('keeps undo through a countdown', async () => {
+    await mountWithStoreSpies()
+    await clickReset()
+    await act(async () => {
+      broadcastHandlers.get('start')?.({ payload: { initiatorId: me.id, mode: 'silent' } })
+    })
+    expect(lastProps(CardsArea).countdownRunning).toBe(true)
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(true)
+  })
+
+  it.each([
+    ['reveal', () => useRoomStore.setState({ roomState: fakeState({ phase: 'revealed' }) })],
+    ['a new round', () => useRoomStore.setState({ roomState: fakeState({ phase: 'voting', round_started_at: '2026-05-05T00:00:00Z' }) })],
+    ['losing the moderator flag', () => usePlayersStore.setState({ players: partial.map(p => (p.id === 'me' ? { ...p, is_moderator: false } : p)) })],
+  ])('drops undo after %s', async (_name, change) => {
+    await mountWithStoreSpies()
+    await clickReset()
+    await act(async () => { change() })
+    await act(async () => { useRoomStore.setState({ roomState: fakeState({ phase: 'voting', round_started_at: useRoomStore.getState().roomState?.round_started_at }) }) })
+    await act(async () => { usePlayersStore.setState({ players: partial }) })
+    expect(lastProps(CardsArea).resetUndoAvailable).toBe(false)
+  })
+})
+
 describe('room page results', () => {
   it('shows selected developer circles in canonical order with QA disciplines folded', async () => {
     const roles = ['sm', 'gqa', 'be', 'qa', 'sre', 'dev', 'aqa', 'fe', 'po']

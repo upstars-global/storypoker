@@ -132,6 +132,7 @@ const literalNames: readonly string[] = [
   'ic:baseline-person-remove',
   'ic:baseline-play-arrow',
   'ic:baseline-restart-alt',
+  'ic:baseline-undo',
   'ic:baseline-settings',
   'ic:baseline-stop',
   'ic:baseline-timer',

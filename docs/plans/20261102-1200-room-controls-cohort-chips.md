@@ -263,7 +263,7 @@ Commits: allowed
 Initial dirty state: clean
 Task 1: done - vitest tests/unit 575 passed, lint + typecheck clean; RED written together with GREEN (tests and impl in one edit)
 Task 2: done - vitest tests/unit 576 passed, lint + typecheck clean; AC14 realtime test landed in Task 1
-Task 3: pending
+Task 3: done - vitest tests/unit 584 passed, icons:check up to date, lint + typecheck clean; Ruling: icon ic:baseline-undo added to manifest + MDI_TO_LUCIDE (undo-2) over reusing lucide:undo - Lucide hardcode is forbidden - low cost
 Task 4: pending
 Task 5: pending
 Task 6: pending
