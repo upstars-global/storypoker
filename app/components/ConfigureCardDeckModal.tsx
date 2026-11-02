@@ -76,7 +76,7 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
       onClose={onClose}
     >
       <AppModalPaper
-        style={{ maxWidth: '560px', padding: '32px 40px 40px' }}
+        style={{ maxWidth: '760px', padding: '32px 40px 40px' }}
         onClose={onClose}
       >
         <h2
@@ -207,17 +207,20 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
           <span className="text-mui-caption font-semibold uppercase tracking-wide text-primary">
             {t('deck.resultCohorts')}
           </span>
-          {RESULT_CHIP_GROUPS.map(group => (
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-y-2">
+          {RESULT_CHIP_GROUPS.map((group, index) => (
             <div
               key={group.chips[0]}
-              className="flex flex-wrap items-center justify-center gap-2"
+              className={index > 0
+                ? 'flex items-center gap-1.5 pl-2 ml-2 border-l border-input'
+                : 'flex items-center gap-1.5'}
               data-testid="deck-result-cohort-group"
             >
               {group.chips.map(cohort => (
                 <button
                   key={cohort}
                   type="button"
-                  className={splitCohorts.includes(cohort) ? 'mui-chip is-selected' : 'mui-chip'}
+                  className={splitCohorts.includes(cohort) ? 'mui-chip is-selected px-2.5!' : 'mui-chip px-2.5!'}
                   aria-pressed={splitCohorts.includes(cohort)}
                   data-testid="deck-result-cohort"
                   onClick={() => toggleCohort(cohort)}
@@ -233,6 +236,7 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
               ))}
             </div>
           ))}
+          </div>
         </div>
 
         <div className="flex justify-center mt-8">

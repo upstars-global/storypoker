@@ -279,4 +279,5 @@ Task 14: done - panel back under cards, cards-sized zone with scrolling circles 
 Task 15: done - ResultsLayer scales up to 6 circles to fit, scrolls from 7; vitest tests/unit 596 passed, lint + typecheck clean
 Task 16: done - only circles scale via --result-circle-scale; vitest tests/unit 596 passed, lint + typecheck clean
 Task 17: done - one panel button: reveal in voting, new round after reveal; vitest tests/unit 596 passed, lint + typecheck clean
+Task 18: done - result chips in one row (modal 760px, compact chips, group dividers; wraps below sm); vitest tests/unit 596 passed, lint + typecheck clean; browser check not run
 ```
