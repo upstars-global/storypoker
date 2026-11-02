@@ -15,6 +15,7 @@
     "skipToContent": "Skip to main content"
   },
   "header": {
+    "feedback": "Send feedback",
     "renameRoom": "Rename Room",
     "configureCardDeck": "Configure Card Deck",
     "recentRooms": "Recent Rooms",
