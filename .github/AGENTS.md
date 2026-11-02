@@ -1,6 +1,6 @@
 # .github/AGENTS.md
 
-Авторевʼю PR (`workflows/claude-review.yml`). Загальний CI (`ci.yml`) описаний у корінному `AGENTS.md`.
+Авторевʼю PR (`workflows/pr-auto-review.yml`). Загальний CI (`ci.yml`) описаний у корінному `AGENTS.md`.
 
 Workflow використовує спільний пакет ревʼю чотирьох репозиторіїв з адаптером акаунта
 `so-upstars`, секрету `SO_UPSTARS_PR_TOKEN` і CI Story Poker. Модель за замовчуванням -
