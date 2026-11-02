@@ -276,4 +276,5 @@ Ruling: plan revised after spec re-approval - docs/specs/2026-11-02-room-control
 Task 12: done - chip filter (resultKeyFor), uncounted voters red, reveal writes counted votes only, migration 021 with 9 roles (not applied); vitest tests/unit 594 passed, lint + typecheck clean
 Task 13: done - legacy custom:* treated as no role (DEV) in app, API unchanged; vitest tests/unit 592 passed, lint + typecheck clean
 Task 14: done - panel back under cards, cards-sized zone with scrolling circles layer; vitest tests/unit 591 passed, lint + typecheck clean; harness Chrome screenshot 1280: panel under cards
+Task 15: done - ResultsLayer scales up to 6 circles to fit, scrolls from 7; vitest tests/unit 596 passed, lint + typecheck clean
 ```

@@ -433,6 +433,15 @@ describe('room page revealed layout', () => {
     expect(lastProps(CardsArea)).toMatchObject({ revealed: true, showLastRound: false })
     expect(lastRoundViewProps()).toMatchObject({ showNewRound: true })
   })
+
+  it.each([[6, true], [7, false]])('fits up to six circles and scrolls beyond (%i circles)', async (count, fits) => {
+    const roles = ['dev', 'be', 'fe', 'sre', 'qa', 'gqa', 'aqa'].slice(0, count)
+    await mountRoom({
+      players: [me, ...roles.map(role => fakePlayer(role, [role], '3'))],
+      state: fakeState({ phase: 'revealed', result_cohorts: ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA'] }),
+    })
+    expect(lastProps(CardsArea).lastRoundFits).toBe(fits)
+  })
 })
 
 describe('room page reset undo', () => {

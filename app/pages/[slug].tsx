@@ -69,6 +69,7 @@ function readSideWidget(): SideWidget {
 
 const AlignmentTrendsModal = lazy(() => import('~/components/AlignmentTrendsModal'))
 
+const MAX_FITTED_RESULT_CIRCLES = 6
 const EMPTY_BACKGROUND: RoomBackground = { background_url: null, background_updated_at: null, background_opacity: null }
 
 function readHeaderSeed(urlParam: string): HeaderSeed {
@@ -842,6 +843,7 @@ export default function RoomPage() {
           {roomState && (roomState.phase === 'voting' || roomState.phase === 'revealed') && (
             <CardsArea
               revealed={roomState.phase === 'revealed'}
+              lastRoundFits={(roomState.phase === 'revealed' ? resultGroups.length : (lastRound?.groups?.length ?? 0)) <= MAX_FITTED_RESULT_CIRCLES}
               activeCards={activeCards}
               selectedVote={currentPlayer ? voteOf(currentPlayer.id) : null}
               isModerator={isModerator}

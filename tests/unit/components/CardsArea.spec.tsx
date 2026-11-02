@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { i18n } from '~/i18n'
-import CardsArea from '~/components/CardsArea'
+import CardsArea, { ResultsLayer } from '~/components/CardsArea'
 import iconClasses from '~/generated/iconClasses.json'
 import { mapIconName } from '~/utils/iconMap'
 
@@ -132,7 +132,7 @@ describe('CardsArea voting', () => {
     mountCards({ showLastRound: true, lastRoundView: <div /> })
     const zone = screen.getByTestId('cards-zone')
     const lastRound = screen.getByTestId('last-round-layer')
-    expect(lastRound.className.split(' ')).toEqual(expect.arrayContaining(['absolute', 'inset-0', 'overflow-y-auto']))
+    expect(lastRound.className.split(' ')).toEqual(expect.arrayContaining(['absolute', 'inset-0']))
     expect(zone.contains(screen.getByTestId('cards-layer'))).toBe(true)
     expect(zone.nextElementSibling).toBe(screen.getByTestId('moderator-panel'))
   })
@@ -171,3 +171,38 @@ describe('CardsArea voting', () => {
     expect(screen.queryAllByTestId('countdown-mode-option')).toHaveLength(0)
   })
 })
+
+describe('ResultsLayer', () => {
+  function mockHeights(zone: number, content: number) {
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(zone)
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(content)
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('scales the results down proportionally to fit the cards zone', () => {
+    mockHeights(300, 600)
+    render(<ResultsLayer visible fits><div /></ResultsLayer>)
+    const layer = screen.getByTestId('last-round-layer')
+    expect(layer.dataset.scale).toBe('0.5')
+    expect((layer.firstElementChild as HTMLElement).style.transform).toBe('scale(0.5)')
+    expect(layer.className.split(' ')).toContain('overflow-hidden')
+  })
+
+  it('keeps full size when the results already fit', () => {
+    mockHeights(600, 300)
+    render(<ResultsLayer visible fits><div /></ResultsLayer>)
+    expect(screen.getByTestId('last-round-layer').dataset.scale).toBe('1')
+  })
+
+  it('scrolls at full size when too many circles are shown', () => {
+    mockHeights(300, 600)
+    render(<ResultsLayer visible fits={false}><div /></ResultsLayer>)
+    const layer = screen.getByTestId('last-round-layer')
+    expect(layer.dataset.scale).toBe('1')
+    expect(layer.className.split(' ')).toContain('overflow-y-auto')
+  })
+})
+

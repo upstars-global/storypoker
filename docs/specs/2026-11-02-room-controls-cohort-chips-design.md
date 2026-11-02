@@ -136,7 +136,7 @@ None.
 - AC8: Після натискання reset голоси обнулені, кнопка показує іконку undo й підказку «Повернути голоси».
 - AC9: Повторне натискання відновлює голоси рівно такими, якими вони були до reset (голоси, подані після reset, перезаписуються або знімаються), і повертає кнопці іконку reset.
 - AC10: Новий раунд, reveal або релоад модератора повертають кнопку в стан reset без undo.
-- AC11: Панель модератора стоїть під зоною карток і має ту саму позицію в будь-якому стані кімнати (картки, попередній раунд, reveal, будь-яка кількість кіл); кола, що не вміщаються, прокручуються в зоні; після reveal кнопки панелі неактивні.
+- AC11: Панель модератора стоїть під зоною карток і має ту саму позицію в будь-якому стані кімнати (картки, попередній раунд, reveal, будь-яка кількість кіл); до 6 кіл блок результатів пропорційно зменшується, щоб уміститися в зону, від 7 - прокручується; після reveal кнопки панелі неактивні.
 - AC12: Кнопка reveal присутня в DOM у всіх станах і disabled, коли голосів менше 2, під час countdown, коли модератор не може голосувати, і в режимі попереднього раунду.
 - AC14: Зміна `result_cohorts` одним модератором змінює групування кіл в іншого клієнта без релоаду.
 - AC15: Гравець, який вийшов після reset, після undo не має голосу.
@@ -158,6 +158,7 @@ Ruling: GQA and AQA chips added, migration 021 widens the result_cohorts check -
 Ruling: chips become a team-flow filter: DEV/BE/FE/SRE || QA/AQA/GQA || PO || SM, umbrella only for DEV and QA, PO/SM circle only with chip, only counted votes in round_history - user: "уточнюю: DEV/BE/FE/SRE || QA/AQA/GQA || PO || SM і затверджую", "загальне коло є тільки у DEV and QA" (2026-11-02)
 Ruling: spec re-approved - 2026-11-02
 Ruling: panel back under the cards; zone height comes from the cards, circles scroll inside it - user: "ти переніс блок з кнопками в самий низ. виглядає погано. попереднє місце було ок" (2026-11-02)
+Ruling: up to 6 circles scale down to fit the zone, 7+ scroll - user: "якщо кіл більше 6 - тоді можна застосувати прокрутку. до цього,кола зменьшуються пропорційно" (2026-11-02)
 Ruling: custom roles removed, legacy custom:* counts as no role (DEV), API unchanged - user: "давай без кастомних ролей", "1", "лишай API як є" (2026-11-02)
 Ruling: panel pinned to the viewport bottom (fixed) over reserved-height zone - user: "смужка і кнопки - завжди на одному місці. в будь якому сценаріі" (2026-11-02)
 Ruling: AC11 extended to the revealed screen - user: "коли натискаю показати результати - кнопки підскакують вверх до кіл" (2026-11-02)

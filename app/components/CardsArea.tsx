@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react'
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import AppIcon from '~/components/AppIcon'
 import AppTooltip from '~/components/AppTooltip'
@@ -23,6 +22,7 @@ type CardsAreaProps = {
   hasLastRound?: boolean
   showLastRound?: boolean
   lastRoundView?: ReactNode
+  lastRoundFits?: boolean
   revealed?: boolean
   onVote: (card: string) => void
   onReveal: () => void
@@ -42,6 +42,50 @@ const COUNTDOWN_MODE_OPTIONS: { value: CountdownMode; icon: string; label: strin
   { value: 'wet', icon: 'app:town-hall', label: 'cards.countdownWet' },
 ]
 
+export function ResultsLayer({ visible, fits, children }: { visible: boolean; fits: boolean; children: ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null)
+  const inner = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+
+  useLayoutEffect(() => {
+    const zone = outer.current
+    const content = inner.current
+    if (!fits || !zone || !content) {
+      setScale(1)
+      return
+    }
+    const update = () => {
+      const height = content.offsetHeight
+      setScale(height > 0 ? Math.min(1, zone.clientHeight / height) : 1)
+    }
+    update()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(update)
+    observer.observe(zone)
+    observer.observe(content)
+    return () => observer.disconnect()
+  }, [fits])
+
+  const base = fits ? 'absolute inset-0 overflow-hidden w-full' : 'absolute inset-0 overflow-y-auto w-full'
+  return (
+    <div
+      ref={outer}
+      className={visible ? base : `invisible ${base}`}
+      aria-hidden={visible ? undefined : 'true'}
+      data-testid="last-round-layer"
+      data-scale={scale}
+    >
+      <div
+        ref={inner}
+        className="w-full"
+        style={scale < 1 ? { transform: `scale(${scale})`, transformOrigin: 'top center' } : undefined}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function CardsArea({
   activeCards,
   selectedVote,
@@ -57,6 +101,7 @@ export default function CardsArea({
   hasLastRound,
   showLastRound,
   lastRoundView,
+  lastRoundFits = true,
   revealed = false,
   onVote,
   onReveal,
@@ -350,13 +395,12 @@ export default function CardsArea({
         </div>
         </div>
         {lastRoundView && (
-          <div
-            className={resultsShown ? 'absolute inset-0 overflow-y-auto w-full' : 'invisible absolute inset-0 overflow-y-auto w-full'}
-            aria-hidden={resultsShown ? undefined : 'true'}
-            data-testid="last-round-layer"
+          <ResultsLayer
+            visible={resultsShown}
+            fits={lastRoundFits}
           >
             {lastRoundView}
-          </div>
+          </ResultsLayer>
         )}
       </div>
 
