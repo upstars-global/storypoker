@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { i18n } from '~/i18n'
 import { resetSupabase, setSupabase } from '~/lib/supabase-instance'
@@ -27,6 +27,7 @@ function mountTab() {
 afterEach(() => {
   cleanup()
   resetSupabase()
+  vi.restoreAllMocks()
 })
 
 describe('ReportIssueTab', () => {
@@ -56,5 +57,14 @@ describe('ReportIssueTab', () => {
     expect(screen.getByTestId('report-issue-preview').classList.contains('hidden')).toBe(false)
     fireEvent.blur(tab)
     expect(screen.getByTestId('report-issue-preview').classList.contains('hidden')).toBe(true)
+  })
+
+  it('never loads or shows the GIF when the user prefers reduced motion', () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation(query => ({ matches: query === '(prefers-reduced-motion: reduce)' }) as MediaQueryList)
+    const tab = mountTab()
+    fireEvent.pointerEnter(tab.parentElement!)
+    fireEvent.focus(tab)
+    expect(screen.queryByTestId('report-issue-preview')).toBeNull()
+    expect(requested).toEqual([])
   })
 })

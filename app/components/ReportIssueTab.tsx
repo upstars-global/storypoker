@@ -10,12 +10,17 @@ function previewUrl(): string {
   return getSupabase().storage.from(REPORT_ISSUE_BUCKET).getPublicUrl(REPORT_ISSUE_PREVIEW_PATH).data.publicUrl
 }
 
+function prefersReducedMotion(): boolean {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 export default function ReportIssueTab() {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [src, setSrc] = useState<string | null>(null)
 
   function show() {
+    if (prefersReducedMotion()) return
     if (!src) setSrc(previewUrl())
     setOpen(true)
   }
