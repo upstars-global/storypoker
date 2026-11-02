@@ -114,8 +114,6 @@ describe('CardsArea voting', () => {
     const cards = screen.getByTestId('cards-layer')
     const lastRound = screen.getByTestId('last-round-layer')
     expect(cards.parentElement).toBe(lastRound.parentElement)
-    expect(cards.className.split(' ')).toContain('[grid-area:1/1]')
-    expect(lastRound.className.split(' ')).toContain('[grid-area:1/1]')
     expect(cards.classList.contains('invisible')).toBe(showLastRound)
     expect(lastRound.classList.contains('invisible')).toBe(!showLastRound)
     expect(screen.getByTestId('reveal-button')).toBeTruthy()
@@ -130,11 +128,13 @@ describe('CardsArea voting', () => {
     }
   })
 
-  it('pins the moderator panel to the bottom of the viewport', () => {
-    mountCards()
-    const panel = screen.getByTestId('moderator-panel')
-    expect(panel.className.split(' ')).toEqual(expect.arrayContaining(['fixed', 'inset-x-0', 'bottom-0']))
-    expect(panel.contains(screen.getByTestId('reveal-button'))).toBe(true)
+  it('keeps the moderator panel below a cards zone whose height comes from the cards only', () => {
+    mountCards({ showLastRound: true, lastRoundView: <div /> })
+    const zone = screen.getByTestId('cards-zone')
+    const lastRound = screen.getByTestId('last-round-layer')
+    expect(lastRound.className.split(' ')).toEqual(expect.arrayContaining(['absolute', 'inset-0', 'overflow-y-auto']))
+    expect(zone.contains(screen.getByTestId('cards-layer'))).toBe(true)
+    expect(zone.nextElementSibling).toBe(screen.getByTestId('moderator-panel'))
   })
 
   it('hides moderator controls from a plain player', () => {

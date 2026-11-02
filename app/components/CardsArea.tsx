@@ -307,9 +307,9 @@ export default function CardsArea({
 
   return (
     <div className="flex flex-col items-center w-full rounded">
-      <div className="grid w-full">
+      <div className="relative w-full" data-testid="cards-zone">
         <div
-          className={resultsShown ? 'invisible [grid-area:1/1] flex flex-col items-center w-full' : '[grid-area:1/1] flex flex-col items-center w-full'}
+          className={resultsShown ? 'invisible flex flex-col items-center w-full' : 'flex flex-col items-center w-full'}
           aria-hidden={resultsShown ? 'true' : undefined}
           data-testid="cards-layer"
         >
@@ -351,7 +351,7 @@ export default function CardsArea({
         </div>
         {lastRoundView && (
           <div
-            className={resultsShown ? '[grid-area:1/1] w-full' : 'invisible [grid-area:1/1] w-full'}
+            className={resultsShown ? 'absolute inset-0 overflow-y-auto w-full' : 'invisible absolute inset-0 overflow-y-auto w-full'}
             aria-hidden={resultsShown ? undefined : 'true'}
             data-testid="last-round-layer"
           >
@@ -362,7 +362,7 @@ export default function CardsArea({
 
       {isModerator && (
         <div
-          className="fixed inset-x-0 bottom-0 z-20 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-(--bg-appbar) border-t border-input"
+          className="flex flex-wrap items-center justify-center gap-6 pt-8"
           data-testid="moderator-panel"
         >
           <div className="flex items-center gap-2">
