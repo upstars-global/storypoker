@@ -267,6 +267,6 @@ Task 3: done - vitest tests/unit 584 passed, icons:check up to date, lint + type
 Task 4: done - vitest tests/unit 588 passed, lint + typecheck clean
 Task 5: pending
 Task 6: done - vitest CardsArea 14 passed; browser row check pending (run with Task 5 browser pass)
-Task 7: pending
+Task 7: done - RED spinsLeft 5 != 3, GREEN vitest tests/unit 589 passed, lint + typecheck clean
 Task 8: pending
 ```

@@ -221,7 +221,7 @@ export default function RoomPage() {
 
   const currentRoleTag = roleTagForShields(currentPlayer?.shields)
   const isProductRole = currentRoleTag === 'PO' || currentRoleTag === 'SM'
-  const spinsPerRound = isProductRole ? 5 : 3
+  const spinsPerRound = 3
   const canSpinSlot = isProductRole || (
     roomState?.phase === 'voting'
     && !!currentPlayer

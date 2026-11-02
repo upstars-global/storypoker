@@ -394,11 +394,11 @@ describe('room page side widget', () => {
     expect(lastProps(SlotMachine).spinsLeft).toBe(3)
   })
 
-  it('gives PO and SM five spins and lets them spin regardless of votes', async () => {
+  it('gives PO and SM the same three spins and lets them spin regardless of votes', async () => {
     localStorage.setItem('sp-side-widget', 'slot')
     const po = fakePlayer('me', ['po'], null, { is_moderator: true })
     await mountRoom({ state: fakeState({ phase: 'revealed' }), players: [po, fakePlayer('alice', ['dev'], null)], rejoin: async () => po, existing: po })
-    expect(lastProps(SlotMachine)).toMatchObject({ spinsLeft: 5, canSpin: true })
+    expect(lastProps(SlotMachine)).toMatchObject({ spinsLeft: 3, canSpin: true })
   })
 
   it('lets other players spin only after their own vote while someone has not voted', async () => {
