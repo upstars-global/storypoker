@@ -164,12 +164,18 @@ export default function ResultsArea({
       <div
         ref={chartsEl}
         className="w-full flex flex-wrap justify-center gap-8"
+        data-result-charts
       >
         {circles.map(g => (
           <div
             key={g.key ?? g.label}
             className="flex flex-col items-center gap-2"
-            style={{ flex: expandedLayout ? '1 1 280px' : '0 1 240px', width: '100%', maxWidth: expandedLayout ? '500px' : '240px', minWidth: 0 }}
+            style={{
+              flex: expandedLayout ? '1 1 calc(280px * var(--result-circle-scale, 1))' : '0 1 calc(240px * var(--result-circle-scale, 1))',
+              width: '100%',
+              maxWidth: expandedLayout ? 'calc(500px * var(--result-circle-scale, 1))' : 'calc(240px * var(--result-circle-scale, 1))',
+              minWidth: 0,
+            }}
           >
             <span className="mui-h6 text-primary w-full min-w-0 text-center" style={{ overflowWrap: 'anywhere' }}>
               {g.label}

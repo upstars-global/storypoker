@@ -78,7 +78,8 @@ instance; ECharts за замовчуванням використовує Canva
 Картки й кола (`lastRoundView` з `[slug].tsx`: попередній раунд у голосуванні, поточні результати після reveal
 з `revealed`, коли кнопки панелі неактивні) рендеряться в одній зоні; неактивний
 шар `invisible`. Висоту зони (`cards-zone`) задають лише картки, тож панель модератора під нею не зсувається. Шар кіл
-(`ResultsLayer`) до 6 кіл пропорційно зменшує вміст (`transform: scale`, `ResizeObserver`), від 7 - прокручується
+(`ResultsLayer`) до 6 кіл зменшує лише кола: CSS-змінна `--result-circle-scale` множить ширину контейнерів кіл
+у `ResultsArea` (`[data-result-charts]`), текст і кнопки не масштабуються; від 7 кіл - прокрутка
 (`lastRoundFits`, `MAX_FITTED_RESULT_CIRCLES` у `[slug].tsx`). Reveal завжди в DOM, у режимі попереднього
 раунду - disabled. Reset перемикається в undo (`resetUndoAvailable`, іконка `ic:baseline-undo`): знімок голосів
 живе в стані сторінки модератора, `roomStore.restoreVotes()` відновлює його повністю; знімок скидається на reveal,

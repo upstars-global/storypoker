@@ -42,21 +42,33 @@ const COUNTDOWN_MODE_OPTIONS: { value: CountdownMode; icon: string; label: strin
   { value: 'wet', icon: 'app:town-hall', label: 'cards.countdownWet' },
 ]
 
+const MIN_RESULT_CIRCLE_SCALE = 0.2
+
 export function ResultsLayer({ visible, fits, children }: { visible: boolean; fits: boolean; children: ReactNode }) {
   const outer = useRef<HTMLDivElement>(null)
   const inner = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
+  const scaleRef = useRef(1)
 
   useLayoutEffect(() => {
     const zone = outer.current
     const content = inner.current
+    const apply = (next: number) => {
+      scaleRef.current = next
+      setScale(next)
+    }
     if (!fits || !zone || !content) {
-      setScale(1)
+      apply(1)
       return
     }
     const update = () => {
-      const height = content.offsetHeight
-      setScale(height > 0 ? Math.min(1, zone.clientHeight / height) : 1)
+      const charts = content.querySelector<HTMLElement>('[data-result-charts]')
+      const chartsHeight = charts?.offsetHeight ?? 0
+      if (chartsHeight <= 0) return
+      const fixedHeight = content.offsetHeight - chartsHeight
+      const target = scaleRef.current * (zone.clientHeight - fixedHeight) / chartsHeight
+      const next = Math.max(MIN_RESULT_CIRCLE_SCALE, Math.min(1, target))
+      if (Math.abs(next - scaleRef.current) > 0.01) apply(next)
     }
     update()
     if (typeof ResizeObserver === 'undefined') return
@@ -74,11 +86,11 @@ export function ResultsLayer({ visible, fits, children }: { visible: boolean; fi
       aria-hidden={visible ? undefined : 'true'}
       data-testid="last-round-layer"
       data-scale={scale}
+      style={{ '--result-circle-scale': scale } as CSSProperties}
     >
       <div
         ref={inner}
         className="w-full"
-        style={scale < 1 ? { transform: `scale(${scale})`, transformOrigin: 'top center' } : undefined}
       >
         {children}
       </div>

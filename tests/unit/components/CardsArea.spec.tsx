@@ -173,36 +173,47 @@ describe('CardsArea voting', () => {
 })
 
 describe('ResultsLayer', () => {
-  function mockHeights(zone: number, content: number) {
+  function mockHeights(zone: number, content: number, charts: number) {
     vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(zone)
-    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(content)
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.hasAttribute('data-result-charts') ? charts : content
+    })
+  }
+
+  function results() {
+    return (
+      <div>
+        <div data-result-charts />
+        <p>alignment</p>
+      </div>
+    )
   }
 
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
-  it('scales the results down proportionally to fit the cards zone', () => {
-    mockHeights(300, 600)
-    render(<ResultsLayer visible fits><div /></ResultsLayer>)
+  it('shrinks only the circles so the results fit the cards zone', () => {
+    mockHeights(400, 600, 400)
+    render(<ResultsLayer visible fits>{results()}</ResultsLayer>)
     const layer = screen.getByTestId('last-round-layer')
     expect(layer.dataset.scale).toBe('0.5')
-    expect((layer.firstElementChild as HTMLElement).style.transform).toBe('scale(0.5)')
+    expect(layer.style.getPropertyValue('--result-circle-scale')).toBe('0.5')
+    expect((layer.firstElementChild as HTMLElement).style.transform).toBe('')
     expect(layer.className.split(' ')).toContain('overflow-hidden')
   })
 
   it('keeps full size when the results already fit', () => {
-    mockHeights(600, 300)
-    render(<ResultsLayer visible fits><div /></ResultsLayer>)
+    mockHeights(800, 600, 400)
+    render(<ResultsLayer visible fits>{results()}</ResultsLayer>)
     expect(screen.getByTestId('last-round-layer').dataset.scale).toBe('1')
   })
 
   it('scrolls at full size when too many circles are shown', () => {
-    mockHeights(300, 600)
-    render(<ResultsLayer visible fits={false}><div /></ResultsLayer>)
+    mockHeights(400, 600, 400)
+    render(<ResultsLayer visible fits={false}>{results()}</ResultsLayer>)
     const layer = screen.getByTestId('last-round-layer')
     expect(layer.dataset.scale).toBe('1')
     expect(layer.className.split(' ')).toContain('overflow-y-auto')
   })
 })
-
