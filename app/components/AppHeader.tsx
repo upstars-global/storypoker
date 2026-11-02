@@ -10,7 +10,6 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { useTranslation } from 'react-i18next'
 import AppIcon from '~/components/AppIcon'
-import AppTooltip from '~/components/AppTooltip'
 import { AppMenu, AppMenuItem } from '~/components/AppMenu'
 import { persistLocale } from '~/i18n'
 import { useDylanAvatar } from '~/hooks/useDylanAvatar'
@@ -19,17 +18,6 @@ import { useSoundVolume } from '~/hooks/useSoundVolume'
 import { PALETTES, useTheme } from '~/hooks/useTheme'
 import { useAuthStore } from '~/stores/auth'
 import { useProfilesStore } from '~/stores/profiles'
-
-const FEEDBACK_BODY = [
-  '## What happened',
-  '',
-  '',
-  '## What did you expect',
-  '',
-  '',
-].join('\n')
-
-export const FEEDBACK_URL = `https://github.com/upstars-global/storypoker/issues/new?${new URLSearchParams({ title: 'Feedback: ', body: FEEDBACK_BODY }).toString()}`
 
 const VOLUME_LEVEL_ICONS = [
   'tabler:number-0-small', 'tabler:number-1-small', 'tabler:number-2-small', 'tabler:number-3-small',
@@ -160,28 +148,6 @@ export default function AppHeader({
             {headerLabel}
           </span>
         )}
-        <AppTooltip
-          side="bottom"
-          trigger={(
-            <a
-              href={FEEDBACK_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mui-icon-btn text-white"
-              style={ICON_BUTTON_HOVER}
-              aria-label={t('header.feedback')}
-              data-testid="feedback-button"
-            >
-              <AppIcon
-                className="mui-svg-icon"
-                name="ic:baseline-feedback"
-                style={{ fontSize: '1.5rem' }}
-              />
-            </a>
-          )}
-        >
-          {t('header.feedback')}
-        </AppTooltip>
         <AppMenu
           label={t('header.currentUserAccount')}
           testId="account-menu-button"

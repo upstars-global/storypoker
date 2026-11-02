@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { i18n } from '~/i18n'
+import '~/i18n'
 import AppHeader from '~/components/AppHeader'
 import { themeStore } from '~/hooks/useTheme'
 
@@ -96,19 +96,5 @@ describe('AppHeader palette menu', () => {
     expect(screen.queryByRole('menu')).toBeNull()
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(document.activeElement).toBe(trigger)
-  })
-})
-
-describe('AppHeader feedback button', () => {
-  it('opens a prefilled GitHub issue in a new tab without page data', () => {
-    mountHeader()
-    const link = screen.getByTestId('feedback-button') as HTMLAnchorElement
-    expect(link.getAttribute('aria-label')).toBe(i18n.t('header.feedback'))
-    expect(link.target).toBe('_blank')
-    expect(link.rel).toBe('noopener noreferrer')
-    const url = new URL(link.href)
-    expect(`${url.origin}${url.pathname}`).toBe('https://github.com/upstars-global/storypoker/issues/new')
-    expect(url.searchParams.get('title')).toBe('Feedback: ')
-    expect(url.searchParams.get('body')).toBe('## What happened\n\n\n## What did you expect\n\n')
   })
 })
