@@ -119,11 +119,18 @@ describe('CardsArea voting', () => {
     expect(screen.getByTestId('reveal-button')).toBeTruthy()
   })
 
-  it('shows the results layer and disables every panel control after reveal', () => {
-    mountCards({ revealed: true, resetUndoAvailable: true, lastRoundView: <div /> })
+  it('turns the reveal button into an enabled new-round button after reveal', () => {
+    const onStartNewRound = vi.fn()
+    mountCards({ revealed: true, resetUndoAvailable: true, lastRoundView: <div />, onStartNewRound })
     expect(screen.getByTestId('cards-layer').classList.contains('invisible')).toBe(true)
     expect(screen.getByTestId('last-round-layer').classList.contains('invisible')).toBe(false)
-    for (const id of ['reveal-button', 'reset-button', 'last-round-button']) {
+    expect(screen.queryByTestId('reveal-button')).toBeNull()
+    const newRound = screen.getByTestId('new-round-button') as HTMLButtonElement
+    expect(newRound.textContent).toBe(i18n.t('cards.startNewRound'))
+    expect(newRound.disabled).toBe(false)
+    fireEvent.click(newRound)
+    expect(onStartNewRound).toHaveBeenCalledTimes(1)
+    for (const id of ['reset-button', 'last-round-button']) {
       expect((screen.getByTestId(id) as HTMLButtonElement).disabled).toBe(true)
     }
   })

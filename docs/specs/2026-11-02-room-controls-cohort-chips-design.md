@@ -160,6 +160,7 @@ Ruling: spec re-approved - 2026-11-02
 Ruling: panel back under the cards; zone height comes from the cards, circles scroll inside it - user: "ти переніс блок з кнопками в самий низ. виглядає погано. попереднє місце було ок" (2026-11-02)
 Ruling: up to 6 circles scale down to fit the zone, 7+ scroll - user: "якщо кіл більше 6 - тоді можна застосувати прокрутку. до цього,кола зменьшуються пропорційно" (2026-11-02)
 Ruling: only the circles shrink, labels, alignment and buttons keep their size - user: "блок з кнопками, підписи, узгодженість та інші шрифти не зменьшуються. тільки кола" (2026-11-02)
+Ruling: reveal and new-round merged into one panel button whose label follows the phase - user: "потрібно обʼєднати кнопки показати оцінки та почати новий раунд ... змінюється надпис залежно від ситуаціі" (2026-11-02)
 Ruling: custom roles removed, legacy custom:* counts as no role (DEV), API unchanged - user: "давай без кастомних ролей", "1", "лишай API як є" (2026-11-02)
 Ruling: panel pinned to the viewport bottom (fixed) over reserved-height zone - user: "смужка і кнопки - завжди на одному місці. в будь якому сценаріі" (2026-11-02)
 Ruling: AC11 extended to the revealed screen - user: "коли натискаю показати результати - кнопки підскакують вверх до кіл" (2026-11-02)

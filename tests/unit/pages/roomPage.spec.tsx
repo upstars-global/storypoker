@@ -430,8 +430,12 @@ describe('room page side widget', () => {
 describe('room page revealed layout', () => {
   it('renders the revealed results inside CardsArea so the moderator panel stays in place', async () => {
     await mountRoom({ state: fakeState({ phase: 'revealed' }) })
+    const startNewRound = vi.fn().mockResolvedValue(undefined)
+    useRoomStore.setState({ startNewRound })
     expect(lastProps(CardsArea)).toMatchObject({ revealed: true, showLastRound: false })
-    expect(lastRoundViewProps()).toMatchObject({ showNewRound: true })
+    expect(lastRoundViewProps()).toMatchObject({ showNewRound: false })
+    await act(async () => { lastProps(CardsArea).onStartNewRound?.() })
+    expect(startNewRound).toHaveBeenCalledTimes(1)
   })
 
   it.each([[6, true], [7, false]])('fits up to six circles and scrolls beyond (%i circles)', async (count, fits) => {

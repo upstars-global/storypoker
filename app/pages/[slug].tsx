@@ -862,13 +862,12 @@ export default function RoomPage() {
                     <ResultsArea
                       votes={voteCounts}
                       groups={resultGroups}
-                      showNewRound={isModerator}
+                      showNewRound={false}
                       pollQuestion={roomState.poll_question ?? null}
                       disableCelebration={isPollDeck}
                       showAlignment={!isPollDeck}
                       activeCards={activeCards}
                       goalClarityScore={roomState.deck_preset === 'goal_clarity'}
-                      onStartNewRound={() => void useRoomStore.getState().startNewRound()}
                     />
                   )
                 : lastRound && (
@@ -885,6 +884,7 @@ export default function RoomPage() {
               )}
               onVote={card => void handleVote(card)}
               onReveal={() => void useRoomStore.getState().reveal()}
+              onStartNewRound={() => void useRoomStore.getState().startNewRound()}
               onReset={() => void handleResetToggle()}
               onStartCountdown={broadcastCountdownStart}
               onSetPollQuestion={question => void useRoomStore.getState().setPollQuestion(question)}

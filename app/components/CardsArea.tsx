@@ -26,6 +26,7 @@ type CardsAreaProps = {
   revealed?: boolean
   onVote: (card: string) => void
   onReveal: () => void
+  onStartNewRound?: () => void
   onReset: () => void
   onStartCountdown: (mode: CountdownMode) => void
   onSetPollQuestion: (question: string) => void
@@ -117,6 +118,7 @@ export default function CardsArea({
   revealed = false,
   onVote,
   onReveal,
+  onStartNewRound,
   onReset,
   onStartCountdown,
   onSetPollQuestion,
@@ -483,14 +485,27 @@ export default function CardsArea({
             style={{ width: 0 }}
           />
           <div className="flex items-center gap-4">
-            <Button
-              ref={ripple}
-              disabled={!hasVotes || countdownRunning || !canVote || resultsShown}
-              data-testid="reveal-button"
-              onClick={onReveal}
-            >
-              {t('cards.reveal')}
-            </Button>
+            {revealed
+              ? (
+                  <Button
+                    ref={ripple}
+                    disabled={!onStartNewRound}
+                    data-testid="new-round-button"
+                    onClick={onStartNewRound}
+                  >
+                    <span>{t('cards.startNewRound')}</span>
+                  </Button>
+                )
+              : (
+                  <Button
+                    ref={ripple}
+                    disabled={!hasVotes || countdownRunning || !canVote || showLastRound}
+                    data-testid="reveal-button"
+                    onClick={onReveal}
+                  >
+                    <span>{t('cards.reveal')}</span>
+                  </Button>
+                )}
             <div
               className={modeDisabled
                 ? 'mui-icon-group flex items-center justify-center pointer-events-none opacity-50'
