@@ -48,4 +48,5 @@ Finding: R3-F1 Minor ACCEPT - spec lacked the touch-skip and icon-only decisions
 Ruling: touch-skip and icon-only below 640 px recorded as owner decisions - user's brief: "Внеси в PR #76 дві правки, щоб він відповідав рішенням власника в описі issue #65 (розділ Owner decisions, пункти 5 і 7)" (2026-11-03)
 Ruling: spec re-approved - 2026-11-03
 Round review 1: R3 - 1 accepted, 0 rejected
+Verify: PASS full tree f1715478e2b4b49e1c3ded899e34602cc900822d 2026-11-03 01:52
 ```
