@@ -266,7 +266,7 @@ Task 2: done - vitest tests/unit 576 passed, lint + typecheck clean; AC14 realti
 Task 3: done - vitest tests/unit 584 passed, icons:check up to date, lint + typecheck clean; Ruling: icon ic:baseline-undo added to manifest + MDI_TO_LUCIDE (undo-2) over reusing lucide:undo - Lucide hardcode is forbidden - low cost
 Task 4: done - vitest tests/unit 588 passed, lint + typecheck clean
 Task 5: pending
-Task 6: pending
+Task 6: done - vitest CardsArea 14 passed; browser row check pending (run with Task 5 browser pass)
 Task 7: pending
 Task 8: pending
 ```

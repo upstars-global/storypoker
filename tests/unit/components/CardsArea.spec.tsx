@@ -101,6 +101,14 @@ describe('CardsArea voting', () => {
     expect((screen.getByTestId('reveal-button') as HTMLButtonElement).disabled).toBe(false)
   })
 
+  it('sizes cards to a third of the row below the lg breakpoint and keeps the desktop width', () => {
+    mountCards()
+    const slot = screen.getAllByTestId('vote-card')[0]!.parentElement!
+    expect(slot.className).toContain('w-[calc((100%-1.5rem)/3)]')
+    expect(slot.className).toContain('sm:w-[calc((100%-2rem)/3)]')
+    expect(slot.className).toContain('lg:w-[151.66px]')
+  })
+
   it('hides moderator controls from a plain player', () => {
     mountCards({ isModerator: false })
     expect(screen.queryByTestId('reveal-button')).toBeNull()

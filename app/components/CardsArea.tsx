@@ -309,13 +309,13 @@ export default function CardsArea({
 
       {!showLastRound && (
         <div className={canVote
-          ? 'flex flex-wrap justify-center gap-3 sm:gap-4 max-w-[1240px] mx-auto'
-          : 'flex flex-wrap justify-center gap-3 sm:gap-4 max-w-[1240px] mx-auto pointer-events-none opacity-40'}
+          ? 'flex flex-wrap justify-center gap-3 sm:gap-4 w-full lg:w-auto max-w-[480px] lg:max-w-[1240px] mx-auto'
+          : 'flex flex-wrap justify-center gap-3 sm:gap-4 w-full lg:w-auto max-w-[480px] lg:max-w-[1240px] mx-auto pointer-events-none opacity-40'}
         >
           {activeCards.map(card => (
             <div
               key={card}
-              className="relative w-[100px] sm:w-[151.66px] aspect-[2/3] flex-none"
+              className="relative w-[calc((100%-1.5rem)/3)] sm:w-[calc((100%-2rem)/3)] lg:w-[151.66px] aspect-[2/3] flex-none"
             >
               <button
                 ref={ripple}
