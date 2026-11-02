@@ -58,12 +58,16 @@ export function ResultsLayer({ visible, fits, children }: { visible: boolean; fi
       scaleRef.current = next
       setScale(next)
     }
-    const desktop = typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1024px)').matches
-    if (!fits || !zone || !content || !desktop) {
+    if (!fits || !zone || !content) {
       apply(1)
       return
     }
     const update = () => {
+      const desktop = typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1024px)').matches
+      if (!desktop) {
+        if (scaleRef.current !== 1) apply(1)
+        return
+      }
       const charts = content.querySelector<HTMLElement>('[data-result-charts]')
       const chartsHeight = charts?.offsetHeight ?? 0
       if (chartsHeight <= 0) return
