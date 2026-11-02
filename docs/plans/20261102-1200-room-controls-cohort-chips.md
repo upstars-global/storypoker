@@ -283,4 +283,5 @@ Task 18: done - result chips in one row (modal 760px, compact chips, group divid
 Task 19: done - below lg chips break into two rows (DEV group | QA, PO, SM); vitest 597 passed, lint + typecheck clean; browser check not run
 Task 20: done - poll decks hide chips and skip vote filtering (UI + round_history); vitest 602 passed, lint + typecheck clean
 Task 21: done - goal_clarity without chips via usesResultChips(); vitest 609 passed, lint + typecheck clean
+Task 22: done - single-vote circle alignment 100 on results screen; vitest 611 passed, lint + typecheck clean
 ```

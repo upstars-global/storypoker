@@ -71,6 +71,11 @@ function readSideWidget(): SideWidget {
 const AlignmentTrendsModal = lazy(() => import('~/components/AlignmentTrendsModal'))
 
 const MAX_FITTED_RESULT_CIRCLES = 6
+
+function duplicateSingleVote(votes: Record<string, number>): Record<string, number> {
+  const entries = Object.entries(votes)
+  return entries.length === 1 && entries[0]![1] === 1 ? { [entries[0]![0]]: 2 } : {}
+}
 const EMPTY_BACKGROUND: RoomBackground = { background_url: null, background_updated_at: null, background_opacity: null }
 
 function readHeaderSeed(urlParam: string): HeaderSeed {
@@ -281,7 +286,7 @@ export default function RoomPage() {
     const blocks: { key?: string; label: string; value: number }[] = []
     if (groups) {
       for (const group of groups) {
-        const value = alignmentScore(group.votes, deck)
+        const value = alignmentScore(group.votes, deck) ?? alignmentScore(duplicateSingleVote(group.votes), deck)
         if (value !== null) blocks.push({ key: group.key, label: group.label, value })
       }
     } else {

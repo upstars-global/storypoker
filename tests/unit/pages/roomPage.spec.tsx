@@ -549,6 +549,23 @@ describe('room page results', () => {
     expect(lastProps(ResultsArea).groups?.map(group => group.key)).toEqual(['FE', 'PO'])
   })
 
+  it('shows a full alignment for a cohort with a single vote', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('d1', ['dev'], '3'), fakePlayer('d2', ['dev'], '8'), fakePlayer('q', ['qa'], '5')],
+      state: fakeState({ phase: 'revealed', result_cohorts: [] }),
+    })
+    expect(blockLabels()).toEqual(['DEV', 'QA'])
+    expect(lastProps(AlignmentCard).blocks.find(block => block.label === 'QA')?.value).toBe(100)
+  })
+
+  it('shows no alignment for a single non-estimate vote', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('d1', ['dev'], '3'), fakePlayer('d2', ['dev'], '3'), fakePlayer('q', ['qa'], '?')],
+      state: fakeState({ phase: 'revealed', active_cards: ['1', '2', '3', '5', '8', '?'], result_cohorts: [] }),
+    })
+    expect(blockLabels()).toEqual(['DEV'])
+  })
+
   it('applies a realtime chip change without reload', async () => {
     await mountRoom({
       players: [me, fakePlayer('b', ['be'], '3'), fakePlayer('d', ['dev'], '5')],
@@ -567,7 +584,10 @@ describe('room page results', () => {
     ])
     expect(lastProps(ResultsArea).votes).toEqual({ '3': 1, '5': 2 })
     const deck = ['1', '2', '3', '5', '8']
-    expect(lastProps(AlignmentCard).blocks).toEqual([{ key: 'DEV', label: 'DEV', value: alignmentScore({ '3': 1, '5': 1 }, deck) }])
+    expect(lastProps(AlignmentCard).blocks).toEqual([
+      { key: 'DEV', label: 'DEV', value: alignmentScore({ '3': 1, '5': 1 }, deck) },
+      { key: 'QA', label: 'QA', value: 100 },
+    ])
   })
 
   it('folds custom-only voters into the DEV circle', async () => {
