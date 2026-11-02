@@ -81,7 +81,7 @@ instance; ECharts за замовчуванням використовує Canva
 (`ResultsLayer`) до 6 кіл зменшує лише кола: CSS-змінна `--result-circle-scale` множить ширину контейнерів кіл
 у `ResultsArea` (`[data-result-charts]`), текст і кнопки не масштабуються; від 7 кіл - прокрутка
 (`lastRoundFits`, `MAX_FITTED_RESULT_CIRCLES` у `[slug].tsx`). Центральна кнопка панелі - «Показати оцінки» (`reveal-button`, у режимі
-попереднього раунду disabled), після reveal - «Новий раунд» (`new-round-button`); у `ResultsArea` її немає. Reset перемикається в undo (`resetUndoAvailable`, іконка `ic:baseline-undo`): знімок голосів
+попереднього раунду disabled), після reveal - «Новий раунд» (`new-round-button`); у `ResultsArea` її немає. Reset перемикається в undo (`resetUndoAvailable`, та сама іконка дзеркально `scaleX(-1)`): знімок голосів
 живе в стані сторінки модератора, `roomStore.restoreVotes()` відновлює його повністю; знімок скидається на reveal,
 новий раунд, втрату прапора модератора й релоад. Нижче 1024 px картки займають третину рядка.
 

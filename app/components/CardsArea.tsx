@@ -461,19 +461,10 @@ export default function CardsArea({
                   data-testid="reset-button"
                   onClick={onReset}
                 >
-                  {resetUndoAvailable
-                    ? (
-                        <AppIcon
-                          name="ic:baseline-undo"
-                          style={{ fontSize: '1.5rem' }}
-                        />
-                      )
-                    : (
-                        <AppIcon
-                          name="ic:baseline-restart-alt"
-                          style={{ fontSize: '1.5rem' }}
-                        />
-                      )}
+                  <AppIcon
+                    name="ic:baseline-restart-alt"
+                    style={{ fontSize: '1.5rem', transform: resetUndoAvailable ? 'scaleX(-1)' : undefined }}
+                  />
                 </button>
               )}
             >

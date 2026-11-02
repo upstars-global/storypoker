@@ -53,14 +53,17 @@ describe('CardsArea moderator icon buttons', () => {
     expect(button.getAttribute('aria-label')).toBe(i18n.t('cards.undoReset'))
     expect(button.getAttribute('aria-pressed')).toBe('true')
     expect(button.disabled).toBe(false)
-    expect(button.querySelector(`.${(iconClasses as Record<string, string>)[mapIconName('ic:baseline-undo')]}`)).not.toBeNull()
+    const icon = button.querySelector<HTMLElement>(`.${(iconClasses as Record<string, string>)[mapIconName('ic:baseline-restart-alt')]}`)
+    expect(icon?.style.transform).toBe('scaleX(-1)')
   })
 
   it('shows the reset icon outside the undo state', () => {
     mountCards()
     const button = screen.getByTestId('reset-button')
     expect(button.getAttribute('aria-pressed')).toBe('false')
-    expect(button.querySelector(`.${(iconClasses as Record<string, string>)[mapIconName('ic:baseline-restart-alt')]}`)).not.toBeNull()
+    const icon = button.querySelector<HTMLElement>(`.${(iconClasses as Record<string, string>)[mapIconName('ic:baseline-restart-alt')]}`)
+    expect(icon).not.toBeNull()
+    expect(icon?.style.transform).toBe('')
   })
 
   it('exposes the last-round toggle as a pressed button', () => {

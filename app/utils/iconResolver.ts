@@ -41,7 +41,6 @@ const MDI_TO_LUCIDE: Record<string, string> = {
   'ic:baseline-supervisor-account': 'lucide:user-cog',
   'ic:baseline-arrow-drop-down': 'lucide:chevron-down',
   'ic:baseline-restart-alt': 'lucide:rotate-ccw',
-  'ic:baseline-undo': 'lucide:undo-2',
   'ic:baseline-add': 'lucide:plus',
   'ic:baseline-history': 'lucide:history',
   'ic:baseline-arrow-drop-up': 'lucide:chevron-up',
