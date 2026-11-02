@@ -58,7 +58,8 @@ export function ResultsLayer({ visible, fits, children }: { visible: boolean; fi
       scaleRef.current = next
       setScale(next)
     }
-    if (!fits || !zone || !content) {
+    const desktop = typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1024px)').matches
+    if (!fits || !zone || !content || !desktop) {
       apply(1)
       return
     }
@@ -79,11 +80,11 @@ export function ResultsLayer({ visible, fits, children }: { visible: boolean; fi
     return () => observer.disconnect()
   }, [fits])
 
-  const base = fits ? 'absolute inset-0 overflow-hidden w-full' : 'absolute inset-0 overflow-y-auto w-full'
+  const base = fits ? 'lg:absolute lg:inset-0 lg:overflow-hidden w-full' : 'lg:absolute lg:inset-0 lg:overflow-y-auto w-full'
   return (
     <div
       ref={outer}
-      className={visible ? base : `invisible ${base}`}
+      className={visible ? base : `invisible hidden lg:block ${base}`}
       aria-hidden={visible ? undefined : 'true'}
       data-testid="last-round-layer"
       data-scale={scale}
@@ -368,7 +369,7 @@ export default function CardsArea({
     <div className="flex flex-col items-center w-full rounded">
       <div className="relative w-full" data-testid="cards-zone">
         <div
-          className={resultsShown ? 'invisible flex flex-col items-center w-full' : 'flex flex-col items-center w-full'}
+          className={resultsShown ? 'invisible hidden lg:flex flex-col items-center w-full' : 'flex flex-col items-center w-full'}
           aria-hidden={resultsShown ? 'true' : undefined}
           data-testid="cards-layer"
         >

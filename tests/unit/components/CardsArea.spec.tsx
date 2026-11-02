@@ -112,6 +112,11 @@ describe('CardsArea voting', () => {
     expect(slot.className).toContain('lg:w-[151.66px]')
   })
 
+  it('hides the cards layer below lg while results are shown so the panel sits under the circles', () => {
+    mountCards({ revealed: true, lastRoundView: <div /> })
+    expect(screen.getByTestId('cards-layer').className.split(' ')).toEqual(expect.arrayContaining(['hidden', 'lg:flex']))
+  })
+
   it.each([false, true])('stacks cards and the last-round view in one cell (showLastRound=%s)', showLastRound => {
     mountCards({ showLastRound, lastRoundView: <div data-testid="last-round-content" /> })
     const cards = screen.getByTestId('cards-layer')
@@ -142,7 +147,7 @@ describe('CardsArea voting', () => {
     mountCards({ showLastRound: true, lastRoundView: <div /> })
     const zone = screen.getByTestId('cards-zone')
     const lastRound = screen.getByTestId('last-round-layer')
-    expect(lastRound.className.split(' ')).toEqual(expect.arrayContaining(['absolute', 'inset-0']))
+    expect(lastRound.className.split(' ')).toEqual(expect.arrayContaining(['lg:absolute', 'lg:inset-0']))
     expect(zone.contains(screen.getByTestId('cards-layer'))).toBe(true)
     expect(zone.nextElementSibling).toBe(screen.getByTestId('moderator-panel'))
   })
@@ -203,6 +208,15 @@ describe('ResultsLayer', () => {
     vi.restoreAllMocks()
   })
 
+  it('lets the results set the zone height below the lg breakpoint', () => {
+    mockHeights(400, 600, 400)
+    vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList)
+    render(<ResultsLayer visible fits>{results()}</ResultsLayer>)
+    const layer = screen.getByTestId('last-round-layer')
+    expect(layer.dataset.scale).toBe('1')
+    expect(layer.className.split(' ')).not.toContain('absolute')
+  })
+
   it('shrinks only the circles so the results fit the cards zone', () => {
     mockHeights(400, 600, 400)
     render(<ResultsLayer visible fits>{results()}</ResultsLayer>)
@@ -210,7 +224,7 @@ describe('ResultsLayer', () => {
     expect(layer.dataset.scale).toBe('0.5')
     expect(layer.style.getPropertyValue('--result-circle-scale')).toBe('0.5')
     expect((layer.firstElementChild as HTMLElement).style.transform).toBe('')
-    expect(layer.className.split(' ')).toContain('overflow-hidden')
+    expect(layer.className.split(' ')).toContain('lg:overflow-hidden')
   })
 
   it('keeps full size when the results already fit', () => {
@@ -224,6 +238,6 @@ describe('ResultsLayer', () => {
     render(<ResultsLayer visible fits={false}>{results()}</ResultsLayer>)
     const layer = screen.getByTestId('last-round-layer')
     expect(layer.dataset.scale).toBe('1')
-    expect(layer.className.split(' ')).toContain('overflow-y-auto')
+    expect(layer.className.split(' ')).toContain('lg:overflow-y-auto')
   })
 })

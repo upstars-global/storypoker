@@ -284,4 +284,5 @@ Task 19: done - below lg chips break into two rows (DEV group | QA, PO, SM); vit
 Task 20: done - poll decks hide chips and skip vote filtering (UI + round_history); vitest 602 passed, lint + typecheck clean
 Task 21: done - goal_clarity without chips via usesResultChips(); vitest 609 passed, lint + typecheck clean
 Task 22: done - single-vote circle alignment 100 on results screen; vitest 611 passed, lint + typecheck clean
+Task 23: done - below lg results layer in flow, cards layer hidden while results shown; vitest 613 passed, lint + typecheck clean
 ```

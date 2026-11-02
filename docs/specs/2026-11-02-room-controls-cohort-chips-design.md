@@ -164,6 +164,7 @@ Ruling: reveal and new-round merged into one panel button whose label follows th
 Ruling: voting and vote_question decks hide the chips and count every vote - user: "в колодах vote потрібно прибрати чіпси, там кола зʼявляються по іншій логіці" (2026-11-02)
 Ruling: goal_clarity also hides the chips and counts every vote, each role its own circle - user: "goal clarity теж немають необхідності мати чіпси" (2026-11-02)
 Ruling: a result circle with a single estimate vote shows alignment 100 on the results screen; stats keep the 2-vote rule - user: "узгодженість є тільки у випадку різності оцінок в рамках однієї когорти" (2026-11-02)
+Ruling: below 1024 px the zone collapses to the results so the panel sits right under the circles; desktop keeps the fixed zone - user chose option 1 (2026-11-02)
 Ruling: custom roles removed, legacy custom:* counts as no role (DEV), API unchanged - user: "давай без кастомних ролей", "1", "лишай API як є" (2026-11-02)
 Ruling: panel pinned to the viewport bottom (fixed) over reserved-height zone - user: "смужка і кнопки - завжди на одному місці. в будь якому сценаріі" (2026-11-02)
 Ruling: AC11 extended to the revealed screen - user: "коли натискаю показати результати - кнопки підскакують вверх до кіл" (2026-11-02)
