@@ -59,7 +59,7 @@ describe('ConfigureCardDeckModal result cohort chips', () => {
     expect(groups[3]!.className).not.toContain('border-l')
   })
 
-  it.each(['voting', 'vote_question'] as const)('hides the result chips for the %s deck', deckPreset => {
+  it.each(['voting', 'vote_question', 'goal_clarity'] as const)('hides the result chips for the %s deck', deckPreset => {
     const { onSave } = mountModal({ deckPreset, resultCohorts: ['BE'] })
     expect(screen.queryByTestId('deck-result-cohorts')).toBeNull()
     fireEvent.click(saveButton())

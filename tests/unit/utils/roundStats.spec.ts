@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { averageOf, voteToNumber, summarizeRound, isNumericPreset, roleRoundAlignment, roundAlignment } from '~/utils/roundStats'
+import { averageOf, voteToNumber, summarizeRound, isNumericPreset, roleRoundAlignment, roundAlignment, usesResultChips } from '~/utils/roundStats'
 import type { RoundHistory } from '~/stores/types'
 
 const FIB = ['1', '2', '3', '5', '8', '13', '21', '?', '☕']
@@ -212,5 +212,11 @@ describe('roleRoundAlignment', () => {
     }
     const shields = new Map([['b1', ['be']], ['b2', ['be']], ['po', ['po']], ['ux', ['custom:UX']]])
     expect(roleRoundAlignment(round as never, shields)).toEqual({ BE: 100, PO: null, DEV: 25 })
+  })
+})
+
+describe('usesResultChips', () => {
+  it.each([['scrum', true], ['fibonacci', true], ['voting', false], ['vote_question', false], ['goal_clarity', false]])('%s -> %s', (preset, expected) => {
+    expect(usesResultChips(preset)).toBe(expected)
   })
 })

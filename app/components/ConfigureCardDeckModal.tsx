@@ -7,6 +7,7 @@ import { Button } from '~/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { useCardLabel } from '~/hooks/useCardLabel'
 import { useRipple } from '~/hooks/useRipple'
+import { usesResultChips } from '~/utils/roundStats'
 import { RESULT_CHIP_GROUPS, selectedSplitCohorts } from '~/utils/resultCohorts'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
 
@@ -207,7 +208,7 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, result
                 </div>
               )}
 
-        {!isVoting && !isVoteQuestion && (
+        {usesResultChips(presetId) && (
         <div
           className="flex flex-col items-center gap-2 mt-8"
           data-testid="deck-result-cohorts"

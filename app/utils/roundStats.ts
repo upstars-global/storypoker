@@ -34,6 +34,10 @@ export function averageOf(votes: Record<string, number>): string | null {
   return (sum / count).toFixed(1)
 }
 
+export function usesResultChips(preset: string | null | undefined): boolean {
+  return !isPollPreset(preset) && preset !== 'goal_clarity'
+}
+
 export function isPollPreset(preset: string | null | undefined): boolean {
   return preset === 'voting' || preset === 'vote_question'
 }

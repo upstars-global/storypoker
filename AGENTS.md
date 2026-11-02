@@ -191,7 +191,8 @@ VITE_SUPABASE_KEY=...        # publishable client key
 1. **Кола результатів:** чіпи - фільтр флоу команди, групи DEV/BE/FE/SRE || QA/AQA/GQA || PO || SM
    (`resultKeyFor()`). Група DEV чи QA без вибраних чіпів - одне загальне коло, з вибраними - лише їхні кола;
    PO/SM - коло лише з чіпом. Неврахований голос видно тільки в списку (червоний бейдж), він не входить у кола,
-   підсумки й `round_history`. Колоди `voting`/`vote_question` чіпів не мають і рахують усі голоси.
+   підсумки й `round_history`. Колоди `voting`/`vote_question`/`goal_clarity` чіпів не мають
+   (`usesResultChips()`), рахують усі голоси, кожна роль - окреме коло.
    Порядок DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM. Розміри й контракт - `DESIGN.md` §11.9.
 2. **Налаштування кіл:** 9 чіпів у `ConfigureCardDeckModal`; Save пише підмножину в `room_state.result_cohorts`
    (`[]` без чіпів; QA/GQA/AQA/PO/SM потребують міграції `021`). Невідомі значення ігноруються.

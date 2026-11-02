@@ -540,6 +540,15 @@ describe('room page results', () => {
     expect(lastProps(ResultsArea).votes).toEqual({ yes: 1, no: 1 })
   })
 
+  it('shows every role as its own circle in goal clarity regardless of chips', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('f', ['fe'], '3'), fakePlayer('p', ['po'], '4')],
+      state: fakeState({ phase: 'revealed', deck_preset: 'goal_clarity', active_cards: ['1', '2', '3', '4', '5'], result_cohorts: ['BE'] }),
+    })
+    expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
+    expect(lastProps(ResultsArea).groups?.map(group => group.key)).toEqual(['FE', 'PO'])
+  })
+
   it('applies a realtime chip change without reload', async () => {
     await mountRoom({
       players: [me, fakePlayer('b', ['be'], '3'), fakePlayer('d', ['dev'], '5')],
