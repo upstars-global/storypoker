@@ -272,4 +272,6 @@ Task 8: done - AGENTS.md 21507 bytes, no "ігнорується" for result_coh
 Task 9: done - revealed results rendered in the CardsArea results layer with disabled panel; vitest tests/unit 593 passed, lint + typecheck clean
 Task 10: done - moderator panel fixed to viewport bottom, page main reserves bottom padding; vitest tests/unit 595 passed, lint + typecheck clean; harness Chrome: panel y=683 (375x812), y=725 (1280x800)
 Task 11: done - GQA/AQA chips, migration 021 written (not applied); vitest tests/unit 597 passed, lint + typecheck clean
+Ruling: plan revised after spec re-approval - docs/specs/2026-11-02-room-controls-cohort-chips-design.md
+Task 12: done - chip filter (resultKeyFor), uncounted voters red, reveal writes counted votes only, migration 021 with 9 roles (not applied); vitest tests/unit 594 passed, lint + typecheck clean
 ```

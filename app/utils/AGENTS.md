@@ -44,8 +44,9 @@ legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і не�
 ## Групи результатів
 
 `groupResultVotes(players, selected)` повертає `{ key, label, votes }[]` лише для ролей із голосами.
-`selected` - збережений `result_cohorts`, `selectedSplitCohorts()` фільтрує його до `SPLITTABLE_COHORTS`
-(BE/FE/SRE, GQA/AQA): невибрані BE/FE/SRE ідуть у DEV, невибрані GQA/AQA - у QA. Вбудовані ролі
+`selected` - збережений `result_cohorts`; `resultKeyFor(shields, selected)` за `RESULT_CHIP_GROUPS` повертає коло або
+`null` (голос не рахується): група DEV/QA без вибраних чіпів - загальне коло, з вибраними - лише вибрані; PO/SM -
+лише з чіпом. `reveal()` пише в `round_history` тільки голоси з не-`null` колом. Вбудовані ролі
 йдуть у порядку `ROLE_COHORTS`, кастомні - після них за першим проголосувавшим учасником у списку кімнати.
 Ключ кастомної ролі - повний shield `custom:...`, підпис - назва без префікса. Однакові shields групуються;
 `custom:DEV` і DEV мають різні ключі й кола. Перша розпізнана вбудована або кастомна роль у shields визначає

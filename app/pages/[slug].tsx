@@ -35,7 +35,7 @@ import { backgroundTint } from '~/utils/backgroundImage'
 import { DEFAULT_PRESET_ID, activeCardsForDeck } from '~/utils/cardDecks'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { shouldCelebrate } from '~/utils/resultCelebration'
-import { groupResultVotes, type ResultGroup } from '~/utils/resultCohorts'
+import { groupResultVotes, resultKeyFor, type ResultGroup } from '~/utils/resultCohorts'
 import { isValidRoomSlug, normalizeRoomSlug } from '~/utils/roomId'
 import { roleTagForShields, roleTagOrder } from '~/utils/shields'
 import { isRoundTimerStale, type AlarmSettings } from '~/utils/timerAlarm'
@@ -244,15 +244,17 @@ export default function RoomPage() {
 
   const isPollDeck = roomState?.deck_preset === 'voting' || roomState?.deck_preset === 'vote_question'
 
+  const resultCohorts = roomState?.result_cohorts
+  const excludedVoters = visiblePlayers.filter(p => p.vote && resultKeyFor(p.shields, resultCohorts) === null)
+  const hiddenVotePlayerIds = new Set(excludedVoters.map(p => p.id))
   const voteCounts: Record<string, number> = roomState
     ? visiblePlayers.reduce<Record<string, number>>((acc, p) => {
-        if (p.vote) acc[p.vote] = (acc[p.vote] ?? 0) + 1
+        if (p.vote && !hiddenVotePlayerIds.has(p.id)) acc[p.vote] = (acc[p.vote] ?? 0) + 1
         return acc
       }, {})
     : {}
 
   const resultGroups: ResultGroup[] = roomState ? groupResultVotes(visiblePlayers, roomState.result_cohorts) : []
-  const hiddenVotePlayerIds = new Set<string>()
 
   const activeCards = roomState
     ? activeCardsForDeck(roomState.deck_preset ?? DEFAULT_PRESET_ID, roomState.active_cards ?? [])

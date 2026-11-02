@@ -27,7 +27,7 @@ allowed»), тож delete-політику так не перевірити - л
 Таблиці:
 1. `rooms (id text PK, slug text unique, name text, background_url, background_updated_at, background_opacity, background_owner_id, created_at)`
 2. `room_state (room_id PK, phase, deck_preset, active_cards[], round_started_at, paused_at, paused_elapsed_ms, poll_question, result_cohorts[], alarm_minutes, alarm_muted)`
-  (`result_cohorts` з `017`), check-констрейнт: `DEV/BE/FE/SRE/QA/GQA/AQA` (`021` додав GQA/AQA для чіпів кіл).
+  (`result_cohorts` з `017`), check-констрейнт: 9 ролей `DEV/BE/FE/SRE/QA/GQA/AQA/PO/SM` (`021_room_state_result_chips`).
   Поточний UI ігнорує всі збережені значення цього поля; збереження колоди його не змінює. Кола автоматично
   формуються з фактичних голосів кожної вбудованої й кастомної ролі (`groupResultVotes()`); налаштувань
   вибору кіл немає. Схема й дані не мігруються. Будильник таймера з `018` (`alarm_minutes` 3-20, `null` = 5 хв)

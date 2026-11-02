@@ -1,3 +1,4 @@
+import { resultKeyFor } from '~/utils/resultCohorts'
 import { create as createStore } from 'zustand'
 import { getSupabase } from '~/lib/supabase-instance'
 import { getDeck, type DeckPresetId } from '~/utils/cardDecks'
@@ -68,7 +69,7 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
     const supabase = getSupabase()
     const playersStore = usePlayersStore.getState()
     const votes: RoundHistoryVote[] = playersStore.visiblePlayers
-      .filter(p => p.vote !== null)
+      .filter(p => p.vote !== null && resultKeyFor(p.shields, roomState.result_cohorts) !== null)
       .map(p => ({ player_id: p.id, name: p.name, vote: p.vote as string }))
 
     const revealedAt = new Date()

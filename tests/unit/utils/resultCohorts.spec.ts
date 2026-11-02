@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ALWAYS_SHOWN_COHORTS, COHORT_COLORS, ESTIMATOR_COHORTS, ROLE_COHORTS, cohortForShields, estimatorVotes, groupResultVotes, groupVotesByCohort, normalizeCohorts, resultCohortFor, voteCohortFor } from '~/utils/resultCohorts'
+import { ALWAYS_SHOWN_COHORTS, COHORT_COLORS, ESTIMATOR_COHORTS, ROLE_COHORTS, cohortForShields, estimatorVotes, groupResultVotes, resultKeyFor, groupVotesByCohort, normalizeCohorts, resultCohortFor, voteCohortFor } from '~/utils/resultCohorts'
 
 describe('normalizeCohorts', () => {
   it('defaults to every configurable developer role', () => {
@@ -225,91 +225,66 @@ describe('estimatorVotes', () => {
   })
 })
 
-const ALL_SPLIT = ['BE', 'FE', 'SRE']
-const ALL_SPLIT_WITH_QA = [...ALL_SPLIT, 'GQA', 'AQA']
+const ALL_CHIPS = ['DEV', 'BE', 'FE', 'SRE', 'QA', 'AQA', 'GQA', 'PO', 'SM']
+const nine = ['sm', 'po', 'aqa', 'gqa', 'qa', 'sre', 'fe', 'be', 'dev'].map(role => ({ shields: [role], vote: '3' }))
 
 describe('groupResultVotes', () => {
-  it('orders split built-in roles canonically and folds GQA and AQA into QA', () => {
-    const players = ['sm', 'po', 'aqa', 'gqa', 'qa', 'sre', 'fe', 'be', 'dev']
-      .map(role => ({ shields: [role], vote: '3' }))
-    expect(groupResultVotes(players, ALL_SPLIT)).toEqual([
-      { key: 'DEV', label: 'DEV', votes: { '3': 1 } },
-      { key: 'BE', label: 'BE', votes: { '3': 1 } },
-      { key: 'FE', label: 'FE', votes: { '3': 1 } },
-      { key: 'SRE', label: 'SRE', votes: { '3': 1 } },
+  it.each([null, undefined, []])('shows only the DEV and QA umbrella circles with no chips (%s)', selected => {
+    expect(groupResultVotes(nine, selected)).toEqual([
+      { key: 'DEV', label: 'DEV', votes: { '3': 4 } },
       { key: 'QA', label: 'QA', votes: { '3': 3 } },
-      { key: 'PO', label: 'PO', votes: { '3': 1 } },
-      { key: 'SM', label: 'SM', votes: { '3': 1 } },
     ])
   })
 
-  it.each([null, undefined, []])('folds BE, FE and SRE into DEV with no chips selected (%s)', selected => {
-    expect(groupResultVotes([
-      { shields: ['be'], vote: '3' },
-      { shields: ['fe'], vote: '5' },
-      { shields: ['sre'], vote: '3' },
-      { shields: null, vote: '8' },
-      { shields: ['aqa'], vote: '2' },
-    ], selected)).toEqual([
-      { key: 'DEV', label: 'DEV', votes: { '3': 2, '5': 1, '8': 1 } },
-      { key: 'QA', label: 'QA', votes: { '2': 1 } },
-    ])
-  })
-
-  it('splits only the selected developer role', () => {
-    expect(groupResultVotes([
-      { shields: ['be'], vote: '3' },
-      { shields: ['fe'], vote: '5' },
-      { shields: ['dev'], vote: '5' },
-    ], ['BE'])).toEqual([
-      { key: 'DEV', label: 'DEV', votes: { '5': 2 } },
-      { key: 'BE', label: 'BE', votes: { '3': 1 } },
-    ])
-  })
-
-  it('ignores legacy values outside the splittable roles', () => {
-    const players = [{ shields: ['be'], vote: '3' }, { shields: ['gqa'], vote: '5' }]
-    expect(groupResultVotes(players, ['DEV', 'QA'])).toEqual(groupResultVotes(players, []))
-  })
-
-  it('shows all nine built-in roles separately when every chip is selected', () => {
-    const players = ['sm', 'po', 'aqa', 'gqa', 'qa', 'sre', 'fe', 'be', 'dev']
-      .map(role => ({ shields: [role], vote: '3' }))
-    expect(groupResultVotes(players, ALL_SPLIT_WITH_QA).map(group => group.key)).toEqual(
+  it('shows all nine roles separately in canonical order when every chip is selected', () => {
+    expect(groupResultVotes(nine, ALL_CHIPS).map(group => group.key)).toEqual(
       ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM'],
     )
   })
 
-  it('splits a selected QA discipline and keeps the rest in QA', () => {
+  it('replaces the DEV umbrella with the selected chip and drops the rest of the group', () => {
+    expect(groupResultVotes([
+      { shields: ['be'], vote: '3' },
+      { shields: ['fe'], vote: '5' },
+      { shields: ['dev'], vote: '5' },
+      { shields: null, vote: '8' },
+      { shields: ['qa'], vote: '2' },
+    ], ['BE'])).toEqual([
+      { key: 'BE', label: 'BE', votes: { '3': 1 } },
+      { key: 'QA', label: 'QA', votes: { '2': 1 } },
+    ])
+  })
+
+  it('treats the DEV chip as DEV and roleless voters only', () => {
+    expect(groupResultVotes([
+      { shields: ['dev'], vote: '3' },
+      { shields: [], vote: '3' },
+      { shields: ['sre'], vote: '8' },
+    ], ['DEV'])).toEqual([{ key: 'DEV', label: 'DEV', votes: { '3': 2 } }])
+  })
+
+  it('replaces the QA umbrella with the selected chip', () => {
     expect(groupResultVotes([
       { shields: ['qa'], vote: '3' },
       { shields: ['gqa'], vote: '5' },
       { shields: ['aqa'], vote: '8' },
-    ], ['AQA'])).toEqual([
-      { key: 'QA', label: 'QA', votes: { '3': 1, '5': 1 } },
-      { key: 'AQA', label: 'AQA', votes: { '8': 1 } },
-    ])
+    ], ['AQA'])).toEqual([{ key: 'AQA', label: 'AQA', votes: { '8': 1 } }])
   })
 
-  it('creates three circles for three voted roles', () => {
-    expect(groupResultVotes([
-      { shields: ['po'], vote: '2' },
-      { shields: ['be'], vote: '5' },
-      { shields: ['qa'], vote: '8' },
-    ], ALL_SPLIT)).toEqual([
-      { key: 'BE', label: 'BE', votes: { '5': 1 } },
-      { key: 'QA', label: 'QA', votes: { '8': 1 } },
-      { key: 'PO', label: 'PO', votes: { '2': 1 } },
-    ])
+  it('shows PO and SM only with their chips', () => {
+    const players = [{ shields: ['po'], vote: '2' }, { shields: ['sm'], vote: '5' }]
+    expect(groupResultVotes(players, [])).toEqual([])
+    expect(groupResultVotes(players, ['PO'])).toEqual([{ key: 'PO', label: 'PO', votes: { '2': 1 } }])
   })
 
-  it('creates only two circles when two of eight present roles voted', () => {
-    const players = ['dev', 'be', 'fe', 'sre', 'qa', 'gqa', 'aqa', 'po']
-      .map(role => ({ shields: [role], vote: role === 'be' || role === 'po' ? '5' : null }))
-    expect(groupResultVotes(players, ALL_SPLIT)).toEqual([
-      { key: 'BE', label: 'BE', votes: { '5': 1 } },
-      { key: 'PO', label: 'PO', votes: { '5': 1 } },
-    ])
+  it('ignores unknown saved values', () => {
+    expect(groupResultVotes(nine, ['XX', 'custom:DEV'])).toEqual(groupResultVotes(nine, []))
+  })
+
+  it('exposes whether a vote is counted', () => {
+    expect(resultKeyFor(['fe'], ['BE'])).toBeNull()
+    expect(resultKeyFor(['fe'], [])).toBe('DEV')
+    expect(resultKeyFor(['custom:Design'], ['BE'])).toBe('custom:Design')
   })
 
   it('merges identical custom roles and orders them by first voting participant', () => {
@@ -319,7 +294,7 @@ describe('groupResultVotes', () => {
       { shields: ['custom:Design'], vote: '5' },
       { shields: ['custom:Research'], vote: '3' },
       { shields: ['custom:design'], vote: '8' },
-    ], ALL_SPLIT)).toEqual([
+    ], ALL_CHIPS)).toEqual([
       { key: 'custom:Research', label: 'Research', votes: { '3': 2 } },
       { key: 'custom:Design', label: 'Design', votes: { '5': 1 } },
       { key: 'custom:design', label: 'design', votes: { '8': 1 } },
@@ -332,7 +307,7 @@ describe('groupResultVotes', () => {
       { shields: ['custom:'], vote: '2' },
       { shields: ['dev'], vote: '3' },
       { shields: ['qa'], vote: '5' },
-    ], ALL_SPLIT)).toEqual([
+    ], ALL_CHIPS)).toEqual([
       { key: 'DEV', label: 'DEV', votes: { '3': 1 } },
       { key: 'QA', label: 'QA', votes: { '5': 1 } },
       { key: 'custom:DEV', label: 'DEV', votes: { '8': 1 } },
@@ -345,7 +320,7 @@ describe('groupResultVotes', () => {
       { shields: null, vote: '3' },
       { shields: [], vote: '3' },
       { shields: ['unknown'], vote: '5' },
-    ], ALL_SPLIT)).toEqual([{ key: 'DEV', label: 'DEV', votes: { '3': 2, '5': 1 } }])
+    ], ALL_CHIPS)).toEqual([{ key: 'DEV', label: 'DEV', votes: { '3': 2, '5': 1 } }])
   })
 
   it('uses the first recognized built-in or custom legacy shield', () => {
@@ -353,7 +328,7 @@ describe('groupResultVotes', () => {
       { shields: ['unknown', 'custom:DEV', 'qa'], vote: '3' },
       { shields: ['unknown', 'qa', 'custom:DEV'], vote: '5' },
       { shields: ['unknown', 'custom:', 'gqa'], vote: '8' },
-    ], ALL_SPLIT)).toEqual([
+    ], ALL_CHIPS)).toEqual([
       { key: 'QA', label: 'QA', votes: { '5': 1 } },
       { key: 'custom:DEV', label: 'DEV', votes: { '3': 1 } },
       { key: 'custom:', label: '', votes: { '8': 1 } },
@@ -361,17 +336,17 @@ describe('groupResultVotes', () => {
   })
 
   it('omits empty votes and produces no empty groups', () => {
-    expect(groupResultVotes([], ALL_SPLIT)).toEqual([])
+    expect(groupResultVotes([], ALL_CHIPS)).toEqual([])
     expect(groupResultVotes([
       { shields: ['dev'], vote: null },
       { shields: ['custom:Design'], vote: '' },
-    ], ALL_SPLIT)).toEqual([])
+    ], ALL_CHIPS)).toEqual([])
   })
 
   it('counts arbitrary card values without inheriting object properties', () => {
     const players = ['__proto__', 'constructor', 'toString', '__proto__', '0']
       .map(vote => ({ shields: ['custom:Design'], vote }))
-    const groups = groupResultVotes(players, ALL_SPLIT)
+    const groups = groupResultVotes(players, ALL_CHIPS)
     expect(groups).toEqual([{
       key: 'custom:Design', label: 'Design',
       votes: { ['__proto__']: 2, constructor: 1, toString: 1, '0': 1 },
