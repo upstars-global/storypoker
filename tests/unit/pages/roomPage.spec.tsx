@@ -1,4 +1,4 @@
-import { isValidElement, type ComponentProps } from 'react'
+import { isValidElement, type ComponentProps, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
@@ -29,7 +29,7 @@ import { resetStores } from '../../support/helpers/resetStores'
 
 vi.mock('~/components/AppHeader', () => ({ default: vi.fn(() => <header data-testid="app-header" />) }))
 vi.mock('~/components/AlignmentCard', () => ({ default: vi.fn(() => <div data-testid="alignment-card" />) }))
-vi.mock('~/components/CardsArea', () => ({ default: vi.fn(() => <div data-testid="cards-area" />) }))
+vi.mock('~/components/CardsArea', () => ({ default: vi.fn((props: { lastRoundView?: ReactNode }) => <div data-testid="cards-area">{props.lastRoundView}</div>) }))
 vi.mock('~/components/JoinOverlay', () => ({ default: vi.fn(() => <div data-testid="join-overlay" />) }))
 vi.mock('~/components/PlayersList', () => ({ default: vi.fn(() => <div data-testid="players-list" />) }))
 vi.mock('~/components/ResultsArea', () => ({ default: vi.fn(() => <div data-testid="results-area" />) }))
@@ -427,6 +427,14 @@ describe('room page side widget', () => {
   })
 })
 
+describe('room page revealed layout', () => {
+  it('renders the revealed results inside CardsArea so the moderator panel stays in place', async () => {
+    await mountRoom({ state: fakeState({ phase: 'revealed' }) })
+    expect(lastProps(CardsArea)).toMatchObject({ revealed: true, showLastRound: false })
+    expect(lastRoundViewProps()).toMatchObject({ showNewRound: true })
+  })
+})
+
 describe('room page reset undo', () => {
   const partial = [...estimators, fakePlayer('dave', ['dev'], null)]
 
@@ -611,7 +619,7 @@ describe('room page results', () => {
       usePlayersStore.setState({ players: estimators.map(p => ({ ...p, vote: null })) })
       useRoomStore.setState({ roomState: fakeState({ phase: 'voting' }) })
     })
-    expect(screen.queryByTestId('results-area')).toBeNull()
+    expect(lastProps(CardsArea).showLastRound).toBe(false)
 
     await act(async () => {
       lastProps(CardsArea).onToggleLastRound()

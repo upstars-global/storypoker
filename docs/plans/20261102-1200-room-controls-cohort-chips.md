@@ -269,4 +269,5 @@ Task 5: done - vitest tests/unit 591 passed, lint + typecheck clean; Ruling: AC1
 Task 6: done - vitest CardsArea 14 passed; browser (icon harness, Chrome) cards per row: 375 [3,3,3,1], 768 [3,3,3,1], 1023 [3,3,3,1], 1280 [5,5]
 Task 7: done - RED spinsLeft 5 != 3, GREEN vitest tests/unit 589 passed, lint + typecheck clean
 Task 8: done - AGENTS.md 21507 bytes, no "ігнорується" for result_cohorts; app/utils, app/components AGENTS.md and DESIGN.md updated
+Task 9: done - revealed results rendered in the CardsArea results layer with disabled panel; vitest tests/unit 593 passed, lint + typecheck clean
 ```

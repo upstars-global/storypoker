@@ -837,21 +837,9 @@ export default function RoomPage() {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-start">
-          {roomState?.phase === 'revealed' && (
-            <ResultsArea
-              votes={voteCounts}
-              groups={resultGroups}
-              showNewRound={isModerator}
-              pollQuestion={roomState.poll_question ?? null}
-              disableCelebration={isPollDeck}
-              showAlignment={!isPollDeck}
-              activeCards={activeCards}
-              goalClarityScore={roomState.deck_preset === 'goal_clarity'}
-              onStartNewRound={() => void useRoomStore.getState().startNewRound()}
-            />
-          )}
-          {roomState?.phase === 'voting' && (
+          {roomState && (roomState.phase === 'voting' || roomState.phase === 'revealed') && (
             <CardsArea
+              revealed={roomState.phase === 'revealed'}
               activeCards={activeCards}
               selectedVote={currentPlayer ? voteOf(currentPlayer.id) : null}
               isModerator={isModerator}
@@ -864,8 +852,22 @@ export default function RoomPage() {
               voteQuestionMode={roomState.deck_preset === 'vote_question'}
               pollQuestion={roomState.poll_question ?? null}
               hasLastRound={!!lastRound}
-              showLastRound={showLastRound}
-              lastRoundView={lastRound && (
+              showLastRound={roomState.phase === 'voting' && showLastRound}
+              lastRoundView={roomState.phase === 'revealed'
+                ? (
+                    <ResultsArea
+                      votes={voteCounts}
+                      groups={resultGroups}
+                      showNewRound={isModerator}
+                      pollQuestion={roomState.poll_question ?? null}
+                      disableCelebration={isPollDeck}
+                      showAlignment={!isPollDeck}
+                      activeCards={activeCards}
+                      goalClarityScore={roomState.deck_preset === 'goal_clarity'}
+                      onStartNewRound={() => void useRoomStore.getState().startNewRound()}
+                    />
+                  )
+                : lastRound && (
                 <ResultsArea
                   votes={lastRound.votes}
                   groups={lastRound.groups}

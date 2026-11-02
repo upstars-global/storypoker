@@ -23,6 +23,7 @@ type CardsAreaProps = {
   hasLastRound?: boolean
   showLastRound?: boolean
   lastRoundView?: ReactNode
+  revealed?: boolean
   onVote: (card: string) => void
   onReveal: () => void
   onReset: () => void
@@ -56,6 +57,7 @@ export default function CardsArea({
   hasLastRound,
   showLastRound,
   lastRoundView,
+  revealed = false,
   onVote,
   onReveal,
   onReset,
@@ -79,7 +81,7 @@ export default function CardsArea({
   const live = useRef({ countdownRunning, showLastRound, canVote, onStartCountdown })
 
   useEffect(() => {
-    live.current = { countdownRunning, showLastRound, canVote, onStartCountdown }
+    live.current = { countdownRunning, showLastRound: showLastRound || revealed, canVote, onStartCountdown }
   })
 
   const [lastPollQuestion, setLastPollQuestion] = useState(pollQuestion)
@@ -177,10 +179,11 @@ export default function CardsArea({
     if (event.key === 'Enter' || event.key === ' ') cancelHold(mode)
   }
 
-  const lastRoundDisabled = (!hasLastRound && !showLastRound) || countdownRunning
-  const resetDisabled = (!canReset && !resetUndoAvailable) || countdownRunning
+  const resultsShown = showLastRound || revealed
+  const lastRoundDisabled = (!hasLastRound && !showLastRound) || countdownRunning || revealed
+  const resetDisabled = (!canReset && !resetUndoAvailable) || countdownRunning || revealed
   const resetLabel = resetUndoAvailable ? t('cards.undoReset') : t('cards.reset')
-  const modeDisabled = showLastRound || !canVote
+  const modeDisabled = resultsShown || !canVote
 
   function pollSection() {
     if (pollQuestion) {
@@ -306,8 +309,8 @@ export default function CardsArea({
     <div className="flex flex-col items-center w-full rounded">
       <div className="grid w-full">
         <div
-          className={showLastRound ? 'invisible [grid-area:1/1] flex flex-col items-center w-full' : '[grid-area:1/1] flex flex-col items-center w-full'}
-          aria-hidden={showLastRound ? 'true' : undefined}
+          className={resultsShown ? 'invisible [grid-area:1/1] flex flex-col items-center w-full' : '[grid-area:1/1] flex flex-col items-center w-full'}
+          aria-hidden={resultsShown ? 'true' : undefined}
           data-testid="cards-layer"
         >
       {(pollMode || voteQuestionMode || !!pollQuestion) && (
@@ -348,8 +351,8 @@ export default function CardsArea({
         </div>
         {lastRoundView && (
           <div
-            className={showLastRound ? '[grid-area:1/1] w-full' : 'invisible [grid-area:1/1] w-full'}
-            aria-hidden={showLastRound ? undefined : 'true'}
+            className={resultsShown ? '[grid-area:1/1] w-full' : 'invisible [grid-area:1/1] w-full'}
+            aria-hidden={resultsShown ? undefined : 'true'}
             data-testid="last-round-layer"
           >
             {lastRoundView}
@@ -423,7 +426,7 @@ export default function CardsArea({
           <div className="flex items-center gap-4">
             <Button
               ref={ripple}
-              disabled={!hasVotes || countdownRunning || !canVote || showLastRound}
+              disabled={!hasVotes || countdownRunning || !canVote || resultsShown}
               data-testid="reveal-button"
               onClick={onReveal}
             >

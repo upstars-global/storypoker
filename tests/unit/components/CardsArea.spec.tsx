@@ -121,6 +121,15 @@ describe('CardsArea voting', () => {
     expect(screen.getByTestId('reveal-button')).toBeTruthy()
   })
 
+  it('shows the results layer and disables every panel control after reveal', () => {
+    mountCards({ revealed: true, resetUndoAvailable: true, lastRoundView: <div /> })
+    expect(screen.getByTestId('cards-layer').classList.contains('invisible')).toBe(true)
+    expect(screen.getByTestId('last-round-layer').classList.contains('invisible')).toBe(false)
+    for (const id of ['reveal-button', 'reset-button', 'last-round-button']) {
+      expect((screen.getByTestId(id) as HTMLButtonElement).disabled).toBe(true)
+    }
+  })
+
   it('hides moderator controls from a plain player', () => {
     mountCards({ isModerator: false })
     expect(screen.queryByTestId('reveal-button')).toBeNull()
