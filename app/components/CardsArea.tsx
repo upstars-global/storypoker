@@ -425,7 +425,7 @@ export default function CardsArea({
 
       {isModerator && (
         <div
-          className="flex flex-wrap items-center justify-center gap-6 pt-8"
+          className="moderator-panel flex flex-wrap items-center justify-center gap-6 pt-8"
           data-testid="moderator-panel"
         >
           <div className="flex items-center gap-2">
@@ -477,7 +477,7 @@ export default function CardsArea({
             </AppTooltip>
           </div>
           <div
-            className="border-l border-input self-stretch"
+            className="moderator-panel-divider self-stretch"
             style={{ width: 0 }}
           />
           <div className="flex items-center gap-4">

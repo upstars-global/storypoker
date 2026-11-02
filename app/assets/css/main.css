@@ -567,6 +567,25 @@ body {
     box-shadow: none;
   }
 
+  .moderator-panel .mui-icon-btn,
+  .moderator-panel .mui-icon-group {
+    border: 1px solid color-mix(in srgb, var(--text-primary) 55%, transparent);
+    background-color: color-mix(in srgb, var(--bg-app) 70%, transparent);
+  }
+  .moderator-panel .mui-icon-btn:hover {
+    background-color: color-mix(in srgb, var(--bg-app) 70%, var(--hover-bg));
+  }
+  .moderator-panel .mui-icon-group .mui-icon-btn {
+    border: none;
+    background-color: transparent;
+  }
+  .moderator-panel .mui-icon-group .mui-icon-btn:hover {
+    background-color: var(--hover-bg);
+  }
+  .moderator-panel-divider {
+    border-left: 1px solid color-mix(in srgb, var(--text-primary) 55%, transparent);
+  }
+
   .hold-btn {
     position: relative;
     overflow: visible;
