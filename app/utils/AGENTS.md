@@ -41,9 +41,11 @@ legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і не�
 Узгодженість має ціле значення 0-100; менше двох карт колоди без `?`/`☕` дають `null`. Головна бере округлене середнє не-null
 загальних балів числових раундів; картки трендів - ті самі загальні бали у видимому періоді.
 
-## Автоматичні групи результатів
+## Групи результатів
 
-`groupResultVotes(players)` повертає `{ key, label, votes }[]` лише для ролей із голосами. Вбудовані ролі
+`groupResultVotes(players, selected)` повертає `{ key, label, votes }[]` лише для ролей із голосами.
+`selected` - збережений `result_cohorts`, `selectedSplitCohorts()` фільтрує його до `SPLITTABLE_COHORTS`
+(BE/FE/SRE): невибрані з них ідуть у DEV, GQA/AQA - завжди в QA. Вбудовані ролі
 йдуть у порядку `ROLE_COHORTS`, кастомні - після них за першим проголосувавшим учасником у списку кімнати.
 Ключ кастомної ролі - повний shield `custom:...`, підпис - назва без префікса. Однакові shields групуються;
 `custom:DEV` і DEV мають різні ключі й кола. Перша розпізнана вбудована або кастомна роль у shields визначає
@@ -51,13 +53,12 @@ legacy `deck_preset=null`; poll-колоди (`voting`/`vote_question`) і не�
 
 Групування кіл відокремлене від `voteCohortFor()`, `roleRoundAlignment()` і `estimatorVotes()`: контракти
 історії, трендів, головної та API лишаються незмінними. `normalizeCohorts()`, `resultCohortFor()` і
-`groupVotesByCohort()` збережені для сумісності; UI кіл їх не використовує. `room_state.result_cohorts`
-ігнорується під час показу, збереження колоди його не змінює.
+`groupVotesByCohort()` збережені для сумісності; UI кіл їх не використовує.
 
 ## Consensus
 
 `resultCelebration.ts → shouldCelebrate(votes, groups)` - єдиний предикат для салюту (`ResultsArea.tsx`) і звуку
-(`isConsensus` у `pages/[slug].tsx`); `groups` - автоматичні кола з `groupResultVotes()` (`resultCohorts.ts`),
+(`isConsensus` у `pages/[slug].tsx`); `groups` - кола з `groupResultVotes()` (`resultCohorts.ts`),
 включно з кастомними. Одноголосною вважається група з рівно однією унікальною оцінкою **і** ≥ 2 голосами.
 Без груп те саме правило застосовується до всіх голосів.
 Поріг ≥ 2 узгоджений з `DESIGN.md` §11: рядок `round_history` теж пишеться лише при `votes.length >= 2`.

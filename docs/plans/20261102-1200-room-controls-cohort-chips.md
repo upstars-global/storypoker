@@ -268,5 +268,5 @@ Task 4: done - vitest tests/unit 588 passed, lint + typecheck clean
 Task 5: done - vitest tests/unit 591 passed, lint + typecheck clean; Ruling: AC11 narrowed to voting screen by user ("ні, тільки екран 1"), spec re-approved; cards and last-round view stacked in one grid cell over fixed-height zone - panel cannot move on toggle; browser y-check of panel not run (harness has no last-round view)
 Task 6: done - vitest CardsArea 14 passed; browser (icon harness, Chrome) cards per row: 375 [3,3,3,1], 768 [3,3,3,1], 1023 [3,3,3,1], 1280 [5,5]
 Task 7: done - RED spinsLeft 5 != 3, GREEN vitest tests/unit 589 passed, lint + typecheck clean
-Task 8: pending
+Task 8: done - AGENTS.md 21507 bytes, no "ігнорується" for result_cohorts; app/utils, app/components AGENTS.md and DESIGN.md updated
 ```

@@ -326,7 +326,7 @@ const isAuthorizedModerator = isModerator && !!user
 | Дія | Компонент / handler |
 |---|---|
 | Розкрити оцінки (reveal) | `CardsArea.tsx` reveal-button → `roomStore.reveal()` |
-| Скинути голоси (reset) | `CardsArea.tsx` reset-button → `roomStore.resetVotes()` |
+| Скинути голоси (reset) / повернути (undo) | `CardsArea.tsx` reset-button → `roomStore.resetVotes()`; повторне натискання → `roomStore.restoreVotes(snapshot)` |
 | Показати попередній раунд (undo) | `CardsArea.tsx` undo-button → `showLastRound = !showLastRound` |
 | Запустити відлік розкриття | `CardsArea.tsx` hold-to-start (силент/зі звуком/з атмосферою) → `broadcastCountdownStart` - деталі §11.6 |
 | Почати новий раунд | `ResultsArea.tsx`, `showNewRound={isModerator}` → `roomStore.startNewRound()` |
@@ -353,7 +353,7 @@ const isAuthorizedModerator = isModerator && !!user
 - **Перемкнути власний прапорець модератора** (`PlayerRow.tsx`, гейт тільки `isOwn`, без перевірки `currentUserIsModerator`) - самопризначення доступне будь-кому, не тільки поточному модератору; тогл ЧУЖОГО прапорця модератора в UI відсутній взагалі
 - Переглянути історію раундів / графік узгодженості (`AppHeader.tsx`, гейт лише `roomName` - тобто кімната має назву, роль не перевіряється)
 - Перемкнути тему/палітру/мову, бічний віджет Timer ↔ SlotMachine
-- Грати в слот-машину (3 спіни за раунд, у `PO`/`SM` - 5; гейтинг - §11.8)
+- Грати в слот-машину (3 спіни за раунд для всіх; гейтинг - §11.8)
 
 ### 11.3 Графік узгодженості та тренди (`AlignmentTrendsModal.tsx`)
 
@@ -535,7 +535,7 @@ SRE, QA, GQA, AQA, PO, SM; кастомні голоси - останнім ря
 
 Лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine), вибір - у `sp-side-widget` (`timer | slot`).
 
-**Механіка** - 3 барабани, зважена випадковість (`utils/slotMachine.ts`; символи - tabler icon-id у `SLOT_SYMBOL_WEIGHTS`, рендеряться через `<AppIcon>`), 3 спіни на гравця за раунд, у `PO`/`SM` - 5 (`spinsPerRound`, скидаються за `round_started_at`). Джекпот = 3 однакові символи.
+**Механіка** - 3 барабани, зважена випадковість (`utils/slotMachine.ts`; символи - tabler icon-id у `SLOT_SYMBOL_WEIGHTS`, рендеряться через `<AppIcon>`), 3 спіни на кожного гравця за раунд (`spinsPerRound`, скидаються за `round_started_at`). Джекпот = 3 однакові символи.
 
 **Гейтинг спіну** - `canSpinSlot` (`[slug].tsx`, рахується в рендері з `roleTagForShields`): для `PO`/`SM` завжди `true`; для решти ролей - лише коли `phase==='voting'`, гравець уже проголосував і є хоча б один, хто ще не проголосував. Слот - заняття "поки чекаєш інших", не альтернатива голосуванню. `SlotMachine.tsx` приймає `canSpin` поруч зі `spinsLeft` і показує `slot.voteFirst` (1.5с, без власної анімації), коли `spinsLeft > 0`, але `canSpin === false`.
 
@@ -565,10 +565,10 @@ PO, SM у порядку `ROLE_COHORTS`, потім кастомні за пер
    графік без перезавантаження. Один голос дає суцільне коло з підписом карти, кілька - сектори з підписами
    й тією самою палітрою. `<ROLE>: <середнє>` видно одразу поза графіком. Під час завантаження чанка або його
    збою лишається порожнє місце розміру кола без екранної помилки; ECharts не входить в entry-чанк.
-3. **Колода й збережені налаштування:** у `ConfigureCardDeckModal` немає секції «Показувати результати»,
-   чіпів чи підказки. Save зберігає пресет і карти та не змінює `room_state.result_cohorts`. Це поле
-   `text[]` (міграція `017`), його check-констрейнт на `DEV/BE/FE/SRE/QA` і старі дані лишаються сумісними;
-   будь-яке допустиме значення ігнорується під час показу. Старе налаштування не приховує голосів і не
+3. **Колода й чіпи кіл:** `ConfigureCardDeckModal` має чіпи BE/FE/SRE («Окремі кола результатів»). Save
+   пише пресет, карти й підмножину чіпів у `room_state.result_cohorts` (`[]` без чіпів). Поле `text[]`
+   (міграція `017`), check-констрейнт на `DEV/BE/FE/SRE/QA` лишається; значення поза BE/FE/SRE ігноруються.
+   Без чіпа BE/FE/SRE голосують у коло DEV; GQA/AQA завжди в колі QA. Старе налаштування не приховує голосів і не
    робить `RoleBadge` червоним. `voting`, `vote_question`, `goal_clarity` зберігають бульбашки або бал ясності.
 4. **Історія, тренди, головна й нові поля API:** беруть сиру вбудовану роль через `cohortForShields()` і
    `voteCohortFor()` (§11.3-11.4). Кастомні ролі лишаються поза рольовими трендами; гравці без ролі й ті,
