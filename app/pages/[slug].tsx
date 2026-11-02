@@ -245,7 +245,7 @@ export default function RoomPage() {
       }, {})
     : {}
 
-  const resultGroups: ResultGroup[] = roomState ? groupResultVotes(visiblePlayers) : []
+  const resultGroups: ResultGroup[] = roomState ? groupResultVotes(visiblePlayers, roomState.result_cohorts) : []
   const hiddenVotePlayerIds = new Set<string>()
 
   const activeCards = roomState

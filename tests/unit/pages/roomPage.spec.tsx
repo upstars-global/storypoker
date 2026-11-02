@@ -421,35 +421,57 @@ describe('room page side widget', () => {
 })
 
 describe('room page results', () => {
-  it('shows all nine role circles in canonical order with separate QA disciplines', async () => {
+  it('shows selected developer circles in canonical order with QA disciplines folded', async () => {
     const roles = ['sm', 'gqa', 'be', 'qa', 'sre', 'dev', 'aqa', 'fe', 'po']
-    await mountRoom({ players: [me, ...roles.map(role => fakePlayer(role, [role], '3'))] })
-    expect(lastProps(ResultsArea).groups).toEqual(
-      ['DEV', 'BE', 'FE', 'SRE', 'QA', 'GQA', 'AQA', 'PO', 'SM'].map(label => ({ key: label, label, votes: { '3': 1 } })),
-    )
+    await mountRoom({
+      players: [me, ...roles.map(role => fakePlayer(role, [role], '3'))],
+      state: fakeState({ phase: 'revealed', result_cohorts: ['BE', 'FE', 'SRE'] }),
+    })
+    expect(lastProps(ResultsArea).groups).toEqual([
+      { key: 'DEV', label: 'DEV', votes: { '3': 1 } },
+      { key: 'BE', label: 'BE', votes: { '3': 1 } },
+      { key: 'FE', label: 'FE', votes: { '3': 1 } },
+      { key: 'SRE', label: 'SRE', votes: { '3': 1 } },
+      { key: 'QA', label: 'QA', votes: { '3': 3 } },
+      { key: 'PO', label: 'PO', votes: { '3': 1 } },
+      { key: 'SM', label: 'SM', votes: { '3': 1 } },
+    ])
     expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
   })
 
-  it.each([null, [], ['DEV'], ['BE']])('ignores saved result settings %j', async (result_cohorts) => {
+  it.each([
+    [null, [{ key: 'DEV', label: 'DEV', votes: { '3': 4 } }]],
+    [[], [{ key: 'DEV', label: 'DEV', votes: { '3': 4 } }]],
+    [['DEV'], [{ key: 'DEV', label: 'DEV', votes: { '3': 4 } }]],
+    [['BE'], [{ key: 'DEV', label: 'DEV', votes: { '3': 3 } }, { key: 'BE', label: 'BE', votes: { '3': 1 } }]],
+  ])('groups developer roles by saved chips %j', async (result_cohorts, devGroups) => {
     await mountRoom({
       players: [me, ...['dev', 'be', 'fe', 'sre', 'qa'].map(role => fakePlayer(role, [role], '3'))],
       state: fakeState({ phase: 'revealed', result_cohorts }),
     })
-    expect(lastProps(ResultsArea).groups).toEqual(
-      ['DEV', 'BE', 'FE', 'SRE', 'QA'].map(label => ({ key: label, label, votes: { '3': 1 } })),
-    )
+    expect(lastProps(ResultsArea).groups).toEqual([...devGroups, { key: 'QA', label: 'QA', votes: { '3': 1 } }])
     expect(lastProps(PlayersList).hiddenVotePlayerIds?.size).toBe(0)
   })
 
-  it('ignores a saved QA chip and assigns a roleless voter to DEV', async () => {
+  it('ignores legacy saved chips and assigns a roleless voter to DEV', async () => {
     await mountRoom({
       players: [me, fakePlayer('roleless', [], '3'), fakePlayer('tester', ['gqa'], '5')],
       state: fakeState({ phase: 'revealed', result_cohorts: ['DEV', 'QA'] }),
     })
     expect(lastProps(ResultsArea).groups).toEqual([
       { key: 'DEV', label: 'DEV', votes: { '3': 1 } },
-      { key: 'GQA', label: 'GQA', votes: { '5': 1 } },
+      { key: 'QA', label: 'QA', votes: { '5': 1 } },
     ])
+  })
+
+  it('applies a realtime chip change without reload', async () => {
+    await mountRoom({
+      players: [me, fakePlayer('b', ['be'], '3'), fakePlayer('d', ['dev'], '5')],
+      state: fakeState({ phase: 'revealed', result_cohorts: [] }),
+    })
+    expect(lastProps(ResultsArea).groups).toHaveLength(1)
+    await act(async () => { useRoomStore.setState({ roomState: fakeState({ phase: 'revealed', result_cohorts: ['BE'] }) }) })
+    expect(lastProps(ResultsArea).groups?.map(group => group.key)).toEqual(['DEV', 'BE'])
   })
 
   it('splits revealed votes into cohort groups for ResultsArea and AlignmentCard', async () => {

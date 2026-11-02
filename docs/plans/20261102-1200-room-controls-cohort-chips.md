@@ -256,8 +256,12 @@ Store: `restoreVotes(snapshot: Record<string, string>)` у `app/stores/room.ts` 
 ## Execution record
 
 ```text
-Base: unset
-Task 1: pending
+Base: d981184991ea297ac8fae0ee6d152ceb39fb48b5
+Root: /Users/o.hupalov/work/github/storypoker
+Branch: feat/room-controls-cohort-chips
+Commits: allowed
+Initial dirty state: clean
+Task 1: done - vitest tests/unit 575 passed, lint + typecheck clean; RED written together with GREEN (tests and impl in one edit)
 Task 2: pending
 Task 3: pending
 Task 4: pending

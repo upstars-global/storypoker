@@ -29,7 +29,9 @@ export const COHORT_BADGE_TEXT_COLORS: Record<string, string> = {
   SM: '#111111',
 }
 
-const DEV_SUBCOHORTS = new Set(['BE', 'FE', 'SRE'])
+export const SPLITTABLE_COHORTS: readonly string[] = ['BE', 'FE', 'SRE']
+const DEV_SUBCOHORTS = new Set(SPLITTABLE_COHORTS)
+const QA_SUBCOHORTS = new Set(['GQA', 'AQA'])
 
 export type VoteCounts = Record<string, number>
 
@@ -98,9 +100,16 @@ export function groupVotesByCohort(
     .map(([key, votes]) => ({ key, votes }))
 }
 
+export function selectedSplitCohorts(value: readonly string[] | null | undefined): string[] {
+  const chosen = new Set(value ?? [])
+  return SPLITTABLE_COHORTS.filter(tag => chosen.has(tag))
+}
+
 export function groupResultVotes(
   players: readonly { shields: string[] | null; vote: string | null }[],
+  selected: readonly string[] | null | undefined,
 ): (ResultGroup & { key: string })[] {
+  const split = new Set(selectedSplitCohorts(selected))
   const buckets = new Map<string, VoteCounts>(ROLE_COHORTS.map(key => [key, Object.create(null) as VoteCounts]))
   for (const player of players) {
     if (!player.vote) continue
@@ -116,6 +125,8 @@ export function groupResultVotes(
         break
       }
     }
+    if (DEV_SUBCOHORTS.has(key) && !split.has(key)) key = DEV_UMBRELLA_COHORT
+    else if (QA_SUBCOHORTS.has(key)) key = 'QA'
     let bucket = buckets.get(key)
     if (!bucket) {
       bucket = Object.create(null) as VoteCounts
