@@ -1,4 +1,7 @@
 {
+  "reportIssue": {
+    "label": "Report issue"
+  },
   "common": {
     "cancel": "Cancel",
     "save": "Save",

@@ -103,6 +103,7 @@ const literalNames: readonly string[] = [
   'app:timer',
   'app:town-hall',
   'ic:baseline-account-circle',
+  'ic:baseline-feedback',
   'ic:baseline-add',
   'ic:baseline-add-a-photo',
   'ic:baseline-arrow-drop-down',
