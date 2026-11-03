@@ -1,3 +1,5 @@
+import { resultKeyFor } from '~/utils/resultCohorts'
+import { usesResultChips } from '~/utils/roundStats'
 import { create as createStore } from 'zustand'
 import { getSupabase } from '~/lib/supabase-instance'
 import { getDeck, type DeckPresetId } from '~/utils/cardDecks'
@@ -37,6 +39,7 @@ interface RoomStoreState {
   fetchHistory: () => Promise<RoundHistory[]>
   startNewRound: () => Promise<void>
   resetVotes: () => Promise<void>
+  restoreVotes: (snapshot: Record<string, string>) => Promise<void>
   saveCardDeck: (cards: string[]) => Promise<void>
   setDeckPreset: (presetId: DeckPresetId) => Promise<void>
   setPollQuestion: (question: string | null) => Promise<void>
@@ -67,7 +70,7 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
     const supabase = getSupabase()
     const playersStore = usePlayersStore.getState()
     const votes: RoundHistoryVote[] = playersStore.visiblePlayers
-      .filter(p => p.vote !== null)
+      .filter(p => p.vote !== null && (!usesResultChips(roomState.deck_preset) || resultKeyFor(p.shields, roomState.result_cohorts) !== null))
       .map(p => ({ player_id: p.id, name: p.name, vote: p.vote as string }))
 
     const revealedAt = new Date()
@@ -157,6 +160,26 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
     if (!roomId) return
     const playersStore = usePlayersStore.getState()
     await getSupabase().from('players').update({ vote: null }).eq('room_id', roomId)
+    playersStore.clearPendingVotes()
+  }
+
+  async function restoreVotes(snapshot: Record<string, string>) {
+    const { roomId } = get()
+    if (!roomId) return
+    const playersStore = usePlayersStore.getState()
+    const present = new Set(playersStore.players.filter(p => !p.left_at).map(p => p.id))
+    const idsByVote = new Map<string, string[]>()
+    for (const [playerId, vote] of Object.entries(snapshot)) {
+      if (!present.has(playerId)) continue
+      idsByVote.set(vote, [...(idsByVote.get(vote) ?? []), playerId])
+    }
+    const supabase = getSupabase()
+    await Promise.all([...idsByVote].map(([vote, ids]) =>
+      supabase.from('players').update({ vote }).eq('room_id', roomId).in('id', ids),
+    ))
+    const restoredIds = [...idsByVote.values()].flat()
+    const clearOthers = supabase.from('players').update({ vote: null }).eq('room_id', roomId)
+    await (restoredIds.length ? clearOthers.not('id', 'in', `(${restoredIds.join(',')})`) : clearOthers)
     playersStore.clearPendingVotes()
   }
 
@@ -353,6 +376,7 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
     fetchHistory,
     startNewRound,
     resetVotes,
+    restoreVotes,
     saveCardDeck,
     setDeckPreset,
     setPollQuestion,

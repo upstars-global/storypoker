@@ -27,7 +27,7 @@ export default function PlayerEditModal({ name, shields, onSave, onClose }: Play
     const trimmed = nameValue.trim()
     if (!trimmed) return
     const role = tag.trim()
-    onSave({ name: trimmed, shields: role ? [shieldForRoleTag(role)] : [] })
+    onSave({ name: trimmed, shields: [shieldForRoleTag(role)].filter((shield): shield is string => !!shield) })
   }
 
   return (

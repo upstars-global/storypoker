@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AppIcon from '~/components/AppIcon'
 import AppModal from '~/components/AppModal'
@@ -7,15 +7,25 @@ import { Button } from '~/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { useCardLabel } from '~/hooks/useCardLabel'
 import { useRipple } from '~/hooks/useRipple'
+import { usesResultChips } from '~/utils/roundStats'
+import { RESULT_CHIP_GROUPS, selectedSplitCohorts } from '~/utils/resultCohorts'
 import { DECK_PRESETS, getDeck, VOTING_BASE_CARDS, VOTING_THIRD_CARDS, type DeckPresetId } from '~/utils/cardDecks'
 
-export type CardDeckPayload = { deckPreset: DeckPresetId; cards: string[] }
+export type CardDeckPayload = { deckPreset: DeckPresetId; cards: string[]; resultCohorts: string[] }
 
 type ConfigureCardDeckModalProps = {
   deckPreset: DeckPresetId
   activeCards: string[]
+  resultCohorts: readonly string[] | null | undefined
   onSave: (payload: CardDeckPayload) => void
   onClose: () => void
+}
+
+function chipGroupClass(index: number): string {
+  if (index === 0) return 'flex items-center gap-1.5'
+  if (index === 1) return 'flex items-center gap-1.5 lg:pl-2 lg:ml-2 lg:border-l border-input'
+  if (RESULT_CHIP_GROUPS[index - 1]?.umbrella === null) return 'flex items-center gap-1.5 ml-1.5'
+  return 'flex items-center gap-1.5 pl-2 ml-2 border-l border-input'
 }
 
 const PRESET_ITEMS = DECK_PRESETS.map(p => ({ value: p.id, label: p.name }))
@@ -27,12 +37,13 @@ const PRESET_TRIGGER_CLASS = [
   '[&>svg]:text-(--text-primary) [&>svg]:stroke-[3]',
 ].join(' ')
 
-export default function ConfigureCardDeckModal({ deckPreset, activeCards, onSave, onClose }: ConfigureCardDeckModalProps) {
+export default function ConfigureCardDeckModal({ deckPreset, activeCards, resultCohorts, onSave, onClose }: ConfigureCardDeckModalProps) {
   const { t } = useTranslation()
   const cardLabel = useCardLabel()
   const ripple = useRipple<HTMLButtonElement>()
   const [presetId, setPresetId] = useState<DeckPresetId>(deckPreset)
   const [selected, setSelected] = useState<string[]>(() => [...activeCards])
+  const [splitCohorts, setSplitCohorts] = useState<string[]>(() => selectedSplitCohorts(resultCohorts))
   const incoming = { deckPreset, cards: activeCards.join('\n') }
   const [synced, setSynced] = useState(incoming)
 
@@ -55,6 +66,12 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, onSave
     })
   }
 
+  function toggleCohort(cohort: string) {
+    setSplitCohorts(current => selectedSplitCohorts(
+      current.includes(cohort) ? current.filter(c => c !== cohort) : [...current, cohort],
+    ))
+  }
+
   function applyPreset(id: DeckPresetId) {
     setPresetId(id)
     setSelected([...getDeck(id).defaultActive])
@@ -67,7 +84,7 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, onSave
       onClose={onClose}
     >
       <AppModalPaper
-        style={{ maxWidth: '560px', padding: '32px 40px 40px' }}
+        style={{ maxWidth: '760px', padding: '32px 40px 40px' }}
         onClose={onClose}
       >
         <h2
@@ -191,10 +208,57 @@ export default function ConfigureCardDeckModal({ deckPreset, activeCards, onSave
                 </div>
               )}
 
+        {usesResultChips(presetId) && (
+        <div
+          className="flex flex-col items-center gap-2 mt-8"
+          data-testid="deck-result-cohorts"
+        >
+          <span className="text-mui-caption font-semibold uppercase tracking-wide text-primary">
+            {t('deck.resultCohorts')}
+          </span>
+          <div className="flex flex-wrap lg:flex-nowrap items-center justify-center gap-y-2">
+          {RESULT_CHIP_GROUPS.map((group, index) => (
+            <Fragment key={group.chips[0]}>
+            {index === 1 && (
+              <span
+                aria-hidden="true"
+                className="basis-full h-0 lg:hidden"
+                data-testid="deck-result-cohort-break"
+              />
+            )}
+            <div
+              className={chipGroupClass(index)}
+              data-testid="deck-result-cohort-group"
+            >
+              {group.chips.map(cohort => (
+                <button
+                  key={cohort}
+                  type="button"
+                  className={splitCohorts.includes(cohort) ? 'mui-chip is-selected px-2.5!' : 'mui-chip px-2.5!'}
+                  aria-pressed={splitCohorts.includes(cohort)}
+                  data-testid="deck-result-cohort"
+                  onClick={() => toggleCohort(cohort)}
+                >
+                  {splitCohorts.includes(cohort) && (
+                    <AppIcon
+                      className="mui-chip-check"
+                      name="ic:baseline-check"
+                    />
+                  )}
+                  {cohort}
+                </button>
+              ))}
+            </div>
+            </Fragment>
+          ))}
+          </div>
+        </div>
+        )}
+
         <div className="flex justify-center mt-8">
           <Button
             ref={ripple}
-            onClick={() => onSave({ deckPreset: presetId, cards: selected })}
+            onClick={() => onSave({ deckPreset: presetId, cards: selected, resultCohorts: splitCohorts })}
           >
             {t('deck.save')}
           </Button>

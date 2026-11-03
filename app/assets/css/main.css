@@ -554,6 +554,47 @@ body {
     box-shadow: none;
   }
 
+  .report-issue-tab {
+    display: block;
+    padding: 8px 6px;
+    border-radius: 8px 0 0 8px;
+    background-color: var(--bg-appbar);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: var(--card-shadow, 0 2px 6px rgba(0, 0, 0, 0.3));
+    opacity: 0.85;
+    transition: opacity 150ms ease;
+  }
+  @media (min-width: 640px) {
+    .report-issue-tab {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding: 12px 6px;
+      border-radius: 0 8px 8px 0;
+    }
+  }
+  .report-issue-tab:hover,
+  .report-issue-tab:focus-visible {
+    opacity: 1;
+  }
+  .report-issue-tab:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  .report-issue-preview {
+    position: absolute;
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 200px;
+    max-width: 50vw;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+  }
   .mui-icon-group {
     border: 1px solid var(--border-input);
     border-radius: 999px;

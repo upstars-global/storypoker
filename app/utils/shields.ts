@@ -107,18 +107,14 @@ export function roleTagOrder(tag: string | null): number {
 
 const ROLE_TAG_BY_SHIELD = new Map<string, string>(PLAYER_ROLES.map(r => [r.shield, r.tag]))
 
-export const CUSTOM_SHIELD_PREFIX = 'custom:'
-
-export function shieldForRoleTag(tag: string): string {
-  const preset = PLAYER_ROLES.find(r => r.tag === tag)
-  return preset ? preset.shield : CUSTOM_SHIELD_PREFIX + tag
+export function shieldForRoleTag(tag: string): string | null {
+  return PLAYER_ROLES.find(r => r.tag === tag)?.shield ?? null
 }
 
-export function roleTagForShields(shields: string[] | null | undefined): string | null {
+export function roleTagForShields(shields: readonly (string | null)[] | null | undefined): string | null {
   for (const id of shields ?? []) {
-    const tag = ROLE_TAG_BY_SHIELD.get(id)
+    const tag = id ? ROLE_TAG_BY_SHIELD.get(id) : undefined
     if (tag) return tag
-    if (id.startsWith(CUSTOM_SHIELD_PREFIX)) return id.slice(CUSTOM_SHIELD_PREFIX.length)
   }
   return null
 }

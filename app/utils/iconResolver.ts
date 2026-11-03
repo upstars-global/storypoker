@@ -12,6 +12,7 @@ const MDI_TO_LUCIDE: Record<string, string> = {
   'ic:baseline-check-circle': 'lucide:check-circle',
   'ic:baseline-play-arrow': 'lucide:circle-play',
   'ic:baseline-account-circle': 'lucide:user-circle',
+  'ic:baseline-feedback': 'lucide:message-square-warning',
   'ic:baseline-fast-forward': 'lucide:circle-arrow-right',
   'ic:baseline-fast-rewind': 'lucide:circle-arrow-left',
   'ic:baseline-cancel': 'lucide:circle-x',

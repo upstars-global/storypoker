@@ -1404,5 +1404,90 @@ class SummaryRunTest(unittest.TestCase):
         self.assertIn('Rejected: 0\n',state['comments'][0]['body'])
 
 
+
+
+class ReviewSkillLayoutTest(unittest.TestCase):
+    def run_layout(self, layouts, empty=False, zero_byte=False, detail=False, link=None):
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / 'home'
+            home.mkdir()
+            for layout in layouts:
+                skill = root / 'aw' / layout / 'cr-request'
+                skill.mkdir(parents=True)
+                if empty:
+                    continue
+                if zero_byte:
+                    (skill / 'SKILL.md').touch()
+                    continue
+                (skill / 'SKILL.md').write_text('---\nmetadata:\n  version: "0.0.11"\n---\n')
+            if link:
+                outside = root / 'outside' / 'cr-request'
+                outside.mkdir(parents=True)
+                (outside / 'SKILL.md').write_text('---\nmetadata:\n  version: "9.9.9"\n---\n')
+                if link == 'source':
+                    (root / 'aw' / 'skills').mkdir(parents=True)
+                    (root / 'aw' / 'skills' / 'cr-request').symlink_to(outside)
+                elif link == 'parent':
+                    (root / 'aw').mkdir()
+                    (root / 'aw' / 'skills').symlink_to(outside.parent)
+                elif link == 'file':
+                    skill = root / 'aw' / 'skills' / 'cr-request'
+                    skill.mkdir(parents=True)
+                    (skill / 'SKILL.md').symlink_to(outside / 'SKILL.md')
+            child_bin = root / 'bin'
+            child_bin.mkdir()
+            for name in ('mkdir', 'cp', 'sed', 'head', 'realpath', 'find'):
+                (child_bin / name).symlink_to(shutil.which(name))
+            self.assertIsNone(shutil.which('claude', path=str(child_bin)))
+            self.assertIsNone(shutil.which('codex', path=str(child_bin)))
+            source = step('Install cr-request skill')
+            source = source[source.index('mkdir -p ~/.claude/skills'):]
+            result = subprocess.run(['/bin/bash', '-e', '-c', source], cwd=root,
+                                    env={'HOME': str(home), 'PATH': str(child_bin),
+                                         'RUNNER_TEMP': str(root),
+                                         'GITHUB_OUTPUT': str(root / 'output')},
+                                    capture_output=True, text=True)
+            return result if detail else result.returncode
+
+    def test_root_layout(self):
+        self.assertEqual(self.run_layout(['skills']), 0)
+
+    def test_historical_layout(self):
+        self.assertEqual(self.run_layout(['plugins/aw/skills']), 0)
+
+    def test_missing_source(self):
+        self.assertNotEqual(self.run_layout([]), 0)
+
+    def test_missing_skill_file(self):
+        self.assertNotEqual(self.run_layout(['skills'], empty=True), 0)
+
+    def test_zero_byte_skill_file(self):
+        result = self.run_layout(['skills'], zero_byte=True, detail=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('no SKILL.md or it is empty', result.stdout)
+
+    def assert_link_rejected(self, link, message):
+        result = self.run_layout([], link=link, detail=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(message, result.stdout)
+
+    def test_symlinked_source_rejected(self):
+        self.assert_link_rejected('source', 'resolves outside the fetched checkout')
+
+    def test_symlinked_layout_parent_rejected(self):
+        self.assert_link_rejected('parent', 'resolves outside the fetched checkout')
+
+    def test_symlinked_skill_file_rejected(self):
+        self.assert_link_rejected('file', 'contains a symbolic link')
+
+    def test_multiple_historical_sources(self):
+        self.assertNotEqual(self.run_layout(['plugins/aw/skills', 'plugins/awf/skills']), 0)
+
+    def test_ambiguous_sources(self):
+        self.assertNotEqual(self.run_layout(['skills', 'plugins/aw/skills']), 0)
+
+
 if __name__ == '__main__':
     unittest.main()

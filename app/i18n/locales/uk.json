@@ -1,4 +1,7 @@
 {
+  "reportIssue": {
+    "label": "Повідомити про проблему"
+  },
   "common": {
     "cancel": "Скасувати",
     "save": "Зберегти",
@@ -88,6 +91,7 @@
   "cards": {
     "reveal": "Показати оцінки",
     "reset": "Скинути оцінки",
+    "undoReset": "Undo",
     "countdownGroupLabel": "Прошу голосувати (утримати)",
     "countdownSilent": "Відлік без звуку",
     "countdownDry": "Відлік зі звуком",
@@ -128,7 +132,8 @@
       "no": "Ні"
     },
     "voteQuestionInfo": "Питання та відповіді налаштовуються в ігровій зоні",
-    "alwaysIncluded": "Завжди включено"
+    "alwaysIncluded": "Завжди включено",
+    "resultCohorts": "Окремі кола результатів"
   },
   "poll": {
     "thirdCard": "Третя картка",

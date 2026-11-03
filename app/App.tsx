@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import ReportIssueTab from '~/components/ReportIssueTab'
 import UpdateBanner from '~/components/UpdateBanner'
 import { AppRoutes } from '~/router'
 import { soundVolumeStore } from '~/hooks/useSoundVolume'
@@ -24,6 +25,7 @@ export default function App() {
       </a>
       <UpdateBanner />
       <AppRoutes />
+      <ReportIssueTab />
     </div>
   )
 }

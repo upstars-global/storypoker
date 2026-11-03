@@ -6,6 +6,7 @@ import { useRoomStore } from '~/stores/room'
 import { usePlayersStore } from '~/stores/players'
 import type { RoundHistory } from '~/stores/types'
 import { shieldForRoleTag } from '~/utils/shields'
+import { alignmentScore } from '~/utils/alignment'
 import { resetStores } from '../../support/helpers/resetStores'
 import { colorContrast } from '../../support/helpers/colorContrast'
 
@@ -37,7 +38,7 @@ function setRoles(roles: [string, string | null][]) {
       is_moderator: false,
       vote: null,
       user_id: null,
-      shields: role === null ? [] : [shieldForRoleTag(role)],
+      shields: role === null ? [] : [shieldForRoleTag(role) ?? role],
       created_at: '2026-10-20T10:00:00Z',
       left_at: null,
     })),
@@ -66,13 +67,13 @@ afterEach(() => {
 })
 
 describe('HistoryModal', () => {
-  it('lists role rows in canonical order followed by every custom vote without a badge', async () => {
-    setRoles([['fe', 'FE'], ['be', 'BE'], ['be2', 'BE'], ['gqa', 'GQA'], ['custom', 'Designer']])
+  it('lists role rows in canonical order with custom roles counted as DEV', async () => {
+    setRoles([['fe', 'FE'], ['be', 'BE'], ['be2', 'BE'], ['gqa', 'GQA'], ['custom', 'custom:Designer']])
     setRound([['fe', '3'], ['be', '5'], ['gqa', '3'], ['custom', '8'], ['be2', '5']])
     render(<HistoryModal onClose={vi.fn()} />)
     const card = await screen.findByTestId('history-round')
     expect(Array.from(card.lastElementChild!.children, row => row.textContent)).toEqual([
-      'BE5 × 2', 'FE3 × 1', 'GQA3 × 1', '8 × 1',
+      'DEV8 × 1', 'BE5 × 2', 'FE3 × 1', 'GQA3 × 1',
     ])
     expect(screen.getByText('BE').style.backgroundColor).toBe('#42a5f5')
     expect(screen.getByText('FE').style.backgroundColor).toBe('#ab47bc')
@@ -102,12 +103,7 @@ describe('HistoryModal', () => {
     counts: string[]
   }>([
     { roles: [['be', 'BE']], votes: [['be', '3']], counts: ['3 × 1'] },
-    {
-      roles: [['be', 'BE'], ['custom', 'Designer']],
-      votes: [['be', '3'], ['custom', '8']],
-      counts: ['3 × 1', '8 × 1'],
-    },
-    { roles: [['custom', 'Designer']], votes: [['custom', '8']], counts: ['8 × 1'] },
+    { roles: [['custom', 'custom:Designer']], votes: [['custom', '8']], counts: ['8 × 1'] },
   ])('shows all votes without a badge with fewer than two role rows: $counts', async ({ roles, votes, counts }) => {
     setRoles(roles)
     setRound(votes)
@@ -128,13 +124,13 @@ describe('HistoryModal', () => {
     ])
   })
 
-  it('keeps the round average and alignment based on the pooled estimators', async () => {
-    setRoles([['be', 'BE'], ['fe', 'FE'], ['po', 'PO'], ['custom', 'Designer']])
+  it('keeps the round average and alignment based on the pooled estimators including custom roles as DEV', async () => {
+    setRoles([['be', 'BE'], ['fe', 'FE'], ['po', 'PO'], ['custom', 'custom:Designer']])
     setRound([['be', '3'], ['fe', '3'], ['po', '8'], ['custom', '1']])
     render(<HistoryModal onClose={vi.fn()} />)
     await screen.findByTestId('history-round')
-    expect(screen.getByText('3.0')).toBeDefined()
-    expect(screen.getByText('100')).toBeDefined()
+    expect(screen.getByText('2.3')).toBeDefined()
+    expect(screen.getByText(String(alignmentScore({ '3': 2, '1': 1 }, ['1', '2', '3', '5', '8'])))).toBeDefined()
   })
 
   it('lists the fetched rounds', async () => {

@@ -4,13 +4,14 @@ import { i18n } from '~/i18n'
 import ConfigureCardDeckModal from '~/components/ConfigureCardDeckModal'
 import type { DeckPresetId } from '~/utils/cardDecks'
 
-function mountModal(props: { deckPreset?: DeckPresetId } = {}) {
+function mountModal(props: { deckPreset?: DeckPresetId; resultCohorts?: string[] | null } = {}) {
   const onSave = vi.fn()
   const onClose = vi.fn()
   const view = render(
     <ConfigureCardDeckModal
       deckPreset={props.deckPreset ?? 'scrum'}
       activeCards={['1', '2', '3']}
+      resultCohorts={props.resultCohorts ?? null}
       onSave={onSave}
       onClose={onClose}
     />,
@@ -31,12 +32,48 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('ConfigureCardDeckModal automatic results', () => {
-  it('removes result selection and saves only the preset and cards', () => {
+function cohortChips() {
+  return [...document.querySelectorAll<HTMLButtonElement>('[data-testid="deck-result-cohort"]')]
+}
+
+describe('ConfigureCardDeckModal result cohort chips', () => {
+  it('shows the DEV, QA, PO and SM chip groups, none selected by default', () => {
     const { onSave } = mountModal()
-    expect(document.querySelector('[data-testid="deck-result-cohorts"]')).toBeNull()
+    expect([...document.querySelectorAll('[data-testid="deck-result-cohort-group"]')].map(group => group.textContent)).toEqual(['DEVBEFESRE', 'QAAQAGQA', 'PO', 'SM'])
+    expect(cohortChips().every(chip => chip.getAttribute('aria-pressed') === 'false')).toBe(true)
     fireEvent.click(saveButton())
-    expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'] })
+    expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'], resultCohorts: [] })
+  })
+
+  it('breaks the chips into two rows below the lg breakpoint after the DEV group', () => {
+    mountModal()
+    const rowBreak = screen.getByTestId('deck-result-cohort-break')
+    expect(rowBreak.className.split(' ')).toEqual(expect.arrayContaining(['basis-full', 'lg:hidden']))
+    expect(rowBreak.nextElementSibling?.textContent).toBe('QAAQAGQA')
+  })
+
+  it('shows PO and SM side by side without a divider between them', () => {
+    mountModal()
+    const groups = screen.getAllByTestId('deck-result-cohort-group')
+    expect(groups[2]!.className).toContain('border-l')
+    expect(groups[3]!.className).not.toContain('border-l')
+  })
+
+  it.each(['voting', 'vote_question', 'goal_clarity'] as const)('hides the result chips for the %s deck', deckPreset => {
+    const { onSave } = mountModal({ deckPreset, resultCohorts: ['BE'] })
+    expect(screen.queryByTestId('deck-result-cohorts')).toBeNull()
+    fireEvent.click(saveButton())
+    expect(onSave.mock.calls[0]![0]).toMatchObject({ resultCohorts: ['BE'] })
+  })
+
+  it('saves the toggled subset in canonical order', () => {
+    const { onSave } = mountModal({ resultCohorts: ['SRE', 'QA'] })
+    expect(cohortChips().map(chip => chip.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'false', 'true', 'true', 'false', 'false', 'false', 'false'])
+    fireEvent.click(cohortChips()[7]!)
+    fireEvent.click(cohortChips()[1]!)
+    fireEvent.click(cohortChips()[4]!)
+    fireEvent.click(saveButton())
+    expect(onSave).toHaveBeenCalledWith({ deckPreset: 'scrum', cards: ['1', '2', '3'], resultCohorts: ['BE', 'SRE', 'PO'] })
   })
 })
 
