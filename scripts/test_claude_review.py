@@ -7,7 +7,16 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-ADAPTER = json.loads((ROOT / 'scripts/review-parity.json').read_text())['adapter']
+ADAPTER = {
+    'reviewer': 'so-upstars',
+    'secret': 'SO_UPSTARS_PR_TOKEN',
+    'workflow': '.github/workflows/pr-auto-review.yml',
+    'name': 'Claude review',
+    'dispatch': 'pr_number',
+    'jobs': ['Lint', 'Typecheck', 'Unit tests', 'Build', 'Public pages load', 'Review workflow fixtures'],
+    'events': ['pull_request'],
+    'skippable_jobs': [],
+}
 WORKFLOW = ROOT / ADAPTER['workflow']
 
 
@@ -1125,8 +1134,11 @@ sys.exit(2)
         self.assertEqual(set(secrets),{'${{ secrets.'+ADAPTER['secret']+' }}'})
         review=workflow['jobs']['review']
         agent=next(s for s in review['steps'] if s.get('id')=='claude')
-        self.assertIn("vars.CLAUDE_REVIEW_MODEL || 'claude-sonnet-5-5'",agent['with']['claude_args'])
-        self.assertIn('--effort medium',agent['with']['claude_args'])
+        self.assertIn('--model ${{ steps.model.outputs.model }}',agent['with']['claude_args'])
+        self.assertIn('--effort ${{ steps.model.outputs.effort }}',agent['with']['claude_args'])
+        resolve=next(s for s in review['steps'] if s.get('id')=='model')
+        self.assertEqual(resolve['env']['MODEL'],"${{ vars.CLAUDE_REVIEW_MODEL || 'claude-sonnet-5-5' }}")
+        self.assertEqual(resolve['env']['EFFORT'],"${{ vars.CLAUDE_REVIEW_EFFORT || 'medium' }}")
         self.assertEqual(workflow['permissions'],{})
         self.assertEqual(review['permissions'],{'contents':'read','pull-requests':'read'})
         self.assertTrue(workflow['concurrency']['cancel-in-progress'])
@@ -1404,6 +1416,41 @@ class SummaryRunTest(unittest.TestCase):
         self.assertIn('Rejected: 0\n',state['comments'][0]['body'])
 
 
+
+
+class ReviewModelTest(unittest.TestCase):
+    def run_resolve(self,model,effort):
+        with tempfile.TemporaryDirectory() as tmp:
+            out=Path(tmp)/'output'
+            out.write_text('')
+            result=subprocess.run(['bash','-eo','pipefail','-c',step('Resolve review model and effort')],
+                                  env={**os.environ,'MODEL':model,'EFFORT':effort,'GITHUB_OUTPUT':str(out)},
+                                  capture_output=True,text=True)
+            return result,out.read_text()
+
+    def test_accepts_defaults_and_allowed_values(self):
+        for model,effort in [('claude-sonnet-5-5','medium'),('claude-opus-5-5','high'),('claude-haiku-5-5','low'),
+                             ('claude-fable-5-1[1m]','medium')]:
+            with self.subTest(model=model,effort=effort):
+                result,output=self.run_resolve(model,effort)
+                self.assertEqual(result.returncode,0,result.stderr)
+                self.assertEqual(output,f'model={model}\neffort={effort}\n')
+
+    def test_rejects_bad_effort_with_error_annotation(self):
+        for effort in ['','xhigh','max','Medium','medium --foo','medium\nhigh']:
+            with self.subTest(effort=effort):
+                result,output=self.run_resolve('claude-sonnet-5-5',effort)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn('::error',result.stdout+result.stderr)
+                self.assertEqual(output,'')
+
+    def test_rejects_bad_model_shape_with_error_annotation(self):
+        for model in ['','sonnet --effort high','claude sonnet','-x','claude-sonnet-5-5\n--max-turns 1','a;b','$(id)','x'*130]:
+            with self.subTest(model=model):
+                result,output=self.run_resolve(model,'medium')
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn('::error',result.stdout+result.stderr)
+                self.assertEqual(output,'')
 
 
 class ReviewSkillLayoutTest(unittest.TestCase):

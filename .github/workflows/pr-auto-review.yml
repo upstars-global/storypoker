@@ -790,6 +790,28 @@ jobs:
         id: start
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
+      # Model and effort come from repository variables; values are checked before they reach claude_args,
+      # so a bad variable cannot inject extra CLI flags. The model id may carry a context suffix like [1m].
+      - name: Resolve review model and effort
+        id: model
+        env:
+          MODEL: ${{ vars.CLAUDE_REVIEW_MODEL || 'claude-sonnet-5-5' }}
+          EFFORT: ${{ vars.CLAUDE_REVIEW_EFFORT || 'medium' }}
+        run: |
+          case "$EFFORT" in
+            low|medium|high) ;;
+            *) echo "::error::CLAUDE_REVIEW_EFFORT must be low, medium or high"; exit 1 ;;
+          esac
+          re='^[a-z0-9][a-z0-9._:/-]*(\[[a-z0-9]+\])?$'
+          if [ "${#MODEL}" -gt 100 ] || ! [[ "$MODEL" =~ $re ]]; then
+            echo "::error::CLAUDE_REVIEW_MODEL is not a valid model id"
+            exit 1
+          fi
+          {
+            echo "model=$MODEL"
+            echo "effort=$EFFORT"
+          } >> "$GITHUB_OUTPUT"
+
       - uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         id: claude
         with:
@@ -934,7 +956,7 @@ jobs:
           # built-in read-only commands included: any allowed command can echo an expanded variable. .git/
           # is denied for Read, Grep, and Glob: .git/config holds the action's token in the origin URL.
           claude_args: >-
-            --model ${{ vars.CLAUDE_REVIEW_MODEL || 'claude-sonnet-5-5' }} --effort medium
+            --model ${{ steps.model.outputs.model }} --effort ${{ steps.model.outputs.effort }}
             --max-turns 60
             --allowedTools "Skill,Agent,Task,Grep,Glob,Read(./**),Read(~/.claude/skills/**),Edit(./.auto-review/review.md),Write(./.auto-review/review.md),Edit(./.auto-review/comments.json),Write(./.auto-review/comments.json),Edit(./.auto-review/review-actions.json),Write(./.auto-review/review-actions.json)"
             --disallowedTools "Bash,Read(./.git/**)"

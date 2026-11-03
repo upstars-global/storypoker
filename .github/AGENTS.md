@@ -2,9 +2,15 @@
 
 Авторевʼю PR (`workflows/pr-auto-review.yml`). Загальний CI (`ci.yml`) описаний у корінному `AGENTS.md`.
 
-Workflow використовує спільний пакет ревʼю чотирьох репозиторіїв з адаптером акаунта
-`so-upstars`, секрету `SO_UPSTARS_PR_TOKEN` і CI Story Poker. Модель за замовчуванням -
-`claude-sonnet-5-5`, effort `medium`; repo variable `CLAUDE_REVIEW_MODEL` перевизначає модель.
+Workflow самостійний (спільного пакета з іншими репозиторіями немає) і працює з акаунтом
+`so-upstars`, секретом `SO_UPSTARS_PR_TOKEN` і CI Story Poker. Модель і effort задають repository
+variables (Settings -> Variables), зміна не потребує PR; крок `Resolve review model and effort`
+перевіряє значення й падає з `::error` до запуску агента:
+
+1. `CLAUDE_REVIEW_MODEL` - id моделі, типово `claude-sonnet-5-5`; форма `[a-z0-9][a-z0-9._:/-]*`
+   з необовʼязковим суфіксом `[1m]`, до 100 символів.
+2. `CLAUDE_REVIEW_EFFORT` - `low`, `medium` або `high`, типово `medium`.
+
 `REVIEW_SKILLS_REF` може закріпити повний SHA; без нього береться останній реліз `cr-request`.
 
 Автоматичні повтори вимагають нового head і нових або невирішених попередніх Critical чи Important
@@ -69,11 +75,6 @@ CI запускає фікстури фактичних workflow-кроків: �
 REJECT і повністю підтверджене прийняте відкладення більше не блокують його. Прийняте відкладення
 звіряється зі знімком перед моделлю: зміна пропозиції після цього знімка зупиняє дію. Після помилки
 публікації фіналізатор завершує лише власний pending status; новіший run він не перезаписує.
-
-Спільний пакет контролює `scripts/check_review_parity.py` з явним адаптером у
-`scripts/review-parity.json`; локально запускай `python3 scripts/check_review_parity.py --self-test`
-і `python3 -m unittest discover -s scripts -p 'test_review_parity.py'`. Змінюючи спільну логіку,
-тести або fixtures, узгодь усі чотири копії; адаптер допускає лише перелічені проєктні відмінності.
 
 Назви в `docs/plans/` у двох стилях: скіли `plan-craft` і `verify` пишуть `YYYYMMDD-HHMM-<topic>.md`, старші
 плани - `YYYY-MM-DD-<slug>.md`. Це прийнятий компроміс, а не дефект для рев'ю: старі плани не перейменовуються,
