@@ -64,10 +64,11 @@ if [ -f "$skills_local" ]; then
   sh "$skills_local"
 fi
 
-# # VERCEL-LABS AGENT-BROWSER https://github.com/vercel-labs/agent-browser
-# npx -y --prefer-online skl-x add vercel-labs/agent-browser -s \
-#   agent-browser \
-#   -a codex claude-code -y -m sm
+# SHADCN UI https://github.com/shadcn/ui
+npx -y --prefer-online skl-x add shadcn/ui -s \
+  \ migrate-radix-to-base \
+  shadcn \
+  -a codex claude-code -y -m sm
 
 # SUPABASE AGENT-SKILLS https://github.com/supabase/agent-skills
 npx -y --prefer-online skl-x add supabase/agent-skills -s \
@@ -82,18 +83,17 @@ npx -y --prefer-online skl-x add supabase/agent-skills -s \
 #   netlify-deploy \
 #   -a codex claude-code -y -m sm
 
-# SHADCN UI https://github.com/shadcn/ui
-npx -y --prefer-online skl-x add shadcn/ui -s \
-  \ migrate-radix-to-base \
-  shadcn \
-  -a codex claude-code -y -m sm
-
 # # CLOUDFLARE SKILLS https://github.com/cloudflare/skills
 # npx -y --prefer-online skl-x add cloudflare/skills -s \
 #   wrangler \
 #   cloudflare-one \
 #   workers-best-practices \
 #   \ durable-objects \
+#   -a codex claude-code -y -m sm
+
+# # VERCEL-LABS AGENT-BROWSER https://github.com/vercel-labs/agent-browser
+# npx -y --prefer-online skl-x add vercel-labs/agent-browser -s \
+#   agent-browser \
 #   -a codex claude-code -y -m sm
 
 # npx -y --prefer-online skl-x -v
