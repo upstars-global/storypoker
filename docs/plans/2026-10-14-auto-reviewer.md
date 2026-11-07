@@ -2,10 +2,10 @@
 
 **Goal:** Кожен не-draft PR із зеленим `CI` отримує автоматичний коментар із результатом `review-request` від `so-upstars`.
 
-**Architecture:** Окремий workflow `.github/workflows/claude-review.yml` на `anthropics/claude-code-action@v1`;
+**Architecture:** Окремий workflow `.github/workflows/auto-reviewer.yaml` на `anthropics/claude-code-action@v1`;
 скіл ставиться в job через `skl-x@0.4.8`; ідентичність - PAT `so-upstars` у `github_token` і `GH_TOKEN`.
 
-**Spec:** `docs/specs/2026-10-14-claude-pr-review-design.md`
+**Spec:** `docs/specs/2026-10-14-auto-reviewer-design.md`
 
 **Tech Stack:** GitHub Actions, `claude-code-action@v1`, `skl-x@0.4.8`, `gh`. Нових npm-залежностей немає.
 
@@ -21,7 +21,7 @@
 ### Task 1: Workflow
 
 **Files:**
-- Create: `.github/workflows/claude-review.yml`
+- Create: `.github/workflows/auto-reviewer.yaml`
 
 - [x] **Step 1.1:** Тригери `workflow_run` (`CI`, `completed`) і `pull_request` (`ready_for_review`), `concurrency` на
   head-гілку.
@@ -40,8 +40,8 @@
 ### Task 2: Документація
 
 **Files:**
-- Create: `docs/specs/2026-10-14-claude-pr-review-design.md`
-- Create: `docs/plans/2026-10-14-claude-pr-review.md`
+- Create: `docs/specs/2026-10-14-auto-reviewer-design.md`
+- Create: `docs/plans/2026-10-14-auto-reviewer.md`
 - Modify: `AGENTS.md` (абзац про CI)
 
 - [x] **Step 2.1:** Спека з рішенням, безпекою, ручними кроками й критеріями приймання.

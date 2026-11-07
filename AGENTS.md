@@ -67,7 +67,7 @@ Claude Code підвантажує вкладені `CLAUDE.md`, які імпо
 | `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
 | `tests/` | Vitest unit + Playwright e2e і `visual` | `tests/AGENTS.md` |
 | `scripts/` | lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
-| `.github/` | CI-воркфлоу, авторев'ю `pr-review.yml` | `.github/AGENTS.md` |
+| `.github/` | CI-воркфлоу, авторев'ю `auto-reviewer.yaml` | `.github/AGENTS.md` |
 
 Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
@@ -125,12 +125,12 @@ CI - `.github/workflows/ci.yml`. Ціль - кожен job до ~2 хв (ріш�
 (`test:unit:coverage`)/ `build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
 Supabase-кредами на Google Chrome раннера через `PLAYWRIGHT_CHANNEL=chrome`: без apt, який зависав на
 повільному дзеркалі). Окремий job `review-workflow` (`Review workflow fixtures`) запускає Python unittest
-suite `test_claude_review.py`; він обов'язковий для gate авторевʼю. E2E (лише старт Supabase ~90 с, apt для
+suite `test_auto_reviewer.py`; він обов'язковий для gate авторевʼю. E2E (лише старт Supabase ~90 с, apt для
 WebKit зависав) і Visual винесені з CI в локальний `test:pre-squash` (рішення власника 2026-10-27); Visual
 поки нестабільний, його збій - не дефект для рев'ю; деплою в CI немає. Прод збирає сам Netlify з репо
 (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env; job `build` збирає `dist` лише для
 `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
-`.github/workflows/pr-review.yml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й
+`.github/workflows/auto-reviewer.yaml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й
 прийняті компроміси - `.github/AGENTS.md`.
 
 ## Environment Setup

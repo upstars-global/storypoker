@@ -1,6 +1,6 @@
 # .github/AGENTS.md
 
-Авторевʼю PR (`workflows/pr-review.yml`). Загальний CI (`ci.yml`) описаний у корінному `AGENTS.md`.
+Авторевʼю PR (`workflows/auto-reviewer.yaml`). Загальний CI (`ci.yml`) описаний у корінному `AGENTS.md`.
 
 Workflow самостійний (спільного пакета з іншими репозиторіями немає) і працює з акаунтом
 `so-upstars`, секретом `SO_UPSTARS_PR_TOKEN` і CI Story Poker. Модель і effort задають repository
@@ -15,9 +15,11 @@ variables (Settings -> Variables), зміна не потребує PR; крок
 
 Автоматичні повтори вимагають нового head і нових або невирішених попередніх Critical чи Important
 в останньому маркованому огляді.
-Поріг за замовчуванням - 5 оглядів `so-upstars` на PR, включно з ручними. Одна валідна мітка
+Поріг за замовчуванням - 10 оглядів `so-upstars` на PR, включно з ручними. Одна валідна мітка
 `auto-review-rounds-N` перевизначає поріг; неоднозначні й невалідні мітки зупиняють гейт.
 Запит ревʼю `so-upstars` і `workflow_dispatch` обходять лічильник, зберігаючи решту перевірок.
+Для ручного запуску номер PR задається через `pr`; старий параметр `pr_number` теж підтримується.
+Якщо задано обидва, пріоритет має `pr`.
 `skip-auto-review`, draft, fork, PR від ботів і самого `so-upstars` пропускаються. GitHub не дає
 запросити ревʼю в автора PR: live-перевірка `review_requested` потребує PR іншого акаунта.
 
@@ -52,7 +54,10 @@ Ledger у тілі review зберігає структуровані знахі
 PAT, артефактів або parser-а виводу моделі. Thread ID береться з GitHub metadata. Треди закриває
 `github-actions[bot]`; огляди, issue, reply, ledger і merged summary пише `so-upstars`. Це прийнятий
 компроміс, а не дефект для ревʼю: довгоживучий Contents-write PAT міг би пушити в main.
-Підсумок після merge читає історію GitHub без checkout і запуску моделі.
+Підсумок після merge читає історію GitHub без checkout і запуску моделі. Нові знахідки
+позначаються кольоровими колами High, Medium і Low; зіставлення старих тредів підтримує
+текстові заголовки та бейджі. У підписі ревʼю записуються модель, effort, токени й вартість,
+а підсумок показує ці дані таблицею.
 
 `workflow_run` виконує копію з main, PR-події - копію з гілки PR, dispatch - із вибраного ref.
 Після створення PR зі зміною workflow дочекайся завершення CI й його `workflow_run`, потім
@@ -68,7 +73,7 @@ Usage limit акаунта `CLAUDE_CODE_OAUTH_TOKEN` з повідомлення
 тому результат додавай до опису PR.
 
 CI запускає фікстури фактичних workflow-кроків: гейти, ліміти, footer, ledger, resolver, recovery
-і merged summary. Локально: `python3 -m unittest discover -s scripts -p 'test_claude_review.py'`.
+і merged summary. Локально: `python3 -m unittest discover -s scripts -p 'test_auto_reviewer.py'`.
 Прямий запуск файла й unittest discovery збирають усі тестові класи.
 
 Невирішені попередні Critical/Important у canonical ledger також підтримують автоматичний повтор;

@@ -1,7 +1,7 @@
 # Автоматичне ревʼю PR через Claude від імені `so-upstars`
 
 **Дата:** 2026-10-14
-**Статус:** затверджено (план - `docs/plans/2026-10-14-claude-pr-review.md`)
+**Статус:** затверджено (план - `docs/plans/2026-10-14-auto-reviewer.md`)
 **Джерело:** запит власника в сесії 2026-10-14
 
 ## Контекст
@@ -20,7 +20,7 @@
 
 ## Рішення
 
-GitHub Actions workflow `.github/workflows/claude-review.yml` на офіційному `anthropics/claude-code-action@v1`.
+GitHub Actions workflow `.github/workflows/auto-reviewer.yaml` на офіційному `anthropics/claude-code-action@v1`.
 
 - **Тригери:** `workflow_run` workflow `CI` з `completed` (зелений CI після push або відкриття PR) і
   `pull_request` з `ready_for_review` (draft став готовим, а CI на ньому вже зелений).
