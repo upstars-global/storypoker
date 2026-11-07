@@ -1,8 +1,8 @@
-name: Claude review
+name: Auto review
 
 # Posts a cr-request PR review as so-upstars on each open, non-draft, same-repo PR with green CI.
 # Automatic repeats need a new head and prior Critical/Important findings, up to the effective
-# limit (5 by default); a request for so-upstars or dispatch bypasses that count. The read-only agent
+# limit (10 by default); a request for so-upstars or dispatch bypasses that count. The read-only agent
 # writes review transport files. Only trusted publish steps receive the so-upstars PAT to post the
 # validated review and recover ledger actions. Pull_request runs use the PR branch's workflow,
 # so anyone who can push a branch can reach the PAT. Checks validate structure and token-like
@@ -16,9 +16,12 @@ on:
     types: [opened, reopened, ready_for_review, review_requested, closed]
   workflow_dispatch:
     inputs:
-      pr_number:
+      pr:
         description: PR number
-        required: true
+        required: false
+      pr_number:
+        description: Legacy PR number
+        required: false
 
 # One group per head SHA, so the gate that posts the latest `pending` status for a head is also the
 # run whose review survives, and a late CI run for an older head cannot cancel the review of a newer
@@ -30,7 +33,7 @@ on:
 concurrency:
   group: >-
     claude-review-${{ github.event.pull_request.head.repo.full_name || github.event.workflow_run.head_repository.full_name || github.repository }}-${{
-    github.event.workflow_run.head_sha || github.event.pull_request.head.sha || format('pr-{0}', inputs.pr_number) }}${{
+    github.event.workflow_run.head_sha || github.event.pull_request.head.sha || format('pr-{0}', inputs.pr || inputs.pr_number) }}${{
     github.event.action == 'closed' && format('-closed-{0}', github.run_id) ||
     github.event.action == 'review_requested' && github.event.requested_reviewer.login != 'so-upstars'
     && format('-{0}', github.run_id) || '' }}
@@ -203,7 +206,10 @@ jobs:
           def matching_thread(f, all_threads):
               result=[]
               # Only the inline heading identifies the finding; IDs cited in prose are context.
-              pattern=r'^\*\*'+re.escape(f['severity'])+r'\*\* '+re.escape(f['original_id'])+r'(?:\s|$)'
+              # Keep this matcher self-contained: the API-only resolver has no checkout or PR code.
+              badge={'Critical':'High-E5534B','Important':'Medium-C99A3A','Minor':'Low-539BF5'}[f['severity']]
+              circle={'Critical':r'$\color{red}{\bigcirc}$ High','Important':r'$\color{orange}{\bigcirc}$ Medium','Minor':r'$\color{green}{\bigcirc}$ Low'}[f['severity']]
+              pattern=r'^(?:\*\*'+re.escape(f['severity'])+r'\*\*|!\['+re.escape(f['severity'])+r'\]\(https://img\.shields\.io/badge/'+re.escape(badge)+r'\?style=(?:for-the-badge|flat-square)\)|'+re.escape(circle)+r') '+re.escape(f['original_id'])+r'(?:\s|$)'
               for t in all_threads:
                   cs=t.get('comments',[])
                   if t.get('path') != f['path'] or not cs: continue
@@ -255,8 +261,11 @@ jobs:
                   Path('summary.txt').unlink(missing_ok=True)
                   sys.exit(0)
               all_threads=threads()
-              valid=[]; unknown=False; durations=[]
+              valid=[]; unknown=False; durations=[]; usages=[]
+              usage_re=re.compile(r'^Reviewed with: `/cr-request` [^\n]+ skill · In [0-9]+ min [0-9]+ sec(?: · ([a-z0-9][a-z0-9._:/-]*(?:\[[a-z0-9]+\])?) (low|medium|high) · ([0-9]+) tokens · \$([0-9]+\.[0-9]{4}))?$',re.M)
               for r in reviews:
+                  found_usage=usage_re.findall(r.get('body') or '')
+                  usages.append(found_usage[0] if len(found_usage)==1 and found_usage[0][0] else None)
                   raw=ledger_re.findall(r.get('body') or '')
                   try:
                       require(len(raw)==1, 'missing ledger')
@@ -266,7 +275,7 @@ jobs:
                       if d['duration_seconds'] is not None: durations.append(d['duration_seconds'])
                   except (Stop, ValueError, KeyError, TypeError):
                       unknown=True
-                      signature=re.findall(r'^Reviewed with: `/cr-request` [^\n]+ skill · In ([0-9]+) min ([0-9]+) sec$',r.get('body') or '',re.M)
+                      signature=re.findall(r'^Reviewed with: `/cr-request` [^\n]+ skill · In ([0-9]+) min ([0-9]+) sec(?: · .*)?$',r.get('body') or '',re.M)
                       if len(signature)==1 and int(signature[0][1])<60: durations.append(int(signature[0][0])*60+int(signature[0][1]))
               origins={}
               for r,d in valid:
@@ -347,9 +356,22 @@ jobs:
               # Unclassified findings or absent histories cannot prove zero for disposition buckets.
               gap=history_gap or any(v is None for v in states.values())
               show=lambda n: str(n) + (' + unknown' if gap else '')
-              lines=['<!-- claude-review summary -->','## Review cycle summary','',f'Reviews: {len(reviews)}',f'Findings: {len(origins)}'+(' + unknown' if history_gap else ''),f'Fixed: {show(counts["fixed"])}',f'Rejected: {show(counts["REJECT"])}',f'Deferred: {show(counts["deferred"])}',f'Duration measured: {len(durations)}/{len(reviews)}', 'Duration total: '+(str(sum(durations))+' sec' if durations else 'unknown'), 'Duration mean: '+(f'{sum(durations)/len(durations):.2f} sec' if durations else 'unknown')]
-              lines[5:5]=[f'{severity}: {sum(f["severity"]==severity for f in origins.values())}'+(' + unknown' if history_gap else '') for severity in ('Critical','Important','Minor')]
-              lines.insert(-3, 'Undetermined: '+show(sum(v not in ('fixed','REJECT','deferred') for v in states.values())))
+              unk=' + unknown' if history_gap else ''
+              count_of=lambda severity: sum(f['severity']==severity for f in origins.values())
+              rows=[('Reviews',str(len(reviews))),('Findings',str(len(origins))+unk)]
+              rows+=[(severity,str(count_of(severity))+unk) for severity in ('Critical','Important','Minor')]
+              rows+=[('Fixed',show(counts['fixed'])),('Rejected',show(counts['REJECT'])),('Deferred',show(counts['deferred'])),
+                  ('Undetermined',show(sum(v not in ('fixed','REJECT','deferred') for v in states.values()))),
+                  ('Duration measured',f'{len(durations)}/{len(reviews)}'),
+                  ('Duration total',str(sum(durations))+' sec' if durations else 'unknown'),
+                  ('Duration mean',f'{sum(durations)/len(durations):.2f} sec' if durations else 'unknown')]
+              lines=['<!-- claude-review summary -->','## Review cycle summary','','| Metric | Value |','| --- | --- |']+[f'| {k} | {v} |' for k,v in rows]
+              # Rows show 2 decimals while the total sums the exact values: an accepted cent drift
+              measured=[u for u in usages if u]
+              lines+=['','### Review usage','','| Review | Model | Effort | Tokens | Cost |','| --- | --- | --- | --- | --- |']
+              for n,u in enumerate(usages,1):
+                  lines.append(f'| {n} | {u[0]} | {u[1]} | {u[2]} | ${float(u[3]):.2f} |' if u else f'| {n} | unknown | unknown | unknown | unknown |')
+              lines.append(f'| Total (measured {len(measured)}/{len(usages)}) | | | '+(f'{sum(int(u[2]) for u in measured)} | ${sum(float(u[3]) for u in measured):.2f} |' if measured else 'unknown | unknown |'))
               Path('summary.txt').write_text('\n'.join(lines)+'\n',encoding='utf-8')
           except (Stop, ValueError, KeyError, TypeError, OSError):
               print('::error::Merged summary gathering failed', file=sys.stderr)
@@ -423,7 +445,7 @@ jobs:
           SKIPPABLE_JOBS: '[]'
           RUN_SHA: ${{ github.event.workflow_run.head_sha }}
           RUN_HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
-          EVENT_PR: ${{ github.event.pull_request.number || inputs.pr_number }}
+          EVENT_PR: ${{ github.event.pull_request.number || inputs.pr || inputs.pr_number }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_ACTION: ${{ github.event.action }}
           CONTEXT: Claude review
@@ -479,7 +501,7 @@ jobs:
             echo "::error::Invalid auto-review-rounds-N labels: use at most one positive integer limit"
             exit 1
           fi
-          limit=$(jq -r 'if length == 0 then "5" else .[0] | ltrimstr("auto-review-rounds-") end' <<< "$limits")
+          limit=$(jq -r 'if length == 0 then "10" else .[0] | ltrimstr("auto-review-rounds-") end' <<< "$limits")
           requested=$(jq --arg r "$REVIEWER" '[.requested_reviewers[].login] | index($r) != null' <<< "$pr")
 
           # Select the newest run on this exact head from the explicitly allowed CI source events.
@@ -868,17 +890,21 @@ jobs:
             | --- | --- | --- | --- | --- | --- |
             | <verdict> | <verdict> | <verdict> | <n> | <n> | <n> |
 
-            **Readiness:** ready, ready with fixes, or not ready, and nothing else on the line
+            **Readiness:** Ready, Ready with fixes, or Not ready, and nothing else on the line
 
             <details><summary>Details</summary>
 
             #### Findings
 
             One line per finding, most severe first:
-            - **<severity>** <id> [`<path>:<line>`](https://github.com/${{ github.repository }}/blob/${{ needs.gate.outputs.head_sha }}/<path>#L<line>) <title>
+            - <colored circle and level> <id> [`<path>:<line>`](https://github.com/${{ github.repository }}/blob/${{ needs.gate.outputs.head_sha }}/<path>#L<line>) <title>
 
             then each finding with severity, confidence, file:line, impact, and evidence, and an optional
             suggestion. Omit this part when there are no findings.
+
+            Use a GitHub Markdown math circle and level: Critical is `$\color{red}{\bigcirc}$ High`,
+            Important is `$\color{orange}{\bigcirc}$ Medium`, and Minor is `$\color{green}{\bigcirc}$ Low`.
+            Copy these forms exactly; the Critical, Important, and Minor table columns stay numbers.
 
             #### Target
 
@@ -909,9 +935,10 @@ jobs:
 
             .auto-review/comments.json is a JSON array with one object per finding that points at a line the PR
             adds or keeps in diff.patch, so it shows next to the code: {"path": "<repo path>", "line": <line
-            number in the HEAD SHA file>, "body": "<Markdown>"}. The comment body starts with
-            `**<severity>** <id> - <title>`, then the impact and the evidence in a few lines, and an optional
-            suggestion. A finding with no such line stays in the review body only; write `[]` when none has one.
+            number in the HEAD SHA file>, "body": "<Markdown>"}. The comment body starts with the same colored
+            circle and level as in the findings list, a space, `<id> - <title>`, then the impact and evidence
+            in a few lines, and an optional suggestion. A finding with no such line stays in the review body
+            only; write `[]` when none has one.
             A later step drops a comment whose line is outside the diff.
 
             Write .auto-review/review-actions.json as exactly this JSON shape (all fields required, no
@@ -964,10 +991,16 @@ jobs:
       # The duration is the agent step's wall time; the agent cannot measure it. Only the signature line
       # among the last two non-blank lines is rewritten, so a quoted signature higher up stays as written;
       # anything the agent put after the signature and a space there is replaced by the measured duration.
-      # Under a minute it reads `In 0 min 42 sec`.
+      # Under a minute it reads `In 0 min 42 sec`. The same step appends the usage the action recorded,
+      # ` · <model> <effort> · <n> tokens · $<cost>`, read from the result message of its execution file
+      # (tokens are input, output, and cache tokens together); a missing or unreadable file adds nothing,
+      # and the merged summary then shows the usage as unknown.
       - name: Add review duration
         env:
           START: ${{ steps.start.outputs.epoch }}
+          EXEC_FILE: ${{ steps.claude.outputs.execution_file }}
+          USAGE_MODEL: ${{ steps.model.outputs.model }}
+          USAGE_EFFORT: ${{ steps.model.outputs.effort }}
           SIGNATURE: 'Reviewed with: `/cr-request` ${{ steps.skill.outputs.version }} skill'
           SEP: ' · '
         run: |
@@ -975,6 +1008,18 @@ jobs:
           [ -f "$body" ] || exit 0
           elapsed=$(( $(date +%s) - START ))
           export DURATION="In $(( elapsed / 60 )) min $(( elapsed % 60 )) sec"
+          if [ -n "${EXEC_FILE:-}" ] && [ -f "$EXEC_FILE" ]; then
+            usage=$(jq -r '[.[] | select(type == "object" and .type == "result")] | last
+              | select(. != null and (.total_cost_usd | type) == "number" and .total_cost_usd >= 0)
+              | [((.usage.input_tokens // 0) + (.usage.output_tokens // 0)
+                + (.usage.cache_creation_input_tokens // 0) + (.usage.cache_read_input_tokens // 0) | floor),
+                .total_cost_usd] | @tsv' "$EXEC_FILE" 2> /dev/null || true)
+            if [[ "$usage" =~ ^([0-9]+)[[:space:]]([0-9.eE+-]+)$ ]]; then
+              cost=$(LC_ALL=C awk -v c="${BASH_REMATCH[2]}" 'BEGIN { printf "%.4f", c }')
+              DURATION="$DURATION · $USAGE_MODEL $USAGE_EFFORT · ${BASH_REMATCH[1]} tokens · \$$cost"
+              export DURATION
+            fi
+          fi
           tmp="$(mktemp)"
           # Two passes over the body: the first finds the last two non-blank lines, the second rewrites.
           awk '
@@ -991,7 +1036,7 @@ jobs:
             { print }
           ' "$body" "$body" > "$tmp"
           mv "$tmp" "$body"
-          echo "Review duration: $DURATION"
+          echo "Review duration and usage: $DURATION"
 
       # GitHub rejects a whole review when one inline comment points outside the diff, so only comments
       # on a head-side line of a diff.patch hunk stay; the rest of the findings live in the body. The
@@ -1191,8 +1236,12 @@ jobs:
                       require(defer not in ('PROPOSED', 'ACCEPTED') or owner is not None, 'missing defer owner')
                       require(defer != 'ACCEPTED' or status == 'NOT_ADDRESSED' and f['severity'] != 'Critical', 'invalid accepted defer')
                       require(status != 'ADDRESSED' or defer == 'NONE', 'addressed finding has defer')
+          # New drafts use circles; historical thread formats are handled by the matchers.
+          circles = {r'$\color{red}{\bigcirc}$ High': 'Critical', r'$\color{orange}{\bigcirc}$ Medium': 'Important', r'$\color{green}{\bigcirc}$ Low': 'Minor'}
+          circle_re = '(?:' + '|'.join(re.escape(circle) for circle in circles) + ')'
           report = Path(os.environ['BODY_FILE']).read_text(encoding='utf-8')
-          found = re.findall(r'^- \*\*(Critical|Important|Minor)\*\* (R[1-9][0-9]*-(?:[A-Za-z0-9_-]+-)?F[1-9][0-9]*) \[`([^`]+):[0-9]+`\]', report, re.M)
+          found = [(circles[m[1]], m[2], m[3]) for m in re.finditer(
+              r'^- ('+circle_re+r') (R[1-9][0-9]*-(?:[A-Za-z0-9_-]+-)?F[1-9][0-9]*) \[`([^`]+):[0-9]+`\]', report, re.M)]
           expected = [(f['severity'], f['original_id'], f['path']) for f in d['findings']]
           require(sorted(found) == sorted(expected), 'report findings differ from draft')
           table = re.search(r'^\| *Intent *\| *System *\| *Craft *\| *Critical *\| *Important *\| *Minor *\|\s*\n[^\n]*\n\| *(?:PASS|FINDINGS|UNASSESSED) *\| *(?:PASS|FINDINGS|UNASSESSED) *\| *(?:PASS|FINDINGS|UNASSESSED) *\| *([0-9]+) *\| *([0-9]+) *\| *([0-9]+) *\|', report, re.M)
@@ -1204,8 +1253,8 @@ jobs:
           for comment in comments:
               require(isinstance(comment, dict) and set(comment) == {'body', 'line', 'path'}
                       and type(comment['line']) is int and comment['line'] > 0 and isinstance(comment['body'], str), 'invalid inline comment')
-              m = re.match(r'^\*\*(Critical|Important|Minor)\*\* (R[1-9][0-9]*-(?:[A-Za-z0-9_-]+-)?F[1-9][0-9]*)(?:\s|$)', comment['body'])
-              require(m is not None and (m[1], m[2], comment['path']) in expected, 'inline finding mismatch')
+              m = re.match(r'^('+circle_re+r') (R[1-9][0-9]*-(?:[A-Za-z0-9_-]+-)?F[1-9][0-9]*)(?:\s|$)', comment['body'])
+              require(m is not None and (circles[m[1]], m[2], comment['path']) in expected, 'inline finding mismatch')
               require(m[2] not in inline, 'duplicate inline finding')
               inline.add(m[2])
           PY
@@ -1271,7 +1320,7 @@ jobs:
           tail2=$(tr -d '\r' < "$BODY_FILE" | grep -v '^[[:space:]]*$' | tail -n 2 | sed 's/[[:space:]]*$//' || true)
           prev=$(head -n 1 <<< "$tail2")
           last=$(tail -n 1 <<< "$tail2")
-          signature_re="^Reviewed with: \`/cr-request\` ${VERSION//./\\.} skill · In [0-9]+ min [0-9]+ sec\$"
+          signature_re="^Reviewed with: \`/cr-request\` ${VERSION//./\\.} skill · In [0-9]+ min [0-9]+ sec( · [a-z0-9][a-z0-9._:/-]*(\\[[a-z0-9]+\\])? (low|medium|high) · [0-9]+ tokens · \\\$[0-9]+\\.[0-9]{4})?\$"
           # CI FooterTest executes this footer grammar against valid and invalid sample bodies.
           next_re="^Next step: (\`/[a-z0-9-]+( [^\`[:space:]]+)*\`( -> \`/[a-z0-9-]+\`( [a-z0-9-]+)?)?( · [^[:space:]].*)?|none( · [^[:space:]].*)?)\$"
           if [[ "$prev" =~ $signature_re ]] && [[ "$last" =~ $next_re ]]; then
@@ -1348,13 +1397,15 @@ jobs:
           critical="${BASH_REMATCH[4]}"
           important="${BASH_REMATCH[5]}"
           minor="${BASH_REMATCH[6]}"
-          readiness=$(grep -oE '\*\*Readiness:\*\* *(ready with fixes|not ready|ready)' <<< "$section" \
+          # Older reviews wrote the readiness in lowercase; both forms read as the capitalised one.
+          readiness=$(grep -oE '\*\*Readiness:\*\* *([Rr]eady with fixes|[Nn]ot ready|[Rr]eady)$' <<< "$section" \
             | sed -E 's/.*\*\* *//' | head -n 1 || true)
           [ -n "$readiness" ] || fail "The review has no merge readiness"
+          readiness="$(tr '[:lower:]' '[:upper:]' <<< "${readiness:0:1}")${readiness:1}"
 
           summary="Critical $critical, Important $important, Minor $minor; $readiness"
           state=success
-          if [ "$critical" -gt 0 ] || [ "$readiness" = "not ready" ]; then state=failure; fi
+          if [ "$critical" -gt 0 ] || [ "$readiness" = "Not ready" ]; then state=failure; fi
           {
             echo "ready_to_post=true"
             echo "validated_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -1580,7 +1631,10 @@ jobs:
           def matching_thread(f, all_threads):
               result=[]
               # Only the inline heading identifies the finding; IDs cited in prose are context.
-              pattern=r'^\*\*'+re.escape(f['severity'])+r'\*\* '+re.escape(f['original_id'])+r'(?:\s|$)'
+              # Keep this matcher self-contained: the API-only resolver has no checkout or PR code.
+              badge={'Critical':'High-E5534B','Important':'Medium-C99A3A','Minor':'Low-539BF5'}[f['severity']]
+              circle={'Critical':r'$\color{red}{\bigcirc}$ High','Important':r'$\color{orange}{\bigcirc}$ Medium','Minor':r'$\color{green}{\bigcirc}$ Low'}[f['severity']]
+              pattern=r'^(?:\*\*'+re.escape(f['severity'])+r'\*\*|!\['+re.escape(f['severity'])+r'\]\(https://img\.shields\.io/badge/'+re.escape(badge)+r'\?style=(?:for-the-badge|flat-square)\)|'+re.escape(circle)+r') '+re.escape(f['original_id'])+r'(?:\s|$)'
               for t in all_threads:
                   cs=t.get('comments',[])
                   if t.get('path') != f['path'] or not cs: continue
@@ -1739,7 +1793,7 @@ jobs:
               d['review_source_id']=review_id
               for f in d['findings']: f['origin_review_id']=review_id
               signature=Path(os.environ['POST_FILE']).read_text(encoding='utf-8')
-              m=re.search(r'^Reviewed with: `/cr-request` .* skill · In ([0-9]+) min ([0-9]+) sec$',signature,re.M)
+              m=re.search(r'^Reviewed with: `/cr-request` .* skill · In ([0-9]+) min ([0-9]+) sec(?: · .*)?$',signature,re.M)
               duration=int(m[1])*60+int(m[2]) if m else None
               d.update(envelope_version=1,published_review_id=review_id,run_id=run_id,duration_seconds=duration,
                        action_progress=[],disposition_events=events)
@@ -1851,8 +1905,8 @@ jobs:
                   body=post.read_text(encoding='utf-8')
                   # Keep any independent readiness gap and any unassessed axis intact.
                   assessed = re.search(r'^\| *Intent *\| *System *\| *Craft *\| *Critical *\| *Important *\| *Minor *\|\s*\n[^\n]*\n\| *(PASS|FINDINGS|UNASSESSED) *\| *(PASS|FINDINGS|UNASSESSED) *\| *(PASS|FINDINGS|UNASSESSED) *\|', body, re.M)
-                  if assessed and 'UNASSESSED' not in assessed.groups() and re.search(r'^\*\*Readiness:\*\* (?:ready with fixes|ready)$', body, re.M):
-                      body,n=re.subn(r'^\*\*Readiness:\*\* (?:ready with fixes|ready)$', '**Readiness:** ready', body, flags=re.M)
+                  if assessed and 'UNASSESSED' not in assessed.groups() and re.search(r'^\*\*Readiness:\*\* (?:[Rr]eady with fixes|[Rr]eady)$', body, re.M):
+                      body,n=re.subn(r'^\*\*Readiness:\*\* (?:[Rr]eady with fixes|[Rr]eady)$', '**Readiness:** Ready', body, flags=re.M)
                       require(n==1, 'readiness line unavailable')
                       body,n=re.subn(r'^Next step: .*$', 'Next step: `/verify` -> `/finalize` squash', body, flags=re.M)
                       require(n==1, 'next step unavailable')
@@ -2238,7 +2292,10 @@ jobs:
           def matching_thread(f, all_threads):
               result=[]
               # Only the inline heading identifies the finding; IDs cited in prose are context.
-              pattern=r'^\*\*'+re.escape(f['severity'])+r'\*\* '+re.escape(f['original_id'])+r'(?:\s|$)'
+              # Keep this matcher self-contained: the API-only resolver has no checkout or PR code.
+              badge={'Critical':'High-E5534B','Important':'Medium-C99A3A','Minor':'Low-539BF5'}[f['severity']]
+              circle={'Critical':r'$\color{red}{\bigcirc}$ High','Important':r'$\color{orange}{\bigcirc}$ Medium','Minor':r'$\color{green}{\bigcirc}$ Low'}[f['severity']]
+              pattern=r'^(?:\*\*'+re.escape(f['severity'])+r'\*\*|!\['+re.escape(f['severity'])+r'\]\(https://img\.shields\.io/badge/'+re.escape(badge)+r'\?style=(?:for-the-badge|flat-square)\)|'+re.escape(circle)+r') '+re.escape(f['original_id'])+r'(?:\s|$)'
               for t in all_threads:
                   cs=t.get('comments',[])
                   if t.get('path') != f['path'] or not cs: continue
@@ -2397,7 +2454,7 @@ jobs:
               d['review_source_id']=review_id
               for f in d['findings']: f['origin_review_id']=review_id
               signature=Path(os.environ['POST_FILE']).read_text(encoding='utf-8')
-              m=re.search(r'^Reviewed with: `/cr-request` .* skill · In ([0-9]+) min ([0-9]+) sec$',signature,re.M)
+              m=re.search(r'^Reviewed with: `/cr-request` .* skill · In ([0-9]+) min ([0-9]+) sec(?: · .*)?$',signature,re.M)
               duration=int(m[1])*60+int(m[2]) if m else None
               d.update(envelope_version=1,published_review_id=review_id,run_id=run_id,duration_seconds=duration,
                        action_progress=[],disposition_events=events)
@@ -2509,8 +2566,8 @@ jobs:
                   body=post.read_text(encoding='utf-8')
                   # Keep any independent readiness gap and any unassessed axis intact.
                   assessed = re.search(r'^\| *Intent *\| *System *\| *Craft *\| *Critical *\| *Important *\| *Minor *\|\s*\n[^\n]*\n\| *(PASS|FINDINGS|UNASSESSED) *\| *(PASS|FINDINGS|UNASSESSED) *\| *(PASS|FINDINGS|UNASSESSED) *\|', body, re.M)
-                  if assessed and 'UNASSESSED' not in assessed.groups() and re.search(r'^\*\*Readiness:\*\* (?:ready with fixes|ready)$', body, re.M):
-                      body,n=re.subn(r'^\*\*Readiness:\*\* (?:ready with fixes|ready)$', '**Readiness:** ready', body, flags=re.M)
+                  if assessed and 'UNASSESSED' not in assessed.groups() and re.search(r'^\*\*Readiness:\*\* (?:[Rr]eady with fixes|[Rr]eady)$', body, re.M):
+                      body,n=re.subn(r'^\*\*Readiness:\*\* (?:[Rr]eady with fixes|[Rr]eady)$', '**Readiness:** Ready', body, flags=re.M)
                       require(n==1, 'readiness line unavailable')
                       body,n=re.subn(r'^Next step: .*$', 'Next step: `/verify` -> `/finalize` squash', body, flags=re.M)
                       require(n==1, 'next step unavailable')
@@ -2577,7 +2634,7 @@ jobs:
           [ "$posted" = true ] || { post_status failure "Posted review not found"; exit 1; }
           if [ "$DEFERRED_COMPLETE" = true ]; then
             STATE=success
-            SUMMARY="Critical 0, Important 0, Minor 0; ready"
+            SUMMARY="Critical 0, Important 0, Minor 0; Ready"
           fi
           post_status "$STATE" "$SUMMARY"
 
