@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = {
     'reviewer': 'so-upstars',
     'secret': 'SO_UPSTARS_PR_TOKEN',
-    'workflow': '.github/workflows/pr-auto-review.yml',
+    'workflow': '.github/workflows/pr-review.yml',
     'name': 'Claude review',
     'dispatch': 'pr_number',
     'jobs': ['Lint', 'Typecheck', 'Unit tests', 'Build', 'Public pages load', 'Review workflow fixtures'],
