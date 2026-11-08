@@ -1,29 +1,29 @@
 # `resolveRoom` filter injection
 
-- Status: Planned
-- Priority: P2
-- Ініційовано: 2026-06-24 (аудит)
-- Last reviewed: 2026-07-17
+1. Status: Planned
+2. Priority: P2
+3. Initiated: 2026-06-24 (audit)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-`app/stores/room.ts:179` будує `.or()` з шаблонного рядка
-`id.eq.${input},slug.eq.${input}` із сирим `input`. Спецсимволи (`,` `.` `)`)
-ламають фільтр PostgREST.
+`app/stores/room.ts:179` builds `.or()` from the template string
+`id.eq.${input},slug.eq.${input}` with raw `input`. Special characters (`,` `.`
+`)`) break the PostgREST filter.
 
-## Очікуваний результат
+## Expected outcome
 
-Резолв кімнати за id або slug не залежить від вмісту рядка з URL.
+Resolving a room by id or slug does not depend on the content of the URL string.
 
-## Обсяг
+## Scope
 
-- Валідувати `input` через `isValidRoomSlug` або перевірку 8-символьного id.
-- Альтернативно - два окремі `.eq()`-запити замість `.or()`.
+1. Validate `input` with `isValidRoomSlug` or check for an 8-character id.
+2. Alternatively, use two separate `.eq()` queries instead of `.or()`.
 
-## Критерії завершення
+## Completion criteria
 
-- Довільний рядок у URL дає `not found`, а не зламаний запит.
+1. An arbitrary string in the URL returns `not found` instead of a broken query.
 
-## Наступний крок
+## Next step
 
-Додати unit-тест на `resolveRoom` зі спецсимволами у вхідному рядку.
+Add a unit test for `resolveRoom` with special characters in the input string.

@@ -1,21 +1,21 @@
 # Zustand stores
 
-Zustand stores у `app/stores/`: дії й стан - `useXStore.getState()`, у компонентах - `useXStore(selector)`;
-`players.visiblePlayers` - поле, яке `subscribe` перераховує при кожній зміні `players`. Тести скидають стан
-`resetStores()` з `tests/support/helpers/resetStores.ts`; модульні `initialization` (спільний промис `init()`)
-в `auth.ts` і `inflight` (Map запитів у польоті) в `profiles.ts` він не скидає.
+Zustand stores live in `app/stores/`: use `useXStore.getState()` for actions and state, and `useXStore(selector)` in
+components. `players.visiblePlayers` is a field that `subscribe` recalculates on every change to `players`. Tests reset
+state with `resetStores()` from `tests/support/helpers/resetStores.ts`; it does not reset the module-level
+`initialization` (the shared `init()` promise) in `auth.ts` or `inflight` (the Map of in-flight requests) in `profiles.ts`.
 
-- `auth.ts` - Supabase session, sign in/up/out, password reset/update
-- `room.ts` - room state, create, reveal, new round, deck, resolve, room name/slug
-- `players.ts` - players, optimistic votes, join/rejoin, rename, moderator toggle, set shields, kick/leave, link user
-- `presence.ts` - online `Set<playerId>` через Supabase Presence; на `visibilitychange → hidden` закриває канал лише
-  через `AWAY_TIMEOUT_MS` (5 хв), повернення раніше - скасовує таймер
-- `profiles.ts` - `user_profiles` cache, fetch/upsert, Realtime applyChange
-- `types.ts` - спільні TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `ConnectionStatus`);
-  `UserProfile` живе в `profiles.ts`
+1. `auth.ts` - Supabase session, sign in/up/out, password reset/update
+2. `room.ts` - room state, create, reveal, new round, deck, resolve, room name/slug
+3. `players.ts` - players, optimistic votes, join/rejoin, rename, moderator toggle, set shields, kick/leave, link user
+4. `presence.ts` - online `Set<playerId>` via Supabase Presence; on `visibilitychange → hidden`, closes the channel only
+   after `AWAY_TIMEOUT_MS` (5 minutes); returning earlier cancels the timer
+5. `profiles.ts` - `user_profiles` cache, fetch/upsert, Realtime applyChange
+6. `types.ts` - shared TS interfaces (`Player`, `RoomState`, `RoundHistory`, `RoundHistoryVote`, `ConnectionStatus`);
+   `UserProfile` lives in `profiles.ts`
 
-`room.restoreVotes()` спершу записує голоси знімка, потім обнуляє решту гравців кімнати: undo - повний відкат, і
-голос, поданий після reset, теж зникає. Це прийнятий компроміс за рішенням власника (спека
-`docs/specs/2026-11-02-room-controls-cohort-chips-design.md`, рішення 3), а не дефект для рев'ю.
+`room.restoreVotes()` first writes the snapshot votes, then clears the other players in the room: undo is a full rollback,
+and a vote cast after reset also disappears. This is an accepted compromise by owner decision (specification
+`docs/specs/2026-11-02-room-controls-cohort-chips-design.md`, decision 3), not a defect for review.
 
-Інваріант доступу до Supabase-клієнта (`getSupabase()`/`initSupabase()`/`setSupabase(mock)`) - `app/AGENTS.md`.
+The Supabase client access invariant (`getSupabase()`/`initSupabase()`/`setSupabase(mock)`) is in `app/AGENTS.md`.

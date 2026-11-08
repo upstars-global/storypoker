@@ -1,44 +1,44 @@
 # Auth & Account
 
-- Status: Partial
-- Priority: P1
-- Ініційовано: 2026-05 (Iter 2)
-- Last reviewed: 2026-07-17
+1. Status: Partial
+2. Priority: P1
+3. Initiated: 2026-05 (Iter 2)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-Базова авторизація є, але акаунт лишається неповним: не можна змінити email чи
-display name, а критичні дії гейтяться лише на клієнті.
+Basic authentication is in place, but the account remains incomplete: users cannot change
+their email or display name, and critical actions are gated only on the client.
 
-## Очікуваний результат
+## Expected outcome
 
-Повноцінний акаунт: керування власними даними і серверне підтвердження прав
-модератора.
+A complete account with management of personal data and server-side verification of
+moderator permissions.
 
-## Обсяг
+## Scope
 
-Зроблено:
+Done:
 
-- Sign Up з підтвердженням email, Sign In + persistent session, скидання пароля.
-- Прив'язка гри до акаунту (`playersStore.linkUser` → `players.user_id`).
-- Профілі: `user_profiles` (`avatar_style` / `avatar_seed`) + `UserSettingsModal`.
+1. Sign Up with email confirmation, Sign In + persistent session, password reset.
+2. Linking a game to an account (`playersStore.linkUser` → `players.user_id`).
+3. Profiles: `user_profiles` (`avatar_style` / `avatar_seed`) + `UserSettingsModal`.
 
-Лишилось:
+Remaining:
 
-- OAuth provider (Google / GitHub) - опційно.
-- Зміна email і display name на акаунті (зараз - лише пароль).
-- Захист критичних дій (Reveal, Configure Card Deck) тільки для авторизованих
-  модераторів.
+1. OAuth provider (Google / GitHub) - optional.
+2. Change the account email and display name (currently only the password can be changed).
+3. Restrict critical actions (Reveal, Configure Card Deck) to authenticated moderators.
 
-## Залежності
+## Dependencies
 
-- Серверний гейтинг залежить від [RLS та авторизації мутацій](rls-security.md).
+1. Server-side gating depends on [RLS and mutation authorization](rls-security.md).
 
-## Критерії завершення
+## Completion criteria
 
-- Користувач змінює email і display name з UI.
-- Reveal і Configure Card Deck неможливі без відповідних прав на боці БД.
+1. A user can change their email and display name in the UI.
+2. Reveal and Configure Card Deck cannot be performed without the appropriate permissions
+   on the database side.
 
-## Наступний крок
+## Next step
 
-Зміна email і display name - вона не блокована RLS-роботою.
+Change email and display name; this is not blocked by the RLS work.

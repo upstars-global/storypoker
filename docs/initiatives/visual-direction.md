@@ -1,21 +1,21 @@
-# Візуальний напрям (MD2 → MD3 / shadcn)
+# Visual direction (MD2 → MD3 / shadcn)
 
-- Status: Idea
-- Priority: P3
-- Ініційовано: 2026-06
-- Last reviewed: 2026-07-17
-- Related: [`DESIGN.md`](../../DESIGN.md)
+1. Status: Idea
+2. Priority: P3
+3. Initiated: 2026-06
+4. Last reviewed: 2026-07-17
+5. Related: [`DESIGN.md`](../../DESIGN.md)
 
-## Навіщо
+## Why
 
-Зараз - Material Design 2 з трьома palette-темами (classic / cyberdeck / matcha).
-`DESIGN.md` пропонує рух у бік MD3 або shadcn-стилю: ширші радіуси, surface tint.
+The current design is Material Design 2 with three palette themes (classic / cyberdeck / matcha).
+`DESIGN.md` proposes moving towards MD3 or the shadcn style: wider radii and surface tint.
 
-## Відкрите питання
+## Open question
 
-Чи мігрувати візуальний напрям, враховуючи, що palette-теми вже задають
-`--radius-*` і власні поверхні для кожної теми?
+Should the visual direction migrate, given that the palette themes already define
+`--radius-*` and their own surfaces for each theme?
 
-## Наступний крок
+## Next step
 
-Зробити візуальний прототип однієї сторінки в MD3-напрямі й порівняти з поточним.
+Create a visual prototype of one page in the MD3 direction and compare it with the current design.

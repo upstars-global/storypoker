@@ -89,6 +89,7 @@
     "joinRoom": "Приєднатись"
   },
   "cards": {
+    "goalClarityQuestion": "Наскільки чітко я розумію Sprint Goals?",
     "reveal": "Показати оцінки",
     "reset": "Скинути оцінки",
     "undoReset": "Undo",

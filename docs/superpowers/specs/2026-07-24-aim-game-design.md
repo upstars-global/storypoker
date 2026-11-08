@@ -1,21 +1,21 @@
-# Aim Game - ракетний тир по нафтобазі (третій side-widget)
+# Aim Game - rocket range targeting an oil depot (third side widget)
 
-**Дата:** 2026-07-24
-**Статус:** затверджено
+**Date:** 2026-07-24
+**Status:** approved
 
-## Контекст
+## Context
 
-Кімната має лівий side-widget, що перемикається кнопкою-іконкою в header блоку: `Timer` ↔ `SlotMachine` (`sp-side-widget`, `timer | slot`). Потрібен третій віджет - міні-гра "тир": рухомий приціл, кнопка запуску ракети, ціль (нафтобаза, generic industrial target - не прив'язана до реального об'єкта). Влучив → ціль горить; не влучив → ще спроба. Обмежено 3 спроби на раунд, без міжгравецького broadcast (на відміну від слот-джекпоту).
+The room has a left side widget, switched by an icon button in the block header: `Timer` ↔ `SlotMachine` (`sp-side-widget`, `timer | slot`). A third widget is needed: a shooting-range minigame with a moving crosshair, a rocket launch button, and a target (an oil depot, a generic industrial target unrelated to a real location). A hit sets the target on fire; a miss allows another attempt. There are 3 attempts per round and no broadcast to other players (unlike the slot jackpot).
 
-## Мета
+## Goal
 
-Додати `AimGame.vue` як третій режим side-widget, за архітектурним патерном `SlotMachine.vue`/`slotMachine.ts` (pure-logic util + Vue-компонент, детерміновані unit-тести з injectable `random`).
+Add `AimGame.vue` as a third side-widget mode, following the `SlotMachine.vue`/`slotMachine.ts` architectural pattern (a pure-logic utility and Vue component, with deterministic unit tests using an injectable `random`).
 
-## Widget-стан (`app/pages/[slug].vue`)
+## Widget state (`app/pages/[slug].vue`)
 
-`sideWidget` розширюється до `'timer' | 'slot' | 'aim'`, localStorage-ключ `sp-side-widget` лишається той самий.
+`sideWidget` expands to `'timer' | 'slot' | 'aim'`; the localStorage key `sp-side-widget` stays the same.
 
-Перемикання перестає бути циклічним toggle (`timer<->slot`) і стає прямим переходом з payload:
+Switching changes from a cyclic toggle (`timer<->slot`) to a direct transition with a payload:
 
 ```ts
 const SIDE_WIDGET_KEY = 'sp-side-widget'
@@ -31,14 +31,14 @@ function switchSideWidget(target: SideWidget) {
 }
 ```
 
-`Timer.vue` емітить `switchWidget` з payload `'slot'` або `'aim'` (дві окремі кнопки в header). `SlotMachine.vue` і новий `AimGame.vue` емітять `switchWidget` з payload `'timer'` (одна кнопка назад, симетрично з поточним патерном).
+`Timer.vue` emits `switchWidget` with a `'slot'` or `'aim'` payload (two separate buttons in the header). `SlotMachine.vue` and the new `AimGame.vue` emit `switchWidget` with a `'timer'` payload (one back button, matching the current pattern).
 
 ```ts
 // Timer.vue, SlotMachine.vue, AimGame.vue
 const emit = defineEmits<{ (e: 'switchWidget', target: 'timer' | 'slot' | 'aim'): void }>()
 ```
 
-Спроби гри (aim) - окремий лічильник від спінів слота:
+Game attempts (aim) use a counter separate from slot spins:
 
 ```ts
 const AIM_ATTEMPTS_PER_ROUND = 3
@@ -50,7 +50,7 @@ watch(() => roomState.value?.round_started_at, () => {
 })
 ```
 
-Розмітка:
+Markup:
 
 ```html
 <AimGame
@@ -61,9 +61,9 @@ watch(() => roomState.value?.round_started_at, () => {
 />
 ```
 
-## Pure-логіка: `app/utils/aimGame.ts`
+## Pure logic: `app/utils/aimGame.ts`
 
-Без Vue-залежностей, дзеркально до `slotMachine.ts`:
+No Vue dependencies, matching `slotMachine.ts`:
 
 ```ts
 export const AIM_ZONE_WIDTH = 0.2
@@ -83,22 +83,22 @@ export function isHit(position: number, zoneStart: number, zoneWidth: number = A
 }
 ```
 
-`positionAtTime` - трикутна хвиля 0→1→0 (ping-pong), детермінована від `elapsedMs` (без `Math.random`, без DOM). `randomZoneStart` дає рівномірну позицію зони так, щоб `zoneStart + AIM_ZONE_WIDTH <= 1`.
+`positionAtTime` is a 0→1→0 triangle wave (ping-pong), determined by `elapsedMs` (without `Math.random` or the DOM). `randomZoneStart` gives a uniformly distributed zone position such that `zoneStart + AIM_ZONE_WIDTH <= 1`.
 
-## Компонент: `app/components/AimGame.vue`
+## Component: `app/components/AimGame.vue`
 
-Структура паперу - як `SlotMachine.vue` (`mui-paper` + `mui-paper-header` з кнопкою-перемикачем у правому куті, іконка `tabler:target`, тултіп `aim.switchToAim`/`aim.switchToTimer`).
+The paper structure matches `SlotMachine.vue` (`mui-paper` + `mui-paper-header` with a switch button in the right corner, the `tabler:target` icon, and the `aim.switchToAim`/`aim.switchToTimer` tooltip).
 
-**Візуал:** inline SVG нафтобази (кілька циліндричних танків + труба-з'єднувач) як фон картки; під/над нею - горизонтальна `aim-bar` з підсвіченою цільовою зоною (`div` з `left`/`width` у %, з `AIM_ZONE_WIDTH`) і прицілом-іконкою (`tabler:target`), що рухається по `left: calc(${position * 100}%)`.
+**Visuals:** an inline SVG oil depot (several cylindrical tanks and a connecting pipe) as the card background; below/above it, a horizontal `aim-bar` with a highlighted target zone (a `div` with `left`/`width` in %, using `AIM_ZONE_WIDTH`) and a crosshair icon (`tabler:target`) moving along `left: calc(${position * 100}%)`.
 
-**Рух прицілу:** `requestAnimationFrame`-цикл (як тик-цикл у `SlotMachine.vue`), що оновлює `elapsed.value = performance.now() - startTime`; `position = computed(() => positionAtTime(elapsed.value))`. Цикл активний лише у стані `idle`.
+**Crosshair movement:** a `requestAnimationFrame` loop (like the tick loop in `SlotMachine.vue`) updates `elapsed.value = performance.now() - startTime`; `position = computed(() => positionAtTime(elapsed.value))`. The loop is active only in the `idle` state.
 
-**Стани:**
-- `idle` - приціл рухається, кнопка "Пуск" активна (якщо `attemptsLeft > 0`)
-- `firing` - клік фіксує `hitPosition = position.value`; невелика анімація ракети (translateY від прицілу вниз до танка, ~500ms); рух прицілу призупинено
-- `resolved` - обчислюється `isHit(hitPosition, zoneStart.value)`:
-  - **hit:** SVG танк отримує CSS-клас з keyframes вогню/диму (аналогічно `.slot-window.is-jackpot`) на ~2.5s, потім гасне; після завершення - `zoneStart = randomZoneStart()`, повернення в `idle`
-  - **miss:** коротка "промах"-анімація (пилюка/дим від землі, ~600ms), одразу назад у `idle` з новим `zoneStart = randomZoneStart()`
+**States:**
+1. `idle` - the crosshair moves, and the "Пуск" (Launch) button is active (if `attemptsLeft > 0`)
+2. `firing` - a click records `hitPosition = position.value`; a short rocket animation plays (translateY down from the crosshair to the tank, ~500ms); crosshair movement pauses
+3. `resolved` - `isHit(hitPosition, zoneStart.value)` is calculated:
+   1. **hit:** the SVG tank gets a CSS class with fire/smoke keyframes (like `.slot-window.is-jackpot`) for ~2.5s, then goes out; after completion, `zoneStart = randomZoneStart()` and the game returns to `idle`
+   2. **miss:** a short miss animation (dust/smoke from the ground, ~600ms), then an immediate return to `idle` with a new `zoneStart = randomZoneStart()`
 
 **Props/emits:**
 
@@ -110,13 +110,13 @@ const emit = defineEmits<{
 }>()
 ```
 
-`emit('fire')` викликається одразу при натисканні кнопки пуску (аналогічно `emit('spin')` у `SlotMachine.vue`), незалежно від результату hit/miss.
+`emit('fire')` is called as soon as the launch button is pressed (like `emit('spin')` in `SlotMachine.vue`), regardless of a hit or miss.
 
-**Без broadcast:** ніяких realtime-подій, каналів чи банерів для інших гравців - результат бачить лише той, хто грає.
+**No broadcast:** there are no realtime events, channels, or banners for other players; only the player sees the result.
 
 ## i18n
 
-`app/i18n/locales/{uk,en}.json`, namespace `aim`, дзеркально до `slot`:
+`app/i18n/locales/{uk,en}.json`, namespace `aim`, matching `slot`:
 
 ```json
 "aim": {
@@ -146,16 +146,16 @@ EN (`en.json`):
 }
 ```
 
-## Тести: `tests/unit/utils/aimGame.spec.ts`
+## Tests: `tests/unit/utils/aimGame.spec.ts`
 
-Дзеркально до `slotMachine.spec.ts`, з тим самим `sequence()`-хелпером для `random`:
+Matching `slotMachine.spec.ts`, with the same `sequence()` helper for `random`:
 
-- `positionAtTime`: межові точки періоду - `0` → `0`, чверть періоду → `0.5`, половина періоду → `1`, три чверті → `0.5`, повний період → `0`
-- `isHit`: точно на межах зони (`zoneStart`, `zoneStart + zoneWidth`) - `true`; трохи за межами - `false`
-- `randomZoneStart`: результат завжди в `[0, 1 - AIM_ZONE_WIDTH]` для крайніх значень `random` (`0` та `0.999999`)
+1. `positionAtTime`: period boundary points - `0` → `0`, quarter period → `0.5`, half period → `1`, three quarters → `0.5`, full period → `0`
+2. `isHit`: exactly on the zone boundaries (`zoneStart`, `zoneStart + zoneWidth`) - `true`; just outside - `false`
+3. `randomZoneStart`: the result is always in `[0, 1 - AIM_ZONE_WIDTH]` for extreme `random` values (`0` and `0.999999`)
 
-## Поза межами цієї ітерації
+## Out of scope for this iteration
 
-- Іконка нафтобази НЕ реєструється через `registerAppIcons.ts`/`app:` collection - SVG живе inline в `AimGame.vue`, бо анімація вогню прив'язана до конкретних `<path>`/`<rect>` цього SVG і не має сенсу як переюзабельна іконка.
-- Немає win-broadcast/celebration на кімнату (на відміну від `SlotWinBanner`) - свідоме рішення, може бути додано окремою ітерацією.
-- Складність (ширина зони) фіксована (`AIM_ZONE_WIDTH = 0.2`), без прогресивної складності чи випадкової ширини - свідоме спрощення.
+1. The oil depot icon is NOT registered through `registerAppIcons.ts`/the `app:` collection. The SVG lives inline in `AimGame.vue` because the fire animation is tied to specific `<path>`/`<rect>` elements of this SVG and does not make sense as a reusable icon.
+2. There is no room-wide win broadcast/celebration (unlike `SlotWinBanner`). This is a deliberate decision; it may be added in a separate iteration.
+3. Difficulty (zone width) is fixed (`AIM_ZONE_WIDTH = 0.2`), with no progressive difficulty or random width. This is a deliberate simplification.

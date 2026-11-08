@@ -1,29 +1,29 @@
-# Lint strictness і Supabase types
+# Lint strictness and Supabase types
 
-- Status: Planned
-- Priority: P2
-- Ініційовано: 2026-06-24 (аудит)
-- Last reviewed: 2026-07-17
+1. Status: Planned
+2. Priority: P2
+3. Initiated: 2026-06-24 (audit)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-Lint проходить із ~461 warning, тож нові попередження губляться в шумі. Запити
-до Supabase типізовані як `any` замість generated types.
+Lint passes with ~461 warnings, so new warnings get lost in the noise. Supabase
+queries are typed as `any` instead of using generated types.
 
-## Очікуваний результат
+## Expected outcome
 
-Lint працює як gate, а типи таблиць приходять зі схеми БД.
+Lint works as a gate, and table types come from the database schema.
 
-## Обсяг
+## Scope
 
-- Ввести `--max-warnings 0` поступово, категоріями правил.
-- Підключити generated Supabase types замість `any`.
+1. Introduce `--max-warnings 0` gradually, by rule category.
+2. Connect generated Supabase types in place of `any`.
 
-## Критерії завершення
+## Completion criteria
 
-- `npm run lint` падає на нових warnings.
-- Store-методи оперують типами, згенерованими зі схеми.
+1. `npm run lint` fails on new warnings.
+2. Store methods use types generated from the schema.
 
-## Наступний крок
+## Next step
 
-Порахувати warnings за правилами і закрити найчисленніше.
+Count warnings by rule and resolve the most common one.

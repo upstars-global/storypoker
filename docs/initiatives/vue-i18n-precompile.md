@@ -1,30 +1,29 @@
 # vue-i18n precompile
 
-- Status: Planned
-- Priority: P3
-- Ініційовано: 2026-05-16 (post-migration)
-- Last reviewed: 2026-07-17
-- Related: [spec](../superpowers/specs/2026-05-16-vue-vite-migration-design.md)
+1. Status: Planned
+2. Priority: P3
+3. Initiated: 2026-05-16 (post-migration)
+4. Last reviewed: 2026-07-17
+5. Related: [spec](../superpowers/specs/2026-05-16-vue-vite-migration-design.md)
 
-## Навіщо
+## Why
 
-Локалі компілюються в runtime. Це повільніше, збільшує bundle і дає dev-warning
-`[intlify] Runtime compilation is being used`.
+Locales are compiled at runtime. This is slower, increases the bundle size and produces
+the dev warning `[intlify] Runtime compilation is being used`.
 
-## Очікуваний результат
+## Expected outcome
 
-Повідомлення прекомпільовані на етапі build через
-`@intlify/unplugin-vue-i18n`.
+Messages are precompiled at build time using `@intlify/unplugin-vue-i18n`.
 
-## Обсяг
+## Scope
 
-- Підключити плагін, перевести `app/i18n/locales/{uk,en}.json` на precompile.
-- Прибрати runtime-compilation залежність з бандла.
+1. Add the plugin and precompile `app/i18n/locales/{uk,en}.json`.
+2. Remove the runtime compilation dependency from the bundle.
 
-## Критерії завершення
+## Completion criteria
 
-- Dev-warning зникає, локалізація працює для uk і en.
+1. The dev warning disappears and localization works for uk and en.
 
-## Наступний крок
+## Next step
 
-Перевірити сумісність плагіна з Vite 8 / Rolldown.
+Check plugin compatibility with Vite 8 / Rolldown.

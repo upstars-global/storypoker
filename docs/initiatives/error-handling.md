@@ -1,33 +1,33 @@
-# Обробка помилок
+# Error handling
 
-- Status: Planned
-- Priority: P1
-- Ініційовано: 2026-06-24 (аудит)
-- Last reviewed: 2026-07-17
+1. Status: Planned
+2. Priority: P1
+3. Initiated: 2026-06-24 (audit)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-Порожні `catch {}` у `app/pages/[slug].vue` (×3) і store-методи без перевірки
-`{ error }` тихо ковтають фейли rename, shields і vote - користувач бачить
-успішний UI при невдалому записі.
+Empty `catch {}` blocks in `app/pages/[slug].vue` (×3) and store methods that do
+not check `{ error }` silently swallow rename, shields, and vote failures. The
+user sees a successful UI when the write has failed.
 
-## Очікуваний результат
+## Expected outcome
 
-Кожна мутація має явний результат: помилка видима користувачу, стан
-відкочується, дія повторювана.
+Every mutation has an explicit result: the error is visible to the user, the
+state is rolled back, and the action can be retried.
 
-## Обсяг
+## Scope
 
-- Typed helper для Supabase-result.
-- Loading / error state у stores.
-- Локалізований toast з retry.
-- Rollback для всіх optimistic updates, не лише для vote.
+1. Typed helper for Supabase results.
+2. Loading / error state in stores.
+3. Localized toast with retry.
+4. Rollback for all optimistic updates, including vote.
 
-## Критерії завершення
+## Completion criteria
 
-- Немає порожніх `catch {}` у `[slug].vue`.
-- Фейл rename / shields / vote показує повідомлення і повертає попередній стан.
+1. There are no empty `catch {}` blocks in `[slug].vue`.
+2. A rename / shields / vote failure shows a message and restores the previous state.
 
-## Наступний крок
+## Next step
 
-Ввести helper для Supabase-result і провести через нього `playersStore`.
+Introduce a helper for Supabase results and route `playersStore` through it.

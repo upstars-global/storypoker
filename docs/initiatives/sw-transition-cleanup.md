@@ -1,34 +1,35 @@
-# Прибрати перехідний reload service worker-а
+# Remove the transitional service worker reload
 
-- Status: Planned
-- Priority: P1
-- Ініційовано: 2026-10-24 (PR #37)
-- Last reviewed: 2026-10-24
+1. Status: Planned
+2. Priority: P1
+3. Initiated: 2026-10-24 (PR #37)
+4. Last reviewed: 2026-10-24
 
-## Навіщо
+## Why
 
-Реліз із PR #37 переводить PWA з `autoUpdate` на `prompt`. Старий бандл сам не
-перезавантажується, тому `vite.config.ts` тимчасово тримає `skipWaiting: true` і
-`importScripts: ['sw-reload-clients.js']`: новий worker при активації перезавантажує
-всі відкриті вкладки. Поки скрипт лишається, кожен деплой перезавантажує вкладки
-одразу, в обхід правил `useAppUpdate` (прихована вкладка, простій, відлік, reveal).
+The release from PR #37 moves the PWA from `autoUpdate` to `prompt`. The old bundle
+cannot reload itself, so `vite.config.ts` temporarily retains `skipWaiting: true` and
+`importScripts: ['sw-reload-clients.js']`: the new worker reloads all open tabs on
+activation. While the script remains, every deployment immediately reloads tabs,
+bypassing the `useAppUpdate` rules (hidden tab, idle time, countdown, reveal).
 
-## Очікуваний результат
+## Expected outcome
 
-Нова версія застосовується лише за правилами `useAppUpdate`; worker чекає у `waiting`.
+The new version is applied only according to the `useAppUpdate` rules; the worker
+remains in `waiting`.
 
-## Обсяг
+## Scope
 
-- Прибрати `skipWaiting: true` і `importScripts` з `vite.config.ts`.
-- Видалити `public/sw-reload-clients.js` і `tests/unit/swReloadClients.spec.ts`.
-- Прибрати виняток `sw-reload-clients.js` у `scripts/audit-icon-build.ts`.
-- Оновити рядок PWA в `AGENTS.md`.
+1. Remove `skipWaiting: true` and `importScripts` from `vite.config.ts`.
+2. Delete `public/sw-reload-clients.js` and `tests/unit/swReloadClients.spec.ts`.
+3. Remove the `sw-reload-clients.js` exception in `scripts/audit-icon-build.ts`.
+4. Update the PWA line in `AGENTS.md`.
 
-## Критерії завершення
+## Completion criteria
 
-- `dist/sw.js` не містить `skipWaiting` і `importScripts`.
-- На stage вкладка посеред відліку не перезавантажується до його завершення.
+1. `dist/sw.js` contains neither `skipWaiting` nor `importScripts`.
+2. On stage, a tab in the middle of a countdown does not reload until it finishes.
 
-## Наступний крок
+## Next step
 
-Наступний реліз після злиття PR #37 і деплою його на прод.
+The next release after PR #37 is merged and deployed to production.

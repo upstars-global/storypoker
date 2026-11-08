@@ -2,6 +2,8 @@ import { test, expect } from '../support/test'
 import { HomePage } from '../page-objects/HomePage'
 import { RoomPage } from '../page-objects/RoomPage'
 
+test.use({ locale: 'en-US' })
+
 test('home → create room → joined as moderator with auto-rejoin', async ({ page, trackedRoomIds, consoleErrors: _consoleErrors }) => {
   const home = new HomePage(page)
   await home.goto()
@@ -42,7 +44,7 @@ test('moderator votes, reveals, starts new round', async ({ page, browser, track
   const roomId = await home.createRoom(NAME)
   trackedRoomIds.push(roomId)
 
-  const secondContext = await browser.newContext()
+  const secondContext = await browser.newContext({ locale: 'en-US' })
   try {
     const secondPage = await secondContext.newPage()
     const second = new RoomPage(secondPage)

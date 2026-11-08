@@ -1,32 +1,32 @@
-# Оптимізація бандла
+# Bundle optimization
 
-- Status: Planned
-- Priority: P2
-- Ініційовано: 2026-05-16 (post-migration)
-- Last reviewed: 2026-07-17
+1. Status: Planned
+2. Priority: P2
+3. Initiated: 2026-05-16 (post-migration)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-Бандл монолітний (~757 KB / 233 KB gzip). `app/router.ts` статично імпортує всі
-сім сторінок, а DiceBear-колекції входять в initial bundle, хоч потрібні лише в
-кімнаті й налаштуваннях.
+The bundle is monolithic (~757 KB / 233 KB gzip). `app/router.ts` statically imports all
+seven pages, and DiceBear collections are included in the initial bundle even though they
+are needed only in the room and settings.
 
-## Очікуваний результат
+## Expected outcome
 
-Initial bundle містить тільки те, що потрібно для першого рендера; решта
-вантажиться на вимогу.
+The initial bundle contains only what is needed for the first render; the rest loads on
+demand.
 
-## Обсяг
+## Scope
 
-- Auth-сторінки і `/ffc` - на `() => import(...)`.
-- DiceBear - у динамічний import.
-- Розбити монолітний chunk, прибрати невикористані deps.
+1. Move auth pages and `/ffc` to `() => import(...)`.
+2. Move DiceBear to a dynamic import.
+3. Split the monolithic chunk and remove unused dependencies.
 
-## Критерії завершення
+## Completion criteria
 
-- Initial JS помітно менший за поточні 233 KB gzip.
-- DiceBear не потрапляє в initial chunk.
+1. Initial JS is noticeably smaller than the current 233 KB gzip.
+2. DiceBear is absent from the initial chunk.
 
-## Наступний крок
+## Next step
 
-Заміряти baseline через `rollup-plugin-visualizer` перед змінами.
+Measure the baseline with `rollup-plugin-visualizer` before making changes.

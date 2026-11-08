@@ -2,7 +2,7 @@
 
 **Spec:** none
 
-**Goal:** `reveal()` пише `round_history` лише з того reveal, чий умовний update (`phase <> 'revealed'`) змінив рядок `room_state` (PR #53).
+**Goal:** `reveal()` writes `round_history` only for the reveal whose conditional update (`phase <> 'revealed'`) changed the `room_state` row (PR #53).
 
 **Execution:** inline
 

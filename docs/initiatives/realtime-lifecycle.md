@@ -1,43 +1,45 @@
 # Realtime lifecycle
 
-- Status: Planned
-- Priority: P2
-- Ініційовано: 2026-06-24 (аудит)
-- Last reviewed: 2026-08-02
+1. Status: Planned
+2. Priority: P2
+3. Initiated: 2026-06-24 (audit)
+4. Last reviewed: 2026-08-02
 
-## Навіщо
+## Why
 
-`openChannel()` у presence-сторі може викликатись повторно без закриття
-попереднього каналу → zombie channels. Канал `user_profiles` підписаний без
-фільтра, тому апдейт будь-якого профілю в БД летить усім клієнтам.
+`openChannel()` in the presence store can be called again without closing the
+previous channel, creating zombie channels. The `user_profiles` channel is
+subscribed without a filter, so an update to any profile in the database reaches
+all clients.
 
-## Спостереження
+## Observations
 
-2026-08-02, manual smoke кастомних аватарок (headless Playwright, два
-контексти в одній кімнаті): Presence кілька разів показував активного
-користувача як offline (гравець з відкритою вкладкою мав offline-іконку і
-grayscale-аватар у глядача), а в одному прогоні leave після закриття браузера
-зайняв >45 с - глядач ще довго бачив гравця online. Відтворюваність
-нестабільна: у сусідньому прогоні leave долетів за ~1 с. Ймовірно повʼязано з
-lifecycle каналів вище; при роботі над ініціативою перевірити точність
-presence-стану окремо (headless - зручний спосіб відтворення).
+2026-08-02, manual smoke test of custom avatars (headless Playwright, two contexts
+in one room): Presence showed an active user as offline several times (a player
+with an open tab had an offline icon and a grayscale avatar for the observer),
+and in one run, leave after closing the browser took >45 s: the observer still
+saw the player online for a long time. Reproducibility is inconsistent: in an
+adjacent run, leave arrived in ~1 s. This is probably related to the channel
+lifecycle above; check the accuracy of presence state separately when working on
+the initiative (headless is a convenient way to reproduce it).
 
-## Очікуваний результат
+## Expected outcome
 
-Кожна кімната тримає рівно один комплект каналів, а трафік обмежений її
-учасниками.
+Each room maintains exactly one set of channels, and traffic is limited to its
+participants.
 
-## Обсяг
+## Scope
 
-- Single-flight reconnect + generation guard.
-- `removeChannel()` на cleanup.
-- Фільтр для `user_profiles`-каналу або відмова від нього.
+1. Single-flight reconnect + generation guard.
+2. `removeChannel()` on cleanup.
+3. A filter for the `user_profiles` channel or removal of that channel.
 
-## Критерії завершення
+## Completion criteria
 
-- Повторний `openChannel()` не лишає відкритих каналів.
-- Оновлення чужого профілю не викликає realtime-подій у сторонніх кімнатах.
+1. Repeated `openChannel()` calls leave no channels open.
+2. An update to another user's profile does not trigger realtime events in
+   unrelated rooms.
 
-## Наступний крок
+## Next step
 
-Перевірити кількість активних каналів після серії reconnect у devtools.
+Check the number of active channels after a series of reconnects in devtools.

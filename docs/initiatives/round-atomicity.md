@@ -1,38 +1,39 @@
-# Атомарність раунду
+# Round atomicity
 
-- Status: Planned
-- Priority: P0
-- Ініційовано: 2026-06-24 (аудит)
-- Last reviewed: 2026-07-17
+1. Status: Planned
+2. Priority: P0
+3. Initiated: 2026-06-24 (audit)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-`reveal()`, `startNewRound()` і create-room у `app/stores/room.ts` - окремі
-не-транзакційні запити. Два модератори можуть записати два snapshots одного
-раунду; create може лишити `rooms` без `room_state`.
+`reveal()`, `startNewRound()`, and room creation in `app/stores/room.ts` use separate,
+non-transactional requests. Two moderators can write two snapshots of the same round;
+room creation can leave `rooms` without `room_state`.
 
-## Очікуваний результат
+## Expected outcome
 
-Життєвий цикл раунду й створення кімнати виконуються однією транзакцією з
-optimistic concurrency, а інваріанти тримає сама БД.
+The round lifecycle and room creation each run in a single transaction with optimistic
+concurrency, and the database itself enforces the invariants.
 
-## Обсяг
+## Scope
 
-- Postgres RPC `create_room()`, `reveal_round(expected_started_at)`,
-  `start_new_round()` з транзакціями.
-- DB-constraints на `phase`, `deck_preset`, довжини полів, `room_id NOT NULL`.
+1. Postgres RPCs `create_room()`, `reveal_round(expected_started_at)`, and
+   `start_new_round()` with transactions.
+2. Database constraints on `phase`, `deck_preset`, field lengths, and `room_id NOT NULL`.
 
-## Критерії завершення
+## Completion criteria
 
-- Повторний `reveal` того самого раунду не створює другий запис у `round_history`.
-- Створення кімнати або повністю успішне, або не лишає осиротілих рядків.
+1. Repeating `reveal` for the same round does not create a second `round_history` record.
+2. Room creation either succeeds completely or leaves no orphaned rows.
 
-## Стан
+## Status
 
-- 2026-10-26: подвійний snapshot закрито на клієнті без зміни схеми: `reveal()` пише `round_history`, лише
-  коли його `update ... where phase <> 'revealed'` змінив рядок. Лишаються: update і insert - не одна транзакція
-  (insert може впасти після reveal), reveal на застарілому `round_started_at`, create-room і `startNewRound()`.
+1. 2026-10-26: The duplicate snapshot was addressed on the client without a schema change:
+   `reveal()` writes `round_history` only when its `update ... where phase <> 'revealed'`
+   changed a row. Remaining: update and insert are not one transaction (insert can fail
+   after reveal), reveal with a stale `round_started_at`, room creation, and `startNewRound()`.
 
-## Наступний крок
+## Next step
 
-Описати сигнатури RPC і поведінку при конфлікті `expected_started_at`.
+Describe the RPC signatures and conflict behavior for `expected_started_at`.

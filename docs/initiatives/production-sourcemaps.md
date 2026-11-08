@@ -1,28 +1,28 @@
 # Production sourcemaps
 
-- Status: Planned
-- Priority: P2
-- Ініційовано: 2026-05-16 (post-migration)
-- Last reviewed: 2026-07-17
+1. Status: Planned
+2. Priority: P2
+3. Initiated: 2026-05-16 (post-migration)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-`vite.config.ts` тримає `build: { sourcemap: true }` для прода: це розкриває
-вихідний код і додає ~3.6 MB у `dist/`.
+`vite.config.ts` keeps `build: { sourcemap: true }` for production: this exposes
+source code and adds ~3.6 MB to `dist/`.
 
-## Очікуваний результат
+## Expected outcome
 
-Sourcemaps доступні для діагностики, але не публікуються з продом.
+Sourcemaps are available for diagnostics but are not published with production.
 
-## Обсяг
+## Scope
 
-- Лишити sourcemaps тільки для stage, або вантажити їх в error-tracker і не
-  деплоїти у `dist/`.
+1. Keep sourcemaps for staging only, or upload them to an error tracker and do not
+   deploy them in `dist/`.
 
-## Критерії завершення
+## Completion criteria
 
-- `dist/` прод-збірки не містить `.map`-файлів.
+1. The production build's `dist/` contains no `.map` files.
 
-## Наступний крок
+## Next step
 
-Визначити, чи потрібен error-tracker, - від цього залежить варіант рішення.
+Decide whether an error tracker is needed; the choice of solution depends on it.

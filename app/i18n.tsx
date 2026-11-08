@@ -11,7 +11,13 @@ function storedLocale(): string {
     const value = localStorage.getItem(STORAGE_KEY)
     if (value && LOCALES.includes(value)) return value
   } catch {}
-  return 'uk'
+
+  const languages = navigator.languages?.length ? navigator.languages : [navigator.language]
+  for (const language of languages) {
+    const code = language?.split('-')[0]?.toLowerCase()
+    if (code && LOCALES.includes(code)) return code
+  }
+  return 'en'
 }
 
 function applyDocumentLang(code: string) {

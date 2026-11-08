@@ -1,22 +1,22 @@
-# Pages - маршрути й Realtime
+# Pages - routing and Realtime
 
 ## Realtime
 
-`app/pages/[slug].tsx` підписується в `useEffect` на:
+`app/pages/[slug].tsx` subscribes in `useEffect` to:
 
-- `players:<roomId>` → `playersStore.applyChange`
-- `room_state:<roomId>` → `roomStore.applyChange`
-- `rooms:<roomId>` → sync `slug/name/background_*`, redirect між id і slug; фон - inline `background-image` на корені
-- `user_profiles:<roomId>` → `profilesStore.applyChange`
-- `room:<roomId>` Presence → online players
-- `countdown:<roomId>` broadcast (`self:true`) → синхронний відлік перед reveal; initiator викликає `reveal()`.
-  Hold-to-start UI (silent/dry/wet, `app/hooks/useCountdown.ts`) - `DESIGN.md` §11.6
+1. `players:<roomId>` → `playersStore.applyChange`
+2. `room_state:<roomId>` → `roomStore.applyChange`
+3. `rooms:<roomId>` → sync `slug/name/background_*`, redirect between id and slug; the background is an inline `background-image` on the root
+4. `user_profiles:<roomId>` → `profilesStore.applyChange`
+5. `room:<roomId>` Presence → online players
+6. `countdown:<roomId>` broadcast (`self:true`) → synchronized countdown before reveal; the initiator calls `reveal()`.
+   Hold-to-start UI (silent/dry/wet, `app/hooks/useCountdown.ts`) - `DESIGN.md` §11.6
 
-Колбеки каналів живуть довше за рендер: свіжі значення (`isConsensus`, `navigate`, `startCountdown`) вони читають
-з `live` ref, який оновлюється після кожного рендера; замкнені змінні рендера там застаріють.
+Channel callbacks outlive a render: they read fresh values (`isConsensus`, `navigate`, `startCountdown`) from the
+`live` ref, which is updated after each render; render variables captured in closures would become stale.
 
-Після `'reconnecting' → 'online'` (перехід статусу Presence-каналу) виконується reconciliation refetch. Додатково
-`document.visibilitychange → visible` теж тригерить `fetchInitialData()` незалежно від presence-статусу - Supabase
-Realtime не переграє `postgres_changes`, пропущені під час розриву з'єднання (згорнута вкладка/додаток, короткий
-мережевий збій), і цей розрив не завжди проявляється як 'reconnecting' у presence-каналі. Optimistic vote пишеться в
-`pendingVotes[playerId]`, success/realtime ACK очищає запис, error робить rollback.
+After `'reconnecting' → 'online'` (a Presence channel status transition), a reconciliation refetch runs. In addition,
+`document.visibilitychange → visible` triggers `fetchInitialData()` regardless of presence status - Supabase
+Realtime does not replay `postgres_changes` missed during a disconnection (a backgrounded tab/app or a brief
+network failure), and that interruption does not always appear as 'reconnecting' on the presence channel. An optimistic
+vote is written to `pendingVotes[playerId]`; success/realtime ACK clears the entry, and an error rolls it back.

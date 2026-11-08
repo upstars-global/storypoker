@@ -2,22 +2,22 @@
 
 ## Overview
 
-Story Poker - веб-застосунок для планінг покеру (оцінювання User Stories) з реалтайм синхронізацією між учасниками. Jamstack, без власного бекенду - Supabase як база даних і реалтайм транспорт.
+Story Poker is a web application for planning poker (estimating User Stories), with real-time synchronization between participants. It uses Jamstack without a custom backend, with Supabase as the database and real-time transport.
 
 ## Tech Stack
 
-- **Framework:** Nuxt 4 (Vue 3, Composition API `<script setup>`)
-- **Styling:** Tailwind CSS 4
-- **Realtime/DB:** Supabase (Postgres + Realtime subscriptions + Presence)
-- **Auth:** Supabase Auth (email + пароль)
-- **Avatars:** DiceBear Dylan (`@dicebear/core`, `@dicebear/collection`)
-- **UI:** @nuxt/icon, v-wave, Google Fonts Montserrat 400/600
+1. **Framework:** Nuxt 4 (Vue 3, Composition API `<script setup>`)
+2. **Styling:** Tailwind CSS 4
+3. **Realtime/DB:** Supabase (Postgres + Realtime subscriptions + Presence)
+4. **Auth:** Supabase Auth (email + password)
+5. **Avatars:** DiceBear Dylan (`@dicebear/core`, `@dicebear/collection`)
+6. **UI:** @nuxt/icon, v-wave, Google Fonts Montserrat 400/600
 
 ## Data Model
 
 ### `rooms`
 ```sql
-id          text PRIMARY KEY   -- 8-char random ID, напр. "Ob4W3XMI"
+id          text PRIMARY KEY   -- 8-char random ID, e.g. "Ob4W3XMI"
 created_at  timestamptz DEFAULT now()
 ```
 
@@ -25,7 +25,7 @@ created_at  timestamptz DEFAULT now()
 ```sql
 room_id      text PRIMARY KEY REFERENCES rooms(id)
 phase        text DEFAULT 'voting'   -- 'voting' | 'revealed'
-active_cards text[]  -- масив активних карт, напр. ['0.5','1','2','3','5','8','13','21','?','Pass','☕']
+active_cards text[]  -- array of active cards, e.g. ['0.5','1','2','3','5','8','13','21','?','Pass','☕']
 round_started_at timestamptz DEFAULT now()
 ```
 
@@ -35,120 +35,120 @@ id           uuid PRIMARY KEY DEFAULT gen_random_uuid()
 room_id      text REFERENCES rooms(id)
 name         text NOT NULL
 is_moderator boolean DEFAULT false
-vote         text NULL    -- null = не голосував
+vote         text NULL    -- null = has not voted
 is_online    boolean DEFAULT true
-user_id      uuid NULL REFERENCES auth.users(id)  -- NULL для анонімних
+user_id      uuid NULL REFERENCES auth.users(id)  -- NULL for anonymous users
 created_at   timestamptz DEFAULT now()
 ```
 
-Realtime підписки на таблиці `players` та `room_state` - всі зміни миттєво видно всім у кімнаті.
+Realtime subscriptions to the `players` and `room_state` tables make all changes immediately visible to everyone in the room.
 
 ## localStorage
 
-Ключ: `storypoker_session_<roomId>`
-Значення: `{ playerId: string, playerName: string }`
+Key: `storypoker_session_<roomId>`
+Value: `{ playerId: string, playerName: string }`
 
-При вході на `/room/[slug]` - перевіряє localStorage. Якщо є збережений `playerId` для цієї кімнати, одразу підключається без форми імені.
+On entry to `/room/[slug]`, the application checks localStorage. If a `playerId` is saved for this room, it connects immediately without showing the name form.
 
 ## Pages
 
-### `pages/index.vue` - Головна
+### `pages/index.vue` - Home
 
-- Заголовок: "Create a planning poker room"
-- Поле імені з placeholder "Please enter your name"
-- Кнопка "Create Room"
-- Валідація: якщо поле порожнє - червона рамка інпуту, кімната не створюється
-- При успіху: генерує 8-char ID → INSERT у `rooms` + `room_state` + `players` → зберігає в localStorage → redirect на `/room/[id]`
+1. Heading: "Create a planning poker room"
+2. Name field with placeholder "Please enter your name"
+3. "Create Room" button
+4. Validation: if the field is empty, the input has a red border and the room is not created
+5. On success: generates an 8-char ID → INSERT into `rooms` + `room_state` + `players` → saves to localStorage → redirects to `/room/[id]`
 
-### `pages/room/[slug].vue` - Кімната
+### `pages/room/[slug].vue` - Room
 
-**При завантаженні:**
-1. Перевіряє localStorage для цього `roomId`
-2. Є збережений `playerId` → одразу підключається (оновлює `is_online = true`)
-3. Немає → показує join-оверлей
+**On load:**
+1. Checks localStorage for this `roomId`
+2. If a `playerId` is saved, connects immediately (updates `is_online = true`)
+3. Otherwise, shows the join overlay
 
-**Join-оверлей:**
-- Поле імені (мін. 1 символ)
-- Кнопка "Join Room"
-- INSERT нового гравця, зберігає в localStorage
+**Join overlay:**
+1. Name field (minimum 1 character)
+2. "Join Room" button
+3. INSERTs a new player and saves to localStorage
 
-**Лейаут:**
+**Layout:**
 ```
 [Header]
 [Players panel | Cards / Results area]
-[Moderator Insights panel]  ← під Players, тільки для модераторів
+[Moderator Insights panel]  ← below Players, moderators only
 ```
 
 ## Components
 
 ### Header
-- Ліворуч: "Story Point Poker" (логотип/назва)
-- Праворуч: кількість гравців онлайн + іконка юзера
-  - Якщо не авторизований: dropdown → Sign In / Sign Up / Configure Card Deck (якщо модератор)
-  - Якщо авторизований: аватар Dylan + ім'я → dropdown → Configure Card Deck (якщо модератор) / Sign Out
+1. Left: "Story Point Poker" (logo/name)
+2. Right: number of online players + user icon
+   1. If not authenticated: dropdown → Sign In / Sign Up / Configure Card Deck (if moderator)
+   2. If authenticated: Dylan avatar + name → dropdown → Configure Card Deck (if moderator) / Sign Out
 
 ### Players Panel
 
-Список всіх гравців кімнати:
-- **Онлайн гравець:** аватар Dylan (кольоровий, seed = ім'я), ім'я, іконка модератора (геймпад), статус
-- **Офлайн гравець:** аватар сірий, ім'я сіре, іконка "no wifi"
+List of all players in the room:
+1. **Online player:** Dylan avatar (colored, seed = name), name, moderator icon (gamepad), status
+2. **Offline player:** gray avatar, gray name, "no wifi" icon
 
-Статуси в колонці справа:
-- `voting` фаза: порожньо = не голосував, ✓ = проголосував (значення приховане)
-- `revealed` фаза: показує числове значення голосу
+Statuses in the right column:
+1. `voting` phase: empty = has not voted, ✓ = voted (value hidden)
+2. `revealed` phase: shows the numeric vote value
 
-**Меню `⋮` (свій рядок - всі гравці):**
-- Перейменувати
-- Стати модератором / Перестати бути модератором (toggle)
-- Вийти з кімнати
+**`⋮` menu (own row - all players):**
+1. Rename
+2. Become a moderator / Stop being a moderator (toggle)
+3. Leave the room
 
-**Меню `⋮` (чужий рядок - тільки авторизований модератор):**
-- Kick Player → видаляє гравця з кімнати (DELETE з `players`)
+**`⋮` menu (another player's row - authenticated moderator only):**
+1. Kick Player → removes the player from the room (DELETE from `players`)
 
-### Cards Area (фаза `voting`)
+### Cards Area (`voting` phase)
 
-Сітка карт: `0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`
-(відображаються тільки активні карти з `room_state.active_cards`)
+Card grid: `0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`
+(only active cards from `room_state.active_cards` are displayed)
 
-- Вибрана карта підсвічується синім
-- Клік → UPDATE `players.vote`
-- Кнопка "Reveal Estimates" (тільки модератор) → UPDATE `room_state.phase = 'revealed'`
+1. The selected card is highlighted in blue
+2. Click → UPDATE `players.vote`
+3. "Reveal Estimates" button (moderator only) → UPDATE `room_state.phase = 'revealed'`
 
-### Results Area (фаза `revealed`)
+### Results Area (`revealed` phase)
 
-- Кругова діаграма - сектори пропорційні кількості голосів за кожне значення, різні кольори
-- У списку гравців видно числові значення голосів
-- Кнопка "Start New Estimation Round" (тільки модератор) → скидає всі votes до NULL, phase → 'voting', оновлює `round_started_at`
+1. Pie chart - sectors are proportional to the number of votes for each value, with different colors
+2. Numeric vote values are visible in the player list
+3. "Start New Estimation Round" button (moderator only) → resets all votes to NULL, phase → 'voting', updates `round_started_at`
 
 ### Moderator Insights Panel
 
-Видимий тільки гравцям з `is_moderator = true`.
-Відображає: "This round started N minutes ago" (відносний час від `round_started_at`).
+Visible only to players with `is_moderator = true`.
+Displays: "This round started N minutes ago" (relative time from `round_started_at`).
 
 ### Configure Card Deck Modal
 
-Доступний тільки модераторам через меню хедера.
+Available only to moderators through the header menu.
 
-- Dropdown: тільки "Fibonacci scale" (перша ітерація)
-- Повний пул карт шкали: `0, 0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`
-- Чекбокс біля кожної карти - увімкнути/вимкнути
-- За замовчуванням активні: `0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`
-- Кнопка "Save Card Deck" → UPDATE `room_state.active_cards` → синхронізується до всіх
+1. Dropdown: only "Fibonacci scale" (first iteration)
+2. Full pool of cards in the scale: `0, 0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`
+3. Checkbox next to each card to enable/disable it
+4. Active by default: `0.5, 1, 2, 3, 5, 8, 13, 21, ?, Pass, ☕`
+5. "Save Card Deck" button → UPDATE `room_state.active_cards` → synchronizes to everyone
 
 ### Sign In / Sign Up Modal
 
-- Поля: email + пароль
-- Кнопка Sign In / Sign Up
-- Supabase Auth (`supabase.auth.signInWithPassword` / `signUp`)
-- Після входу: `players.user_id` оновлюється для поточного гравця
+1. Fields: email + password
+2. Sign In / Sign Up button
+3. Supabase Auth (`supabase.auth.signInWithPassword` / `signUp`)
+4. After sign-in: `players.user_id` is updated for the current player
 
 ## Roles & Permissions
 
-| Дія | Анонім | Анонім-модератор | Авториз. | Авториз.-модератор |
+| Action | Anonymous | Anonymous moderator | Authenticated | Authenticated moderator |
 |---|:---:|:---:|:---:|:---:|
-| Голосувати | ✓ | ✓ | ✓ | ✓ |
-| Перейменувати себе | ✓ | ✓ | ✓ | ✓ |
-| Стати модератором | ✓ | - | ✓ | - |
+| Vote | ✓ | ✓ | ✓ | ✓ |
+| Rename self | ✓ | ✓ | ✓ | ✓ |
+| Become a moderator | ✓ | - | ✓ | - |
 | Reveal Estimates | - | ✓ | - | ✓ |
 | Start New Round | - | ✓ | - | ✓ |
 | Configure Card Deck | - | ✓ | - | ✓ |
@@ -156,14 +156,14 @@ Realtime підписки на таблиці `players` та `room_state` - вс
 
 ## Realtime Flow
 
-1. Гравець входить → підписується на `players` WHERE `room_id = X` та `room_state` WHERE `room_id = X`
-2. Будь-яка зміна (голос, фаза, новий гравець) → Supabase надсилає UPDATE всім підписникам
-3. При закритті браузера → `beforeunload` → UPDATE `is_online = false`
-4. При поверненні → UPDATE `is_online = true`, відновлює старий `playerId` з localStorage
+1. A player joins → subscribes to `players` WHERE `room_id = X` and `room_state` WHERE `room_id = X`
+2. Any change (vote, phase, new player) → Supabase sends an UPDATE to all subscribers
+3. On browser close → `beforeunload` → UPDATE `is_online = false`
+4. On return → UPDATE `is_online = true`, restores the old `playerId` from localStorage
 
 ## Out of Scope (v2)
 
-- Re-estimate кнопка
-- Аналітика (Team Alignment Trends)
-- OAuth (Microsoft, Google)
-- Кілька шкал карт
+1. Re-estimate button
+2. Analytics (Team Alignment Trends)
+3. OAuth (Microsoft, Google)
+4. Multiple card scales
