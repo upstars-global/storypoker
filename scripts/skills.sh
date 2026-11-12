@@ -24,11 +24,11 @@ npx -y --prefer-online skl-x add sentimony/agentic-workflow -s \
 # SENTIMONY SKILLS https://github.com/sentimony/skills
 npx -y --prefer-online skl-x add sentimony/skills -s \
   \ scope-triage \
-  \ scope-check \
+  \ doc-preview \
   \ plan-crafting \
-  \ inline-plan-dev \
-  \ subagent-plan-dev \
-  \ git-worktree-isolation \
+  \ plan-execution \
+  \ plan-orchestration \
+  \ worktree-isolation \
   parallel-agents \
   \ tdd \
   \ review-request \
@@ -46,7 +46,7 @@ npx -y --prefer-online skl-x add sentimony/skills -s \
   prose-crafting \
   dashfix \
   negafix \
-  maintaining-agent-context \
+  agent-instructions \
   commit-all \
   gh-switch \
   secret-hygiene \

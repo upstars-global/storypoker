@@ -29,8 +29,8 @@ Guidance for coding agents (Claude Code, Codex) working with this repository.
 ## Workflow sequences
 Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
 CI check = `pnpm run test:ci` - app-перевірки, обов'язкові перед завершенням задачі зі змінами в репозиторії.
-Після змін reviewer workflow, його helpers або CI окремо запускай Python workflow fixtures;
-команди - `.github/AGENTS.md`. Для read-only аудитів дотримуйся обмежень викликаного скіла.
+Після змін виклику авторев'ю або CI запускай `actionlint .github/workflows/*.y*ml`; пін спільного workflow -
+`.github/AGENTS.md`. Для read-only аудитів дотримуйся обмежень викликаного скіла.
 - **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
   `web-debug`; тести - `vitest` і/або `web-debug`; фініш - `cr-request` →
   `verify` → CI check
@@ -67,7 +67,7 @@ Claude Code підвантажує вкладені `CLAUDE.md`, які імпо
 | `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
 | `tests/` | Vitest unit + Playwright e2e і `visual` | `tests/AGENTS.md` |
 | `scripts/` | lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
-| `.github/` | CI-воркфлоу, авторев'ю `pr-auto-review.yml` | `.github/AGENTS.md` |
+| `.github/` | CI-воркфлоу, авторев'ю `auto-reviewer.yaml` | `.github/AGENTS.md` |
 
 Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
 на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
@@ -124,14 +124,13 @@ CI - `.github/workflows/ci.yml`. Ціль - кожен job до ~2 хв (ріш�
 На кожен run паралельні job ids `lint`/`typecheck` (`icons:check` + `typecheck`)/`unit`
 (`test:unit:coverage`)/ `build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
 Supabase-кредами на Google Chrome раннера через `PLAYWRIGHT_CHANNEL=chrome`: без apt, який зависав на
-повільному дзеркалі). Окремий job `review-workflow` (`Review workflow fixtures`) запускає Python unittest
-suite `test_claude_review.py`; він обов'язковий для gate авторевʼю. E2E (лише старт Supabase ~90 с, apt для
+повільному дзеркалі). E2E (лише старт Supabase ~90 с, apt для
 WebKit зависав) і Visual винесені з CI в локальний `test:pre-squash` (рішення власника 2026-10-27); Visual
 поки нестабільний, його збій - не дефект для рев'ю; деплою в CI немає. Прод збирає сам Netlify з репо
 (`netlify.toml`, `command = "pnpm run build"`) зі своїм site env; job `build` збирає `dist` лише для
 `icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
-`.github/workflows/pr-auto-review.yml` - не required авторев'ю PR від `so-upstars`; механіка, гейт, права агента й
-прийняті компроміси - `.github/AGENTS.md`.
+`.github/workflows/auto-reviewer.yaml` - не required авторев'ю PR від `so-upstars`: тонкий виклик спільного workflow
+`sentimony/github-workflows`; пін, гейт і запуск - `.github/AGENTS.md`.
 
 ## Environment Setup
 `pnpm-lock.yaml` - committed (required for `pnpm install --frozen-lockfile`). Do NOT add it to `.gitignore`.
