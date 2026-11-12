@@ -19,7 +19,7 @@ permissions:
   statuses: write
 jobs:
   review:
-    uses: sentimony/github-workflows/.github/workflows/auto-reviewer-shared.yaml@v0.0.6
+    uses: sentimony/github-workflows/.github/workflows/auto-reviewer-shared.yaml@v0.0.7
     with:
       required-ci-jobs: |
         Lint

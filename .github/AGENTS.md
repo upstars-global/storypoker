@@ -3,7 +3,7 @@
 Авторевʼю PR (`workflows/auto-reviewer.yaml`, назва `Auto review`). Загальний CI (`ci.yml`) описаний у корінному `AGENTS.md`.
 
 Файл - тонкий виклик спільного reusable workflow
-`sentimony/github-workflows/.github/workflows/auto-reviewer-shared.yaml@v0.0.6`; локальної копії логіки
+`sentimony/github-workflows/.github/workflows/auto-reviewer-shared.yaml@v0.0.7`; локальної копії логіки
 немає (рішення власника, issue #80). Гейт, агент, права, ledger, footer і resolver тредів живуть у
 upstream; їх контракт - README та `AUTO_REVIEWER_SHARED_TRANSPORT.md` у `sentimony/github-workflows` на
 потрібному тегу. Виклик не задає `concurrency`, `runs-on` і `steps`, а `permissions` - стеля з README.
