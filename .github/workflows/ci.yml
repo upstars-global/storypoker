@@ -11,15 +11,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  review-workflow:
-    name: Review workflow fixtures
-    runs-on: ubuntu-latest
-    timeout-minutes: 4
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test review workflow
-        run: python3 -m unittest discover -s scripts -p 'test_claude_review.py'
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
