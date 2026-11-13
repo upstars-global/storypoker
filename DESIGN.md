@@ -168,7 +168,7 @@ Values from the actual code: `padding: 16px / 24px / 32px / 36px`, `margin: 4px 
 
 ### 4.6 Player context menu (3-dot)
 - The same `MuiMenu-paper`, options: **Is Moderator** / **Is Observer** (with Switch), **Rename Player**, **Leave Room**
-- Switch - standard MUI with primary theme
+- Switch - standard MUI with the primary color
 
 ---
 

@@ -169,7 +169,7 @@ introduce a prefix.
 | `storypoker_session_<roomId>` | `{ playerId, playerName, lastVisitedAt }` for auto-rejoin and Recent Rooms |
 | `sp-theme` / `sp-palette` | `light\|dark` / `classic\|cyberdeck\|matcha` - details in `app/assets/AGENTS.md` |
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - seed for AppHeader to prevent header jumps on reload |
-| `sp-lang` | `uk \| en`; read in `app/i18n.tsx`, written by `persistLocale()`. Default is `uk` |
+| `sp-lang` | `uk \| en`; manual choice stored by `persistLocale()`. Browser preferences apply when no valid choice is saved; fallback `en` (see `app/AGENTS.md`) |
 | `sp-side-widget` | `timer \| slot` - details in `app/components/AGENTS.md` |
 | `sp-volume` | `0`-`1`, volume for all sounds; default `0` (muted), unmute sets `0.1`. Written by `useSoundVolume()` |
 | `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
