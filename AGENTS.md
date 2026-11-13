@@ -28,10 +28,11 @@ changing the import scheme; do not create symlinks between them.
 - **Pace:** for a long plan, commit and push after each completed task, during the pause between subagents
 
 ## Workflow sequences
-Names come from `ls .claude/skills/`; do not invoke invented names. `/code-review` and `/security-review` are slash
-commands, not skills. CI check = `pnpm run test:ci` - app checks required before completing a task with repository
-changes. After changes to the reviewer workflow, its helpers, or CI, run the Python workflow fixtures separately;
-commands are in `.github/AGENTS.md`. For read-only audits follow the invoked skill's restrictions.
+Names come from `ls .claude/skills/`; do not invoke invented names. `/code-review` and `/security-review` are
+slash commands, not skills. CI check = `pnpm run test:ci` - app checks required before completing a task with
+repository changes. After changes to the auto-review caller or CI, run `actionlint .github/workflows/*.y*ml`;
+the shared workflow pin is documented in `.github/AGENTS.md`. For read-only audits follow the invoked skill's
+restrictions.
 - **New feature:** `specify` → `plan-craft` → `implement`; as needed `typescript` · `echarts` ·
   `web-debug`; tests: `vitest` and/or `web-debug`; finish: `cr-request` →
   `verify` → CI check
@@ -68,7 +69,7 @@ directory. Open the relevant instructions explicitly before editing.
 | `netlify/` | read-only `/api/*` function, Bearer token | `netlify/AGENTS.md` |
 | `tests/` | Vitest unit + Playwright e2e and `visual` | `tests/AGENTS.md` |
 | `scripts/` | lifecycle hooks, skills (`\ <name>` - intentionally disabled), icon generator | `scripts/AGENTS.md` |
-| `.github/` | CI workflows, `pr-auto-review.yml` auto-review | `.github/AGENTS.md` |
+| `.github/` | CI workflows, `auto-reviewer.yaml` auto-review | `.github/AGENTS.md` |
 
 Other paths: `public/_redirects` (`/* /index.html 200`, required for SPA routing on Netlify), `index.html` (head/meta +
 inline theme script), `test-results/` (gitignored artifacts).
@@ -113,7 +114,7 @@ pnpm run test:visual [<ref>]   # render <ref> (default origin/main) as the tree 
 pnpm run test:pre-squash [<ref>]   # before squash: local Supabase + e2e chromium/webkit + visual against <ref>
                                    # (default merge-base with origin/main) in a Playwright container; reports in test-results/pre-squash
 pnpm run test:ci     # app portion of CI: icons:check + lint + typecheck + test:unit + build + icons:audit-build
-                     # Python workflow fixtures run separately; commands in .github/AGENTS.md
+                     # Auto-review caller and CI changes also require actionlint; see .github/AGENTS.md
 pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI builds by itself (--no-build disables it). CLI defaults
                      # to dev context, build to production; deploy:prod pins both with --context production
 ```
@@ -125,15 +126,14 @@ CI is `.github/workflows/ci.yml`. The target is each job within ~2 min (owner de
 `timeout-minutes` is 4; shard a check that exceeds the target or move it to `scripts/pre-squash.sh` instead of
 raising the timeout. Each run has parallel job IDs `lint`/`typecheck` (`icons:check` + `typecheck`)/`unit`
 (`test:unit:coverage`)/ `build`/`page-load` (Playwright projects `page-load` and `icon-delivery` with dummy
-Supabase credentials on the runner's Google Chrome via `PLAYWRIGHT_CHANNEL=chrome`: no apt, which hung on a
-slow mirror). A separate `review-workflow` job (`Review workflow fixtures`) runs the Python unittest suite
-`test_claude_review.py`; it is required for the auto-review gate. E2E (Supabase startup alone takes ~90 s, apt
-for WebKit hung) and Visual were moved from CI to local `test:pre-squash` (owner decision 2026-10-27); Visual
-is still unstable, and its failure is not a review defect; CI does not deploy. Netlify builds production
-itself from the repo (`netlify.toml`, `command = "pnpm run build"`) with its own site env; the `build` job
-builds `dist` only for `icons:audit-build` with placeholder credentials, so it must not be shipped.
-`.github/workflows/pr-auto-review.yml` is non-required PR auto-review by `so-upstars`; mechanics, gate, agent
-permissions, and accepted trade-offs are in `.github/AGENTS.md`.
+Supabase credentials on the runner's Google Chrome via `PLAYWRIGHT_CHANNEL=chrome`: no apt, which hung on a slow
+mirror). E2E (Supabase startup alone takes ~90 s, apt for WebKit hung) and Visual were moved from CI to local
+`test:pre-squash` (owner decision 2026-10-27); Visual is still unstable, and its failure is not a review defect;
+CI does not deploy. Netlify builds production itself from the repo (`netlify.toml`,
+`command = "pnpm run build"`) with its own site env; the `build` job builds `dist` only for `icons:audit-build`
+with placeholder credentials, so it must not be shipped. `.github/workflows/auto-reviewer.yaml` is non-required
+PR auto-review by `so-upstars`: a thin caller of the shared workflow in `sentimony/github-workflows`; the pin,
+gate, and invocation are in `.github/AGENTS.md`.
 
 ## Environment Setup
 `pnpm-lock.yaml` - committed (required for `pnpm install --frozen-lockfile`). Do NOT add it to `.gitignore`.

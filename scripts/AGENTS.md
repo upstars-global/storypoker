@@ -6,7 +6,6 @@ The pnpm scripts `postinstall` (`[ -n "$CI" ]`) and `predev` (`|| true`) also ex
 
 | Script | Invocation | Purpose |
 | --- | --- | --- |
-| `test_claude_review.py`, `fixtures/claude-review/` | `python3 -m unittest discover -s scripts -p 'test_claude_review.py'` | Offline checks of the actual auto-review steps; Python/GitHub fixtures, Ruby YAML parser |
 | `setup.sh` | `preinstall`, `pnpm run setup` | Creates `.agents/skills`, `.claude/skills`, `.env/` with empty `.env` and `.env.local`; writes or extends `.claude/settings.json` through `jq` (`attribution` disabled, `SessionStart` hook for `session-start.sh` added once); finally calls `migrate-test-artifacts.sh` |
 | `migrate-test-artifacts.sh` | From `setup.sh` | Moves legacy `coverage/`, `playwright-report/` from the root to `test-results/`; temporary, remove together with the lines in `.gitignore` |
 | `skills.sh` | `postinstall` (except CI), `predev` (failure does not stop `dev`), `pnpm run skills` | First runs `skl-x update` and `skl-x rm .` (removes all project skills), then installs skills via `skl-x add` for Codex and Claude Code; uses the network |

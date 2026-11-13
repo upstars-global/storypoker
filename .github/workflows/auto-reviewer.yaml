@@ -1,0 +1,37 @@
+name: Auto review
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  pull_request:
+    types: [opened, reopened, ready_for_review, review_requested, closed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR number
+        required: true
+        type: string
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+  issues: read
+  statuses: write
+jobs:
+  review:
+    uses: sentimony/github-workflows/.github/workflows/auto-reviewer-shared.yaml@v0.0.7
+    with:
+      required-ci-jobs: |
+        Lint
+        Typecheck
+        Unit tests
+        Build
+        Public pages load
+      ci-workflow: ci.yml
+      ci-events: pull_request
+      reviewer: so-upstars
+      review-changed-head: true
+      pr: ${{ inputs.pr || '' }}
+    secrets:
+      AUTO_REVIEWER_TOKEN: ${{ secrets.SO_UPSTARS_PR_TOKEN }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
