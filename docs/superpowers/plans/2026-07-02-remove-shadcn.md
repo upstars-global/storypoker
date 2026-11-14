@@ -1410,6 +1410,9 @@ Find the **UI** bullet in the Tech Stack section. It currently lists `reka-ui@2.
 - Remove: shadcn-vue paragraph (`shadcn-vue ініціалізовано...`)
 - Add (to Components bullet): `AppModal` (native `<dialog>`, `app/components/AppModal.vue`), `AppTooltip` (`app/components/AppTooltip.vue`), `useClickOutside` (`app/composables/useClickOutside.ts`)
 
+These quoted fragments are historical literal source excerpts. First: TooltipProvider is in App.vue;
+dialog/popover/switch primitives are in modals and the listed components. Second: "shadcn-vue is initialized..."
+
 - [ ] **Step 8.3: Commit**
 
 ```bash

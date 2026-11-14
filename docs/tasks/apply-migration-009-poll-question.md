@@ -1,58 +1,58 @@
-# Задача для Claude Code: застосувати міграцію 009 (poll_question)
+# Task for Claude Code: apply migration 009 (poll_question)
 
-> Хендоф для тіммейта. Передай цей файл своїй сесії Claude Code (або виконай кроки вручну).
-> Мова спілкування в репозиторії - українська.
+> Handoff for a teammate. Give this file to your Claude Code session (or perform the steps manually).
+> This historical handoff specified Ukrainian for communication. Follow the current user instructions for the response language.
 
-## Контекст
+## Context
 
-Додано нову фічу - колода **«Голосовалка»** (Planning Poker, репозиторій `storypoker`).
-Код уже в `main`, але **неробочий**, бо в БД Supabase бракує колонки `room_state.poll_question`.
+A new feature was added: the **Voting** deck (Planning Poker, `storypoker` repository).
+The code is already in `main`, but **does not work** because the Supabase database lacks the `room_state.poll_question` column.
 
-Міграції накатуються **вручну** (див. `CLAUDE.md` → Database). Файл міграції вже є в репо:
+Migrations are applied **manually** (see `CLAUDE.md` → Database). The migration file is already in the repository:
 `supabase/migrations/009_room_state_poll_question.sql`.
 
-### Наслідки відсутньої колонки (поточні баги)
+### Effects of the missing column (current bugs)
 
-- `room.startNewRound()` пише `poll_question: null` → запит відхиляється БД → фаза не скидається з `revealed` на `voting` → **кнопка «Почати новий раунд» не діє для будь-якої колоди** (регресія, не лише голосовалка).
-- Не повертаючись у фазу `voting`, **не зʼявляється поле введення питання**.
-- `room.setDeckPreset()` і `room.setPollQuestion()` теж падають.
+1. `room.startNewRound()` writes `poll_question: null` → the database rejects the request → the phase does not reset from `revealed` to `voting` → **the “Start New Estimation Round” button does not work for any deck** (a regression affecting all decks, including Voting).
+2. Without returning to the `voting` phase, **the question input does not appear**.
+3. `room.setDeckPreset()` and `room.setPollQuestion()` also fail.
 
-## Чому це не зміг зробити попередній агент
+## Why the previous agent could not do this
 
-У проєкті доступні лише PostgREST-ключі (`VITE_SUPABASE_KEY`, `SUPABASE_SECRET_KEY=sb_secret_…`),
-які **не дозволяють DDL** (`ALTER TABLE`). Немає Supabase CLI, `psql`, connection string до Postgres
-та RPC для виконання SQL. Тому колонку має додати людина з доступом до дашборду / БД.
+The project only has PostgREST keys (`VITE_SUPABASE_KEY`, `SUPABASE_SECRET_KEY=sb_secret_…`),
+which **do not permit DDL** (`ALTER TABLE`). Supabase CLI, `psql`, a Postgres connection string,
+and an RPC for executing SQL are unavailable. A person with dashboard / database access must add the column.
 
-## Що треба зробити
+## What to do
 
-Застосувати міграцію `009` до **prod** Supabase-проєкту (і до тестового проєкту в `.env/.env.test`, якщо ганяєте E2E).
+Apply migration `009` to the **prod** Supabase project (and to the test project in `.env/.env.test` if running E2E).
 
-### Варіант A - Supabase SQL Editor (найшвидше)
+### Option A - Supabase SQL Editor (fastest)
 
-Відкрити **Supabase Dashboard → SQL Editor** потрібного проєкту і виконати:
+Open **Supabase Dashboard → SQL Editor** for the target project and run:
 
 ```sql
 alter table room_state
   add column if not exists poll_question text;
 ```
 
-### Варіант B - Supabase CLI (якщо проєкт залінковано)
+### Option B - Supabase CLI (if the project is linked)
 
 ```bash
-npx supabase link --project-ref <PROJECT_REF>   # одноразово
+npx supabase link --project-ref <PROJECT_REF>   # once
 npx supabase db push
 ```
 
-### Варіант C - пряме підключення (якщо є connection string з паролем БД)
+### Option C - direct connection (if you have a connection string with the database password)
 
 ```bash
 psql "<POSTGRES_CONNECTION_STRING>" -f supabase/migrations/009_room_state_poll_question.sql
 ```
 
-## Перевірка (обовʼязково)
+## Verification (required)
 
-Колонка має існувати й бути доступною для select через клієнтський ключ.
-Створи тимчасовий скрипт, прожени, видали:
+The column must exist and be accessible for select using the client key.
+Create a temporary script, run it, and delete it:
 
 ```bash
 cat > ./check_poll.mjs <<'EOF'
@@ -69,18 +69,18 @@ EOF
 node ./check_poll.mjs; rm -f ./check_poll.mjs
 ```
 
-Очікуваний вивід: `OK: poll_question exists`.
+Expected output: `OK: poll_question exists`.
 
-## Димова перевірка фічі в застосунку
+## Feature smoke test in the app
 
-1. `npm run dev`, зайти в кімнату модератором.
-2. «Налаштувати колоду» → вибрати **«Голосовалка»**. За/Проти зафіксовані (disabled-чекбокси), обрати третю картку (☕ / 🍺 / 🚬). Зберегти.
-3. Над картами зʼявляється поле питання → написати → **«Почати голосування»**. До цього картки заблоковані.
-4. Проголосувати (≥2 гравці), розкрити. У результатах над діаграмами видно текст питання.
-5. **«Почати новий раунд»** → фаза скидається, питання очищується, картки знову заблоковані до нового питання.
+1. Run `npm run dev` and enter a room as a moderator.
+2. “Configure Card Deck” → select **“Vote - Y/N”**. For / Against are fixed (disabled checkboxes); select the third card (☕ / 🍺 / 🚬). Save.
+3. The question field appears above the cards → enter a question → **“Start voting”**. The cards are disabled until then.
+4. Vote (≥2 players), then reveal. The question text appears above the charts in the results.
+5. **“Start New Estimation Round”** → the phase resets, the question is cleared, and the cards are disabled again until a new question is entered.
 
-## Готово, коли
+## Done when
 
-- Перевірочний скрипт друкує `OK: poll_question exists`.
-- Кнопка «Почати новий раунд» працює.
-- На колоді «Голосовалка» проходить увесь сценарій з п. «Димова перевірка».
+1. The verification script prints `OK: poll_question exists`.
+2. The “Start New Estimation Round” button works.
+3. The full scenario in “Feature smoke test in the app” passes with the “Voting” deck.

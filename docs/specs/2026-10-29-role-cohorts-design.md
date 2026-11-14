@@ -1,4 +1,4 @@
-# Когорти за ролями: кола, тренди, історія, головна й API
+# Role cohorts: circles, trends, history, home, and API
 
 Status: approved
 Route: design
@@ -6,162 +6,117 @@ Date: 2026-11-01
 
 ## Goal
 
-Команда в кімнаті бачить оцінки кожної ролі окремо, а не лише DEV проти QA. PR #58 (`ea60eb3`) уже дав кожній
-ролі власне коло результатів і лінію в графіку трендів. Решта застосунку досі на DEV/QA-поділі: історія раундів,
-середня узгодженість кімнати на головній і read-only `/api`. QA, GQA і AQA ділять одне коло, а загальний бал у
-картках трендів рахує PO/SM не так, як решта екранів. Ця специфікація описує поведінку, що вже в проді, і зводить
-усі місця до одного визначення ролі:
+A team in a room sees each role's estimates separately, instead of only DEV versus QA. PR #58 (`ea60eb3`) already gave each role its own result circle and trend chart line. The rest of the application still uses the DEV/QA split: round history, average room alignment on the home page, and the read-only `/api`. QA, GQA, and AQA share a circle, and the overall score in trend cards treats PO/SM differently from the other screens. This specification describes behavior already in production and brings all places under one definition of role:
 
-1. Описати відвантажене в #58 як контракт: кола, PO/SM, однаковий розмір, лінії трендів.
-2. Розділити QA на три ролі: QA, GQA, AQA.
-3. Перевести історію раундів, головну і `/api` на ролі; `/api` - лише додаванням полів, щоб не зламати agilecharts.
-4. Дати одне визначення загального балу раунду (оцінювачі без PO/SM) для історії, головної, карток трендів і `/api`.
-5. Прибрати DEV/QA-залишки з коду застосунку й документації.
-6. Малювати коло результатів на ECharts замість саморобного SVG.
-7. Ревізія перед релізом: автоматично показувати окреме коло кожної ролі з голосами, включно з кастомними,
-   прибрати налаштування показу та адаптувати кола до доступної ширини.
+1. Describe what shipped in #58 as a contract: circles, PO/SM, equal size, and trend lines.
+2. Split QA into three roles: QA, GQA, AQA.
+3. Move round history, home, and `/api` to roles; add fields to `/api` only, to avoid breaking agilecharts.
+4. Provide one definition of the overall round score (estimators excluding PO/SM) for history, home, trend cards, and `/api`.
+5. Remove DEV/QA remnants from application code and documentation.
+6. Draw the result circle with ECharts instead of custom SVG.
+7. Pre-release revision: automatically show a separate circle for every role with votes, including custom roles, remove display settings, and adapt circles to the available width.
 
-Усе - в одній специфікації: частини ділять одне визначення ролі й ідуть одним PR.
+Everything is in one specification: the parts share one definition of role and go into one PR.
 
 ## Evidence
 
-Початкові технічні записи нижче описують baseline `ea60eb3`; нова ревізія змінює лише поточні кола й налаштування.
+The original technical notes below describe baseline `ea60eb3`; the new revision changes only the current circles and settings.
 
 | Assumption | State | Source |
 | --- | --- | --- |
-| Кола результатів уже рахуються за ролями DEV/BE/FE/SRE/QA + PO/SM, QA = QA+GQA+AQA | verified | `app/utils/resultCohorts.ts` (`COHORT_BY_TAG`, `PRODUCT_COHORTS`) на `ea60eb3` |
-| Збережений набір чіпів обмежений check-констрейнтом DEV/BE/FE/SRE/QA | verified | `supabase/migrations/017_room_state_result_cohorts.sql:4-5` |
-| Графік трендів уже малює лінію на роль; картки беруть середнє ролей разом із PO/SM | verified | `app/components/AlignmentTrendsModal.tsx:164-166` (`roleRoundAlignment`, `overall = average(...)`) |
-| Картки трендів: «Поточний» - останній не-null загальний бал; «Середній» - середнє не-null; «Тренд» - друга половина проти першої при ≥ 4 балах, поріг ±1 % | verified | `AlignmentTrendsModal.tsx:202-218` |
-| Список історії ділить голоси на DEV/QA і підписує DEV як `DEV/FE/BE/SRE` | verified | `app/components/HistoryModal.tsx:76-85`, `:245` |
-| Список історії рахує середнє й узгодженість з голосів оцінювачів одним пулом, без PO/SM і кастомних; якщо голосували лише не-оцінювачі, пул - усі голоси | verified | `app/utils/roundStats.ts:104-118` `summarizeRound` → `trendCohorts` (`app/utils/shields.ts:161-172`, фолбек на рядку 171) |
-| `/api` `average`/`voters` рахуються тим самим пулом (PO/SM і кастомні виключені, той самий фолбек) | verified | `netlify/functions/room-json.mts:98-117` (`trendCohortForShields` дає `null` для PO/SM/custom), `:194-208` |
-| Netlify-функція не імпортує з `app/`, логіка DEV/QA - локальна копія | verified | `room-json.mts:1-5` (лише `@supabase/supabase-js`, коментар про відсутність `~`) |
-| Головна рахує узгодженість кімнати як середнє DEV і QA по всіх раундах, без фільтра колоди | verified | `app/pages/index.tsx:42,73-81` → `roundAlignment()` (`roundStats.ts:92-102`) |
-| `/api` віддає `devAlignment`, `qaAlignment`, `votes[].cohort: 'DEV'\|'QA'`, `average`, `voters`; раунди - лише числові колоди з не-null `average` | verified | `room-json.mts:192-217` |
-| agilecharts читає саме ці поля й приймає `cohort` лише `'DEV'\|'QA'` | verified | `agilecharts/app/utils/storypoker.ts:17,27-28,59`, `TeamConsistencyTrends.vue:60` |
-| Бал узгодженості - ціле 0-100 з карт колоди без `?`/`☕`, `null` при < 2 таких голосах | verified | `app/utils/alignment.ts:1-21` |
-| Гравець, якого немає серед видимих (вийшов), рахується як DEV - і в застосунку, і в `/api` | verified | `app/hooks/useShieldsMap.ts` (лише `visiblePlayers`), `room-json.mts:186-189` |
-| Роль у минулих раундах береться з поточних shields гравця, а не на момент голосу | verified | `round_history.votes` має лише `player_id,name,vote`; `useShieldsMap` |
-| Салют: будь-яке коло з ≥ 2 голосами й однією оцінкою; приховані голоси в кола не входять | verified | `app/utils/resultCelebration.ts:16-24`, `app/pages/[slug].tsx:250-252` |
-| ECharts зараз вантажиться лише з lazy-модалкою трендів | verified | `grep -rln echarts app` → лише `AlignmentTrendsModal.tsx`, `useEChart.ts`; `[slug].tsx:70` `lazy()` |
-| Eager-імпорт ECharts у коло результатів перевищить бюджет entry-чанка | assumed | бюджет +25 KiB gzip до baseline (`scripts/audit-icon-build.ts:8`); ризик знімає lazy-завантаження (рішення 10) |
-| Рішення власника: `/api` - додати нові поля, старі не чіпати | verified | відповідь користувача, Round 1 |
-| Рішення власника: PO/SM не входять у загальний бал | verified | відповідь користувача, Round 1 |
-| Рішення власника: салют - будь-яке коло, де тіммейтів-голосів цієї ролі більше одного | verified | відповідь користувача, Round 1 |
-| Рішення власника: QA, GQA, AQA - три окремі ролі; GQA/AQA завжди увімкнені, як QA | verified | відповіді користувача, Round 1-2 |
-| Автоматичні кола замість налаштувань; кожна кастомна роль має власне коло | verified | вимоги власника в чаті 2026-10-31 та підтвердження завершити до релізу 2026-11-01 |
-| Поточний код ще має чіпи й виключає кастомні ролі з кіл | verified | `app/utils/resultCohorts.ts:75-116`, `app/components/ConfigureCardDeckModal.tsx:208-256`, `app/pages/[slug].tsx:248-260` на `64ace6e` |
-| Кола вже lazy ECharts; контейнер потребує перевірки resize й довгих підписів | verified | `app/components/ResultsArea.tsx:29,89-91`, поточна реалізація |
+| Result circles are already calculated by roles DEV/BE/FE/SRE/QA + PO/SM, QA = QA+GQA+AQA | verified | `app/utils/resultCohorts.ts` (`COHORT_BY_TAG`, `PRODUCT_COHORTS`) at `ea60eb3` |
+| The saved set of chips is limited by a check constraint to DEV/BE/FE/SRE/QA | verified | `supabase/migrations/017_room_state_result_cohorts.sql:4-5` |
+| The trend chart already draws a line per role; cards take the average of roles including PO/SM | verified | `app/components/AlignmentTrendsModal.tsx:164-166` (`roleRoundAlignment`, `overall = average(...)`) |
+| Trend cards: “Current” is the last non-null overall score; “Average” is the average of non-null scores; “Trend” compares the second half with the first at ≥ 4 scores, threshold ±1 % | verified | `AlignmentTrendsModal.tsx:202-218` |
+| The history list splits votes into DEV/QA and labels DEV as `DEV/FE/BE/SRE` | verified | `app/components/HistoryModal.tsx:76-85`, `:245` |
+| The history list calculates average and alignment from estimator votes as one pool, excluding PO/SM and custom roles; if only non-estimators voted, the pool is all votes | verified | `app/utils/roundStats.ts:104-118` `summarizeRound` → `trendCohorts` (`app/utils/shields.ts:161-172`, fallback on line 171) |
+| `/api` `average`/`voters` use the same pool (PO/SM and custom roles excluded, same fallback) | verified | `netlify/functions/room-json.mts:98-117` (`trendCohortForShields` returns `null` for PO/SM/custom), `:194-208` |
+| The Netlify function does not import from `app/`; the DEV/QA logic is a local copy | verified | `room-json.mts:1-5` (only `@supabase/supabase-js`, comment about absence of `~`) |
+| Home calculates room alignment as the average of DEV and QA across all rounds, with no deck filter | verified | `app/pages/index.tsx:42,73-81` → `roundAlignment()` (`roundStats.ts:92-102`) |
+| `/api` returns `devAlignment`, `qaAlignment`, `votes[].cohort: 'DEV'\|'QA'`, `average`, `voters`; rounds include only numeric decks with non-null `average` | verified | `room-json.mts:192-217` |
+| agilecharts reads these fields and accepts `cohort` only as `'DEV'\|'QA'` | verified | `agilecharts/app/utils/storypoker.ts:17,27-28,59`, `TeamConsistencyTrends.vue:60` |
+| The alignment score is an integer 0-100 from deck cards excluding `?`/`☕`, `null` with < 2 such votes | verified | `app/utils/alignment.ts:1-21` |
+| A player absent from the visible players (left) counts as DEV, both in the application and `/api` | verified | `app/hooks/useShieldsMap.ts` (only `visiblePlayers`), `room-json.mts:186-189` |
+| A role in past rounds comes from the player's current shields, not those at the time of the vote | verified | `round_history.votes` has only `player_id,name,vote`; `useShieldsMap` |
+| Celebration: any circle with ≥ 2 votes and one estimate; hidden votes are excluded from circles | verified | `app/utils/resultCelebration.ts:16-24`, `app/pages/[slug].tsx:250-252` |
+| ECharts currently loads only with the lazy trend modal | verified | `grep -rln echarts app` → only `AlignmentTrendsModal.tsx`, `useEChart.ts`; `[slug].tsx:70` `lazy()` |
+| Eager import of ECharts into the result circle would exceed the entry chunk budget | assumed | budget +25 KiB gzip over baseline (`scripts/audit-icon-build.ts:8`); lazy loading mitigates the risk (decision 10) |
+| Owner decision: add new fields to `/api`, leave old ones untouched | verified | user response, Round 1 |
+| Owner decision: PO/SM are excluded from the overall score | verified | user response, Round 1 |
+| Owner decision: celebration applies to any circle where more than one teammate of that role voted | verified | user response, Round 1 |
+| Owner decision: QA, GQA, AQA are three separate roles; GQA/AQA are always enabled, like QA | verified | user responses, Rounds 1-2 |
+| Automatic circles replace settings; each custom role has its own circle | verified | owner requirements in chat on 2026-10-31 and confirmation to finish before release on 2026-11-01 |
+| Current code still has chips and excludes custom roles from circles | verified | `app/utils/resultCohorts.ts:75-116`, `app/components/ConfigureCardDeckModal.tsx:208-256`, `app/pages/[slug].tsx:248-260` at `64ace6e` |
+| Circles already use lazy ECharts; the container needs resize and long-label checks | verified | `app/components/ResultsArea.tsx:29,89-91`, current implementation |
 
 ## Decisions
 
-1. Вбудовані рольові когорти: `DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM` у цьому порядку. Кожна кастомна роль
-   отримує окреме коло; кастомні ролі йдуть після вбудованих у порядку першого проголосувавшого учасника в
-   поточному списку кімнати. Гравець без ролі або відсутній серед видимих гравців - `DEV`.
-2. Кола визначаються автоматично за фактичними голосами після reveal. Показується лише роль із хоча б одним
-   голосом, незалежно від кількості учасників із цією роллю. Три проголосовані ролі дають три кола; з восьми
-   присутніх ролей і двох проголосованих - два кола. Кола без голосів відсутні.
-3. Секцію «Показувати результати» прибрано. Збережений `room_state.result_cohorts` будь-якого допустимого
-   значення ігнорується під час показу; нове збереження колоди не змінює цього поля. Схема й старі дані лишаються
-   сумісними. Автоматичний показ обрано замість чіпів за прямою вимогою власника.
-4. Автоматичні кастомні кола стосуються лише результатів поточного раунду. Вбудовані когорти історії, трендів,
-   головної й `/api`, визначення оцінювачів та сумісність API зберігаються за рішеннями нижче. Ідентичність
-   кастомної ролі - повне збережене значення її shield із префіксом `custom:`; однакові значення групуються,
-   різні значення не зливаються, навіть коли підпис збігається з назвою вбудованої ролі.
+1. Built-in role cohorts: `DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM` in that order. Each custom role gets a separate circle; custom roles follow built-in roles in the order of the first voter from each role in the current room list. A player without a role or absent from visible players is `DEV`.
+2. Circles are determined automatically from actual votes after reveal. Only a role with at least one vote is shown, regardless of the number of participants with that role. Three roles with votes produce three circles; of eight roles present and two with votes, two circles appear. Circles without votes are absent.
+3. The “Show results” section is removed. Any valid saved value of `room_state.result_cohorts` is ignored during display; saving a deck again does not change this field. The schema and old data remain compatible. Automatic display was chosen over chips at the owner's direct request.
+4. Automatic custom circles apply only to current-round results. Built-in cohorts for history, trends, home, and `/api`, the definition of estimators, and API compatibility remain as specified in the decisions below. A custom role's identity is the full saved shield value with the `custom:` prefix; identical values are grouped, and different values are not merged even if the label matches a built-in role's name.
 
-5. Загальний бал раунду (середнє й узгодженість) рахується одним пулом голосів оцінювачів: ролі `DEV, BE, FE, SRE,
-   QA, GQA, AQA` без PO/SM і кастомних. Якщо в раунді голосували лише не-оцінювачі, пул - усі голоси. Бал - ціле
-   0-100 з карт без `?`/`☕`, `null` при менше ніж двох таких голосах. Це визначення беруть список історії,
-   головна, картки трендів і `average`/`voters` в `/api`. Take пул оцінювачів over середнього по ролях: так уже
-   рахують історія й `/api`, тож їхні числа не зміняться. Ціна - числа на головній і в картках трендів зсунуться
-   (головна досі брала середнє DEV і QA, картки - середнє ролей з PO/SM). Rejected: середнє рольових балів -
-   змінило б історичні числа в історії й `/api`.
-6. Картки трендів зберігають формули, міняється лише вхідний бал раунду (рішення 5). «Поточний бал» - останній
-   не-null бал у видимому періоді. «Середній бал» - округлене середнє не-null балів. «Тренд» - середнє другої
-   половини не-null балів проти першої при ≥ 4 балах; зміна понад ±1 % - вгору чи вниз, інакше стабільно.
-   Головна - округлене середнє не-null загальних балів раундів числових колод (`scrum, fibonacci, hours,
-   goal_clarity` і раунди без пресету), тобто того самого набору раундів, що й у трендах. Take спільний фільтр over
-   нинішнього «всі раунди»: раунди голосувань більше не потрапляють у бал кімнати.
-7. `/api` розширюється без зламу. Кожен раунд отримує `alignments` і `roleVotes`. `alignments` - розріджений
-   об'єкт: ключ є лише для ролі, що має хоча б один голос, значення - ціле 0-100 або `null`. `roleVotes` - усі
-   голоси з когортою, кожен з полем `role`. `average`, `voters`, `devAlignment`, `qaAlignment` і
-   `votes[{name,vote,cohort}]` лишаються побайтно такими, як зараз, і набір раундів у відповіді теж. Take нові поля
-   поруч over заміни: agilecharts працює без змін, ціна - у функції лишається копія старого DEV/QA-поділу як
-   legacy-контракт. Rejected: замінити поля - ламає вкладку Estimation Trends в agilecharts.
-8. Графік трендів: лінія на кожну роль, що має бал у видимому періоді; кожну можна сховати в легенді. «Деталі» на
-   точці лінії показує голоси лише цієї ролі. Take лінії за ролями over DEV/QA: для вбудованих ролей, як у колах.
-9. Список історії: якщо голоси раунду з когортою припадають на дві й більше ролей, раунд показує по рядку на роль
-   (кольоровий бейдж ролі + лічильники карт) у порядку рішення 1. Голоси кастомних ролей ідуть останнім рядком без
-   бейджа. Раунд з однією роллю або лише з кастомними ролями показує один рядок лічильників усіх голосів, як
-   зараз. Take рядки за ролями over DEV/QA-рядків; take окремий рядок кастомних over їх відкидання: кількість голосів
-   у рядках дорівнює кількості голосів раунду.
-10. Салют і звук консенсусу - як зараз: спрацьовують, коли видиме коло має ≥ 2 голоси й одну оцінку. Підходить коло
-    будь-якої ролі, PO/SM і кастомної теж; усі голоси належать власним колам. «Тіммейтів більше одного» читаємо як ≥ 2
-    голоси в колі, а не ≥ 2 гравці з роллю в кімнаті. Take голоси over членів: один проголосувавший із трьох PO
-    не має з ким бути одноголосним.
-11. Коло результатів малює ECharts (pie) у lazy-чанку, як модалка трендів. Усі кола однакові: ширина 240 px, на
-    екрані, де 240 px не вміщаються, усі звужуються однаково. Один голос - суцільне коло з підписом карти, кілька -
-    сектори з підписами карт, палітра та сама. Підпис `<ROLE>: <середнє>` рендериться поза графіком і видний одразу.
-    Поки чанк вантажиться або якщо не завантажився, на місці кола - порожнє місце того самого розміру, без
-    помилки на екрані. Take lazy ECharts over eager: бюджет entry-чанка `icons:audit-build`, ціна - коло
-    з'являється після підвантаження чанка (миттєво з кешу PWA). Rejected: лишити SVG - правило
-    `app/components/AGENTS.md` «при дотику переписуй на ECharts».
-12. Кольори ролей - одна мапа на всі місця: лінії трендів, бейджі історії, бейдж знімка раунду. Чинні кольори не
-    міняються; нові - GQA `#ff7043`, AQA `#fdd835`, обидва відмінні від QA `#ffa726`.
-13. Після переходу в застосунку не лишається DEV/QA-поділу: зникають функції й константи, що його рахують або
-    підписують, а документація описує лише рольові когорти. Єдиний свідомий залишок - legacy-поля `/api`
-    (рішення 7), позначені в коді й документації як контракт для agilecharts.
+5. The overall round score (average and alignment) uses one pool of estimator votes: roles `DEV, BE, FE, SRE, QA, GQA, AQA`, excluding PO/SM and custom roles. If only non-estimators voted in the round, the pool is all votes. The score is an integer 0-100 from cards excluding `?`/`☕`, `null` with fewer than two such votes. History list, home, trend cards, and `/api` `average`/`voters` use this definition. Take the estimator pool over the average of roles: history and `/api` already calculate it this way, so their numbers do not change. The cost is that home and trend card numbers shift (home previously averaged DEV and QA, cards averaged roles including PO/SM). Rejected: averaging role scores would change historical numbers in history and `/api`.
+6. Trend cards retain their formulas; only the input round score changes (decision 5). “Current score” is the last non-null score in the visible period. “Average score” is the rounded average of non-null scores. “Trend” compares the average of the second half of non-null scores to the first at ≥ 4 scores; a change beyond ±1 % is up or down, otherwise stable. Home uses the rounded average of non-null overall scores of numeric deck rounds (`scrum, fibonacci, hours, goal_clarity` and rounds without a preset), the same set of rounds as trends. Take a shared filter over the current “all rounds”: voting rounds no longer enter the room score.
+7. `/api` is extended without breaking compatibility. Each round gets `alignments` and `roleVotes`. `alignments` is a sparse object: a key exists only for a role with at least one vote, with an integer 0-100 or `null` value. `roleVotes` contains all votes with a cohort, each with a `role` field. `average`, `voters`, `devAlignment`, `qaAlignment`, and `votes[{name,vote,cohort}]` remain byte-for-byte as they are, as does the set of rounds in the response. Take new fields alongside existing ones over replacement: agilecharts works unchanged, at the cost of retaining a copy of the old DEV/QA split in the function as a legacy contract. Rejected: replacing fields breaks the Estimation Trends tab in agilecharts.
+8. Trend chart: one line per role with a score in the visible period; each can be hidden in the legend. “Details” on a line point shows only that role's votes. Take role lines over DEV/QA: for built-in roles, as in circles.
+9. History list: if a round's votes with a cohort span two or more roles, the round shows one row per role (colored role badge + card counts), in the order of decision 1. Custom role votes go in the last row without a badge. A round with one role or only custom roles shows one row of counts for all votes, as it does now. Take role rows over DEV/QA rows; take a separate custom row over discarding them: the number of votes in rows equals the number of votes in the round.
+10. Celebration and consensus sound stay as they are: they trigger when a visible circle has ≥ 2 votes and one estimate. Any role's circle qualifies, including PO/SM and custom roles; all votes belong to their own circles. “Тіммейтів більше одного” (“More than one teammate”) means ≥ 2 votes in the circle, rather than ≥ 2 players with the role in the room. Take votes over members: one voter among three POs has nobody with whom to reach unanimity.
+11. ECharts (pie) draws the result circle in a lazy chunk, like the trend modal. All circles are equal: width 240 px; on a screen where 240 px does not fit, all narrow equally. One vote is a solid circle with the card label; multiple votes are sectors with card labels, using the same palette. The `<ROLE>: <average>` label renders outside the chart and is visible immediately. While the chunk loads or if it fails to load, an empty space of the same size occupies the circle's place, with no on-screen error. Take lazy ECharts over eager: the `icons:audit-build` entry chunk budget; the cost is that the circle appears after the chunk loads (instantly from the PWA cache). Rejected: keeping SVG, due to the `app/components/AGENTS.md` rule “при дотику переписуй на ECharts” (“rewrite to ECharts when touching it”).
+12. Role colors use one map everywhere: trend lines, history badges, and round snapshot badge. Existing colors do not change; new colors are GQA `#ff7043`, AQA `#fdd835`, both distinct from QA `#ffa726`.
+13. After the transition, no DEV/QA split remains in the application: functions and constants that calculate or label it disappear, and documentation describes only role cohorts. The sole deliberate remnant is the legacy `/api` fields (decision 7), marked in code and documentation as a contract for agilecharts.
 
 ## Behavior
 
-**Кола результатів (після reveal, числова колода).** На кожну роль із голосами - коло з підписом
-`<ROLE>: <середнє>`. DEV, QA і Designer дають три кола. Два Designer з однаковим збереженим shield голосують в
-одне коло; Designer та Architect - у різні. Кастомна роль із назвою DEV має окреме коло від вбудованої DEV.
-Непроголосовані учасники не створюють кіл; до reveal приховані голоси не показуються. Коли немає голосів,
-рольових кіл немає. Колоди `voting`, `vote_question`, `goal_clarity` поводяться як зараз (бульбашки, бал ясності).
+**Result circles (after reveal, numeric deck).** Each role with votes gets a circle labeled
+`<ROLE>: <average>`. DEV, QA, and Designer produce three circles. Two Designers with the same saved shield vote
+into one circle; Designer and Architect vote into separate circles. A custom role named DEV has a separate circle
+from the built-in DEV. Participants who have not voted do not create circles; hidden votes are not shown before
+reveal. With no votes, there are no role circles. The `voting`, `vote_question`, and `goal_clarity` decks behave as
+before (bubbles, clarity score).
 
-**Діалог «Налаштувати колоду».** Секції «Показувати результати», її чіпів і підказки немає. Вибір пресету й карт
-працює як раніше. Бейдж голосу не стає червоним через старе налаштування прихованих ролей.
+**"Configure deck" dialog.** The "Show results" section, its chips, and its tooltip are absent. Preset and card
+selection works as before. The vote badge does not turn red because of the old hidden roles setting.
 
-**Адаптивність.** Усі кола мають однаковий розмір до 240 px і переносяться на нові рядки за доступною шириною.
-Якщо місця менше за ширину одного кола, воно звужується до контейнера. На 375 px і 1280 px немає горизонтального
-переповнення, обрізаних кіл або накладень підписів; довгі назви кастомних ролей переносяться. Зміна ширини
-перемальовує графік без перезавантаження сторінки.
+**Responsiveness.** All circles have the same size up to 240 px and wrap onto new rows as width permits. If less
+space than one circle is available, it shrinks to the container. At 375 px and 1280 px there is no horizontal
+overflow, clipped circle, or overlapping label; long custom role names wrap. Changing width redraws the chart without
+reloading the page.
 
-**Графік трендів.** Лінія на роль (до 9), легенда-перемикачі, картки за рішенням 6. Знімок раунду з лінії показує
-лише голоси цієї ролі з бейджем ролі в заголовку.
+**Trends chart.** One line per role (up to 9), legend toggles, and cards follow decision 6. A round snapshot from a
+line shows only that role's votes, with a role badge in the header.
 
-**Історія раундів.** Рядки за рішенням 9; середнє й узгодженість у рядку раунду - за рішенням 5 (як зараз).
+**Round history.** Rows follow decision 9; the average and alignment in a round row follow decision 5 (as before).
 
-**Головна (Recent Rooms).** Узгодженість кімнати - за рішенням 6.
+**Home (Recent Rooms).** Room alignment follows decision 6.
 
-**`/api`.** Як зараз плюс `alignments` і `roleVotes` на кожен раунд; набір раундів не змінюється.
+**`/api`.** As before, plus `alignments` and `roleVotes` for each round; the set of rounds remains unchanged.
 
-**Роль у минулих раундах** - поточна роль гравця; гравець, якого вже немає серед видимих, - DEV (як зараз).
+**Role in past rounds:** the player's current role; a player no longer among those visible is DEV (as before).
 
 ## Contract
 
-1. Вбудовані когорти: `DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM`; кастомні кола мають окремі стабільні ключі,
-   що не збігаються з ключами вбудованих ролей. Підпис кастомної ролі - її назва без префікса `custom:`.
-2. `room_state.result_cohorts`: формат і check-констрейнт без змін; значення не впливає на кола, збереження
-   колоди його не змінює. Оцінювачі для статистики - лише сім вбудованих ролей без PO/SM, як у рішенні 5.
-3. `/api` раунд:
+1. Built-in cohorts: `DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM`; custom circles have separate stable keys that do not
+   collide with built-in role keys. A custom role's label is its name without the `custom:` prefix.
+2. `room_state.result_cohorts`: the format and check constraint remain unchanged; the value does not affect circles,
+   and saving the deck does not change it. The statistics estimators are only the seven built-in roles excluding
+   PO/SM, as in decision 5.
+3. `/api` round:
   `{ id, date, week, deck, average, devAlignment, qaAlignment, voters, votes: [{name, vote, cohort: 'DEV'|'QA'}],
   alignments: { <ROLE>?: integer 0-100 | null }, roleVotes: [{ name: string, vote: string, role: <ROLE> }] }`.
-  `alignments` містить ключ лише для ролі з хоча б одним голосом у раунді. `null` - коли балу немає: менше двох
-  голосів картами колоди без `?`/`☕`. `roleVotes` - усі голоси з когортою (кастомних ролей немає) у порядку раунду.
-  Legacy-поля й набір раундів рахуються так само, як на `ea60eb3`.
-4. Кольори ролей: одна мапа на 9 ролей (рішення 12).
+  `alignments` contains a key only for a role with at least one vote in the round. `null` means no score: fewer than
+  two votes using deck cards other than `?`/`☕`. `roleVotes` contains all votes with a cohort (no custom roles) in
+  round order. Legacy fields and the set of rounds are calculated as on `ea60eb3`.
+4. Role colors: one map for 9 roles (decision 12).
 
 ## Out of scope
 
-1. Зміни в agilecharts: перехід на `alignments`/`roleVotes` робиться окремо в тому репо.
-2. Роль на момент голосу в історії: для цього потрібне поле в `round_history.votes`.
-3. Міграції бази й зміна check-констрейнту.
-4. Кастомні лінії трендів, кастомні ключі `/api` та зміна визначення загального балу через нові кола.
-5. Клієнти зі старим бандлом PWA до оновлення: вони показують QA одним колом і старий бал. Дані й схема ті самі,
-  тож зламу немає; оновлення приходить звичайним механізмом `useAppUpdate`.
+1. Changes to agilecharts: migration to `alignments`/`roleVotes` happens separately in that repository.
+2. The role at the time of a historical vote: this requires a field in `round_history.votes`.
+3. Database migrations and changes to the check constraint.
+4. Custom trend lines, custom `/api` keys, and changes to the overall score definition due to new circles.
+5. Clients with an old PWA bundle before updating: they show QA as one circle and the old score. The data and schema
+  are the same, so there is no breakage; the update arrives through the usual `useAppUpdate` mechanism.
 
 ## Open questions
 
@@ -169,38 +124,39 @@ None.
 
 ## Acceptance criteria
 
-1. AC1: Після reveal у числовій колоді голоси всіх дев’яти вбудованих ролей дають дев’ять кіл у порядку DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM.
-2. AC2: Гравці з ролями GQA і AQA потрапляють у кола `GQA` і `AQA`, а не в `QA`.
-3. AC3: DEV, QA і кастомна Designer із голосами дають три окремі кола; лише Designer та Architect дають два окремі кола без загального кола.
-4. AC4: Голос гравця без ролі й голос гравця, що вийшов з кімнати, рахуються як DEV у колах, історії, трендах і `/api` `roleVotes`.
-5. AC5: За трьох присутніх ролей із голосами показано три кола; за восьми присутніх ролей і голосів лише двох показано два кола.
-6. AC6: Значення result_cohorts null, [], [DEV] і [BE] дають однакові рольові кола для того самого набору голосів і не змінюють колір бейджа через приховування ролі.
-7. AC7: За відсутності голосів після reveal немає рольових кіл і салюту; до reveal рольові кола не розкривають прихованих голосів.
-8. AC8: Діалог налаштування колоди не містить секції «Показувати результати», її чіпів чи підказки; збереження пресету й карт не змінює result_cohorts.
-9. AC9: Однакові повні кастомні shields групуються в одне коло, різні - в окремі; custom:DEV не зливається з вбудованою DEV, підпис відображає назву як звичайний текст; кастомні кола йдуть після вбудованих за порядком першого проголосувавшого учасника відповідної ролі в поточному списку кімнати.
-10. AC10: На ширинах 375 px і 1280 px та після resize всі кола однакові, не ширші за 240 px або контейнер, без горизонтального переповнення; довгі назви переносяться без накладень.
-11. AC11: Коло результатів рендерить ECharts: один голос дає суцільне коло з підписом карти, кілька - сектори з підписами карт; ECharts не входить в entry-чанк (`pnpm run icons:audit-build` зелений).
-12. AC12: Поки чанк кола не завантажився або якщо його завантаження впало, підписи `<ROLE>: <середнє>` видно, місце кола має той самий розмір, а помилки на екрані немає.
-13. AC13: Салют і звук спрацьовують для будь-якого кола з принаймні двома однаковими голосами, включно з кастомним, PO і SM; кола з одним голосом чи різними оцінками їх не запускають.
-14. AC14: Колоди `voting`, `vote_question` і `goal_clarity` після reveal показують те саме, що на `ea60eb3`.
-15. AC15: Графік трендів малює окрему лінію для кожної з 9 ролей, що має бал у періоді, і кожну можна сховати в легенді.
-16. AC16: «Деталі» на точці лінії ролі відкривають знімок лише з голосами цієї ролі й бейджем ролі в заголовку.
-17. AC17: Загальний бал раунду в списку історії, вхід карток трендів і вхід головної дорівнюють узгодженості пулу голосів оцінювачів без PO/SM і кастомних; раунд, де голосували лише PO/SM чи кастомні ролі, рахується з усіх голосів.
-18. AC18: Картки трендів рахуються за формулами рішення 6 від загальних балів AC17.
-19. AC19: Узгодженість кімнати на головній - округлене середнє не-null загальних балів її раундів числових колод; раунди голосувань і раунди з `null` у середнє не входять.
-20. AC20: Ігнорування result_cohorts і додавання кастомних кіл не змінюють рядків історії, ліній трендів, балів головної, визначення оцінювачів і полів API.
-21. AC21: Раунд у списку історії з голосами двох і більше ролей показує по рядку на роль з бейджем ролі в порядку `DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM`, а голоси кастомних ролей - останнім рядком без бейджа; раунд з однією роллю або лише з кастомними ролями - один рядок усіх голосів.
-22. AC22: Відповідь `/api` для того самого набору даних має той самий набір раундів і ті самі `average`, `voters`, `devAlignment`, `qaAlignment` і `votes`, що й на `ea60eb3`.
-23. AC23: Кожен раунд у `/api` має `alignments` з ключем лише на кожну роль, що голосувала, зі значенням цілим 0-100 або `null`, і `roleVotes` з `role` для кожного голосу з когортою; голосів кастомних ролей у `roleVotes` немає.
-24. AC24: `/api` без Bearer-токена чи з неправильним токеном і далі повертає `401`.
-25. AC25: `grep -rnE 'trendCohorts|trendCohortForShields|isQaPlayer|DEV_COHORT_LABEL|splitRoundAlignment|TrendCohort' app` нічого не знаходить, і `roundAlignment` (якщо лишається) не рахує DEV і QA окремо; `AGENTS.md`, `DESIGN.md` і вкладені `AGENTS.md` не описують DEV/QA-поділ, окрім legacy-полів `/api`.
-26. AC26: Лінії трендів, бейджі ролей в історії й бейдж знімка раунду беруть колір ролі з однієї мапи; GQA `#ff7043`, AQA `#fdd835`, QA `#ffa726`.
-27. AC27: `pnpm run test:ci` зелений.
+1. AC1: After reveal in a numeric deck, votes from all nine built-in roles produce nine circles in the order DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM.
+2. AC2: Players with GQA and AQA roles appear in `GQA` and `AQA` circles respectively, rather than `QA`.
+3. AC3: DEV, QA, and custom Designer with votes produce three separate circles; Designer and Architect alone produce two separate circles without a combined circle.
+4. AC4: A vote by a player without a role and a vote by a player who left the room count as DEV in circles, history, trends, and `/api` `roleVotes`.
+5. AC5: Three present roles with votes produce three circles; eight present roles with votes from only two produce two circles.
+6. AC6: The result_cohorts values null, [], [DEV], and [BE] produce identical role circles for the same set of votes and do not change the badge color due to role hiding.
+7. AC7: With no votes after reveal, there are no role circles or confetti; before reveal, role circles do not disclose hidden votes.
+8. AC8: The deck configuration dialog contains no "Show results" section, its chips, or its tooltip; saving the preset and cards does not change result_cohorts.
+9. AC9: Identical complete custom shields are grouped into one circle, different ones into separate circles; custom:DEV does not merge with built-in DEV, and the label displays the name as plain text; custom circles follow built-in ones in the order of the first participant who voted for each role in the current room list.
+10. AC10: At widths of 375 px and 1280 px and after resize, all circles are equal, no wider than 240 px or the container, and have no horizontal overflow; long names wrap without overlap.
+11. AC11: ECharts renders the result circle: one vote produces a solid circle with the card label, multiple votes produce sectors with card labels; ECharts is excluded from the entry chunk (`pnpm run icons:audit-build` passes).
+12. AC12: While the circle chunk is loading or if loading fails, `<ROLE>: <average>` labels remain visible, the circle placeholder has the same size, and no error appears on screen.
+13. AC13: Confetti and sound trigger for any circle with at least two identical votes, including custom, PO, and SM; circles with one vote or different estimates do not trigger them.
+14. AC14: The `voting`, `vote_question`, and `goal_clarity` decks show the same result after reveal as on `ea60eb3`.
+15. AC15: The trends chart draws a separate line for each of the 9 roles with a score in the period, and each can be hidden in the legend.
+16. AC16: "Details" on a role line point opens a snapshot containing only that role's votes and a role badge in the header.
+17. AC17: The overall round score in the history list, the trends cards input, and the home page input equal the alignment of the pool of estimator votes excluding PO/SM and custom roles; a round where only PO/SM or custom roles voted is calculated from all votes.
+18. AC18: Trends cards are calculated using the formulas in decision 6 from the overall scores in AC17.
+19. AC19: Room alignment on the home page is the rounded average of non-null overall scores of its numeric-deck rounds; voting rounds and rounds with `null` are excluded from the average.
+20. AC20: Ignoring result_cohorts and adding custom circles do not change history rows, trend lines, home page scores, the definition of estimators, or API fields.
+21. AC21: A round in the history list with votes from two or more roles shows one row per role with a role badge in the order `DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM`, with custom role votes in the last row without a badge; a round with one role or only custom roles has one row for all votes.
+22. AC22: The `/api` response for the same dataset has the same set of rounds and the same `average`, `voters`, `devAlignment`, `qaAlignment`, and `votes` as on `ea60eb3`.
+23. AC23: Every round in `/api` has `alignments` with a key only for each role that voted, with an integer value 0-100 or `null`, and `roleVotes` with a `role` for every vote with a cohort; custom role votes are absent from `roleVotes`.
+24. AC24: `/api` continues to return `401` without a Bearer token or with an incorrect token.
+25. AC25: `grep -rnE 'trendCohorts|trendCohortForShields|isQaPlayer|DEV_COHORT_LABEL|splitRoundAlignment|TrendCohort' app` finds nothing, and `roundAlignment` (if retained) does not calculate DEV and QA separately; `AGENTS.md`, `DESIGN.md`, and nested `AGENTS.md` files do not describe a DEV/QA split except for legacy `/api` fields.
+26. AC26: Trend lines, role badges in history, and the round snapshot badge take the role color from one map; GQA `#ff7043`, AQA `#fdd835`, QA `#ffa726`.
+27. AC27: `pnpm run test:ci` passes.
 
 ## Security Model
 
-Trusted inputs: рішення власника в цій розмові. Untrusted inputs: дані Supabase (`round_history.votes`, імена,
-shields) і запити до `/api`. Імена гравців у `roleVotes` не виходять за межі того, що вже віддає `votes` і що видно
-будь-кому в кімнаті. Ендпоінт лишається за `Authorization: Bearer <STORYPOKER_API_TOKEN>`. Зміна не додає мережевих
-викликів, секретів, змін RLS чи схеми, і клієнт не отримує даних, яких не мав. Кастомні назви показуються як звичайний текст, без HTML;
-довгі назви переносяться, а ключі кастомних ролей не змішуються з вбудованими.
+Trusted inputs: owner decisions in this conversation. Untrusted inputs: Supabase data (`round_history.votes`, names,
+shields) and requests to `/api`. Player names in `roleVotes` do not go beyond what `votes` already returns and what
+anyone in the room can see. The endpoint remains protected by `Authorization: Bearer <STORYPOKER_API_TOKEN>`. The
+change adds no network calls, secrets, RLS or schema changes, and the client receives no data it did not already have.
+Custom names are displayed as plain text without HTML; long names wrap, and custom role keys do not collide with
+built-in keys.

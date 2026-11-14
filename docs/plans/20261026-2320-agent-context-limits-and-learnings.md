@@ -2,7 +2,7 @@
 
 **Spec:** none
 
-**Goal:** гілка переносить session learnings у `tests/AGENTS.md` і `supabase/AGENTS.md` та виправляє в `AGENTS.md`, `scripts/AGENTS.md` і `.codex/config.toml` опис завантаження інструкцій і бюджет Codex 64 KiB.
+**Goal:** the branch moves session learnings to `tests/AGENTS.md` and `supabase/AGENTS.md` and corrects the description of instruction loading and the then-current Codex 64 KiB budget in `AGENTS.md`, `scripts/AGENTS.md`, and `.codex/config.toml`.
 
 **Execution:** inline
 

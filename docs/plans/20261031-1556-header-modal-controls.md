@@ -2,59 +2,59 @@
 
 **Spec:** none
 
-**Goal:** Перенести керування виглядом і звуком у меню користувача та прибрати
-перетини заголовків попапів із кнопкою закриття. Окремий PR націлено на гілку PR63.
+**Goal:** Move appearance and sound controls to the user menu and prevent popup titles
+from overlapping the close button. A separate PR targets the PR63 branch.
 
-**Architecture:** Зберегти useTheme/useSoundVolume та спільні Base UI примітиви.
-Відступи й кнопку закриття виправити в AppModalPaper/main.css для всіх його споживачів.
+**Architecture:** Keep useTheme/useSoundVolume and the shared Base UI primitives.
+Fix spacing and the close button in AppModalPaper/main.css for all its consumers.
 
 **Stack:** React, Base UI, Tailwind, Vitest, Playwright.
 
 **Execution:** inline
 
-## Global constraints
+## Global constraints (historical)
 
-- Окремий PR, що зливається в PR63, без злиття PR63 у main.
-- З хедеру перенести вибір теми та слайдер гучності в dropdown користувача.
-- Заголовки попапів мають горизонтальні відступи та не перетинаються з close.
-- Кнопки закриття попапів без border.
-- Стрілка селекта колоди має відступ справа в усіх палітрах.
-- Before/After: classic dark, classic light, cyberdeck dark, cyberdeck light,
-  matcha dark, matcha light. Збережені рішення локального звіту лишаються чинними.
+1. A separate PR merges into PR63; PR63 is not merged into main.
+2. Move the theme selector and volume slider from the header to the user dropdown.
+3. Popup titles have horizontal spacing and do not overlap the close button.
+4. Popup close buttons have no border.
+5. The deck select arrow has right spacing in all palettes.
+6. Before/After: classic dark, classic light, cyberdeck dark, cyberdeck light,
+   matcha dark, matcha light. Saved decisions in the local report remain valid.
 
 ## Review focus
 
-Клавіатура меню й range, persistence теми/гучності, довгі українські заголовки
-на 375px, обидві теми всіх трьох палітр. Обмежити diff новим PR.
+Menu and range keyboard support, theme/volume persistence, long Ukrainian titles
+at 375px, and both themes of all three palettes. Limit the diff to the new PR.
 
 ## Acceptance criteria
 
-AC1: У закритому меню хедер не показує theme/palette/volume controls; у меню вони доступні гостю й авторизованому користувачу.
-AC2: Палітра, light/dark, mute й slider працюють і зберігаються; range доступний клавіатурою, Escape повертає focus.
-AC3: У всіх дев'яти AppModalPaper попапів title не перетинається з close на 375/1280px; close без border і тіні, focus visible.
-AC4: У селекта колоди правий відступ стрілки не менше16px у всіх шести комбінаціях тем.
-AC5: Локальні Before/After впорядковані за вказаними шістьма темами; існуючі audit histories прив'язані до незмінних screenshot IDs.
-AC6: test:ci та public-page/icon-delivery Playwright перевірки проходять; новий PR має base гілки PR63.
+1. AC1: When the menu is closed, the header does not show theme/palette/volume controls; the menu provides them to guests and signed-in users.
+2. AC2: Palette, light/dark, mute, and slider work and persist; the range is keyboard accessible, and Escape returns focus.
+3. AC3: In all nine AppModalPaper popups, the title does not overlap close at 375/1280px; close has no border or shadow, and focus is visible.
+4. AC4: The deck select arrow has a right inset of at least 16px in all six theme combinations.
+5. AC5: Local Before/After images follow the specified six-theme order; existing audit histories remain tied to unchanged screenshot IDs.
+6. AC6: test:ci and public-page/icon-delivery Playwright checks pass; the new PR uses the PR63 branch as its base.
 
-AC7: Локальна сторінка зберігає рішення та чернетки; редагування коментаря оновлює той самий запис, кошик видаляє запис. Після рішення поле й кнопки ховаються; Reject перевіряє обов’язкову причину при натисканні. Передача JSON зберігає latest і timestamped snapshot.
-AC8: Повзунок без додаткового border/outline у всіх6темах; усі3темні теми мають fill і цифру оригінального хедерного повзунка, без gradient. Усі3світлі теми зберігають fill/gradient хедера; digit контраст>=4.5.
+7. AC7: The local page saves decisions and drafts; editing a comment updates the same record, and the trash button deletes it. After a decision, the field and buttons are hidden; Reject validates the required reason when clicked. JSON transfer saves latest and a timestamped snapshot.
+8. AC8: The slider has no additional border/outline in all 6 themes; all 3 dark themes use the fill and digit of the original header slider, without a gradient. All 3 light themes retain the header fill/gradient; digit contrast >=4.5. See historical decisions R5 and R9 in the [execution record](#execution-record).
 
-AC9: Кнопка mute й слайдер шириною96px у меню користувача займають один рядок, без окремого видимого підпису; доступна назва, клавіатура та persistence збережені.
+9. AC9: The mute button and 96px slider occupy one row in the user menu, with no separate visible label; the accessible name, keyboard support, and persistence are retained.
 
-AC10: Один пункт «Кольорова тема» відкриває бічне підменю Classic/Cyberdeck/Matcha з однією активною галочкою; click, клавіатура, Escape і persistence працюють, підменю вміщується у viewport.
+10. AC10: One “Кольорова тема” (“Color theme”) item opens a side submenu for Classic/Cyberdeck/Matcha with one active checkmark; click, keyboard, Escape, and persistence work, and the submenu fits within the viewport.
 
 ## Files
 
 | File | Change | Task |
 | --- | --- | --- |
-| app/components/AppHeader.tsx | Перенести controls | 1 |
-| app/components/ui/dropdown-menu.tsx | MUI submenu trigger і розділювачі без горизонтального overflow | 1 |
-| tests/unit/components/AppHeader.spec.tsx | Меню й поведінка controls | 1 |
-| tests/e2e/{page-load,icon-delivery}.spec.ts | Відкривати account menu перед controls | 1 |
-| app/components/AppModalPaper.tsx, app/assets/css/main.css | Спільні title/close стилі | 2 |
-| app/components/ConfigureCardDeckModal.tsx | Правий відступ select | 2 |
-| tests/visual/support/scene.ts | dark перед light | 2 |
-| visual-review/pr-63/build.py | Локальний порядок Before/After, gitignored у головному checkout | 2 |
+| app/components/AppHeader.tsx | Move controls | 1 |
+| app/components/ui/dropdown-menu.tsx | MUI submenu trigger and separators without horizontal overflow | 1 |
+| tests/unit/components/AppHeader.spec.tsx | Menu and controls behavior | 1 |
+| tests/e2e/{page-load,icon-delivery}.spec.ts | Open the account menu before controls | 1 |
+| app/components/AppModalPaper.tsx, app/assets/css/main.css | Shared title/close styles | 2 |
+| app/components/ConfigureCardDeckModal.tsx | Select right inset | 2 |
+| tests/visual/support/scene.ts | dark before light | 2 |
+| visual-review/pr-63/build.py | Local Before/After order, gitignored in the main checkout | 2 |
 
 ## Tasks
 
@@ -63,9 +63,9 @@ AC10: Один пункт «Кольорова тема» відкриває б�
 **Files:** app/components/AppHeader.tsx, app/components/ui/dropdown-menu.tsx,
 tests/unit/components/AppHeader.spec.tsx, tests/e2e/page-load.spec.ts, tests/e2e/icon-delivery.spec.ts
 
-**Consumes:** Наявні AppMenu, useTheme, useSoundVolume.
+**Consumes:** Existing AppMenu, useTheme, useSoundVolume.
 
-**Produces:** Controls у dropdown з незмінним persistence API та бічним вибором палітри.
+**Produces:** Controls in the dropdown with the same persistence API and side palette selection.
 
 **Covers:** AC1, AC2, AC6, AC10
 
@@ -73,7 +73,7 @@ tests/unit/components/AppHeader.spec.tsx, tests/e2e/page-load.spec.ts, tests/e2e
 
 **RED:** `pnpm run test:unit -- tests/unit/components/AppHeader.spec.tsx` -> assertion controls hidden before opening account menu fails.
 
-**GREEN:** Та сама команда -> усі тести PASS; Playwright доводить keyboard/persistence.
+**GREEN:** Same command -> all tests PASS; Playwright verifies keyboard support and persistence.
 
 **Commit:** `git add -A -- app/components/AppHeader.tsx app/components/ui/dropdown-menu.tsx tests/unit/components/AppHeader.spec.tsx tests/e2e/page-load.spec.ts tests/e2e/icon-delivery.spec.ts docs/plans/20261031-1556-header-modal-controls.md`
 
@@ -81,18 +81,18 @@ tests/unit/components/AppHeader.spec.tsx, tests/e2e/page-load.spec.ts, tests/e2e
 
 **Files:** app/components/AppModalPaper.tsx, app/assets/css/main.css,
 app/components/ConfigureCardDeckModal.tsx, tests/visual/support/scene.ts;
-локально visual-review/pr-63/build.py у головному checkout.
+locally, visual-review/pr-63/build.py in the main checkout.
 
-**Consumes:** Controls у dropdown з незмінним persistence API; усі9споживачів AppModalPaper.
+**Consumes:** Controls in the dropdown with the same persistence API; all 9 AppModalPaper consumers.
 
-**Produces:** Загальні title/close відступи; впорядковані локальні screenshots та незмінні IDs.
+**Produces:** Shared title/close spacing; ordered local screenshots and unchanged IDs.
 
 **Covers:** AC3, AC4, AC5, AC6
 
 **Depends on:** Task 1
 
-**Check:** Playwright на375/1280px,3палітри×2теми: title/close rectangles не перетинаються,
-border/box-shadow close нульові, select arrow inset>=16px. test:ci PASS.
+**Check:** Playwright at 375/1280px, 3 palettes × 2 themes: title/close rectangles do not overlap,
+close border/box-shadow are zero, select arrow inset >=16px. test:ci PASS.
 
 **Commit:** `git add -A -- app/components/AppModalPaper.tsx app/assets/css/main.css app/components/ConfigureCardDeckModal.tsx tests/visual/support/scene.ts docs/plans/20261031-1556-header-modal-controls.md`
 
@@ -100,21 +100,21 @@ border/box-shadow close нульові, select arrow inset>=16px. test:ci PASS.
 ### Task 3: Rejection reasons and header-colored volume thumb
 
 **Files:** app/assets/css/main.css, tests/e2e/page-load.spec.ts;
-локальні visual-review/pr-{63,64}/ HTML і capture artifacts у головному checkout.
+local visual-review/pr-{63,64}/ HTML and capture artifacts in the main checkout.
 
-**Consumes:** Наявні slider mask/number і header CSS tokens; локальні JSON histories із необов'язковим reason.
+**Consumes:** Existing slider mask/number and header CSS tokens; local JSON histories with an optional reason.
 
-**Produces:** Header fill/gradient на thumb, контрастний outline та білий digit;
-textarea після details, draft persistence й append-only reason records, старі ID/storage keys незмінні.
+**Produces:** Header fill/gradient on the thumb, a contrasting outline, and a white digit;
+textarea after details, draft persistence and append-only reason records, with old IDs/storage keys unchanged. The historical decisions R5 and R9 in the [execution record](#execution-record) supersede parts of the thumb treatment.
 
 **Covers:** AC2, AC7, AC8
 
 **Depends on:** Task 2
 
-**RED:** Six-theme slider Playwright matrix ->6failed on header-style equality.
+**RED:** Six-theme slider Playwright matrix -> 6 failed on header-style equality.
 
-**GREEN:** Same33public/icon cases ->33passed; local page check proves legacy Reject03,
-reason draft/reload,5append events, plain-text rendering and JSON export on12/72pair pages.
+**GREEN:** Same 33 public/icon cases -> 33 passed; local page check proves legacy Reject 03,
+reason draft/reload, 5 append events, plain-text rendering and JSON export on 12/72 pair pages.
 
 **Commit:** `git add -A -- app/assets/css/main.css tests/e2e/page-load.spec.ts docs/plans/20261031-1556-header-modal-controls.md`
 

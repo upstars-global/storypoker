@@ -1,83 +1,85 @@
 # Playwright Smoke E2E Tests Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use numbered checkboxes (`1. [ ]`) for tracking.
 
-**Goal:** Додати Playwright smoke pack (3 user flows) у `tests/e2e/`, інтегрувати у CI окремим job-ом, який блокує deploy.
+**Goal:** Add a Playwright smoke pack (3 user flows) in `tests/e2e/` and integrate it into CI as a separate job that blocks deployment.
 
-**Architecture:** Root `playwright.config.ts`, тести в `tests/e2e/`, Page Object Model у `tests/page-objects/`, custom Playwright fixtures зі service-role cleanup у `tests/fixtures/`, ESM-сумісний ручний `loadDotenv({ override: true })` для `.env/.env.test`. CI отримує новий `detect-secrets` job, який видає прапори; `e2e` і `deploy` jobs мають `if:` на ці outputs (бо `secrets.*` не expand-яться в job-level `if`).
+**Architecture:** Root `playwright.config.ts`, tests in `tests/e2e/`, Page Object Model in `tests/page-objects/`, custom Playwright fixtures with service-role cleanup in `tests/fixtures/`, and an ESM-compatible manual `loadDotenv({ override: true })` for `.env/.env.test`. CI gets a new `detect-secrets` job that emits flags; the `e2e` and `deploy` jobs use these outputs in `if:` (because `secrets.*` are not expanded in job-level `if`).
 
-**Tech Stack:** `@playwright/test` ^1.x, `dotenv` ^16.x, `@supabase/supabase-js` (вже встановлено), Node 24+.
+**Tech Stack:** `@playwright/test` ^1.x, `dotenv` ^16.x, `@supabase/supabase-js` (already installed), Node 24+.
 
-**Спека:** `docs/superpowers/specs/2026-05-15-playwright-e2e-tests-design.md`. Якщо ці файли розходяться - спека канон.
+**Spec:** `docs/superpowers/specs/2026-05-15-playwright-e2e-tests-design.md`. If these files differ, the spec is canonical.
 
-> As-built note: цей план зберігає детальні task-by-task нотатки з початкового розбиття. Канонічна поточна структура описана у секціях Goal/Architecture/Файлова структура вище та у спеці: root `playwright.config.ts`, E2E specs у `tests/e2e/`, fixtures у `tests/fixtures/`, POM у `tests/page-objects/`.
-
----
-
-## Файлова структура
-
-Створюємо:
-- `supabase/migrations/007_players_room_state_realtime.sql` - idempotent додавання `players` і `room_state` до `supabase_realtime` (P5)
-- `.env/.env.test.example` - committed шаблон
-- `playwright.config.ts` - конфіг (ESM, dotenv, webServer)
-- `tests/support/helpers/supabase-admin.ts` - service-role клієнт, тільки в Node
-- `tests/fixtures/room.ts` - auto-cleanup створених кімнат
-- `tests/fixtures/auth.ts` - auto-cleanup створених юзерів + UI signup helper
-- `tests/fixtures/console.ts` - browser console/pageerror guard
-- `tests/support/test.ts` - merged Playwright fixtures
-- `tests/page-objects/HomePage.ts` - POM для `/`
-- `tests/page-objects/RoomPage.ts` - POM для `/<roomId>`
-- `tests/page-objects/AuthPage.ts` - POM для `/signup`, `/login`, account menu
-- `tests/e2e/smoke.spec.ts` - Flow 1 + Flow 2
-- `tests/e2e/critical-flows.spec.ts` - Flow 3 (chromium only)
-
-Модифікуємо:
-- `.gitignore` - зняти `package-lock.json`; додати `test-results/`, `playwright-report/`, `!/.env/.env.test.example`
-- `package.json` - devDeps + scripts
-- `package-lock.json` - починає трекатись після P1
-- `app/pages/index.vue` - testids
-- `app/pages/signup.vue` - testids
-- `app/pages/login.vue` - testids
-- `app/components/AppHeader.vue` - testids
-- `app/components/CardsArea.vue` - testids + `aria-pressed`
-- `app/components/ResultsArea.vue` - `results-area` і `new-round-button` testids
-- `app/components/PlayersList.vue` - testid root + типу `players` prop
-- `app/components/PlayerRow.vue` - testid root + data-* атрибути + `votePending` поле player
-- `app/pages/[slug].vue` - `playersForUi` додає `votePending`
-- `.github/workflows/ci.yml` - `detect-secrets` job, новий `e2e` job, виправлення `deploy.if`
-- `CLAUDE.md` - нотатка про обов'язковий lockfile (mitigation R1)
+> As-built note: this plan preserves detailed task-by-task notes from the original breakdown. The canonical current structure is described in the Goal, Architecture, and File structure sections above and in the spec: root `playwright.config.ts`, E2E specs in `tests/e2e/`, fixtures in `tests/fixtures/`, POM in `tests/page-objects/`.
 
 ---
 
-## Phase 1 - Передумови (blockers)
+## File structure
 
-### Task 1: P1 - lockfile у git
+Create:
+1. `supabase/migrations/007_players_room_state_realtime.sql` - idempotent addition of `players` and `room_state` to `supabase_realtime` (P5)
+2. `.env/.env.test.example` - committed template
+3. `playwright.config.ts` - configuration (ESM, dotenv, webServer)
+4. `tests/support/helpers/supabase-admin.ts` - service-role client, Node only
+5. `tests/fixtures/room.ts` - auto-cleanup of created rooms
+6. `tests/fixtures/auth.ts` - auto-cleanup of created users + UI signup helper
+7. `tests/fixtures/console.ts` - browser console/pageerror guard
+8. `tests/support/test.ts` - merged Playwright fixtures
+9. `tests/page-objects/HomePage.ts` - POM for `/`
+10. `tests/page-objects/RoomPage.ts` - POM for `/<roomId>`
+11. `tests/page-objects/AuthPage.ts` - POM for `/signup`, `/login`, account menu
+12. `tests/e2e/smoke.spec.ts` - Flow 1 + Flow 2
+13. `tests/e2e/critical-flows.spec.ts` - Flow 3 (chromium only)
+
+Modify:
+1. `.gitignore` - remove `package-lock.json`; add `test-results/`, `playwright-report/`, `!/.env/.env.test.example`
+2. `package.json` - devDeps + scripts
+3. `package-lock.json` - tracked starting after P1
+4. `app/pages/index.vue` - testids
+5. `app/pages/signup.vue` - testids
+6. `app/pages/login.vue` - testids
+7. `app/components/AppHeader.vue` - testids
+8. `app/components/CardsArea.vue` - testids + `aria-pressed`
+9. `app/components/ResultsArea.vue` - `results-area` and `new-round-button` testids
+10. `app/components/PlayersList.vue` - root testid + `players` prop type
+11. `app/components/PlayerRow.vue` - root testid + data-* attributes + `votePending` field on player
+12. `app/pages/[slug].vue` - `playersForUi` adds `votePending`
+13. `.github/workflows/ci.yml` - `detect-secrets` job, new `e2e` job, fix for `deploy.if`
+14. `CLAUDE.md` - note about the required lockfile (mitigation R1)
+
+---
+
+## Phase 1 - Prerequisites (blockers)
+
+### Task 1: P1 - lockfile in git
 
 **Files:**
-- Modify: `.gitignore`
-- Add: `package-lock.json` (генерується npm)
+1. Modify: `.gitignore`
+2. Add: `package-lock.json` (generated by npm)
 
-- [ ] **Step 1: Прибрати lockfile з .gitignore**
+<!-- Separate file and step lists. -->
 
-Edit `.gitignore`: видалити рядок 5 (`package-lock.json`). Решта файлу залишається.
+1. [ ] **Step 1: Remove lockfile from .gitignore**
 
-- [ ] **Step 2: Згенерувати lockfile**
+Edit `.gitignore`: remove line 5 (`package-lock.json`). Leave the rest of the file unchanged.
+
+2. [ ] **Step 2: Generate lockfile**
 
 Run:
 ```bash
 npm install
 ```
-Expected: створено/оновлено `package-lock.json` у корені.
+Expected: `package-lock.json` created/updated in the root.
 
-- [ ] **Step 3: Перевірити що `npm ci` працює локально**
+3. [ ] **Step 3: Verify that `npm ci` works locally**
 
 Run:
 ```bash
 rm -rf node_modules && npm ci
 ```
-Expected: успішна інсталяція без помилок.
+Expected: successful installation without errors.
 
-- [ ] **Step 4: Commit**
+4. [ ] **Step 4: Commit**
 
 ```bash
 git add .gitignore package-lock.json
@@ -86,12 +88,14 @@ git commit -m "chore: track package-lock.json (required for npm ci)"
 
 ---
 
-### Task 2: P5 - Realtime publication для `players` і `room_state`
+### Task 2: P5 - Realtime publication for `players` and `room_state`
 
 **Files:**
-- Create: `supabase/migrations/007_players_room_state_realtime.sql`
+1. Create: `supabase/migrations/007_players_room_state_realtime.sql`
 
-- [ ] **Step 1: Створити міграцію**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Create migration**
 
 Write `supabase/migrations/007_players_room_state_realtime.sql`:
 
@@ -107,15 +111,15 @@ exception when duplicate_object then null;
 end $$;
 ```
 
-- [ ] **Step 2: Накатати у test Supabase project**
+2. [ ] **Step 2: Apply to test Supabase project**
 
-Manual: відкрити SQL Editor у test Supabase project → paste content вище → Run. Очікувано без помилок (idempotent).
+Manual: open SQL Editor in the test Supabase project → paste the content above → Run. Expected: no errors (idempotent).
 
-- [ ] **Step 3: Накатати у production Supabase project**
+3. [ ] **Step 3: Apply to production Supabase project**
 
-Manual: те саме у production project. Idempotent - повторний прогін не зламається, якщо таблиці вже у publication.
+Manual: do the same in the production project. Idempotent - rerunning will not fail if the tables are already in the publication.
 
-- [ ] **Step 4: Commit**
+4. [ ] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations/007_players_room_state_realtime.sql
@@ -124,49 +128,51 @@ git commit -m "feat(db): add players and room_state to realtime publication"
 
 ---
 
-### Task 3 (manual): P2 + P3 - Persistent test user у test Supabase project
+### Task 3 (manual): P2 + P3 - Persistent test user in test Supabase project
 
-**Files:** жодних змін у репо.
+**Files:** no repository changes.
 
-- [ ] **Step 1: Створити окремий test Supabase project**
+1. [ ] **Step 1: Create a separate test Supabase project**
 
-Manual: Supabase Dashboard → New Project. Зафіксувати URL і `anon` key, плюс `service_role` key (Settings → API).
+Manual: Supabase Dashboard → New Project. Record the URL and `anon` key, plus the `service_role` key (Settings → API).
 
-- [ ] **Step 2: Накатати всі міграції 001..007 у test project**
+2. [ ] **Step 2: Apply all migrations 001..007 to the test project**
 
-Manual: SQL Editor → виконати кожен файл з `supabase/migrations/` по черзі.
+Manual: SQL Editor → run each file in `supabase/migrations/` in order.
 
-- [ ] **Step 3: Залишити email-confirmation увімкненим**
+3. [ ] **Step 3: Keep email confirmation enabled**
 
-Manual: Authentication → Providers → Email → переконатись що `Confirm email` ON. Це P2 - тест signup перевіряє success-screen, не autologin.
+Manual: Authentication → Providers → Email → ensure `Confirm email` is ON. This is P2 - the signup test checks the success screen, not autologin.
 
-- [ ] **Step 4: Створити persistent test user**
+4. [ ] **Step 4: Create a persistent test user**
 
-Manual: Authentication → Users → Add user → Email + Password (зберегти у password manager). Підтвердити email через `Mark as confirmed` або через лист.
+Manual: Authentication → Users → Add user → Email + Password (save in a password manager). Confirm the email using `Mark as confirmed` or through the email.
 
-- [ ] **Step 5: Завести GitHub secrets**
+5. [ ] **Step 5: Set up GitHub secrets**
 
 Manual: repo Settings → Secrets and variables → Actions:
-- `E2E_SUPABASE_URL` - URL з test project
-- `E2E_SUPABASE_ANON_KEY` - anon publishable key
-- `E2E_SUPABASE_SERVICE_ROLE_KEY` - service role key
-- `E2E_TEST_USER_EMAIL` - email persistent user
-- `E2E_TEST_USER_PASSWORD` - пароль persistent user
+1. `E2E_SUPABASE_URL` - URL from the test project
+2. `E2E_SUPABASE_ANON_KEY` - anon publishable key
+3. `E2E_SUPABASE_SERVICE_ROLE_KEY` - service role key
+4. `E2E_TEST_USER_EMAIL` - persistent user email
+5. `E2E_TEST_USER_PASSWORD` - persistent user password
 
-Не комітити креди.
+Do not commit credentials.
 
 ---
 
-## Phase 2 - DOM contract (data-testid атрибути)
+## Phase 2 - DOM contract (data-testid attributes)
 
-### Task 4: testids у `app/pages/index.vue`
+### Task 4: testids in `app/pages/index.vue`
 
 **Files:**
-- Modify: `app/pages/index.vue`
+1. Modify: `app/pages/index.vue`
 
-- [ ] **Step 1: Додати testid на input імені**
+<!-- Separate file and step lists. -->
 
-Edit `app/pages/index.vue` line 114 - додати `data-testid="home-name-input"` у `<input v-model="name" ...>`. Решта атрибутів без змін:
+1. [ ] **Step 1: Add a testid to the name input**
+
+Edit `app/pages/index.vue` line 114 - add `data-testid="home-name-input"` to `<input v-model="name" ...>`. Leave the other attributes unchanged:
 
 ```vue
 <input
@@ -180,19 +186,19 @@ Edit `app/pages/index.vue` line 114 - додати `data-testid="home-name-input
 />
 ```
 
-- [ ] **Step 2: Додати testid на кнопку Create Room**
+2. [ ] **Step 2: Add a testid to the Create Room button**
 
-Edit `app/pages/index.vue` line 122 - додати `data-testid="home-create-room"` у `<button @click="createRoom">`. Решта без змін.
+Edit `app/pages/index.vue` line 122 - add `data-testid="home-create-room"` to `<button @click="createRoom">`. Leave the rest unchanged.
 
-- [ ] **Step 3: Запустити unit-suite (sanity)**
+3. [ ] **Step 3: Run unit suite (sanity)**
 
 Run:
 ```bash
 npm test
 ```
-Expected: PASS (testids не зачіпають unit-логіку).
+Expected: PASS (testids do not affect unit logic).
 
-- [ ] **Step 4: Commit**
+4. [ ] **Step 4: Commit**
 
 ```bash
 git add app/pages/index.vue
@@ -201,16 +207,18 @@ git commit -m "chore(ui): add data-testid for e2e on home page"
 
 ---
 
-### Task 5: testids + data-* у `PlayerRow.vue` / `PlayersList.vue` + plumbing `votePending`
+### Task 5: testids + data-* in `PlayerRow.vue` / `PlayersList.vue` + plumbing `votePending`
 
 **Files:**
-- Modify: `app/components/PlayerRow.vue`
-- Modify: `app/components/PlayersList.vue`
-- Modify: `app/pages/[slug].vue`
+1. Modify: `app/components/PlayerRow.vue`
+2. Modify: `app/components/PlayersList.vue`
+3. Modify: `app/pages/[slug].vue`
 
-- [ ] **Step 1: Розширити `playersForUi` у `[slug].vue` полем `votePending`**
+<!-- Separate file and step lists. -->
 
-Edit `app/pages/[slug].vue` lines 55-61. Замінити computed на:
+1. [ ] **Step 1: Add the `votePending` field to `playersForUi` in `[slug].vue`**
+
+Edit `app/pages/[slug].vue` lines 55-61. Replace the computed value with:
 
 ```ts
 const playersForUi = computed(() =>
@@ -223,11 +231,11 @@ const playersForUi = computed(() =>
 )
 ```
 
-`pendingVotes` уже задестракчений на лінії 26.
+`pendingVotes` is already destructured on line 26.
 
-- [ ] **Step 2: Додати `votePending` у тип `players` prop у `PlayersList.vue`**
+2. [ ] **Step 2: Add `votePending` to the `players` prop type in `PlayersList.vue`**
 
-Edit `app/components/PlayersList.vue` lines 2-15. Додати поле `votePending: boolean` в інлайн-тип одного player. Тіло компонента без змін.
+Edit `app/components/PlayersList.vue` lines 2-15. Add the `votePending: boolean` field to the inline type of a player. Leave the component body unchanged.
 
 ```ts
 const props = defineProps<{
@@ -246,11 +254,11 @@ const props = defineProps<{
 }>()
 ```
 
-- [ ] **Step 3: Додати `data-testid` на root `PlayersList`**
+3. [ ] **Step 3: Add `data-testid` to the `PlayersList` root**
 
-Edit `app/components/PlayersList.vue` line 30 - додати `data-testid="players-list"` на `<div class="mui-paper">`.
+Edit `app/components/PlayersList.vue` line 30 - add `data-testid="players-list"` to `<div class="mui-paper">`.
 
-- [ ] **Step 4: Розширити тип `player` prop у `PlayerRow.vue` полем `votePending`**
+4. [ ] **Step 4: Add the `votePending` field to the `player` prop type in `PlayerRow.vue`**
 
 Edit `app/components/PlayerRow.vue` lines 2-15:
 
@@ -272,9 +280,9 @@ const props = defineProps<{
 }>()
 ```
 
-- [ ] **Step 5: Додати testid + data-* на root `PlayerRow`**
+5. [ ] **Step 5: Add testid + data-* to the `PlayerRow` root**
 
-Edit `app/components/PlayerRow.vue` line 62-65 - root `<div>`. Додати атрибути:
+Edit `app/components/PlayerRow.vue` line 62-65 - root `<div>`. Add attributes:
 
 ```vue
 <div
@@ -287,7 +295,7 @@ Edit `app/components/PlayerRow.vue` line 62-65 - root `<div>`. Додати ат
 >
 ```
 
-- [ ] **Step 6: Запустити unit-suite**
+6. [ ] **Step 6: Run unit suite**
 
 Run:
 ```bash
@@ -295,7 +303,7 @@ npm test
 ```
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+7. [ ] **Step 7: Commit**
 
 ```bash
 git add app/components/PlayerRow.vue app/components/PlayersList.vue app/pages/\[slug\].vue
@@ -304,14 +312,16 @@ git commit -m "chore(ui): add data-testid and vote-pending markers on player row
 
 ---
 
-### Task 6: testids + `aria-pressed` у `CardsArea.vue`
+### Task 6: testids + `aria-pressed` in `CardsArea.vue`
 
 **Files:**
-- Modify: `app/components/CardsArea.vue`
+1. Modify: `app/components/CardsArea.vue`
 
-- [ ] **Step 1: Додати атрибути на vote-card buttons**
+<!-- Separate file and step lists. -->
 
-Edit `app/components/CardsArea.vue` lines 23-31 - `<button>` всередині `v-for`. Додати `data-testid="vote-card"`, `:data-value="card"`, `:aria-pressed="String(selectedVote === card)"`:
+1. [ ] **Step 1: Add attributes to vote-card buttons**
+
+Edit `app/components/CardsArea.vue` lines 23-31 - `<button>` inside `v-for`. Add `data-testid="vote-card"`, `:data-value="card"`, `:aria-pressed="String(selectedVote === card)"`:
 
 ```vue
 <button
@@ -328,15 +338,15 @@ Edit `app/components/CardsArea.vue` lines 23-31 - `<button>` всередині 
 </button>
 ```
 
-- [ ] **Step 2: Додати testid на кнопку Reveal**
+2. [ ] **Step 2: Add a testid to the Reveal button**
 
-Edit `app/components/CardsArea.vue` line 36 - додати `data-testid="reveal-button"`:
+Edit `app/components/CardsArea.vue` line 36 - add `data-testid="reveal-button"`:
 
 ```vue
 <button v-wave class="mui-btn" data-testid="reveal-button" :disabled="!hasVotes" @click="emit('reveal')">{{ $t('cards.reveal') }}</button>
 ```
 
-- [ ] **Step 3: Commit**
+3. [ ] **Step 3: Commit**
 
 ```bash
 git add app/components/CardsArea.vue
@@ -345,12 +355,14 @@ git commit -m "chore(ui): add data-testid and aria-pressed on vote cards"
 
 ---
 
-### Task 7: testids у `ResultsArea.vue`
+### Task 7: testids in `ResultsArea.vue`
 
 **Files:**
-- Modify: `app/components/ResultsArea.vue`
+1. Modify: `app/components/ResultsArea.vue`
 
-- [ ] **Step 1: Додати testid на root container**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Add a testid to the root container**
 
 Edit `app/components/ResultsArea.vue` line 25 - root `<div>`:
 
@@ -358,7 +370,7 @@ Edit `app/components/ResultsArea.vue` line 25 - root `<div>`:
 <div class="flex flex-col items-center gap-8 w-full" data-testid="results-area">
 ```
 
-- [ ] **Step 2: Додати testid на кнопку Start New Round**
+2. [ ] **Step 2: Add a testid to the Start New Round button**
 
 Edit `app/components/ResultsArea.vue` lines 39-44:
 
@@ -373,7 +385,7 @@ Edit `app/components/ResultsArea.vue` lines 39-44:
 </button>
 ```
 
-- [ ] **Step 3: Commit**
+3. [ ] **Step 3: Commit**
 
 ```bash
 git add app/components/ResultsArea.vue
@@ -382,14 +394,16 @@ git commit -m "chore(ui): add data-testid for results area and new-round button"
 
 ---
 
-### Task 8: testids у `AppHeader.vue`
+### Task 8: testids in `AppHeader.vue`
 
 **Files:**
-- Modify: `app/components/AppHeader.vue`
+1. Modify: `app/components/AppHeader.vue`
 
-- [ ] **Step 1: testid на кнопку avatar (account menu trigger)**
+<!-- Separate file and step lists. -->
 
-Edit `app/components/AppHeader.vue` line 116-132 - `<button>` навколо аватара. Додати `data-testid="account-menu-button"`:
+1. [ ] **Step 1: testid on the avatar button (account menu trigger)**
+
+Edit `app/components/AppHeader.vue` line 116-132 - `<button>` around the avatar. Add `data-testid="account-menu-button"`:
 
 ```vue
 <button
@@ -403,9 +417,9 @@ Edit `app/components/AppHeader.vue` line 116-132 - `<button>` навколо а�
 >
 ```
 
-- [ ] **Step 2: testid на Sign In menu item**
+2. [ ] **Step 2: testid on the Sign In menu item**
 
-Edit `app/components/AppHeader.vue` line 174 - додати `data-testid="auth-sign-in-menu-item"`:
+Edit `app/components/AppHeader.vue` line 174 - add `data-testid="auth-sign-in-menu-item"`:
 
 ```vue
 <button v-wave class="mui-menu-item whitespace-nowrap" data-testid="auth-sign-in-menu-item" @click="emit('openSignIn'); showMenu = false">
@@ -413,9 +427,9 @@ Edit `app/components/AppHeader.vue` line 174 - додати `data-testid="auth-s
 </button>
 ```
 
-- [ ] **Step 3: testid на Sign Out menu item**
+3. [ ] **Step 3: testid on the Sign Out menu item**
 
-Edit `app/components/AppHeader.vue` line 187 - додати `data-testid="auth-sign-out-menu-item"`:
+Edit `app/components/AppHeader.vue` line 187 - add `data-testid="auth-sign-out-menu-item"`:
 
 ```vue
 <button v-wave class="mui-menu-item whitespace-nowrap" data-testid="auth-sign-out-menu-item" @click="emit('signOut'); showMenu = false">
@@ -423,7 +437,7 @@ Edit `app/components/AppHeader.vue` line 187 - додати `data-testid="auth-s
 </button>
 ```
 
-- [ ] **Step 4: Commit**
+4. [ ] **Step 4: Commit**
 
 ```bash
 git add app/components/AppHeader.vue
@@ -432,21 +446,25 @@ git commit -m "chore(ui): add data-testid for account menu controls"
 
 ---
 
-### Task 9: testids у `signup.vue`
+### Task 9: testids in `signup.vue`
 
 **Files:**
-- Modify: `app/pages/signup.vue`
+1. Modify: `app/pages/signup.vue`
 
-- [ ] **Step 1: testids на signup form fields і submit**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: testids on signup form fields and submit**
 
 Edit `app/pages/signup.vue`:
 
-- Line 73 (`<input v-model.trim="form.email" ...>`) - додати `data-testid="signup-email"`
-- Line 78 (`<input v-model="form.password" ...>`) - додати `data-testid="signup-password"`
-- Line 83 (`<input v-model="form.confirm" ...>`) - додати `data-testid="signup-confirm"`
-- Line 90 (`<button v-wave class="mui-btn" type="submit" ...>`) - додати `data-testid="signup-submit"`
+1. Line 73 (`<input v-model.trim="form.email" ...>`) - add `data-testid="signup-email"`
+2. Line 78 (`<input v-model="form.password" ...>`) - add `data-testid="signup-password"`
+3. Line 83 (`<input v-model="form.confirm" ...>`) - add `data-testid="signup-confirm"`
+4. Line 90 (`<button v-wave class="mui-btn" type="submit" ...>`) - add `data-testid="signup-submit"`
 
-- [ ] **Step 2: testid на success block**
+<!-- Separate detail and step lists. -->
+
+2. [ ] **Step 2: testid on success block**
 
 Edit `app/pages/signup.vue` line 66:
 
@@ -454,7 +472,7 @@ Edit `app/pages/signup.vue` line 66:
 <div v-if="success" class="text-center mt-6" data-testid="signup-success">
 ```
 
-- [ ] **Step 3: Commit**
+3. [ ] **Step 3: Commit**
 
 ```bash
 git add app/pages/signup.vue
@@ -463,28 +481,32 @@ git commit -m "chore(ui): add data-testid for signup form"
 
 ---
 
-### Task 10: testids у `login.vue`
+### Task 10: testids in `login.vue`
 
 **Files:**
-- Modify: `app/pages/login.vue`
+1. Modify: `app/pages/login.vue`
 
-- [ ] **Step 1: testids на login form fields і submit**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: testids on login form fields and submit**
 
 Edit `app/pages/login.vue`:
 
-- Line 66 (`<input v-model.trim="form.email" ...>`) - додати `data-testid="login-email"`
-- Line 75 (`<input v-model="form.password" ...>`) - додати `data-testid="login-password"`
-- Line 82 (`<button v-wave class="mui-btn" type="submit" ...>`) - додати `data-testid="login-submit"`
+1. Line 66 (`<input v-model.trim="form.email" ...>`) - add `data-testid="login-email"`
+2. Line 75 (`<input v-model="form.password" ...>`) - add `data-testid="login-password"`
+3. Line 82 (`<button v-wave class="mui-btn" type="submit" ...>`) - add `data-testid="login-submit"`
 
-- [ ] **Step 2: Запустити unit-suite + build (sanity для всіх Phase 2 змін)**
+<!-- Separate detail and step lists. -->
+
+2. [ ] **Step 2: Run unit suite + build (sanity for all Phase 2 changes)**
 
 Run:
 ```bash
 npm test && npm run build
 ```
-Expected: PASS + успішний build.
+Expected: PASS + successful build.
 
-- [ ] **Step 3: Commit**
+3. [ ] **Step 3: Commit**
 
 ```bash
 git add app/pages/login.vue
@@ -495,14 +517,16 @@ git commit -m "chore(ui): add data-testid for login form"
 
 ## Phase 3 - gitignore + env scaffolding
 
-### Task 11: Оновити `.gitignore`
+### Task 11: Update `.gitignore`
 
 **Files:**
-- Modify: `.gitignore`
+1. Modify: `.gitignore`
 
-- [ ] **Step 1: Додати правила**
+<!-- Separate file and step lists. -->
 
-Edit `.gitignore` - після рядка `!/.env/.env.example` додати:
+1. [ ] **Step 1: Add rules**
+
+Edit `.gitignore` and add after `!/.env/.env.example`:
 
 ```
 !/.env/.env.test.example
@@ -511,9 +535,9 @@ Edit `.gitignore` - після рядка `!/.env/.env.example` додати:
 /e2e/playwright-report/
 ```
 
-Перевірити, що `package-lock.json` уже вилучено (Task 1). Якщо ні - вилучити.
+Check that `package-lock.json` has already been removed (Task 1). If not, remove it.
 
-- [ ] **Step 2: Commit**
+2. [ ] **Step 2: Commit**
 
 ```bash
 git add .gitignore
@@ -525,9 +549,11 @@ git commit -m "chore: ignore playwright artifacts, allow .env.test.example"
 ### Task 12: `.env/.env.test.example`
 
 **Files:**
-- Create: `.env/.env.test.example`
+1. Create: `.env/.env.test.example`
 
-- [ ] **Step 1: Створити шаблон**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Create template**
 
 Write `.env/.env.test.example`:
 
@@ -542,7 +568,7 @@ E2E_TEST_USER_EMAIL=e2e-user@storypoker-test.dev
 E2E_TEST_USER_PASSWORD=replace-with-strong-password
 ```
 
-- [ ] **Step 2: Commit**
+2. [ ] **Step 2: Commit**
 
 ```bash
 git add .env/.env.test.example
@@ -556,35 +582,37 @@ git commit -m "chore: add .env.test.example for e2e local runs"
 ### Task 13: Devdeps + npm scripts
 
 **Files:**
-- Modify: `package.json`
-- Modify: `package-lock.json`
+1. Modify: `package.json`
+2. Modify: `package-lock.json`
 
-- [ ] **Step 1: Встановити devdeps**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Install devdeps**
 
 Run:
 ```bash
 npm install -D @playwright/test dotenv
 ```
-Expected: `package.json` і `package-lock.json` оновлено; обидва пакети у `devDependencies`.
+Expected: `package.json` and `package-lock.json` are updated; both packages are in `devDependencies`.
 
-- [ ] **Step 2: Додати scripts**
+2. [ ] **Step 2: Add scripts**
 
-Edit `package.json`, у `scripts` додати після `"test:watch"`:
+Edit `package.json` and add to `scripts` after `"test:watch"`:
 
 ```json
 "test:e2e": "playwright test -c e2e/playwright.config.ts",
 "test:e2e:ui": "playwright test -c e2e/playwright.config.ts --ui"
 ```
 
-- [ ] **Step 3: Встановити Playwright browsers (локально, один раз)**
+3. [ ] **Step 3: Install Playwright browsers (locally, once)**
 
 Run:
 ```bash
 npx playwright install chromium webkit
 ```
-Expected: завантажено бінарники Chromium і WebKit.
+Expected: Chromium and WebKit binaries are downloaded.
 
-- [ ] **Step 4: Commit**
+4. [ ] **Step 4: Commit**
 
 ```bash
 git add package.json package-lock.json
@@ -596,9 +624,11 @@ git commit -m "chore: add @playwright/test and dotenv devdeps + e2e scripts"
 ### Task 14: `e2e/playwright.config.ts`
 
 **Files:**
-- Create: `e2e/playwright.config.ts`
+1. Create: `e2e/playwright.config.ts`
 
-- [ ] **Step 1: Створити конфіг**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Create config**
 
 Write `e2e/playwright.config.ts`:
 
@@ -658,15 +688,15 @@ export default defineConfig({
 })
 ```
 
-- [ ] **Step 2: Sanity-check config компілюється**
+2. [ ] **Step 2: Sanity-check that the config compiles**
 
-Run (без `.env/.env.test` спершу):
+Run (without `.env/.env.test` initially):
 ```bash
 npx playwright test -c e2e/playwright.config.ts --list
 ```
-Expected: помилка про "no tests found" АБО успішний `0 tests` - обидва допустимі; головне щоб не було SyntaxError/TypeError.
+Expected: a "no tests found" error OR a successful `0 tests` result. Both are acceptable; there must be no SyntaxError/TypeError.
 
-- [ ] **Step 3: Commit**
+3. [ ] **Step 3: Commit**
 
 ```bash
 git add e2e/playwright.config.ts
@@ -680,9 +710,11 @@ git commit -m "feat(e2e): playwright config with esm dotenv and isolated webserv
 ### Task 15: `e2e/fixtures/supabase-admin.ts`
 
 **Files:**
-- Create: `e2e/fixtures/supabase-admin.ts`
+1. Create: `e2e/fixtures/supabase-admin.ts`
 
-- [ ] **Step 1: Створити admin клієнт**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Create admin client**
 
 Write `e2e/fixtures/supabase-admin.ts`:
 
@@ -699,15 +731,15 @@ export function getAdminClient(): SupabaseClient {
 }
 ```
 
-- [ ] **Step 2: Грепнути що не використовується з `app/`**
+2. [ ] **Step 2: Check with grep that it is not used from `app/`**
 
 Run:
 ```bash
 grep -r "supabase-admin" app/
 ```
-Expected: порожній вивід.
+Expected: empty output.
 
-- [ ] **Step 3: Commit**
+3. [ ] **Step 3: Commit**
 
 ```bash
 git add e2e/fixtures/supabase-admin.ts
@@ -719,9 +751,11 @@ git commit -m "feat(e2e): service-role admin client (node-only)"
 ### Task 16: `e2e/fixtures/room.ts`
 
 **Files:**
-- Create: `e2e/fixtures/room.ts`
+1. Create: `e2e/fixtures/room.ts`
 
-- [ ] **Step 1: Створити фікстуру з cleanup-policy**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Create fixture with cleanup policy**
 
 Write `e2e/fixtures/room.ts`:
 
@@ -752,13 +786,13 @@ export const test = base.extend<RoomFixtures>({
 export const expect = test.expect
 ```
 
-Cleanup policy (з спеки):
-- test passed + cleanup failed → throw (не маскуємо stale state)
-- test failed + cleanup failed → attach лог, не override-имо причину падіння
+Cleanup policy (from the spec):
+1. test passed + cleanup failed → throw (do not mask stale state)
+2. test failed + cleanup failed → attach the log; do not override the failure reason
 
-Видалення `rooms` тригерить CASCADE на `room_state` / `players` / `round_history` (`001_initial_schema.sql:43-44`).
+Deleting `rooms` triggers CASCADE on `room_state` / `players` / `round_history` (`001_initial_schema.sql:43-44`).
 
-- [ ] **Step 2: Commit**
+2. [ ] **Step 2: Commit**
 
 ```bash
 git add e2e/fixtures/room.ts
@@ -770,9 +804,11 @@ git commit -m "feat(e2e): room fixture with service-role cascade cleanup"
 ### Task 17: `e2e/fixtures/auth.ts`
 
 **Files:**
-- Create: `e2e/fixtures/auth.ts`
+1. Create: `e2e/fixtures/auth.ts`
 
-- [ ] **Step 1: Створити фікстуру з UI helper і admin-cleanup**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Create fixture with UI helper and admin cleanup**
 
 Write `e2e/fixtures/auth.ts`:
 
@@ -846,7 +882,7 @@ export const test = base.extend<AuthFixtures>({
 export const expect = test.expect
 ```
 
-- [ ] **Step 2: Commit**
+2. [ ] **Step 2: Commit**
 
 ```bash
 git add e2e/fixtures/auth.ts
@@ -858,9 +894,11 @@ git commit -m "feat(e2e): auth fixture with admin cleanup and signup helper"
 ### Task 18: `e2e/pages/HomePage.ts`
 
 **Files:**
-- Create: `e2e/pages/HomePage.ts`
+1. Create: `e2e/pages/HomePage.ts`
 
-- [ ] **Step 1: Створити POM**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Create POM**
 
 Write `e2e/pages/HomePage.ts`:
 
@@ -889,7 +927,7 @@ export class HomePage {
 }
 ```
 
-- [ ] **Step 2: Commit**
+2. [ ] **Step 2: Commit**
 
 ```bash
 git add e2e/pages/HomePage.ts
@@ -901,9 +939,11 @@ git commit -m "feat(e2e): HomePage object"
 ### Task 19: `e2e/pages/RoomPage.ts`
 
 **Files:**
-- Create: `e2e/pages/RoomPage.ts`
+1. Create: `e2e/pages/RoomPage.ts`
 
-- [ ] **Step 1: Створити POM**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Create POM**
 
 Write `e2e/pages/RoomPage.ts`:
 
@@ -958,7 +998,7 @@ export class RoomPage {
 }
 ```
 
-- [ ] **Step 2: Commit**
+2. [ ] **Step 2: Commit**
 
 ```bash
 git add e2e/pages/RoomPage.ts
@@ -970,9 +1010,11 @@ git commit -m "feat(e2e): RoomPage object with vote/reveal/round helpers"
 ### Task 20: `e2e/pages/AuthPage.ts`
 
 **Files:**
-- Create: `e2e/pages/AuthPage.ts`
+1. Create: `e2e/pages/AuthPage.ts`
 
-- [ ] **Step 1: Створити POM**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Create POM**
 
 Write `e2e/pages/AuthPage.ts`:
 
@@ -1014,7 +1056,7 @@ export class AuthPage {
 }
 ```
 
-- [ ] **Step 2: Commit**
+2. [ ] **Step 2: Commit**
 
 ```bash
 git add e2e/pages/AuthPage.ts
@@ -1023,18 +1065,20 @@ git commit -m "feat(e2e): AuthPage object with sign-in/out flows"
 
 ---
 
-## Phase 6 - Тести
+## Phase 6 - Tests
 
 ### Task 21: Flow 1 - `home-create-room.spec.ts`
 
 **Files:**
-- Create: `e2e/tests/home-create-room.spec.ts`
+1. Create: `e2e/tests/home-create-room.spec.ts`
 
-- [ ] **Step 1: Створити локальний `.env/.env.test`**
+<!-- Separate file and step lists. -->
 
-Manual: скопіювати `.env/.env.test.example` → `.env/.env.test`, заповнити з Task 3 credentials. Файл gitignored.
+1. [ ] **Step 1: Create local `.env/.env.test`**
 
-- [ ] **Step 2: Написати тест**
+Manual: copy `.env/.env.test.example` to `.env/.env.test` and fill it with the credentials from Task 3. The file is gitignored.
+
+2. [ ] **Step 2: Write the test**
 
 Write `e2e/tests/home-create-room.spec.ts`:
 
@@ -1071,15 +1115,15 @@ test('home → create room → joined as moderator with auto-rejoin', async ({ p
 })
 ```
 
-- [ ] **Step 3: Прогнати тест локально**
+3. [ ] **Step 3: Run the test locally**
 
 Run:
 ```bash
 npm run test:e2e -- e2e/tests/home-create-room.spec.ts
 ```
-Expected: 2 PASS (chromium + webkit). Якщо WebKit зависає - підняти `webServer.timeout` або вручну `npm run build && npm run preview` і повторити з `E2E_BASE_URL=http://localhost:3000`.
+Expected: 2 PASS (chromium + webkit). If WebKit hangs, increase `webServer.timeout` or run `npm run build && npm run preview` manually and retry with `E2E_BASE_URL=http://localhost:3000`.
 
-- [ ] **Step 4: Commit**
+4. [ ] **Step 4: Commit**
 
 ```bash
 git add e2e/tests/home-create-room.spec.ts
@@ -1091,9 +1135,11 @@ git commit -m "test(e2e): home create-room flow with auto-rejoin"
 ### Task 22: Flow 2 - `solo-vote-reveal.spec.ts`
 
 **Files:**
-- Create: `e2e/tests/solo-vote-reveal.spec.ts`
+1. Create: `e2e/tests/solo-vote-reveal.spec.ts`
 
-- [ ] **Step 1: Написати тест**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Write the test**
 
 Write `e2e/tests/solo-vote-reveal.spec.ts`:
 
@@ -1121,19 +1167,19 @@ test('moderator votes, reveals, starts new round', async ({ page, trackedRoomIds
 })
 ```
 
-Залежність від Flow 1 mechanics: home-flow робить `toggleModerator(true)` (`app/pages/index.vue:75`) - тому ми обираємо саме цей шлях, інакше `reveal-button` не з'явиться (CardsArea рендерить його лише при `isModerator`).
+This depends on Flow 1 mechanics: the home flow calls `toggleModerator(true)` (`app/pages/index.vue:75`), so we choose this path. Otherwise, `reveal-button` will not appear (CardsArea renders it only when `isModerator` is true).
 
-Caveat (з спеки): `round_history` не пишеться для solo (потрібно `votes.length >= 2`); ми це не assert-имо.
+Caveat (from the spec): `round_history` is not written for solo play (it requires `votes.length >= 2`); we do not assert it.
 
-- [ ] **Step 2: Прогнати тест локально**
+2. [ ] **Step 2: Run the test locally**
 
 Run:
 ```bash
 npm run test:e2e -- e2e/tests/solo-vote-reveal.spec.ts
 ```
-Expected: 2 PASS (chromium + webkit). Якщо vote-confirmed чекає - впевнитися що P5 міграція накатана у test project (без `players` у publication UPDATE подія не приходить, `pendingVotes` не очищується).
+Expected: 2 PASS (chromium + webkit). If vote-confirmed keeps waiting, make sure the P5 migration has been applied to the test project (without `players` in the publication, the UPDATE event does not arrive and `pendingVotes` is not cleared).
 
-- [ ] **Step 3: Commit**
+3. [ ] **Step 3: Commit**
 
 ```bash
 git add e2e/tests/solo-vote-reveal.spec.ts
@@ -1145,9 +1191,11 @@ git commit -m "test(e2e): solo vote/reveal/new-round flow"
 ### Task 23: Flow 3 - `auth-signup-login.spec.ts`
 
 **Files:**
-- Create: `e2e/tests/auth-signup-login.spec.ts`
+1. Create: `e2e/tests/auth-signup-login.spec.ts`
 
-- [ ] **Step 1: Написати тест**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Write the test**
 
 Write `e2e/tests/auth-signup-login.spec.ts`:
 
@@ -1180,25 +1228,25 @@ test('login persistent user → account menu reflects signed-in/out', async ({ p
 })
 ```
 
-webkit-проєкт виключений через `testIgnore` у `playwright.config.ts` (Task 14, project `webkit`). Жодних додаткових `test.skip()` тут не потрібно.
+The webkit project is excluded via `testIgnore` in `playwright.config.ts` (Task 14, project `webkit`). No additional `test.skip()` calls are needed here.
 
-- [ ] **Step 2: Прогнати тест локально**
+2. [ ] **Step 2: Run the test locally**
 
 Run:
 ```bash
 npm run test:e2e -- e2e/tests/auth-signup-login.spec.ts
 ```
-Expected: 2 PASS (тільки chromium; webkit skipped).
+Expected: 2 PASS (chromium only; webkit skipped).
 
-- [ ] **Step 3: Прогнати повний smoke-pack**
+3. [ ] **Step 3: Run the full smoke pack**
 
 Run:
 ```bash
 npm run test:e2e
 ```
-Expected: 6 PASS total (3 chromium + 2 webkit + 0 skipped from webkit на auth). Точніше: home/solo по 2, auth тільки 2 chromium → 4 + 2 = 6.
+Expected: 6 PASS total (3 chromium + 2 webkit + 0 skipped from webkit for auth). More precisely: home and solo each have 2, and auth has 2 chromium only → 4 + 2 = 6.
 
-- [ ] **Step 4: Commit**
+4. [ ] **Step 4: Commit**
 
 ```bash
 git add e2e/tests/auth-signup-login.spec.ts
@@ -1209,12 +1257,14 @@ git commit -m "test(e2e): signup success screen + login sign-out cycle"
 
 ## Phase 7 - CI integration
 
-### Task 24: Переписати `.github/workflows/ci.yml`
+### Task 24: Rewrite `.github/workflows/ci.yml`
 
 **Files:**
-- Modify: `.github/workflows/ci.yml`
+1. Modify: `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Замінити вміст файлу повністю**
+<!-- Separate file and step lists. -->
+
+1. [ ] **Step 1: Replace the entire file contents**
 
 Write `.github/workflows/ci.yml`:
 
@@ -1341,71 +1391,75 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 ```
 
-Зверни увагу:
-- `secrets.*` у job-level `if:` НЕ використовуються - замість цього `needs.detect-secrets.outputs.*`. Це виправляє регресію існуючого `deploy.if` (`.github/workflows/ci.yml:35` у поточному файлі).
-- `deploy` має `always() && ...` тому що без `always()` skipped `e2e` job завадить оцінити решту умов. E2E failure блокує deploy, skipped E2E не блокує deploy.
+Note:
+1. `secrets.*` is NOT used in the job-level `if:`; use `needs.detect-secrets.outputs.*` instead. This fixes a regression in the existing `deploy.if` (`.github/workflows/ci.yml:35` in the current file).
+1. `deploy` has `always() && ...` because without `always()`, a skipped `e2e` job prevents evaluation of the remaining conditions. An E2E failure blocks deploy; skipped E2E does not.
 
-- [ ] **Step 2: Перевірити YAML локально**
+<!-- Separate detail and step lists. -->
+
+2. [ ] **Step 2: Validate YAML locally**
 
 Run:
 ```bash
 npx --yes -p js-yaml js-yaml .github/workflows/ci.yml > /dev/null
 ```
-Expected: тихий вихід (валідний YAML). Якщо `js-yaml` недоступний - пропустити і покластись на GitHub validator.
+Expected: silent exit (valid YAML). If `js-yaml` is unavailable, skip this and rely on the GitHub validator.
 
-- [ ] **Step 3: Commit**
+3. [ ] **Step 3: Commit**
 
 ```bash
 git add .github/workflows/ci.yml
 git commit -m "ci: add e2e job and detect-secrets gate; fix deploy if-condition"
 ```
 
-- [ ] **Step 4: Push і дочекатися першого CI-прогону на feature branch**
+4. [ ] **Step 4: Push and wait for the first CI run on the feature branch**
 
 Run:
 ```bash
 git push origin HEAD
 ```
 
-Перевірити GitHub Actions:
-- `detect-secrets` пройшов → `has_e2e=true`, `has_netlify=true` (за умови що Task 3 secrets заведено)
-- `test` пройшов
-- `e2e` пройшов (6 specs)
-- `deploy` skipped (бо не на `main`)
+Check GitHub Actions:
+1. `detect-secrets` passed → `has_e2e=true`, `has_netlify=true` (provided the Task 3 secrets are configured)
+1. `test` passed
+1. `e2e` passed (6 specs)
+1. `deploy` skipped (because this is not `main`)
 
-Якщо `e2e` падає - скачати artifact `playwright-report` і відкрити `index.html` локально.
+If `e2e` fails, download the `playwright-report` artifact and open `index.html` locally.
 
 ---
 
-## Phase 8 - Документація
+## Phase 8 - Documentation
 
-### Task 25: Зафіксувати lockfile-вимогу і e2e в `CLAUDE.md`
+### Task 25: Document the lockfile requirement and e2e in `CLAUDE.md`
 
 **Files:**
-- Modify: `CLAUDE.md`
+1. Modify: `CLAUDE.md`
 
-- [ ] **Step 1: Додати пункти**
+<!-- Separate file and step lists. -->
 
-Edit `CLAUDE.md`:
-- У секції "Common Commands" після `npm run test:ci` додати:
-  ```
-  npm run test:e2e     # playwright smoke pack (3 flows)
-  npm run test:e2e:ui  # playwright інтерактивний debug
-  ```
-- У секції "Environment Setup" додати рядок:
-  ```
-  - `/.env/.env.test` - креди тестового Supabase project для Playwright (gitignored)
-  ```
-- Додати нову коротку секцію перед "Common Commands":
-  ```
-  ## Lockfile
+1. [ ] **Step 1: Add entries**
 
-  `package-lock.json` - committed (NPM ci у CI вимагає його). Не повертати у `.gitignore`.
-  ```
+   Edit `CLAUDE.md`:
+   1. In the "Common Commands" section, add after `npm run test:ci`:
+      ```
+      npm run test:e2e     # playwright smoke pack (3 flows)
+      npm run test:e2e:ui  # playwright interactive debug
+      ```
+   2. In the "Environment Setup" section, add:
+      ```
+      - `/.env/.env.test` - credentials for the test Supabase project for Playwright (gitignored)
+      ```
+   3. Add a short new section before "Common Commands":
+      ```
+      ## Lockfile
 
-Тримати файл ≤ 200 рядків (constraint з CLAUDE.md). Якщо переповнить - скоротити інші секції або винести в `DESIGN.md`.
+      `package-lock.json` - committed (NPM ci in CI requires it). Do not return it to `.gitignore`.
+      ```
 
-- [ ] **Step 2: Перевірити довжину**
+   Keep the file at ≤ 200 lines (a constraint from CLAUDE.md). If it exceeds that, shorten other sections or move them to `DESIGN.md`.
+
+2. [ ] **Step 2: Check the length**
 
 Run:
 ```bash
@@ -1413,7 +1467,7 @@ wc -l CLAUDE.md
 ```
 Expected: ≤ 200.
 
-- [ ] **Step 3: Commit**
+3. [ ] **Step 3: Commit**
 
 ```bash
 git add CLAUDE.md
@@ -1424,30 +1478,30 @@ git commit -m "docs: note lockfile requirement and e2e scripts"
 
 ## Self-review checklist
 
-Перевірити перед declared done:
+Check before declaring done:
 
 **Spec coverage:**
-- P1 lockfile → Task 1
-- P2 email-confirm-on → Task 3 (manual)
-- P3 persistent user → Task 3 (manual)
-- P4 deploy `if:` fix → Task 24 (detect-secrets pattern)
-- P5 realtime publication → Task 2
-- DOM contract (testids) → Tasks 4-10
-- File structure (`e2e/...`) → Tasks 14-23
-- `playwright.config.ts` ключові поля → Task 14
-- Service-role isolation → Task 15 + grep step
-- Custom fixtures `room` / `auth` → Tasks 16, 17
-- POMs → Tasks 18, 19, 20
-- 3 specs → Tasks 21, 22, 23
-- CI job + deploy gate → Task 24
-- Required GitHub secrets → Task 3 step 5
-- Локальний запуск (`.env/.env.test`) → Tasks 12 + 21 step 1
+1. P1 lockfile → Task 1
+1. P2 email-confirm-on → Task 3 (manual)
+1. P3 persistent user → Task 3 (manual)
+1. P4 deploy `if:` fix → Task 24 (detect-secrets pattern)
+1. P5 realtime publication → Task 2
+1. DOM contract (testids) → Tasks 4-10
+1. File structure (`e2e/...`) → Tasks 14-23
+1. `playwright.config.ts` key fields → Task 14
+1. Service-role isolation → Task 15 + grep step
+1. Custom fixtures `room` / `auth` → Tasks 16, 17
+1. POMs → Tasks 18, 19, 20
+1. 3 specs → Tasks 21, 22, 23
+1. CI job + deploy gate → Task 24
+1. Required GitHub secrets → Task 3 step 5
+1. Local execution (`.env/.env.test`) → Tasks 12 + 21 step 1
 
 **Type consistency:**
-- `votePending: boolean` - введений у Task 5 step 1 (`playersForUi`), використаний в Task 5 steps 2 і 4 (`PlayersList`, `PlayerRow`), assert-иться в `RoomPage.waitVoteConfirmed` (Task 19) і використовується у Task 22.
-- `data-voted` / `data-vote-pending` - однакові імена у Task 5 step 5 і у POM (Task 19).
-- `data-testid` слова збігаються у компонентах і POM/тестах (зокрема `home-name-input`, `home-create-room`, `player-row`, `vote-card`, `reveal-button`, `new-round-button`, `results-area`, `account-menu-button`, `auth-sign-in-menu-item`, `auth-sign-out-menu-item`, `signup-*`, `login-*`).
-- `getByTestId(...)` повертає Locator у всіх POM - узгоджено.
+1. `votePending: boolean` - introduced in Task 5 step 1 (`playersForUi`), used in Task 5 steps 2 and 4 (`PlayersList`, `PlayerRow`), asserted in `RoomPage.waitVoteConfirmed` (Task 19), and used in Task 22.
+1. `data-voted` / `data-vote-pending` - the names match in Task 5 step 5 and the POM (Task 19).
+1. `data-testid` names match in components and POMs/tests (including `home-name-input`, `home-create-room`, `player-row`, `vote-card`, `reveal-button`, `new-round-button`, `results-area`, `account-menu-button`, `auth-sign-in-menu-item`, `auth-sign-out-menu-item`, `signup-*`, `login-*`).
+1. `getByTestId(...)` returns a Locator in all POMs - consistent.
 
 ---
 
@@ -1455,8 +1509,8 @@ git commit -m "docs: note lockfile requirement and e2e scripts"
 
 **Plan complete and saved to `docs/superpowers/plans/2026-05-15-playwright-e2e-tests.md`. Two execution options:**
 
-**1. Subagent-Driven (recommended)** - я диспетчую свіжого subagent на task, дворівневий review між тасками, швидка ітерація.
+**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, with two-stage review between tasks and fast iteration.
 
-**2. Inline Execution** - виконую таски в цій сесії через executing-plans, batch з checkpoint-ами.
+**2. Inline Execution** - I execute tasks in this session using executing-plans, in batches with checkpoints.
 
-**Який підхід?**
+**Which approach?**

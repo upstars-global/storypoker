@@ -2,32 +2,33 @@
 
 **Date:** 2026-05-04
 **Scope:** State management refactor + realtime presence + optimistic vote
-**Out of scope:** UI redesign (mobile-first, минімалізм) → Spec B
+**Out of scope:** UI redesign (mobile-first, minimalism) → Spec B
 
 ## Problem
 
-Поточний стан:
-- Стан тримається у композаблах (`useRoom`, `usePlayer`, `useAuth`) з локальними `ref`. Розкидано, без єдиного DevTools-візиту.
-- Realtime через Supabase `postgres_changes` робить **повний refetch** на будь-яку подію - зайва латенсі та БД-навантаження.
-- "Online" статус - `players.is_online` колонка в БД, оновлюється через `beforeunload` (ненадійно: на mobile часто не спрацьовує).
-- Немає optimistic feedback: між кліком по карті і реальним підсвічуванням - 100-300 мс round-trip.
-- Немає індикатора втрати з'єднання - UI просто застигає.
+Current state:
+
+1. State lives in composables (`useRoom`, `usePlayer`, `useAuth`) with local `ref`s. It is scattered, with no single place to inspect it in DevTools.
+2. Realtime via Supabase `postgres_changes` performs a **full refetch** on every event, adding latency and database load.
+3. The "Online" status is the `players.is_online` database column, updated via `beforeunload` (unreliable: it often does not fire on mobile).
+4. There is no optimistic feedback: a 100-300 ms round trip separates a card click from its actual highlight.
+5. There is no connection loss indicator, so the UI simply freezes.
 
 ## Goals
 
-1. Голос за карту відображається у поточного гравця **миттєво**.
-2. Закриття вкладки/застосунку на mobile → інші бачать тебе offline ≤ 1 сек (без stale `is_online`).
-3. Тимчасова втрата мережі → банер "Reconnecting…" + автоматичне відновлення підписок без втрати playerId.
-4. Realtime події застосовуються диференційно (без full refetch).
-5. Єдине джерело істини для presence (Supabase Presence channel, не БД-колонка).
+1. A card vote appears **instantly** for the current player.
+2. Closing the tab/app on mobile → others see you offline within ≤ 1 sec (without stale `is_online`).
+3. Temporary network loss → "Reconnecting…" banner + automatic subscription recovery without losing playerId.
+4. Realtime events are applied differentially (without a full refetch).
+5. One source of truth for presence (Supabase Presence channel, not a database column).
 
 ## Non-goals
 
-- Typing indicators, "думає" анімації при voting.
-- Optimistic для дій крім cast vote (rename/kick/reveal/start round/save deck чекають ACK).
-- Persistence stores через `pinia-plugin-persistedstate` (поточний ручний localStorage - достатньо).
-- E2E тести.
-- Будь-які UI-зміни крім нового `ConnectionBanner` - UI-редизайн іде у Spec B.
+1. Typing indicators and "думає" ("thinking") animations during voting.
+2. Optimistic updates for actions other than cast vote (rename/kick/reveal/start round/save deck wait for ACK).
+3. Store persistence via `pinia-plugin-persistedstate` (the current manual localStorage is sufficient).
+4. E2E tests.
+5. Any UI changes other than the new `ConnectionBanner`; UI redesign goes into Spec B.
 
 ## Architecture
 
@@ -37,111 +38,112 @@
 app/stores/
 ├── auth.ts          # session, user, signIn/signUp/signOut
 ├── room.ts          # rooms, room_state (phase, active_cards, round_started_at)
-├── players.ts       # players[], мутації (vote, rename, kick, leave, toggleModerator)
+├── players.ts       # players[], mutations (vote, rename, kick, leave, toggleModerator)
 └── presence.ts      # connection status, online[], visibility, reconnect
 ```
 
-**Принципи:**
-- Кожен store - одна доменна одиниця. Cross-store mutations заборонені - тільки експортовані getters.
-- Композаблі `useRoom`/`usePlayer`/`useAuth` видаляються повністю; логіку поглинають stores.
-- Plugins (`supabase`, `vWave`, `clickOutside`) лишаються.
-- Сторінка `[slug].vue` стає тонкою: `onMounted` лише `roomStore.init(slug)` + `presenceStore.start(slug, playerId)`. Реактивні дані через `storeToRefs`.
-- `playersStore` залежить від `presenceStore` для derived `isOnline(playerId)`. `presenceStore` нічого не знає про `players` - лише `Set<playerId>`.
+**Principles:**
 
-### Залежності
+1. Each store is one domain unit. Cross-store mutations are forbidden; use exported getters only.
+2. The `useRoom`/`usePlayer`/`useAuth` composables are removed completely; stores absorb their logic.
+3. Plugins (`supabase`, `vWave`, `clickOutside`) remain.
+4. The `[slug].vue` page becomes thin: `onMounted` only calls `roomStore.init(slug)` + `presenceStore.start(slug, playerId)`. Reactive data comes through `storeToRefs`.
+5. `playersStore` depends on `presenceStore` for derived `isOnline(playerId)`. `presenceStore` knows nothing about `players`; it only has a `Set<playerId>`.
 
-- `pinia` (latest stable, сумісний з Nuxt 4)
-- `@pinia/nuxt` (latest)
-- Без `pinia-plugin-persistedstate`.
+### Dependencies
 
-### DB міграція
+1. `pinia` (latest stable, compatible with Nuxt 4)
+2. `@pinia/nuxt` (latest)
+3. No `pinia-plugin-persistedstate`.
+
+### DB migration
 
 `supabase/migrations/002_drop_is_online.sql`:
 ```sql
 alter table players drop column is_online;
 ```
 
-`left_at` лишається - це окрема дія "Leave room", не presence.
+`left_at` remains; it represents a separate "Leave room" action, not presence.
 
 ## Presence model
 
-### Стани
+### States
 
 ```ts
 type ConnectionStatus = 'connecting' | 'online' | 'reconnecting' | 'offline'
 ```
 
-### Сигнали → переходи
+### Signals → transitions
 
-| Подія | Перехід |
+| Event | Transition |
 |---|---|
-| `roomStore.init()` стартує канали | `→ connecting` |
-| Канал `subscribed` + presence sync прийшов | `→ online` |
-| `document.visibilitychange` → `hidden` | `→ offline` (явний `untrack` + `unsubscribe`) |
+| `roomStore.init()` starts channels | `→ connecting` |
+| Channel `subscribed` + presence sync received | `→ online` |
+| `document.visibilitychange` → `hidden` | `→ offline` (explicit `untrack` + `unsubscribe`) |
 | `document.visibilitychange` → `visible` | `→ connecting` (re-subscribe + track) |
-| Supabase channel `error` / `closed` без явного leave | `→ reconnecting` |
-| Reconnect успіх | `→ online` |
+| Supabase channel `error` / `closed` without an explicit leave | `→ reconnecting` |
+| Reconnect succeeds | `→ online` |
 | `window 'offline'` event | `→ reconnecting` |
 
 ### Supabase Presence
 
-- Один канал на кімнату: `room:<roomId>`
-- На join: `channel.track({ playerId })`
-- `presenceStore.online: Set<playerId>` оновлюється на presence events (`sync`/`join`/`leave`)
-- При visibility=hidden - агресивний `untrack` + `unsubscribe` (не чекаємо timeout, щоб інші побачили offline миттєво)
+1. One channel per room: `room:<roomId>`
+2. On join: `channel.track({ playerId })`
+3. `presenceStore.online: Set<playerId>` updates on presence events (`sync`/`join`/`leave`)
+4. On visibility=hidden, aggressively `untrack` + `unsubscribe` (do not wait for timeout, so others see offline immediately)
 
-### Reconnect-банер
+### Reconnect banner
 
-- Глобальний `<ConnectionBanner />` у `app.vue`
-- Висота 32px, `position: fixed; top: 0`, видимий лише при `status === 'reconnecting'`
-- Текст: "Reconnecting…" + spinner. Без actions
-- При `'offline'` (явний background через visibility) - прихований, бо це нормальна поведінка для mobile
+1. Global `<ConnectionBanner />` in `app.vue`
+2. Height 32px, `position: fixed; top: 0`, visible only when `status === 'reconnecting'`
+3. Text: "Reconnecting…" + spinner. No actions
+4. Hidden on `'offline'` (explicit backgrounding via visibility), since this is normal behavior on mobile
 
-### Mobile-нюанс
+### Mobile nuance
 
-iOS Safari морозить таб через ~30 сек у бекграунді. visibility-handler встигає `untrack` до заморозки, тож для інших гравців ми зникаємо одразу.
+iOS Safari freezes a tab after ~30 sec in the background. The visibility handler has time to `untrack` before the freeze, so other players see us disappear immediately.
 
 ## Optimistic vote flow
 
-### State у `playersStore`
+### State in `playersStore`
 
 ```ts
 players: Player[]                      // server state
-pendingVotes: Map<playerId, string>    // optimistic overlay для current user only
+pendingVotes: Map<playerId, string>    // optimistic overlay for current user only
 ```
 
-### Геттер
+### Getter
 
 ```ts
 voteOf(playerId): string | null
   // pendingVotes.get(playerId) ?? players.find(...)?.vote ?? null
 ```
 
-UI читає `voteOf(currentPlayerId)` - бачить голос миттєво.
+The UI reads `voteOf(currentPlayerId)` and sees the vote immediately.
 
 ### Action `castVote(playerId, card)`
 
-1. `pendingVotes.set(playerId, card)` - UI підсвічує одразу
+1. `pendingVotes.set(playerId, card)` - the UI highlights immediately
 2. `await supabase.from('players').update({ vote: card }).eq('id', playerId)`
-3. **Success або realtime event з `vote === card`** → `pendingVotes.delete(playerId)`
-4. **Error** → `pendingVotes.delete(playerId)` + toast "Failed to save vote, try again". UI повертається до серверного стану.
+3. **Success or realtime event with `vote === card`** → `pendingVotes.delete(playerId)`
+4. **Error** → `pendingVotes.delete(playerId)` + toast "Failed to save vote, try again". The UI returns to server state.
 
-### Реконсиляція
+### Reconciliation
 
-При UPDATE через realtime: якщо `players[id].vote === pendingVotes.get(id)` - pending чиститься.
+On an UPDATE via realtime: if `players[id].vote === pendingVotes.get(id)`, clear the pending vote.
 
 ### Race conditions
 
-- Швидкі кліки 0.5 → 1 → 5: кожен `castVote` ставить новий pending + посилає UPDATE. Сервер виконує по черзі, останній перемагає. UI показує найсвіжіший pending.
-- Reveal між optimistic set і ACK: pending не релевантний, watcher на `roomStore.phase === 'revealed'` чистить map.
+1. Rapid clicks 0.5 → 1 → 5: each `castVote` sets a new pending vote + sends an UPDATE. The server executes them in order; the last wins. The UI shows the latest pending vote.
+2. Reveal between optimistic set and ACK: the pending vote is irrelevant; a watcher on `roomStore.phase === 'revealed'` clears the map.
 
-### Чому тільки для current user
+### Why only for the current user
 
-Оптимізм для інших не має сенсу - невідомо, як вони проголосують. Realtime подія прийде з payload (~100-200 ms) - достатньо швидко.
+Optimistic updates for others do not make sense because their votes are unknown. A realtime event arrives with a payload (~100-200 ms), which is fast enough.
 
 ## Realtime differential updates
 
-### Було
+### Before
 
 ```ts
 .on('postgres_changes', { event: '*', table: 'players', ... },
@@ -151,7 +153,7 @@ UI читає `voteOf(currentPlayerId)` - бачить голос миттєво
     })
 ```
 
-### Стало
+### After
 
 ```ts
 .on('postgres_changes', { event: '*', table: 'players', filter: `room_id=eq.${roomId}` },
@@ -180,63 +182,63 @@ function applyChange(payload: RealtimePostgresChangesPayload<Player>) {
 }
 ```
 
-Примітка: DELETE event надходить лише при kick (hard delete). Leave room - це UPDATE з `left_at`.
+Note: a DELETE event arrives only on kick (hard delete). Leave room is an UPDATE with `left_at`.
 
-Аналогічно `roomStore.applyChange(payload)` для `room_state`.
+Likewise, `roomStore.applyChange(payload)` handles `room_state`.
 
 ### Initial load
 
-`roomStore.init(slug)` робить **один** паралельний select з трьох таблиць. Після - лише deltas.
+`roomStore.init(slug)` performs **one** parallel select from three tables. After that, only deltas.
 
 ### Soft-delete
 
-UPDATE з `left_at != null` - `playersStore` маркує `players[idx].left_at`, геттер `visiblePlayers` фільтрує `is null`. Не видаляємо з масиву (запобігає index-flickering).
+On UPDATE with `left_at != null`, `playersStore` marks `players[idx].left_at`, and the `visiblePlayers` getter filters for `is null`. Do not remove the player from the array (prevents index-flickering).
 
 ### Reconciliation refetch
 
-Після `'reconnecting' → 'online'` - одноразовий повний select (могли пропустити events між disconnect і resubscribe). Тільки в цьому випадку.
+After `'reconnecting' → 'online'`, perform a one-time full select (events may have been missed between disconnect and resubscribe). Only in this case.
 
-## Файлові зміни
+## File changes
 
-| Дія | Файли |
+| Action | Files |
 |---|---|
-| Створити | `app/stores/auth.ts`, `room.ts`, `players.ts`, `presence.ts` |
-| Створити | `app/components/ConnectionBanner.vue` |
-| Створити | `supabase/migrations/002_drop_is_online.sql` |
-| Створити | `app/stores/__tests__/players.spec.ts`, `presence.spec.ts` |
-| Видалити | `app/composables/useRoom.ts`, `usePlayer.ts`, `useAuth.ts` |
-| Оновити | `app/pages/[slug].vue` (тонкий wrapper навколо stores) |
-| Оновити | `app/pages/index.vue` (auth+room через stores) |
-| Оновити | компоненти, що читали композаблі - переходять на `useXxxStore()` + `storeToRefs` |
-| Оновити | `app/app.vue` - додати `<ConnectionBanner />` |
-| Оновити | `nuxt.config.ts` - додати `'@pinia/nuxt'` у `modules` |
-| Оновити | `package.json` - `pinia`, `@pinia/nuxt`, `vitest` (dev) |
-| Оновити | `CLAUDE.md` - нова секція State Management |
+| Create | `app/stores/auth.ts`, `room.ts`, `players.ts`, `presence.ts` |
+| Create | `app/components/ConnectionBanner.vue` |
+| Create | `supabase/migrations/002_drop_is_online.sql` |
+| Create | `app/stores/__tests__/players.spec.ts`, `presence.spec.ts` |
+| Delete | `app/composables/useRoom.ts`, `usePlayer.ts`, `useAuth.ts` |
+| Update | `app/pages/[slug].vue` (thin wrapper around stores) |
+| Update | `app/pages/index.vue` (auth+room via stores) |
+| Update | components that read composables move to `useXxxStore()` + `storeToRefs` |
+| Update | `app/app.vue` - add `<ConnectionBanner />` |
+| Update | `nuxt.config.ts` - add `'@pinia/nuxt'` to `modules` |
+| Update | `package.json` - `pinia`, `@pinia/nuxt`, `vitest` (dev) |
+| Update | `CLAUDE.md` - new State Management section |
 
 ## Testing
 
-Vitest, юніт-тести у `app/stores/__tests__/`:
+Vitest, unit tests in `app/stores/__tests__/`:
 
-- `playersStore.applyChange()` - INSERT/UPDATE/DELETE/soft-delete
-- `playersStore.castVote()` - optimistic flow + rollback при помилці + reconciliation з realtime
-- `presenceStore` - переходи стану на visibility/network events (моки на `document.visibilityState`, `navigator.onLine`, fake supabase channel)
-- `roomStore.applyChange()` - phase transitions, active_cards updates
+1. `playersStore.applyChange()` - INSERT/UPDATE/DELETE/soft-delete
+2. `playersStore.castVote()` - optimistic flow + rollback on error + reconciliation with realtime
+3. `presenceStore` - state transitions on visibility/network events (mocks for `document.visibilityState`, `navigator.onLine`, fake supabase channel)
+4. `roomStore.applyChange()` - phase transitions, active_cards updates
 
-E2E - поза цією спекою.
+E2E is outside this spec.
 
 ## Acceptance criteria
 
-1. Голос за карту відображається у себе миттєво (без чекання сервера).
-2. Закриття вкладки на mobile → інші бачать offline ≤ 1 сек.
-3. Повернення у вкладку → автоматичний rejoin без втрати playerId.
-4. Тимчасова втрата мережі → банер "Reconnecting…" + auto-reconnect.
-5. Колонка `is_online` видалена; "online" обчислюється з presence.
-6. Realtime події не тригерять refetch (тільки initial + post-reconnect reconciliation).
-7. Старі composables видалені, компоненти споживають stores.
-8. Vitest suite - green.
+1. A card vote appears instantly for the voter (without waiting for the server).
+2. Closing a tab on mobile → others see offline within ≤ 1 sec.
+3. Returning to the tab → automatic rejoin without losing playerId.
+4. Temporary network loss → "Reconnecting…" banner + auto-reconnect.
+5. The `is_online` column is removed; "online" is derived from presence.
+6. Realtime events do not trigger refetch (only initial + post-reconnect reconciliation).
+7. Old composables are removed, and components consume stores.
+8. Vitest suite is green.
 
 ## Risks
 
-- **Supabase Presence quota:** на free tier ліміт concurrent connections - для невеликих команд (≤ 50 кімнат × ≤ 10 гравців) запас великий.
-- **iOS Safari зморожування таба** до того, як visibility handler встигне `untrack`: малоймовірно, бо handler синхронний; як fallback - Supabase сам викине через server-side timeout (~30 сек), просто з лагом.
-- **Pinia + SSR:** Nuxt у SSG/SSR режимі - Pinia працює коробково через `@pinia/nuxt`, але треба перевірити, що stores не ініціалізуються на server-side з window-залежним кодом (visibility, navigator). Захист - guard `if (import.meta.client)` у `presenceStore.start()`.
+1. **Supabase Presence quota:** the free tier limits concurrent connections; there is ample headroom for small teams (≤ 50 rooms × ≤ 10 players).
+2. **iOS Safari tab freezing** before the visibility handler can `untrack`: unlikely because the handler is synchronous; as a fallback, Supabase itself will remove the player via server-side timeout (~30 sec), with a delay.
+3. **Pinia + SSR:** Nuxt in SSG/SSR mode - Pinia works out of the box via `@pinia/nuxt`, but verify that stores are not initialized server-side with window-dependent code (visibility, navigator). Guard with `if (import.meta.client)` in `presenceStore.start()`.
