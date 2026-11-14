@@ -22,7 +22,7 @@ export default defineConfig({
       manifest: {
         name: 'Story Poker',
         short_name: 'Story Poker',
-        description: 'Planning Poker для Agile-команд: кімнати, приховане голосування, одночасне розкриття, історія раундів.',
+        description: 'Planning Poker for Agile teams: rooms, hidden voting, simultaneous reveal, and round history.',
         id: '/',
         start_url: '/',
         scope: '/',
@@ -30,7 +30,7 @@ export default defineConfig({
         orientation: 'portrait-primary',
         theme_color: '#212121',
         background_color: '#212121',
-        lang: 'uk',
+        lang: 'en',
         categories: ['productivity', 'business'],
         icons: [
           {

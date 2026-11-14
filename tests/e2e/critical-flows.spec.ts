@@ -4,6 +4,8 @@ import { AuthPage } from '../page-objects/AuthPage'
 import { HomePage } from '../page-objects/HomePage'
 import { RoomPage } from '../page-objects/RoomPage'
 
+test.use({ locale: 'en-US' })
+
 test('signup → success screen (email confirmation on)', async ({ page, signupViaUI, trackedEmails }) => {
   const password = process.env.E2E_TEST_USER_PASSWORD ?? ''
   test.skip(!password, 'E2E_TEST_USER_PASSWORD is not set')
@@ -38,7 +40,7 @@ test('two browsers: vote, reveal, reset, rename, kick', async ({ page, browser, 
   trackedRoomIds.push(roomId)
   const moderator = new RoomPage(page)
 
-  const playerContext = await browser.newContext()
+  const playerContext = await browser.newContext({ locale: 'en-US' })
   try {
     const playerPage = await playerContext.newPage()
     const player = new RoomPage(playerPage)
