@@ -1,20 +1,20 @@
 # Mobile / tablet layout pass
 
-- Status: Idea
-- Priority: P3
-- Ініційовано: 2026-06
-- Last reviewed: 2026-07-17
+1. Status: Idea
+2. Priority: P3
+3. Initiated: 2026-06
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-Референс дизайну - desktop-only 1440×900. Mobile layout верифіковано лише
-емпірично, окремого design pass не було.
+The design reference is desktop-only at 1440×900. The mobile layout has only been
+verified empirically; there has been no separate design pass.
 
-## Відкрите питання
+## Open question
 
-Чи потрібен окремий design pass для mobile і tablet, чи достатньо поточної
-адаптації?
+Is a separate design pass needed for mobile and tablet, or is the current adaptation
+sufficient?
 
-## Наступний крок
+## Next step
 
-Зафіксувати реальні розміри екранів користувачів і за ними вирішити обсяг.
+Record users' actual screen sizes and use them to decide the scope.

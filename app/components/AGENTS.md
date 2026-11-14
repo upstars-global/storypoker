@@ -1,96 +1,95 @@
-# Components - контракти й іконки
+# Components - contracts and icons
 
-## Спільні компоненти
+## Shared components
 
-- `AppModal.tsx` - Base UI Dialog (`ui/dialog`), popup рендериться як `<dialog open class="app-modal">` з
-  `.mui-modal-overlay` всередині, `modal="trap-focus"` (без scroll lock); props `open, lockDismiss?, labelledby?,
-  describedby?, initialFocus?, onClose`. Контент загортається в `AppModalPaper` (`style={{ maxWidth }}` задає ширину)
-- `AppTooltip.tsx` - Base UI Tooltip; props `side?, sideOffset?, className?, trigger` (ReactElement), вміст -
-  `children`; сам ставить `role="tooltip"` і `aria-describedby`, popup лишається змонтованим
-- `AppMenu`/`AppMenuItem` (`AppMenu.tsx`, на `ui/dropdown-menu`) - меню AppHeader і PlayerRow; меню порталиться в
-  `body`, тож у тестах шукай `page.getByRole('menu')`, а не всередині рядка
-- `useRipple()` (`app/hooks/useRipple.ts`) - callback ref Material-ripple: `ref={useRipple()}` на кнопці;
-  `Button` з `ui/` його сам не чіпляє. Текст кнопки, що змінюється, загортай у `<span>`, щоб хвиля не зникала
-- `RolePicker.tsx` - спільний селектор ролі (JoinOverlay + PlayerEditModal) на базі `RoleBadge.tsx`;
-  каталог ролей і запис у `players.shields` - `app/utils/AGENTS.md`
-- `app/components/ui/` - згенеровані shadcn CLI примітиви (`button`, `dialog`, `dropdown-menu`, `select`,
-  `tooltip`, `input`); стилі - лише через міст токенів (`app/assets/AGENTS.md`). Switch не прийнятий: перемикачі
-  `/ffc` і `PlayerRow` лишаються на `.mui-switch` (як і кнопка скидання в `/ffc` на `.mui-btn`) заради піксельної
-  рівності з Vue-версією
+1. `AppModal.tsx` - Base UI Dialog (`ui/dialog`), the popup renders as `<dialog open class="app-modal">` with
+   `.mui-modal-overlay` inside, `modal="trap-focus"` (no scroll lock); props `open, lockDismiss?, labelledby?,
+   describedby?, initialFocus?, onClose`. Content is wrapped in `AppModalPaper` (`style={{ maxWidth }}` sets the width).
+2. `AppTooltip.tsx` - Base UI Tooltip; props `side?, sideOffset?, className?, trigger` (ReactElement), content is
+   `children`; it sets `role="tooltip"` and `aria-describedby` itself, and the popup remains mounted.
+3. `AppMenu`/`AppMenuItem` (`AppMenu.tsx`, based on `ui/dropdown-menu`) - menus for AppHeader and PlayerRow; the menu is
+   portaled to `body`, so look for `page.getByRole('menu')` in tests rather than inside the row.
+4. `useRipple()` (`app/hooks/useRipple.ts`) - Material ripple callback ref: `ref={useRipple()}` on a button;
+   `Button` from `ui/` does not attach it itself. Wrap changing button text in `<span>` so the ripple does not disappear.
+5. `RolePicker.tsx` - shared role selector (JoinOverlay + PlayerEditModal) based on `RoleBadge.tsx`;
+   the role catalog and writing to `players.shields` are in `app/utils/AGENTS.md`.
+6. `app/components/ui/` - shadcn CLI-generated primitives (`button`, `dialog`, `dropdown-menu`, `select`,
+   `tooltip`, `input`); styles use the token bridge only (`app/assets/AGENTS.md`). Switch was not adopted: toggles in
+   `/ffc` and `PlayerRow` remain on `.mui-switch` (as does the reset button in `/ffc` on `.mui-btn`) for pixel
+   parity with the Vue version.
 
-## Іконки
+## Icons
 
-Усі іконки - offline, мережевих запитів до Iconify і Iconify-рантайму в бандлі немає. Рендер - CSS mask:
-`<AppIcon name="…">` віддає `<span class="sp-icon-root sp-icon sp-icon-<prefix>-<name>">`, а стилі приходять зі
-згенерованого `app/generated/icons.css` (`main.css` імпортує його в `layer(components)`).
+All icons are offline, with no network requests to Iconify and no Iconify runtime in the bundle. Rendering uses a CSS mask:
+`<AppIcon name="…">` returns `<span class="sp-icon-root sp-icon sp-icon-<prefix>-<name>">`, and styles come from
+the generated `app/generated/icons.css` (imported by `main.css` in `layer(components)`).
 
-Виняток - кольорові іконки. `app/generated/coloredIcons.json` тримає їх готову розмітку, `<AppIcon>` вставляє
-її через `dangerouslySetInnerHTML` у `<span class="sp-icon-root sp-icon-inline">`. Зараз виняток один: `app:town-hall`
-(кнопка countdown «wet») змішує `currentColor` з `#0057B7`/`#FFD700`, і mask-режим зводить усі заливки до `currentColor`.
-Список винятків - `COLORED_ICONS` у `scripts/icons/coloredIcons.ts`; генератор сам детектує фіксовані заливки і
-падає, якщо детекція розходиться зі списком у будь-який бік.
+Colored icons are an exception. `app/generated/coloredIcons.json` holds their ready-made markup, which `<AppIcon>` inserts
+via `dangerouslySetInnerHTML` in `<span class="sp-icon-root sp-icon-inline">`. Currently there is one exception: `app:town-hall`
+(the countdown "wet" button) mixes `currentColor` with `#0057B7`/`#FFD700`, and mask mode reduces all fills to `currentColor`.
+The exception list is `COLORED_ICONS` in `scripts/icons/coloredIcons.ts`; the generator detects fixed fills itself and
+fails if detection differs from the list in either direction.
 
-Набір іконок - Material (`ic:*`); Lucide вмикається лише прапором `iconsLucide`, нові `lucide:*` хардкодити в
-компонентах не можна. Наявні винятки: `lucide:id-card` і volume-тріо `lucide:volume-x`/`volume-1`/`volume-2`
-(AppHeader) та `lucide:undo` (CardsArea). Shadcn-компоненти в `app/components/ui/` лишають свої іконки з
-`lucide-react`, як їх генерує shadcn; правило вище стосується іконок застосунку поза `ui/`.
-Рендер проганяє назву крізь `mapIconName()` (`app/utils/iconMap.ts` читає флаги і делегує чистому
-`resolveIconName()` в `app/utils/iconResolver.ts`): `iconsLucide` ремапить `ic:baseline-*`→`lucide:*` (нову
-lucide-іконку треба додати в `MDI_TO_LUCIDE`, інакше fallback на raw), `iconsRounded`→`ic:round-*`.
+The icon set is Material (`ic:*`); Lucide is enabled only by the `iconsLucide` flag, and new `lucide:*` icons must not be
+hardcoded in components. Existing exceptions: `lucide:id-card` and the volume trio `lucide:volume-x`/`volume-1`/`volume-2`
+(AppHeader), and `lucide:undo` (CardsArea). Shadcn components in `app/components/ui/` retain their icons from
+`lucide-react`, as generated by shadcn; the rule above applies to app icons outside `ui/`.
+Rendering passes the name through `mapIconName()` (`app/utils/iconMap.ts` reads flags and delegates to the pure
+`resolveIconName()` in `app/utils/iconResolver.ts`): `iconsLucide` remaps `ic:baseline-*`→`lucide:*` (a new
+Lucide icon must be added to `MDI_TO_LUCIDE`, otherwise it falls back to raw), `iconsRounded`→`ic:round-*`.
 
-Джерело істини для subset - `app/utils/iconManifest.ts` (`inputNames` + `dynamicBindings` + чотири `flagCases`).
-Додав нову іконку - додай ім'я туди й перегенеруй: `pnpm run icons:generate` пише чотири артефакти в
+The source of truth for the subset is `app/utils/iconManifest.ts` (`inputNames` + `dynamicBindings` + four `flagCases`).
+When adding an icon, add its name there and regenerate: `pnpm run icons:generate` writes four artifacts to
 `app/generated/` (`iconCollections.json`, `icons.css`, `iconClasses.json`, `coloredIcons.json`).
-Сканер звіряє `names` кожного binding-а з літералами, знайденими в джерелах, тож застарілий запис падає. Зворотний
-напрямок не покривається: літерал невідомої колекції, схований у змінній поза icon-контекстом, статично
-нерозрізненний з Tailwind-варіантом (`sm:hidden`), тож його ловить `throw` у dev/test, а не сканер.
-`pnpm run icons:check` (у job `Typecheck` і на початку `test:ci`) падає на дрейфі будь-якого з них,
-`pnpm run icons:audit-build` стежить за browser graph і бюджетом JS+CSS. У dev/test пропущена іконка кидає
-`Missing local icon: <name>`. Legacy `simple-icons:*`/`game-icons:*` лишилися тільки в `SHIELD_CATALOG` для
-лукапу і в UI не рендеряться. Рантайм читає три артефакти з чотирьох; `iconCollections.json` у бандл не йде -
-це fixture для unit-тестів, і `icons:audit-build` падає, якщо він потрапляє в production graph.
+The scanner checks each binding's `names` against literals found in sources, so a stale entry fails. The reverse
+direction is not covered: a literal from an unknown collection hidden in a variable outside an icon context is statically
+indistinguishable from a Tailwind variant (`sm:hidden`), so a `throw` in dev/test catches it instead of the scanner.
+`pnpm run icons:check` (in the `Typecheck` job and at the start of `test:ci`) fails on drift in any of them;
+`pnpm run icons:audit-build` monitors the browser graph and JS+CSS budget. In dev/test a missing icon throws
+`Missing local icon: <name>`. Legacy `simple-icons:*`/`game-icons:*` remain only in `SHIELD_CATALOG` for
+lookup and are not rendered in the UI. The runtime reads three of the four artifacts; `iconCollections.json` is not bundled -
+it is a unit-test fixture, and `icons:audit-build` fails if it enters the production graph.
 
-## Діаграми
+## Charts
 
-Тільки ECharts: модулі через `echarts/core` + `use([...])` заради розміру бандла, рендер - хук
-`useEChart(containerRef, option)` (`app/hooks/useEChart.ts`: init, `ResizeObserver`, `setOption` з
-`notMerge`, dispose). Перед роботою з графіками активуй skill `echarts`. `AlignmentTrendsModal.tsx`
-вантажиться через `lazy()` у `[slug].tsx`, `PieChart.tsx` - через `lazy()` у `ResultsArea.tsx`:
-eager-імпорт виводить entry за бюджет `icons:audit-build`. Кола використовують ECharts pie з
-`SVGRenderer` і явним `{ renderer: "svg" }`. За однієї чи двох груп контейнери ростуть до 500 px
-(`flex: 1 1 280px`); діаметр кола - 80% контейнера для різних оцінок і 98% для однієї унікальної оцінки.
-У великих контейнерах розмір цифр - 6% ширини для секторів і 12% для суцільного кола.
-За трьох і більше груп контейнери мають ширину до 240 px, діаметр - 80%. Контейнери звужуються до
-доступної ширини й переносяться на нові рядки; довгі назви ролей переносяться без накладень.
-Одна унікальна оцінка дає суцільне коло, кілька - сектори з підписами карт. Групи з `groupResultVotes()` включають
-враховані за чіпами вбудовані ролі; `ResultsArea` та `AlignmentCard` використовують стабільний ключ
-групи окремо від підпису (для legacy-викликів - fallback на підпис). Підпис `<ROLE>: <середнє>`
-рендериться поза графіком одразу; під час завантаження чанка або його збою лишається порожнє місце того
-самого розміру без екранної помилки.
+ECharts only: load modules through `echarts/core` + `use([...])` for bundle size, and render through the
+`useEChart(containerRef, option)` hook (`app/hooks/useEChart.ts`: init, `ResizeObserver`, `setOption` with
+`notMerge`, dispose). Before working on charts, activate the `echarts` skill. `AlignmentTrendsModal.tsx`
+loads through `lazy()` in `[slug].tsx`, and `PieChart.tsx` through `lazy()` in `ResultsArea.tsx`:
+an eager import puts the entry over the `icons:audit-build` budget. Circles use ECharts pie with
+`SVGRenderer` and explicit `{ renderer: "svg" }`. With one or two groups, containers grow to 500 px
+(`flex: 1 1 280px`); circle diameter is 80% of the container for different estimates and 98% for one unique estimate.
+In large containers, digit size is 6% of the width for sectors and 12% for a solid circle.
+With three or more groups, containers are up to 240 px wide and diameter is 80%. Containers shrink to the
+available width and wrap to new rows; long role names wrap without overlap.
+One unique estimate produces a solid circle, while several produce sectors with card labels. Groups from `groupResultVotes()` include
+built-in roles counted by chips; `ResultsArea` and `AlignmentCard` use a stable group key separate from the label
+(for legacy calls, fallback to the label). The `<ROLE>: <average>` label renders outside the chart immediately;
+while the chunk loads or if it fails, an empty space of the same size remains without an on-screen error.
 
-Коли потрібен конкретний renderer, передай його явно третім аргументом
-`useEChart(containerRef, option, { renderer: "svg" })` або `"canvas"`.
-Реєстрація `SVGRenderer` через `use([...])` не задає renderer конкретного
-instance; ECharts за замовчуванням використовує Canvas.
+When a specific renderer is needed, pass it explicitly as the third argument:
+`useEChart(containerRef, option, { renderer: "svg" })` or `"canvas"`.
+Registering `SVGRenderer` through `use([...])` does not set the renderer for a particular
+instance; ECharts uses Canvas by default.
 
-## Панель модератора (`CardsArea`)
+## Moderator panel (`CardsArea`)
 
-Картки й кола (`lastRoundView` з `[slug].tsx`: попередній раунд у голосуванні, поточні результати після reveal
-з `revealed`, коли кнопки панелі неактивні) рендеряться в одній зоні; неактивний
-шар `invisible`. Висоту зони (`cards-zone`) задають лише картки, тож панель модератора під нею не зсувається. Шар кіл
-(`ResultsLayer`) до 6 кіл зменшує лише кола: CSS-змінна `--result-circle-scale` множить ширину контейнерів кіл
-у `ResultsArea` (`[data-result-charts]`), текст і кнопки не масштабуються; від 7 кіл - прокрутка. Нижче 1024 px
-(`lg`) після reveal шар кіл стає в потік, шар карток ховається, і панель стоїть одразу під колами
-(`lastRoundFits`, `MAX_FITTED_RESULT_CIRCLES` у `[slug].tsx`). Центральна кнопка панелі - «Показати оцінки» (`reveal-button`, у режимі
-попереднього раунду disabled), після reveal - «Новий раунд» (`new-round-button`); у `ResultsArea` її немає. Reset перемикається в undo (`resetUndoAvailable`, та сама іконка дзеркально `scaleX(-1)`): знімок голосів
-живе в стані сторінки модератора, `roomStore.restoreVotes()` відновлює його повністю; знімок скидається на reveal,
-новий раунд, втрату прапора модератора й релоад. Нижче 1024 px картки займають третину рядка.
+Cards and circles (`lastRoundView` from `[slug].tsx`: the previous round during voting, current results after reveal
+with `revealed` when panel buttons are inactive) render in the same area; the inactive
+layer is `invisible`. Only cards set the area's height (`cards-zone`), so the moderator panel below does not shift. The circles layer
+(`ResultsLayer`) reduces only the circles for up to 6 circles: CSS variable `--result-circle-scale` multiplies the width of circle containers
+in `ResultsArea` (`[data-result-charts]`); text and buttons are not scaled. From 7 circles there is scrolling. Below 1024 px
+(`lg`) after reveal, the circles layer enters the flow, the cards layer hides, and the panel sits immediately below the circles
+(`lastRoundFits`, `MAX_FITTED_RESULT_CIRCLES` in `[slug].tsx`). The central panel button is "Reveal Estimates" (`reveal-button`, disabled in
+previous-round mode), then after reveal it is "Start New Estimation Round" (`new-round-button`); `ResultsArea` does not contain it. Reset switches to undo (`resetUndoAvailable`, the same icon mirrored with `scaleX(-1)`): the vote snapshot
+lives in the moderator page state, and `roomStore.restoreVotes()` restores it completely; the snapshot resets on reveal,
+a new round, loss of the moderator flag, and reload. Below 1024 px cards occupy one third of a row.
 
-## Side widget і слот
+## Side widget and slot
 
-`sp-side-widget` (`timer | slot`) - лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine).
-Слот: 3 барабани, зважена випадковість (`utils/slotMachine.ts`), за раунд 3 спіни на кожного гравця
-(`spinsPerRound`, скидаються за `round_started_at`), джекпот = 3 однакові символи. Спін гейтиться `canSpinSlot`
-(`[slug].tsx`) - `PO`/`SM` завжди, решта лише після власного голосу і поки хтось ще не проголосував. Стан
-спіну/виграшу транслюється broadcast-каналом `countdown:<roomId>` (`slot-spin-start`/`slot-spin-end`/`slot-win`),
-єдиний видимий ефект - кубик і блимання імені в `PlayerRow.tsx`. Деталі механіки й анімацій - `DESIGN.md` §11.8
+`sp-side-widget` (`timer | slot`) is the room's left widget, switched by a button in the block header (Timer ↔ SlotMachine).
+Slot: 3 reels, weighted randomness (`utils/slotMachine.ts`), 3 spins per player per round
+(`spinsPerRound`, reset by `round_started_at`), jackpot = 3 matching symbols. Spinning is gated by `canSpinSlot`
+(`[slug].tsx`) - `PO`/`SM` always, everyone else only after their own vote and while someone else has yet to vote. Spin/win state
+is broadcast on the `countdown:<roomId>` channel (`slot-spin-start`/`slot-spin-end`/`slot-win`);
+the only visible effect is a die and a flashing name in `PlayerRow.tsx`. Mechanics and animation details are in `DESIGN.md` §11.8.

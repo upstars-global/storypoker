@@ -1,43 +1,43 @@
-# Виділений test-Supabase проєкт
+# Dedicated test Supabase project
 
-- Status: Planned
-- Priority: P2
-- Ініційовано: 2026-05-15
-- Last reviewed: 2026-07-17
-- Related: [spec](../superpowers/specs/2026-05-15-playwright-e2e-tests-design.md)
+1. Status: Planned
+2. Priority: P2
+3. Initiated: 2026-05-15
+4. Last reviewed: 2026-07-17
+5. Related: [spec](../superpowers/specs/2026-05-15-playwright-e2e-tests-design.md)
 
-## Навіщо
+## Why
 
-Окремого dev/test Supabase немає - єдина БД це прод. E2E потребує
-`.env/.env.test` (URL + service-role) для cleanup у teardown, а тестувати проти
-прода ризиковано: public RLS дає нульову ізоляцію. Це головний блокер локального
-`npm run test:e2e` і e2e в CI.
+There is no separate dev/test Supabase project; the only database is production.
+E2E needs `.env/.env.test` (URL + service-role) for cleanup in teardown, and
+running tests against production is risky: public RLS provides zero isolation.
+This is the main blocker for local `npm run test:e2e` and E2E in CI.
 
-## Очікуваний результат
+## Expected outcome
 
-Ізольований Supabase-проєкт із накоченими міграціями і кредами в CI-секретах.
+An isolated Supabase project with migrations applied and credentials in CI secrets.
 
-## Обсяг
+## Scope
 
-- Створити безкоштовний проєкт, накотити міграції `001`-`010`.
-- Скласти креди в `.env/.env.test` і CI-секрети.
+1. Create a free project and apply migrations `001`-`010`.
+2. Put credentials in `.env/.env.test` and CI secrets.
 
-Точкові правки після появи test-проєкту:
+Targeted changes after the test project is available:
 
-- P1. `signupViaUI` фікстура vs `AuthPage` POM - винести `signup()` у POM.
-- P2. Webkit `testIgnore: ['**/critical-flows.spec.ts']` без коментаря - додати пояснення.
-- P3. Порожні `tests/fixtures/{data,factories,mocks,nuxt}/` - `.gitkeep` + README або видалити.
-- P4. Зайвий `_consoleErrors` у підписах smoke-тестів.
-- P6. `reuseExistingServer` бере dev-build замість preview - окремий порт або документація.
-- P7. Console errors без allowlist - `expectedConsoleErrors` param до розширення coverage.
-- P8. Roboto через Google Fonts CDN під час E2E - route-block у setup або self-host.
-- P9. Shared `E2E_TEST_USER` - per-worker account factory до кількох login-тестів.
+1. P1. `signupViaUI` fixture vs `AuthPage` POM: move `signup()` into the POM.
+2. P2. Webkit `testIgnore: ['**/critical-flows.spec.ts']` has no comment: add an explanation.
+3. P3. Empty `tests/fixtures/{data,factories,mocks,nuxt}/`: add `.gitkeep` + README or delete them.
+4. P4. Remove the redundant `_consoleErrors` in smoke test signatures.
+5. P6. `reuseExistingServer` uses the dev build instead of preview: use a separate port or document it.
+6. P7. Console errors have no allowlist: add an `expectedConsoleErrors` param before expanding coverage.
+7. P8. Roboto uses the Google Fonts CDN during E2E: block the route in setup or self-host.
+8. P9. Shared `E2E_TEST_USER`: create a per-worker account factory before adding multiple login tests.
 
-## Критерії завершення
+## Completion criteria
 
-- `npm run test:e2e` проходить локально проти test-проєкту.
-- E2E-job у CI запускається зі своїми секретами.
+1. `npm run test:e2e` passes locally against the test project.
+2. The E2E job in CI runs with its own secrets.
 
-## Наступний крок
+## Next step
 
-Створити проєкт і накотити міграції.
+Create the project and apply the migrations.

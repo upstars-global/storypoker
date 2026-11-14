@@ -1,39 +1,39 @@
 # Estimation Scale
 
-- Status: Partial
-- Priority: P1
-- Ініційовано: 2026-05 (Iter 4)
-- Last reviewed: 2026-07-17
+1. Status: Partial
+2. Priority: P1
+3. Initiated: 2026-05 (Iter 4)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-Колоду можна змінити всередині кімнати, але не при створенні, а кастомні набори
-не переживають кімнату.
+The deck can be changed inside a room, but not when the room is created, and custom
+sets do not outlive the room.
 
-## Очікуваний результат
+## Expected outcome
 
-Вибір і повторне використання шкали оцінювання доступні на всьому шляху: від
-створення кімнати до збереженого набору на акаунті.
+Users can select and reuse an estimation scale throughout the journey, from room
+creation to a set saved on their account.
 
-## Обсяг
+## Scope
 
-Зроблено:
+Done:
 
-- Зміна scale у активній кімнаті без втрати голосів - `roomStore.setDeckPreset()`
-  + `ConfigureCardDeckModal`.
-- Poll-question пресет (`vote_question`, кастомні опції; міграція `009`).
+1. Change the scale in an active room without losing votes - `roomStore.setDeckPreset()`
+   + `ConfigureCardDeckModal`.
+2. Poll-question preset (`vote_question`, custom options; migration `009`).
 
-Лишилось:
+Remaining:
 
-- Picker при створенні кімнати (Scrum / Fibonacci / T-shirt / Hours / Boolean / Custom).
-- Збереження кастомних scales на акаунт користувача.
-- Винести Configure Card Deck з модалки в окрему вкладку або розділ кімнати.
+1. Picker when creating a room (Scrum / Fibonacci / T-shirt / Hours / Boolean / Custom).
+2. Save custom scales to the user's account.
+3. Move Configure Card Deck from the modal to a separate tab or room section.
 
-## Критерії завершення
+## Completion criteria
 
-- Кімната створюється одразу з обраним пресетом.
-- Кастомний набір можна зберегти й перевикористати в іншій кімнаті.
+1. A room is created with the selected preset from the start.
+2. A custom set can be saved and reused in another room.
 
-## Наступний крок
+## Next step
 
-Picker при створенні кімнати - найменша залежність від схеми БД.
+Add the picker when creating a room, as it has the fewest database schema dependencies.

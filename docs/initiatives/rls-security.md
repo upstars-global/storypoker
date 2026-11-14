@@ -1,34 +1,34 @@
-# RLS та авторизація мутацій
+# RLS and mutation authorization
 
-- Status: Planned
-- Priority: P0
-- Ініційовано: 2026-06-24 (аудит)
-- Last reviewed: 2026-07-17
+1. Status: Planned
+2. Priority: P0
+3. Initiated: 2026-06-24 (audit)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-Усі політики - `using (true)` / `with check (true)` (міграції `001`, `002`, `005`).
-З anon-ключем у бандлі будь-хто може змінити чужий голос або профіль,
-self-promote в модератори, захопити slug, переписати `room_state`, читати всі
-`round_history` і `user_profiles` глобально.
+All policies are `using (true)` / `with check (true)` (migrations `001`, `002`, `005`).
+With the anon key in the bundle, anyone can change another user's vote or profile,
+self-promote to moderator, take over a slug, rewrite `room_state`, and read all
+`round_history` and `user_profiles` globally.
 
-## Очікуваний результат
+## Expected outcome
 
-Write-доступ обмежений контекстом кімнати й власника запису; модераторські дії
-виконуються через контрольовані серверні процедури, а не з клієнта.
+Write access is restricted to the room context and the record owner; moderator actions
+run through controlled server-side procedures rather than from the client.
 
-## Обсяг
+## Scope
 
-- Звузити write-політики по `room_id`.
-- `user_profiles` - запис тільки при `auth.uid() = user_id`.
-- Модераторські мутації винести у security-definer RPC.
+1. Restrict write policies by `room_id`.
+2. Allow writes to `user_profiles` only when `auth.uid() = user_id`.
+3. Move moderator mutations into security-definer RPCs.
 
-## Критерії завершення
+## Completion criteria
 
-- Жодна політика не лишається `using (true)` для write.
-- Клієнт з anon-ключем не може змінити чужий голос, профіль чи `room_state`.
-- Модераторські дії проходять через RPC з перевіркою прав.
+1. No policy retains `using (true)` for writes.
+2. A client with the anon key cannot change another user's vote, profile, or `room_state`.
+3. Moderator actions go through RPCs with permission checks.
 
-## Наступний крок
+## Next step
 
-Скласти матрицю таблиця × операція × дозволена умова перед написанням міграції.
+Prepare a table × operation × allowed condition matrix before writing the migration.

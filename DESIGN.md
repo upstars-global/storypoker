@@ -1,39 +1,39 @@
 # DESIGN.md - Story Point Poker Room
 
-Аналіз дизайн-системи сторінки `examples/room.html` (захоплено з `https://app.storypoint.poker/nG8AOnjC`).
+Analysis of the design system of the page `examples/room.html` (captured from `https://app.storypoint.poker/nG8AOnjC`).
 
 ---
 
-## 1. Стек і архітектура UI
+## 1. UI stack and architecture
 
-- **Framework:** React + **Material UI 5** (Emotion CSS-in-JS, `MuiPaper-root`, `MuiAppBar-*`, `MuiCard-root`, `MuiMenu-paper` тощо)
-- **Дизайн-мова:** Material Design 2 (a не M3) - класичні `elevation 0..24`, прямокутні карточки з рад. 4-7px, тіні «Material shadow stack»
-- **Тема:** автоматична через `prefers-color-scheme` (немає UI-перемикача - повністю системна)
-- **Іконки:** Material Symbols (виключно SVG, через `@mui/icons-material`)
-- **Аватари:** [DiceBear `bottts` 7.x](https://api.dicebear.com/7.x/bottts) - згенеровані за `seed = playerName`
-- **Шрифт:** `Roboto, Helvetica, Arial, sans-serif` (з Google Fonts: `Roboto:300,400,500,700` + `Source Sans Pro:300,400,600,700`)
+- **Framework:** React + **Material UI 5** (Emotion CSS-in-JS, `MuiPaper-root`, `MuiAppBar-*`, `MuiCard-root`, `MuiMenu-paper`, etc.)
+- **Design language:** Material Design 2 (not M3) - classic `elevation 0..24`, rectangular cards with a 4-7px radius, "Material shadow stack" shadows
+- **Theme:** automatic via `prefers-color-scheme` (no UI toggle - entirely system-controlled)
+- **Icons:** Material Symbols (SVG only, via `@mui/icons-material`)
+- **Avatars:** [DiceBear `bottts` 7.x](https://api.dicebear.com/7.x/bottts) - generated from `seed = playerName`
+- **Font:** `Roboto, Helvetica, Arial, sans-serif` (from Google Fonts: `Roboto:300,400,500,700` + `Source Sans Pro:300,400,600,700`)
 
 ---
 
-## 2. Дизайн-токени
+## 2. Design tokens
 
-### 2.1 Кольорова палітра
+### 2.1 Color palette
 
 #### Brand
-| Токен | Hex | Призначення |
+| Token | Hex | Purpose |
 |---|---|---|
-| `primary` | `#455a64` | AppBar, Players header, кнопка JOIN ROOM (Blue Grey 700) |
-| `primary.dark-mode` | `#546e7a` | Той самий primary в темній темі (Blue Grey 600) |
-| `primary.dark` | `#1c313a` | Темний відтінок для hover/active |
-| `accent` | `#00cdcd` | Pinned tab колір (бренд-tinted) |
-| `error` | `rgb(198, 63, 23)` | Деструктивні стани (помилки, leave room) |
+| `primary` | `#455a64` | AppBar, Players header, JOIN ROOM button (Blue Grey 700) |
+| `primary.dark-mode` | `#546e7a` | The same primary in the dark theme (Blue Grey 600) |
+| `primary.dark` | `#1c313a` | Dark shade for hover/active |
+| `accent` | `#00cdcd` | Pinned tab color (brand-tinted) |
+| `error` | `rgb(198, 63, 23)` | Destructive states (errors, leave room) |
 
 #### Light theme - surfaces & text
-| Роль | Значення |
+| Role | Value |
 |---|---|
 | `background.default` | `rgb(250, 250, 250)` ≈ `#fafafa` |
 | `background.paper` | `#ffffff` |
-| `surface.subtle` | `rgb(245, 245, 245)` ≈ `#f5f5f5` (картки голосування) |
+| `surface.subtle` | `rgb(245, 245, 245)` ≈ `#f5f5f5` (voting cards) |
 | `surface.hover` | `rgb(240, 240, 240)` ≈ `#f0f0f0` |
 | `text.primary` | `rgba(0, 0, 0, 0.87)` |
 | `text.secondary` | `rgb(97, 97, 97)` (Grey 700) |
@@ -43,7 +43,7 @@
 | `action.selected` | `rgba(69, 90, 100, 0.08)` |
 
 #### Dark theme - surfaces & text
-| Роль | Значення |
+| Role | Value |
 |---|---|
 | `background.default` | `rgb(33, 33, 33)` ≈ `#212121` |
 | `background.paper` | `rgb(51, 51, 51)` ≈ `#333333` |
@@ -55,28 +55,28 @@
 | `action.hover` | `rgba(255, 255, 255, 0.08)` |
 | `action.selected` | `rgba(255, 255, 255, 0.12)` |
 
-### 2.2 Типографіка
+### 2.2 Typography
 
-Базовий розмір - `16px`, шкала Material:
+Base size - `16px`, Material scale:
 
-| Роль | Розмір | Вага | Приклад |
+| Role | Size | Weight | Example |
 |---|---|---|---|
 | `h1` | `2.9991rem` (~48px) | 700 | - |
 | `h2` | `2.7849rem` (~44px) | 700 | - |
 | `h3` | `2.5707rem` (~41px) | 700 | - |
 | `h4` | `2rem` | 700 | - |
-| `h5` | `1.5rem` | 700 | значення на картках голосування |
-| `h6` | `1.25rem` | 600 | заголовок «Players», «Story Point Poker» |
+| `h5` | `1.5rem` | 700 | values on voting cards |
+| `h6` | `1.25rem` | 600 | "Players", "Story Point Poker" headings |
 | `subtitle1` | `1.125rem` | 500 | - |
-| `body1` | `1rem` | 400 | основний текст |
-| `body2` | `0.9375rem` | 400 | підписи, метаінфо |
-| `caption` | `0.75em` | 400 | бейджі, статус-помітки |
+| `body1` | `1rem` | 400 | body text |
+| `body2` | `0.9375rem` | 400 | labels, metadata |
+| `caption` | `0.75em` | 400 | badges, status indicators |
 
-**Ваги в системі:** `400 / 500 / 600 / 700` (light не використовується)
+**Weights in the system:** `400 / 500 / 600 / 700` (light is not used)
 
-### 2.3 Тіні (Material elevation stack)
+### 2.3 Shadows (Material elevation stack)
 
-| Рівень | Значення |
+| Level | Value |
 |---|---|
 | `elevation 0` | `none` |
 | `elevation 1` | `0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.12)` |
@@ -84,24 +84,24 @@
 | `elevation 4` | `0 2px 4px -1px ..., 0 4px 5px ..., 0 1px 10px ...` (AppBar) |
 | `elevation 8` | `0 5px 5px -3px ..., 0 8px 10px 1px ..., 0 3px 14px 2px ...` (Menu, Popover) |
 
-В темній темі тіні **зберігаються** (на відміну від Material 3, де вони замінюються на surface tint).
+In the dark theme, shadows are **retained** (unlike Material 3, where they are replaced by surface tint).
 
 ### 2.4 Border radius
 
-| Токен | Значення | Де |
+| Token | Value | Where |
 |---|---|---|
 | `radius.none` | `0` | AppBar |
-| `radius.sm` | `4px` | Картки голосування, поля вводу |
+| `radius.sm` | `4px` | Voting cards, input fields |
 | `radius.md` | `5px / 7px` | Player rows |
-| `radius.pill` | `25px` | Кнопка JOIN ROOM (на login-екрані) |
-| `radius.full` | `50%` | Аватари, IconButton |
+| `radius.pill` | `25px` | JOIN ROOM button (on the login screen) |
+| `radius.full` | `50%` | Avatars, IconButton |
 
 ### 2.5 Spacing scale
 
-Базується на 8-px grid (Material standard):
+Based on an 8-px grid (Material standard):
 `4 / 8 / 16 / 24 / 32 / 48` (px)
 
-Розрізи з реального коду: `padding: 16px / 24px / 32px / 36px`, `margin: 4px / 8px / 24px / 32px`.
+Values from the actual code: `padding: 16px / 24px / 32px / 36px`, `margin: 4px / 8px / 24px / 32px`.
 
 ---
 
@@ -125,110 +125,110 @@
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-- **AppBar:** позиція `sticky`, висота `64px`, фон `#455a64`, текст білий
-- **Sidebar (Players):** фіксована ширина ~`260px`, `margin: 16px`, `elevation 3`
-- **Vote area:** flex-wrap, картки `~150 × 200px`, gap `16px`, центровані по горизонталі
+- **AppBar:** `sticky` position, `64px` height, `#455a64` background, white text
+- **Sidebar (Players):** fixed width ~`260px`, `margin: 16px`, `elevation 3`
+- **Vote area:** flex-wrap, cards `~150 × 200px`, gap `16px`, horizontally centered
 
 ---
 
-## 4. Компоненти
+## 4. Components
 
 ### 4.1 AppBar
 - `MuiAppBar-positionSticky` + `MuiAppBar-colorPrimary`
-- Висота `64px`, padding-left/right `24px`
-- Контейнер з логотипом (h6, weight 600) ліворуч, праворуч - текст username + IconButton з PersonIcon
+- Height `64px`, padding-left/right `24px`
+- Logo container (h6, weight 600) on the left, username text + IconButton with PersonIcon on the right
 
 ### 4.2 Players Card
-- `MuiPaper-elevation3`, рад. `5px`
-- Header: `#455a64` фон, білий h6 «Players», center, padding `8px 16px`
-- Список - `<List>` з рядками: avatar + name + status icons + 3-dot menu (тільки для current user)
-- Status icons (праворуч): `aria-label="moderator|inactive|player deciding"`
-- Висота рядка `48px`, `border-radius: 7px` на hover
+- `MuiPaper-elevation3`, radius `5px`
+- Header: `#455a64` background, white h6 "Players", centered, padding `8px 16px`
+- List - `<List>` with rows: avatar + name + status icons + 3-dot menu (current user only)
+- Status icons (right): `aria-label="moderator|inactive|player deciding"`
+- Row height `48px`, `border-radius: 7px` on hover
 
 ### 4.3 Vote Card
 - `MuiCard-root` + `MuiPaper-elevation1`
-- Розмір `~150 × 200px`, фон `#f5f5f5` (light) / `#424242` (dark)
-- Значення центроване, `font-size: 1.5rem` (h5), `font-weight: 400`, колір `text.secondary`
+- Size `~150 × 200px`, background `#f5f5f5` (light) / `#424242` (dark)
+- Value centered, `font-size: 1.5rem` (h5), `font-weight: 400`, color `text.secondary`
 - States:
-  - **default:** `elevation 1`, фон subtle
-  - **hover:** ледь вищий контраст фону (`#f0f0f0`)
-  - **selected:** `elevation 3` + білий фон в light, або трохи світліший в dark
-- Спеціальні значення: `?` (unknown estimate), `☕` (coffee break) - як емоджі (1.5rem)
+  - **default:** `elevation 1`, subtle background
+  - **hover:** slightly higher background contrast (`#f0f0f0`)
+  - **selected:** `elevation 3` + white background in light, or slightly lighter in dark
+- Special values: `?` (unknown estimate), `☕` (coffee break) - as emoji (1.5rem)
 
 ### 4.4 Player row (in Players list)
-- `<ListItem>` з:
-  - Avatar (round, 40 × 40, DiceBear bottts; авторизовані можуть завантажити власне фото - непорожній `user_profiles.avatar_url` + Storage bucket `avatars`, спека `docs/specs/2026-08-02-custom-avatar-upload-design.md`)
-  - Primary text (name) - `body1` 400; **bold 500** для current user
-  - Trailing - статус-іконки (16px, opacity 0.54) + 3-dot IconButton (тільки своя)
+- `<ListItem>` with:
+  - Avatar (round, 40 × 40, DiceBear bottts; authenticated users can upload their own photo - non-empty `user_profiles.avatar_url` + Storage bucket `avatars`, spec `docs/specs/2026-08-02-custom-avatar-upload-design.md`)
+  - Primary text (name) - `body1` 400; **bold 500** for the current user
+  - Trailing - status icons (16px, opacity 0.54) + 3-dot IconButton (own row only)
 
 ### 4.5 Avatar Menu (top-right)
 - `MuiPopover` + `MuiMenu-paper`, `elevation 8`
-- Опції: `Sign In`, `Sign Up` (для гостя)
-- Іконки 24px зліва від тексту
+- Options: `Sign In`, `Sign Up` (for guests)
+- 24px icons to the left of the text
 
 ### 4.6 Player context menu (3-dot)
-- Те саме `MuiMenu-paper`, опції: **Is Moderator** / **Is Observer** (з Switch), **Rename Player**, **Leave Room**
-- Switch - стандартний MUI з primary тремоном
+- The same `MuiMenu-paper`, options: **Is Moderator** / **Is Observer** (with Switch), **Rename Player**, **Leave Room**
+- Switch - standard MUI with the primary color
 
 ---
 
-## 5. Іконографіка
+## 5. Iconography
 
-Усі іконки - **Material Symbols / Icons** (SVG, viewBox 24×24):
+All icons are **Material Symbols / Icons** (SVG, viewBox 24×24):
 
-| Іконка | aria-label | Призначення |
+| Icon | aria-label | Purpose |
 |---|---|---|
-| `SportsEsports` | - | Геймпад біля гравця-«bot» (io) |
-| `WifiOff` | `inactive` | Гравець офлайн |
-| `Schedule` (clock) | `player deciding` | Гравець ще обирає |
-| `MilitaryTech` / shield | `moderator` | Модератор кімнати |
-| `MoreVert` | - | 3-dot меню гравця |
-| `AccountCircle` | `account of current user` | Avatar IconButton в AppBar |
+| `SportsEsports` | - | Gamepad beside the "bot" player (io) |
+| `WifiOff` | `inactive` | Player offline |
+| `Schedule` (clock) | `player deciding` | Player is still deciding |
+| `MilitaryTech` / shield | `moderator` | Room moderator |
+| `MoreVert` | - | Player 3-dot menu |
+| `AccountCircle` | `account of current user` | Avatar IconButton in AppBar |
 
-**Жодних емоджі замість іконок** - структурні елементи виключно SVG. Емоджі (`☕`) використовуються лише як **семантичне значення** на vote card.
+**No emoji in place of icons** - structural elements are SVG only. Emoji (`☕`) are used only as a **semantic value** on the vote card.
 
 ---
 
-## 6. Інтерактивні стейти
+## 6. Interactive states
 
 | State | Light | Dark |
 |---|---|---|
 | Default surface | `#ffffff` / `#f5f5f5` | `#333` / `#424242` |
 | Hover | +`rgba(69,90,100,.04)` | +`rgba(255,255,255,.08)` |
 | Active / Pressed | +`rgba(69,90,100,.12)` | +`rgba(255,255,255,.12)` |
-| Selected | `elevation 3` + accent border | те саме |
+| Selected | `elevation 3` + accent border | same |
 | Disabled | opacity `.38` | opacity `.5` (text), `.3` (icon) |
 | Focus visible | `outline: 2px solid #455a64` (MUI default) | `2px solid #00cdcd` |
 
 ---
 
-## 7. Адаптивність
+## 7. Responsiveness
 
-Захоплена розмітка - **desktop layout** (1440 × 900). На мобільних, ймовірно:
-- AppBar залишається sticky
-- Players sidebar схлопується в expandable панель або bottom sheet
-- Vote cards перебудовуються в 3 колонки
+The captured layout is the **desktop layout** (1440 × 900). On mobile, presumably:
+- The AppBar remains sticky
+- The Players sidebar collapses into an expandable panel or bottom sheet
+- Vote cards reflow into 3 columns
 
-> ⚠️ Захоплена тільки одна точка зору; mobile-варіант не верифіковано.
-
----
-
-## 8. Анти-патерни / зауваги
-
-- ❌ **Немає UI-перемикача теми** - користувач залежить від системних налаштувань. UX-кейс «хочу темну тему вдень» не покритий
-- ❌ **Status icons без tooltip** на player row - `aria-label` є, але hover-tooltip не показує сенс іконки користувачу-без-screen-reader
-- ❌ **Контраст vote card в light:** значення `rgb(97,97,97)` на фоні `#f5f5f5` - контраст ~5.7:1 (OK для AA, але не AAA)
-- ⚠️ **Material Design 2** замість M3 - виглядає трохи застаріло (плоскі тіні, прямі углы). Сучасніший вигляд дав би перехід на MD3 (динамічна палітра, surface tint, ширші радіуси `12-16px`)
-- ⚠️ **DiceBear аватари** генеруються через зовнішнє API на кожен render - варто кешувати або генерувати на клієнті (`@dicebear/core`)
+> ⚠️ Only one viewport was captured; the mobile variant has not been verified.
 
 ---
 
-## 9. Рекомендації для відтворення
+## 8. Anti-patterns / notes
 
-Якщо переписувати на власний стек:
+- ❌ **No theme switch in the UI** - the user depends on system settings. The UX case "I want a dark theme during the day" is not covered
+- ❌ **Status icons without tooltips** on the player row - `aria-label` is present, but a hover tooltip does not explain the icon to a user without a screen reader
+- ❌ **Vote card contrast in light:** `rgb(97,97,97)` on `#f5f5f5` has a contrast ratio of ~5.7:1 (OK for AA, but not AAA)
+- ⚠️ **Material Design 2** instead of M3 - looks somewhat dated (flat shadows, square corners). Moving to MD3 would provide a more modern look (dynamic palette, surface tint, wider `12-16px` radii)
+- ⚠️ **DiceBear avatars** are generated through an external API on every render - consider caching or generating them on the client (`@dicebear/core`)
+
+---
+
+## 9. Recommendations for reproduction
+
+If rewriting with a custom stack:
 
 ```ts
-// Tailwind config (приклад)
+// Tailwind config (example)
 colors: {
   primary: { DEFAULT: '#455a64', dark: '#1c313a', light: '#546e7a' },
   accent:  { DEFAULT: '#00cdcd' },
@@ -247,208 +247,208 @@ boxShadow: {
 },
 ```
 
-**Бажаний апгрейд:**
-- Перейти на MD3 / shadcn/ui - отримати кращу типографіку, surface tint, dynamic theming
-- Додати свій theme-toggle (зберігати в `localStorage`)
-- Додати tooltip на статус-іконки гравця
-- Анімований transition між темами (`transition: background 200ms ease, color 200ms ease`)
-- Фіксовані values голосування винести в config (зараз - Fibonacci `1, 2, 3, 5, 8, 13, 20, ?, ☕`)
+**Desired upgrades:**
+- Move to MD3 / shadcn/ui for better typography, surface tint, and dynamic theming
+- Add a custom theme toggle (persist it in `localStorage`)
+- Add tooltips to player status icons
+- Animate the transition between themes (`transition: background 200ms ease, color 200ms ease`)
+- Move fixed voting values to config (currently Fibonacci `1, 2, 3, 5, 8, 13, 20, ?, ☕`)
 
 ---
 
-## 10. Аудит поточної реалізації (assets/css/main.css)
+## 10. Audit of the current implementation (assets/css/main.css)
 
-> Аудит станом на 2026-05-14. Версія: Tailwind v3 via `@nuxtjs/tailwindcss ^6`.
+> Audit as of 2026-05-14. Version: Tailwind v3 via `@nuxtjs/tailwindcss ^6`.
 
-### 10.1 Що реалізовано
+### 10.1 What is implemented
 
-- Повна система CSS custom properties (`--bg-*`, `--text-*`, `--primary`, `--shadow-*`)
-- Dual-theme через `html[data-theme='dark|light']` - без flash завдяки inline script у `<head>` (nuxt.config.ts)
-- MUI-like бібліотека в `@layer components`: `mui-btn`, `mui-btn-text`, `mui-icon-btn`, `mui-input`, `mui-card`, `mui-menu`, `mui-menu-item`, `mui-modal-overlay`, `mui-modal-paper`, `mui-switch`, `mui-h5`, `mui-h6`, `mui-body`, `mui-caption`, `mui-svg-icon`
+- A complete system of CSS custom properties (`--bg-*`, `--text-*`, `--primary`, `--shadow-*`)
+- Dual theme via `html[data-theme='dark|light']` - no flash thanks to an inline script in `<head>` (nuxt.config.ts)
+- MUI-like library in `@layer components`: `mui-btn`, `mui-btn-text`, `mui-icon-btn`, `mui-input`, `mui-card`, `mui-menu`, `mui-menu-item`, `mui-modal-overlay`, `mui-modal-paper`, `mui-switch`, `mui-h5`, `mui-h6`, `mui-body`, `mui-caption`, `mui-svg-icon`
 - Responsive `mui-card-value` (4 breakpoints: base / 600 / 900 / 1200)
 - Consistent shadow scale (1/2/3/4/8 = Material elevation stack)
-- ✅ Tailwind токени зареєстровані в `tailwind.config.ts` (раніше - пр. 10.2 #1): `primary`, `primary-hover`, `primary-soft`, `danger`, `success`, `bg-{app,appbar,paper,elevated,overlay,skeleton}`, `text-{primary,body,muted,disabled,inverse}`, `border-{DEFAULT,input}`, `shadow-{1,2,3,4,8}`
+- ✅ Tailwind tokens registered in `tailwind.config.ts` (previously - item 10.2 #1): `primary`, `primary-hover`, `primary-soft`, `danger`, `success`, `bg-{app,appbar,paper,elevated,overlay,skeleton}`, `text-{primary,body,muted,disabled,inverse}`, `border-{DEFAULT,input}`, `shadow-{1,2,3,4,8}`
 
-### 10.2 Виявлені проблеми
+### 10.2 Issues found
 
-| # | Проблема | Вплив |
+| # | Issue | Impact |
 |---|----------|-------|
-| 2 | Inline `style=` у компонентах (AppHeader, [slug].vue та ін.) | Обходить Tailwind, важко рефакторити та підтримувати |
-| 3 | ✅ Виправлено - `mui-btn-text:disabled` визначено | - |
-| 4 | ✅ Виправлено (2026-07-12) - див. §10.4 | Карти й панелі більше не зливаються з фоном у light mode |
+| 2 | Inline `style=` in components (AppHeader, [slug].vue, etc.) | Bypasses Tailwind, hard to refactor and maintain |
+| 3 | ✅ Fixed - `mui-btn-text:disabled` is defined | - |
+| 4 | ✅ Fixed (2026-07-12) - see §10.4 | Cards and panels no longer blend into the background in light mode |
 
-### 10.3 Рекомендовані виправлення
+### 10.3 Recommended fixes
 
-**Пріоритет 1 - fix light mode card contrast:** ✅ реалізовано (2026-07-12) через `--card-border`/`--card-shadow`, див. §10.4 - фінальне рішення додає контур+тінь, а не тільки зміну фону.
+**Priority 1 - fix light mode card contrast:** ✅ implemented (2026-07-12) via `--card-border`/`--card-shadow`, see §10.4 - the final solution adds an outline and shadow along with the background change.
 
-**Пріоритет 2 - `mui-btn-text:disabled`:** ✅ вже реалізовано в кодовій базі.
+**Priority 2 - `mui-btn-text:disabled`:** ✅ already implemented in the codebase.
 
-**Пріоритет 3 - поступово замінити inline `style="color: var(--text-*)"` на Tailwind утиліти (`text-muted`, `bg-paper` тощо).** Досі актуально; частково зроблено для `text-white` → `text-primary` (§10.4), решта inline-стилів (AppHeader, countdown-кнопки) лишається.
+**Priority 3 - gradually replace inline `style="color: var(--text-*)"` with Tailwind utilities (`text-muted`, `bg-paper`, etc.).** Still relevant; partially done for `text-white` → `text-primary` (§10.4); the remaining inline styles (AppHeader, countdown buttons) remain.
 
-### 10.4 Зміни сесії 2026-07-12
+### 10.4 Changes from the 2026-07-12 session
 
-**Контраст карток/панелей у light theme (§10.2 #4).** Додано теми-залежні токени в `html[data-theme='light']`:
-- `--card-border: 1px solid rgba(0,0,0,0.192)`, `--card-shadow: 0px 1px 2px rgba(0,0,0,0.096)` - читає `.mui-card` (голосувальні картки) і `.mui-icon-btn` (іконки-кнопки)
-- `--paper-border: var(--card-border)`, `--paper-shadow: var(--card-shadow)` - читає `.mui-paper` (Players/Timer/AlignmentCard/SlotMachine), а заразом і `.mui-modal-paper`/`.mui-menu`, які вже раніше читали `--paper-border`
-- Для `.mui-icon-btn` контур вимкнено в темних барах (`.bg-appbar`, `.mui-paper-header`), де він не потрібен
+**Card/panel contrast in the light theme (§10.2 #4).** Theme-dependent tokens added to `html[data-theme='light']`:
+- `--card-border: 1px solid rgba(0,0,0,0.192)`, `--card-shadow: 0px 1px 2px rgba(0,0,0,0.096)` - read by `.mui-card` (voting cards) and `.mui-icon-btn` (icon buttons)
+- `--paper-border: var(--card-border)`, `--paper-shadow: var(--card-shadow)` - read by `.mui-paper` (Players/Timer/AlignmentCard/SlotMachine), as well as `.mui-modal-paper`/`.mui-menu`, which already read `--paper-border`
+- For `.mui-icon-btn`, the outline is disabled in dark bars (`.bg-appbar`, `.mui-paper-header`), where it is not needed
 
-**Новий компонент `.mui-chip`** (Filter/Choice chip, `border-radius: var(--radius-chip, 999px)`) - замінив нативний чекбокс-грід карток колоди та `.mui-shield`-пікер третьої картки в `ConfigureCardDeckModal.vue`. `.mui-shield` лишився без змін для вибору ролі гравця (`PlayerEditModal.vue`).
+**New `.mui-chip` component** (Filter/Choice chip, `border-radius: var(--radius-chip, 999px)`) - replaced the native checkbox grid for deck cards and the `.mui-shield` picker for the third card in `ConfigureCardDeckModal.vue`. `.mui-shield` remained unchanged for player role selection (`PlayerEditModal.vue`).
 
-**`.mui-icon-group`** - тонкий спільний контур (`border-radius: 999px`, `min-width: 128px`, `min-height: 44px`), об'єднує групу іконок-кнопок в один блок замість окремих рамок на кожній.
+**`.mui-icon-group`** - a thin shared outline (`border-radius: 999px`, `min-width: 128px`, `min-height: 44px`) combines a group of icon buttons into one block instead of separate borders on each.
 
-**Механіка старту відліку (`CardsArea.vue`) переосмислена:**
-- Прибрано окрему CTA-кнопку "Прошу голосувати" (`cards.revealCountdown`) і концепцію "коротке натискання = обраний режим за замовчуванням" (`sp-countdown-mode` в localStorage більше не використовується)
-- Кожна з 3 іконок (`Без звуку` / `Простий звук` / `З атмосферою`) - самодостатня дія: **утримання 1.4с** (`pointerdown`/`keydown Enter-Space`, скасовується на `pointerup`/`pointerleave`/`blur`, прив'язане до конкретного режиму щоб `blur` сусідньої кнопки не скасовував чуже утримання) заповнює тонкий SVG-ореол (`stroke-dashoffset`-transition, синхронізована з `HOLD_MS` в CSS) і стартує `startCountdown(mode)`
-- Ореол: `stroke-width: 2`, колір `var(--text-primary)` (тема-залежний: чорний у light, білий у dark), вписаний у межі самої кнопки (не виходить за контур групи)
-- Поки триває відлік, група `.mui-icon-group` не зникає - рамка лишається на місці, кнопки всередині заміняються центрованим лічильником (`countdownCounter`)
-- Іконка "Простий звук": `app:bank` → кастомна `app:timer` (двострілковий циферблат; виправлено через `fill-rule="evenodd"`, бо напрямок обходу контуру ховав другу стрілку)
+**The countdown start mechanism (`CardsArea.vue`) was redesigned:**
+- Removed the separate "Please vote" CTA button (`cards.revealCountdown`) and the concept of "short press = selected default mode" (`sp-countdown-mode` in localStorage is no longer used)
+- Each of the 3 icons (`No sound` / `Simple sound` / `With atmosphere`) is a self-contained action: **holding for 1.4s** (`pointerdown`/`keydown Enter-Space`, canceled on `pointerup`/`pointerleave`/`blur`, tied to the specific mode so that a neighboring button's `blur` does not cancel another button's hold) fills a thin SVG halo (`stroke-dashoffset` transition, synchronized with `HOLD_MS` in CSS) and starts `startCountdown(mode)`
+- Halo: `stroke-width: 2`, color `var(--text-primary)` (theme-dependent: black in light, white in dark), fitted within the button itself (does not extend beyond the group outline)
+- While the countdown runs, the `.mui-icon-group` does not disappear - the border remains in place, and the buttons inside are replaced by a centered counter (`countdownCounter`)
+- "Simple sound" icon: `app:bank` → custom `app:timer` (a dial with two hands; fixed via `fill-rule="evenodd"` because the contour direction hid the second hand)
 
-**`text-white` → `text-primary`** у заголовках/статистиці/вкладках-фільтрах (`AlignmentTrendsModal`, `HistoryModal`, `ConfigureCardDeckModal`, `ResultsArea`, `CardsArea`) - білий текст на світлому фоні модалок був практично невидимий у light theme. Білий текст лишено тільки там, де він лежить на кольорових бейджах/бульбашках (не теми-залежний фон).
+**`text-white` → `text-primary`** in headings/statistics/filter tabs (`AlignmentTrendsModal`, `HistoryModal`, `ConfigureCardDeckModal`, `ResultsArea`, `CardsArea`) - white text on the light background of modals was practically invisible in the light theme. White text was retained only where it sits on colored badges/bubbles (a background that does not depend on the theme).
 
-**Vote question (`CardsArea.vue`)** - редактор відповідей: кожен рядок отримав `✕` (видалення будь-якого рядка, не тільки останнього), "+" винесено в окрему кнопку `mui-btn-text` "Додати варіант" під списком; старт голосування блокується, якщо є доданий, але порожній рядок.
+**Vote question (`CardsArea.vue`)** - answer editor: each row received `✕` (any row can be removed, including rows other than the last); "+" was moved to a separate `mui-btn-text` "Add option" button below the list; starting the vote is blocked if an added row is empty.
 
 ---
 
-## 11. Функціонал та механіки
+## 11. Features and mechanics
 
-> Усі ролеві гейти нижче - **client-side only**. RLS на `rooms`/`room_state`/`players`/`round_history` - `using (true)` (публічний read/write для anon key, `supabase/migrations/001_initial_schema.sql`). Розмежування ролей ніяк не enforced на рівні БД.
+> All role gates below are **client-side only**. RLS on `rooms`/`room_state`/`players`/`round_history` uses `using (true)` (public read/write for the anon key, `supabase/migrations/001_initial_schema.sql`). Role distinctions are not enforced at the database level.
 
-### 11.1 Функціонал модератора
+### 11.1 Moderator features
 
-Ролі визначаються в `app/pages/[slug].tsx`:
+Roles are defined in `app/pages/[slug].tsx`:
 ```ts
 const isModerator = currentPlayer?.is_moderator ?? false
 const isAuthorizedModerator = isModerator && !!user
 ```
 
-**Модератор (`is_moderator`, авторизація не потрібна)** - увесь нижній блок кнопок у `CardsArea.tsx` (`{isModerator && ...}`) плюс кілька контролів поза ним:
+**Moderator (`is_moderator`, no authentication required)** - the entire bottom button block in `CardsArea.tsx` (`{isModerator && ...}`), plus several controls outside it:
 
-| Дія | Компонент / handler |
+| Action | Component / handler |
 |---|---|
-| Розкрити оцінки (reveal) | `CardsArea.tsx` reveal-button → `roomStore.reveal()` |
-| Скинути голоси (reset) / повернути (undo) | `CardsArea.tsx` reset-button → `roomStore.resetVotes()`; повторне натискання → `roomStore.restoreVotes(snapshot)` |
-| Показати попередній раунд (undo) | `CardsArea.tsx` undo-button → `showLastRound = !showLastRound` |
-| Запустити відлік розкриття | `CardsArea.tsx` hold-to-start (силент/зі звуком/з атмосферою) → `broadcastCountdownStart` - деталі §11.6 |
-| Почати новий раунд | `ResultsArea.tsx`, `showNewRound={isModerator}` → `roomStore.startNewRound()` |
-| Налаштувати опитування (`voting`/`vote_question`) | `CardsArea.tsx`, умова `... && isModerator` → `setPollQuestion`/`startVoteQuestion` |
-| Налаштувати колоду карт | `AppHeader.tsx` меню → `ConfigureCardDeckModal` (пресет і карти; кола автоматичні, §11.9) |
-| Виключити гравця (kick) | `PlayerRow.tsx`, гейт `currentUserIsModerator` → `playersStore.kick` |
-| Керування таймером (reset/pause/resume/±30s) | `Timer.tsx`, `canControl={isModerator}` (саме `isModerator`, **не** `isAuthorizedModerator`) |
+| Reveal estimates | `CardsArea.tsx` reveal-button → `roomStore.reveal()` |
+| Reset votes (reset) / restore (undo) | `CardsArea.tsx` reset-button → `roomStore.resetVotes()`; press again → `roomStore.restoreVotes(snapshot)` |
+| Show previous round (undo) | `CardsArea.tsx` undo-button → `showLastRound = !showLastRound` |
+| Start reveal countdown | `CardsArea.tsx` hold-to-start (silent/with sound/with atmosphere) → `broadcastCountdownStart` - details in §11.6 |
+| Start a new round | `ResultsArea.tsx`, `showNewRound={isModerator}` → `roomStore.startNewRound()` |
+| Configure a poll (`voting`/`vote_question`) | `CardsArea.tsx`, condition `... && isModerator` → `setPollQuestion`/`startVoteQuestion` |
+| Configure the card deck | `AppHeader.tsx` menu → `ConfigureCardDeckModal` (preset and cards; circles are automatic, §11.9) |
+| Kick a player | `PlayerRow.tsx`, gate `currentUserIsModerator` → `playersStore.kick` |
+| Control the timer (reset/pause/resume/±30s) | `Timer.tsx`, `canControl={isModerator}` (specifically `isModerator`, **not** `isAuthorizedModerator`) |
 
-**Авторизований модератор (`isModerator && user`)** - додатково над списком вище:
+**Authorized moderator (`isModerator && user`)** - in addition to the list above:
 
-| Дія | Компонент / handler |
+| Action | Component / handler |
 |---|---|
-| Перейменувати кімнату / встановити slug | `AppHeader.tsx`, вкладена умова `user` усередині `isModerator` → `roomStore.setRoomName(name, slug)` |
-| Фон кімнати (завантажити / кадрувати / прибрати) | `AppHeader.tsx` → `RoomBackgroundModal` (лише `isAuthorizedModerator`, який є власником фону або фон ще нічий) → `roomStore.uploadBackground` / `removeBackground`, §11.10 |
-| Перейменувати іншого гравця + його shields | `PlayerRow.tsx`, гейт `currentUserIsAuthorizedModerator` (вкладено в `currentUserIsModerator`-блок) → `PlayerEditModal` |
+| Rename the room / set its slug | `AppHeader.tsx`, nested `user` condition inside `isModerator` → `roomStore.setRoomName(name, slug)` |
+| Room background (upload / crop / remove) | `AppHeader.tsx` → `RoomBackgroundModal` (only an `isAuthorizedModerator` who owns the background or when the background has no owner yet) → `roomStore.uploadBackground` / `removeBackground`, §11.10 |
+| Rename another player + edit their shields | `PlayerRow.tsx`, gate `currentUserIsAuthorizedModerator` (nested inside the `currentUserIsModerator` block) → `PlayerEditModal` |
 
-### 11.2 Функціонал гравця
+### 11.2 Player features
 
-Доступно будь-якому учаснику кімнати, незалежно від `is_moderator`:
+Available to any room participant, regardless of `is_moderator`:
 
-- Голосувати за активну картку (`CardsArea.tsx`, картки не гейтяться роллю - лише `canVote`)
-- Перейменувати себе / встановити власні shields (`PlayerRow.tsx`, гейт `isOwn` → `PlayerEditModal`)
-- Вийти з кімнати (`PlayerRow.tsx`, гейт `isOwn` → soft-delete `left_at`)
-- **Перемкнути власний прапорець модератора** (`PlayerRow.tsx`, гейт тільки `isOwn`, без перевірки `currentUserIsModerator`) - самопризначення доступне будь-кому, не тільки поточному модератору; тогл ЧУЖОГО прапорця модератора в UI відсутній взагалі
-- Переглянути історію раундів / графік узгодженості (`AppHeader.tsx`, гейт лише `roomName` - тобто кімната має назву, роль не перевіряється)
-- Перемкнути тему/палітру/мову, бічний віджет Timer ↔ SlotMachine
-- Грати в слот-машину (3 спіни за раунд для всіх; гейтинг - §11.8)
+1. Vote for an active card (`CardsArea.tsx`, cards are not role-gated - only `canVote` applies)
+2. Rename yourself / set your own shields (`PlayerRow.tsx`, gate `isOwn` → `PlayerEditModal`)
+3. Leave the room (`PlayerRow.tsx`, gate `isOwn` → soft-delete `left_at`)
+4. **Toggle your own moderator flag** (`PlayerRow.tsx`, gate is only `isOwn`, with no `currentUserIsModerator` check) - anyone can self-promote, not only the current moderator; the UI has no toggle for ANOTHER player's moderator flag
+5. View round history / the alignment chart (`AppHeader.tsx`, only gate is `roomName` - the room must have a name; the role is not checked)
+6. Switch theme/palette/language, and the Timer ↔ SlotMachine side widget
+7. Play the slot machine (3 spins per round for everyone; gating - §11.8)
 
-### 11.3 Графік узгодженості та тренди (`AlignmentTrendsModal.tsx`)
+### 11.3 Alignment chart and trends (`AlignmentTrendsModal.tsx`)
 
-**Джерело даних:** один запит `roomStore.fetchHistory()` в `useEffect` при відкритті - увесь
-`round_history` кімнати (без пагінації/дат-фільтра на рівні БД). `isNumericPreset()` лишає
-`scrum`/`fibonacci`/`hours`/`goal_clarity` і раунди без пресету; для останніх додатково потрібен хоча б
-один числовий голос.
+**Data source:** one `roomStore.fetchHistory()` request in `useEffect` on opening - the room's entire
+`round_history` (no database-level pagination/date filter). `isNumericPreset()` retains
+`scrum`/`fibonacci`/`hours`/`goal_clarity` and rounds without a preset; the latter also require at least
+one numeric vote.
 
-**Гранулярність - один раунд = одна точка графіка.** Кожен відфільтрований запис `round_history`
-мапиться 1:1 у `ChartPoint {date, alignments, overall, deckPreset, round}`:
-`roleRoundAlignment(round, shieldsMap)` дає бали ролей, `summarizeRound(round, shieldsMap).alignment` -
-загальний бал. Агрегування по днях/тижнях немає.
+**Granularity - one round = one chart point.** Each filtered `round_history` record maps 1:1 to
+`ChartPoint {date, alignments, overall, deckPreset, round}`:
+`roleRoundAlignment(round, shieldsMap)` supplies role scores, and `summarizeRound(round, shieldsMap).alignment`
+supplies the overall score. There is no daily/weekly aggregation.
 
-> ⚠️ `shieldsMap` будується з поточних shields видимих гравців на момент відкриття модалки. Зміна ролі
-перераховує минулі раунди під нову роль; без ролі й гравці, яких уже немає серед видимих, рахуються як
-DEV. Роль на момент голосування у snapshot не зберігається.
+> ⚠️ `shieldsMap` is built from the current shields of visible players when the modal opens. A role change
+recalculates past rounds under the new role; players without a role and those no longer visible count as
+DEV. The snapshot does not save the role at the time of voting.
 
-**Фільтри:**
-- Часове вікно: `30D` / `90D` / `6M` (default) / `1Y` - `cutoff` рахується від `Date.now()`
-- Колода: `deckFilter` обмежує до одного `deck_preset` або показує всі
+**Filters:**
+1. Time window: `30D` / `90D` / `6M` (default) / `1Y` - `cutoff` is calculated from `Date.now()`
+2. Deck: `deckFilter` limits results to one `deck_preset` or shows all
 
-**Формула `alignmentScore(votes, deckOrder)` (`app/utils/alignment.ts`):**
-1. `estimateCards` = порядок колоди мінус `{'?', '☕'}`
-2. Кожен голос → індекс позиції у `estimateCards`; голоси за `?`/`☕` не рахуються
-3. Якщо рахованих голосів < 2 → `null`
-4. `span = estimateCards.length - 1`; якщо колода має 1 картку-оцінку → `100`
-5. `spread = max(індекс) - min(індекс)` серед голосів
-6. **`score = round(100 * (1 - spread / span))`** - 100 = усі обрали одну картку (або сусідні), 0 = найдальші картки колоди одночасно проголосовані
+**`alignmentScore(votes, deckOrder)` formula (`app/utils/alignment.ts`):**
+1. `estimateCards` = deck order minus `{'?', '☕'}`
+2. Each vote → its position index in `estimateCards`; votes for `?`/`☕` are excluded
+3. If counted votes < 2 → `null`
+4. `span = estimateCards.length - 1`; if the deck has one estimate card → `100`
+5. `spread = max(index) - min(index)` among votes
+6. **`score = round(100 * (1 - spread / span))`** - 100 = everyone chose the same card (or adjacent cards), 0 = the most distant cards in the deck were voted simultaneously
 
-Графік трендів малює окрему лінію на кожну з ролей DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM, що має
-не-null бал у видимому періоді (`roleRoundAlignment()` у `roundStats.ts`, сира роль - `voteCohortFor()`
-з `resultCohorts.ts`). Кожна лінія перемикається в легенді. `COHORT_COLORS` - спільна мапа для ліній і
-бейджів історії та знімка; GQA - `#ff7043`, AQA - `#fdd835`, QA - `#ffa726`. Автоматичні кола поточного
-раунду (§11.9) не змінюють формул історії, трендів і головної. Legacy `custom:*` рахується як DEV.
+The trends chart draws a separate line for each of DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM with a
+non-null score in the visible period (`roleRoundAlignment()` in `roundStats.ts`, raw role - `voteCohortFor()`
+in `resultCohorts.ts`). Each line can be toggled in the legend. `COHORT_COLORS` is the shared map for lines
+and history and snapshot badges; GQA - `#ff7043`, AQA - `#fdd835`, QA - `#ffa726`. The current round's
+automatic circles (§11.9) do not change the history, trends, or home formulas. Legacy `custom:*` counts as DEV.
 
-**Legacy rounds без `active_cards`/`deck_preset`** (виправлено 2026-07-26): `alignmentScore` повертає
-`null`, якщо `deckOrder` порожній - а раунди, записані до міграції `010_round_history_deck.sql`, мають
-`active_cards = null` (і найстаріші - ще й `deck_preset = null`), тому їхній alignment мовчки випадав з
-графіка, хоча голоси в них цілком реальні й числові. `resolveActiveCards(activeCards, deckPreset)`
-(`app/utils/roundStats.ts`) підставляє `defaultActive` відповідного пресету з `cardDecks.ts`, а якщо
-навіть `deck_preset` відсутній - `DEFAULT_PRESET_ID` (`'scrum'`); це наближення (реальна колода на
-момент раунду могла бути звуженою), але краще за повне випадання точки. Викликається в
-`roleRoundAlignment`/`summarizeRound` - тому й `AlignmentTrendsModal`, і `HistoryModal` тепер бачать ці
-раунди. **Дзеркалить** `resolveActiveCards` у `netlify/functions/room-json.mts` (комміти
-`e1dcf02`/`beca0e5`) - синхронізувати вручну при зміні формули в обох місцях.
+**Legacy rounds without `active_cards`/`deck_preset`** (fixed 2026-07-26): `alignmentScore` returns
+`null` when `deckOrder` is empty, and rounds recorded before migration `010_round_history_deck.sql` have
+`active_cards = null` (the oldest also have `deck_preset = null`), so their alignment silently disappeared
+from the chart even though their votes are real and numeric. `resolveActiveCards(activeCards, deckPreset)`
+(`app/utils/roundStats.ts`) supplies the corresponding preset's `defaultActive` from `cardDecks.ts`, or
+`DEFAULT_PRESET_ID` (`'scrum'`) if `deck_preset` is also missing. This is an approximation (the actual deck
+at the time of the round may have been narrowed), but is better than losing the point entirely. It is called
+in `roleRoundAlignment`/`summarizeRound`, so both `AlignmentTrendsModal` and `HistoryModal` now see these
+rounds. It **mirrors** `resolveActiveCards` in `netlify/functions/room-json.mts` (commits
+`e1dcf02`/`beca0e5`) - synchronize both places manually when changing the formula.
 
-**Загальний бал раунду:** історія, головна й картки трендів рахують `alignmentScore` одним пулом голосів
-оцінювачів DEV/BE/FE/SRE/QA/GQA/AQA, без PO/SM (`estimatorVotes()`; legacy `custom:*` - DEV). Якщо жоден
-оцінювач не голосував, пул - усі голоси. Середнє оцінок рахується з того самого пулу. Бал - ціле 0-100,
-`null` при менше ніж двох голосах картами колоди без `?`/`☕`. Головна показує округлене середнє не-null
-загальних балів числових раундів; poll- і нечислові колоди виключені. Legacy-поля API для agilecharts
-зберігають свій контракт (`netlify/AGENTS.md`).
+**Overall round score:** history, home, and trend cards calculate `alignmentScore` using one pool of votes
+from DEV/BE/FE/SRE/QA/GQA/AQA estimators, excluding PO/SM (`estimatorVotes()`; legacy `custom:*` is DEV).
+If no estimator voted, the pool contains all votes. The estimate average uses the same pool. The score is an
+integer from 0-100, or `null` with fewer than two votes for deck cards excluding `?`/`☕`. Home displays the
+rounded average of non-null overall scores for numeric rounds; poll and non-numeric decks are excluded. Legacy
+API fields for agilecharts retain their contract (`netlify/AGENTS.md`).
 
-**Агрегати поверх відфільтрованих точок** беруть загальні бали раундів:
+**Aggregates over filtered points** use overall round scores:
 
-- Поточний бал - останній не-null бал у видимому періоді; середній - округлене середнє не-null балів
-- Тренд - тільки якщо ≥4 не-null балів: `pct = (середнє нової половини - середнє старої половини) / стара половина × 100`;
-  `up` якщо `pct > 1`, `down` якщо `< -1`, інакше `stable`
+1. Current score - the last non-null score in the visible period; average - the rounded average of non-null scores
+2. Trend - only with ≥4 non-null scores: `pct = (average of newer half - average of older half) / older half × 100`;
+  `up` if `pct > 1`, `down` if `< -1`, otherwise `stable`
 
-**Бейджі рівня (`alignmentLevel`/`levelColor`):** `Perfect ≥90` (зелений), `High ≥75` (зелений), `Medium ≥40` (жовтий), `Low <40` (червоний).
+**Level badges (`alignmentLevel`/`levelColor`):** `Perfect ≥90` (green), `High ≥75` (green), `Medium ≥40` (yellow), `Low <40` (red).
 
-> ⚠️ Горизонтальні пунктирні лінії-орієнтири на самому графіку (`REF_LINES`: 100/75/50/25, підписані як `100%`/`75%`/`50%`/`25%`) - це просто візуальні мітки сітки, їхні позиції **не збігаються точно** з порогами `alignmentLevel` (напр. лінія на 50 не збігається з текстовим порогом "Medium", який починається з 40).
+> ⚠️ Horizontal dashed reference lines on the chart (`REF_LINES`: 100/75/50/25, labeled `100%`/`75%`/`50%`/`25%`) are visual grid markers; their positions **do not match exactly** the `alignmentLevel` thresholds (e.g. the line at 50 does not match the text threshold for "Medium", which starts at 40).
 
-**Рушій графіка - ECharts** (`echarts`, з 2026-07-25; до того - ручний SVG). Підключені лише потрібні модулі (`echarts/core` + `CanvasRenderer`/`LineChart`/`GridComponent`/`TooltipComponent`/`DataZoomComponent`/`MarkLineComponent`, `use([...])`) заради розміру бандла. `useEChart(container, option)` (`app/hooks/useEChart.ts`, resize через `ResizeObserver`) - `chartOption` у `useMemo`, що будує `xAxis`/`yAxis`/`series`/`tooltip`/`dataZoom` з `points`.
+**Chart engine - ECharts** (`echarts`, since 2026-07-25; previously hand-written SVG). Only the required modules are loaded (`echarts/core` + `CanvasRenderer`/`LineChart`/`GridComponent`/`TooltipComponent`/`DataZoomComponent`/`MarkLineComponent`, `use([...])`) for bundle size. `useEChart(container, option)` (`app/hooks/useEChart.ts`, resize via `ResizeObserver`) - `chartOption` in `useMemo` builds `xAxis`/`yAxis`/`series`/`tooltip`/`dataZoom` from `points`.
 
-**Ось X** - `type: 'category'` з `boundaryGap: false`, дані - `weekLabel(date)` (ISO-тиждень, `w12`) для кожної точки; категорійна вісь сама розподіляє точки рівномірно за порядком (а не пропорційно реальному часу), тому близькі в часі раунди не накладаються, а перша/остання точка лежать точно на краях графіка. Лінія - `smooth: true` (вбудоване згладжування ECharts, без ручної Catmull-Rom).
+**X axis** - `type: 'category'` with `boundaryGap: false`, data - `weekLabel(date)` (ISO week, `w12`) for each point; the category axis distributes points evenly in order (rather than in proportion to actual time), so rounds close in time do not overlap and the first/last points lie exactly at the chart edges. The line uses `smooth: true` (built-in ECharts smoothing, no manual Catmull-Rom).
 
-**dataZoom-таймлайн знизу** - слайдер (`type: 'slider'`) під графіком з міні-превʼю форми лінії (`dataBackground`) + `type: 'inside'` для zoom/pan колесом миші чи pinch; дозволяє наблизити довільний відрізок часового вікна, обраного кнопками `30D/90D/6M/1Y`, не змінюючи сам фільтр.
+**dataZoom timeline below** - a slider (`type: 'slider'`) under the chart with a miniature preview of the line shape (`dataBackground`) + `type: 'inside'` for zoom/pan with the mouse wheel or pinch; it allows zooming into any segment of the time window selected with the `30D/90D/6M/1Y` buttons without changing the filter itself.
 
-**Reference lines** (100/75/50/25%) - окрема невидима серія `__refLines` (`data: []`, `silent: true`,
-`tooltip.show: false`) з `markLine`, завжди в `series` незалежно від перемикачів ролей, щоб орієнтири не
-зникали разом із лініями.
+**Reference lines** (100/75/50/25%) - a separate invisible series `__refLines` (`data: []`, `silent: true`,
+`tooltip.show: false`) with `markLine`, always in `series` regardless of role toggles, so the reference lines
+do not disappear with the lines.
 
-**Tooltip** - `trigger: 'item'`, **`triggerOn: 'click'`** (клік на крапку показує і "пришпилює" tooltip;
-ховається лише повторним кліком чи по порожньому місцю графіка - на відміну від строгого hover, це дає
-час дотягнутись курсором до кнопки "Деталі", особливо на крайніх точках), `enterable: true` (можна
-навести на сам tooltip не закривши його). Контент - `formatter()` повертає HTML: лейбл серії + значення
-(`%`), дата, кнопка-закриття `×` (`data-close-tooltip`) і клікабельний рядок `trends.viewDetails`
-(`data-view-details`, `data-index`). Лейбл серії - тег сирої ролі з `series.name`, колір - з
-`COHORT_COLORS`.
+**Tooltip** - `trigger: 'item'`, **`triggerOn: 'click'`** (clicking a point shows and "pins" the tooltip;
+it hides only on another click or a click on an empty area of the chart - unlike strict hover, this gives
+time to move the pointer to the "Details" button, especially at edge points), `enterable: true` (the pointer
+can enter the tooltip without closing it). Content - `formatter()` returns HTML: series label + value
+(`%`), date, close button `×` (`data-close-tooltip`), and clickable `trends.viewDetails` row
+(`data-view-details`, `data-index`). The series label is the raw role tag from `series.name`, and its color is
+from `COHORT_COLORS`.
 
-**Round snapshot** - клік на `data-view-details` у tooltip ловиться делегованим `document`-listener-ом
-(ECharts рендерить tooltip у `document.body`), звідти `points[dataIndex].round` → `selectedRound` →
-`RoundSnapshotModal.tsx`. Модалка рендериться всередині поточної, щоб Tab не виходив зі знімка; показує
-імена й голоси зі snapshot `round_history.votes`, поруч - `RoleBadge` з поточних shields. Роль береться
-з того самого `shieldsMap`, тому діє застереження про зміну ролей після голосування.
+**Round snapshot** - a delegated `document` listener catches clicks on `data-view-details` in the tooltip
+(ECharts renders the tooltip in `document.body`), then `points[dataIndex].round` → `selectedRound` →
+`RoundSnapshotModal.tsx`. The modal renders inside the current one so Tab does not leave the snapshot; it shows
+names and votes from the `round_history.votes` snapshot, with a `RoleBadge` from current shields alongside.
+The role comes from the same `shieldsMap`, so the warning about role changes after voting applies.
 
-**Когорта в round snapshot** - `data-view-details` несе `data-cohort` з тегом ролі лінії
-(`params.seriesName`), який передається як `cohort` у `RoundSnapshotModal`. Модалка фільтрує
-`round.votes` через `voteCohortFor()` і показує лише голоси цієї сирої ролі; у заголовку - її бейдж
-кольору з `COHORT_COLORS`. Якщо після фільтра голосів немає - `trends.noVotesInCohort`.
+**Cohort in the round snapshot** - `data-view-details` carries `data-cohort` with the line's role tag
+(`params.seriesName`), passed as `cohort` to `RoundSnapshotModal`. The modal filters `round.votes` through
+`voteCohortFor()` and shows only votes for that raw role; its badge in the heading uses the color from
+`COHORT_COLORS`. If no votes remain after filtering - `trends.noVotesInCohort`.
 
-### 11.4 Історія раундів (`round_history`)
+### 11.4 Round history (`round_history`)
 
-**Схема** (`supabase/migrations/001_initial_schema.sql` + `010_round_history_deck.sql`):
+**Schema** (`supabase/migrations/001_initial_schema.sql` + `010_round_history_deck.sql`):
 ```sql
 round_history (
   id uuid PK, room_id text, started_at timestamptz, revealed_at timestamptz,
@@ -457,128 +457,128 @@ round_history (
 )
 ```
 
-**Запис** - `roomStore.reveal()` (`app/stores/room.ts`):
-1. No-op якщо кімнати/стану нема або `phase` вже `'revealed'` (захист від подвійного запису)
-2. Збирає `votes = {player_id, name, vote}[]` лише з гравців із непустим голосом
-3. Виставляє `room_state.phase='revealed'` умовним update (`phase <> 'revealed'`, `select('room_id')`); якщо таймер був на паузі - заморожує `paused_elapsed_ms` (див. §11.6)
-4. **Рядок `round_history` пишеться, тільки коли цей update змінив рядок і `votes.length >= 2`** - одноголосні/безголосі reveal-и в історію не потрапляють, а з двох одночасних reveal-ів пише лише той, що виграв update; той, що змінив 0 рядків, перечитує `room_state`, а помилку update логує
-5. `active_cards`/`deck_preset` беруться зі стану кімнати на момент reveal - тому картка в історії лишається правильною, навіть якщо колоду згодом змінили
+**Writing** - `roomStore.reveal()` (`app/stores/room.ts`):
+1. No-op if the room/state is absent or `phase` is already `'revealed'` (prevents duplicate writes)
+2. Collects `votes = {player_id, name, vote}[]` only from players with a non-empty vote
+3. Sets `room_state.phase='revealed'` with a conditional update (`phase <> 'revealed'`, `select('room_id')`); if the timer was paused, freezes `paused_elapsed_ms` (see §11.6)
+4. **A `round_history` row is written only when this update changed a row and `votes.length >= 2`** - reveals with one or zero votes do not enter history, and of two simultaneous reveals only the one that won the update writes; the one that changed 0 rows rereads `room_state`, and an update error is logged
+5. `active_cards`/`deck_preset` come from the room state at reveal time, so the card in history remains correct even if the deck is changed later
 
-`?` і `☕` рахуються як повноцінні голоси для запису, але виключаються з `alignmentScore`/`averageOf` (нечислові). `name` у snapshot дублюється, щоб історія лишалась читабельною після rename/kick/leave гравця.
+`?` and `☕` count as full votes for recording, but are excluded from `alignmentScore`/`averageOf` (non-numeric). `name` is duplicated in the snapshot so history remains readable after a player is renamed, kicked, or leaves.
 
-**`HistoryModal.tsx`** читає весь `fetchHistory()`, групує по рік/квартал, фільтрує по колоді; для
-кожного раунду показує `summarizeRound()` (`app/utils/roundStats.ts`): `average` (зважене середнє
-числових голосів, `.toFixed(1)`), `alignment` (`alignmentScore`), `counts` (кількість голосів по кожному
-значенню), `voterCount`. Для poll-колод (`voting`/`vote_question`) `average`/`alignment` - завжди
-`null`. Середнє й узгодженість беруть пул оцінювачів (§11.3); counts і voterCount охоплюють усі голоси.
-Якщо голоси з когортою належать двом і більше ролям, показується рядок на роль у порядку DEV, BE, FE,
-SRE, QA, GQA, AQA, PO, SM (legacy `custom:*` - DEV). Якщо роль одна, показується один рядок усіх голосів. Групування бере сиру поточну роль незалежно від
-чіпів кімнати.
+**`HistoryModal.tsx`** reads all of `fetchHistory()`, groups by year/quarter, and filters by deck; for
+each round it displays `summarizeRound()` (`app/utils/roundStats.ts`): `average` (weighted mean of
+numeric votes, `.toFixed(1)`), `alignment` (`alignmentScore`), `counts` (number of votes for each
+value), `voterCount`. For poll decks (`voting`/`vote_question`), `average`/`alignment` are always
+`null`. Average and alignment use the estimator pool (§11.3); counts and voterCount include all votes.
+If votes with a cohort belong to two or more roles, one row per role is shown in the order DEV, BE, FE,
+SRE, QA, GQA, AQA, PO, SM (legacy `custom:*` is DEV). If there is one role, one row shows all votes. Grouping uses the raw current role regardless of
+room chips.
 
-### 11.5 Export (видалено)
+### 11.5 Export (removed)
 
-Ручний CSV-експорт з `HistoryModal` (кнопка на колоду, обмежена `scrum`/`fibonacci`) видалено - його роль тепер виконує публічний JSON API `netlify/functions/room-json.mts` (`GET /api/<room>.json` і `GET /api/teams.json`), яким живиться `agilecharts`. Деталі - AGENTS.md, розділ "Зовнішні інтеграції".
+Manual CSV export from `HistoryModal` (a button per deck, limited to `scrum`/`fibonacci`) was removed - its role is now served by the public JSON API `netlify/functions/room-json.mts` (`GET /api/<room>.json` and `GET /api/teams.json`), which feeds `agilecharts`. See `netlify/AGENTS.md` for the API contract.
 
-### 11.6 Механіка таймера і відліку розкриття
+### 11.6 Round timer and reveal countdown mechanics
 
-Це дві незалежні фічі, обидві звані "таймер" у побуті:
+These are two independent features, both commonly called a "timer":
 
-**А. Таймер раунду (`Timer.tsx`)** - рахує, скільки триває поточний раунд голосування.
+**A. Round timer (`Timer.tsx`)** - measures the duration of the current voting round.
 
-- `room_state`: `round_started_at`, `paused_at` (nullable), `paused_elapsed_ms` (`supabase/migrations/006_room_state_timer.sql`)
-- `elapsedMs = max(0, pivot - round_started_at - paused_elapsed_ms)`, де `pivot` = момент `reveal` (заморожений `Date.now()` в момент переходу `phase → 'revealed'`), або `paused_at` якщо на паузі, або живий `now` (тік раз/сек)
-- **Контролі** (`reset`/`pause`/`resume`/`±30s`) - тільки `showControls = canControl && phase==='voting'`, `canControl={isModerator}` у `[slug].tsx`
-  - `reset` - повний рестарт (`round_started_at=now()`, скидає паузу)
-  - `pause`/`resume` - `resume` додає тривалість паузи, що щойно закінчилась, до `paused_elapsed_ms`
-  - `±30s` (`adjustTimer`) - зсуває `round_started_at`; для "+30s" зсув затиснутий (`min(cap, ...)`), щоб не пересунути старт у майбутнє
-- **Ліміт 1 година** (`ROUND_TIMER_CAP_MS` у `app/utils/timerAlarm.ts`) - показаний час не росте понад 1 год, під час `voting` текст стає «Таймер зупинено після 1h 0m 0s», сигнал далі не спрацьовує. За `round_history` (травень-жовтень 2026) 92% раундів коротші за 45 хв, а довші за годину - здебільшого кімнати, залишені на ніч чи дні після рефайнменту. Коли команда повертається, тобто `onlineCount` зростає й перевищує 1, `[slug].tsx` при `isRoundTimerStale()` викликає `resetTimer(round_started_at)` і відлік починається з нуля; один учасник у кімнаті бачить зупинений таймер, а інші зміни `room_state` (Pause, ±30s, налаштування сигналу) скидання не запускають. Запис іде лише за незмінного `round_started_at` і `phase = 'voting'` (compare-and-set), тож кілька клієнтів одночасно, ручний Reset/±30s і reveal між перевіркою й записом не перезаписуються. Пауза в ліміт не рахується
-- Якщо `reveal()` стається під час паузи - `paused_elapsed_ms` домотується до моменту reveal, і показана тривалість коректно заморожується; `Timer.tsx` у фазі `revealed` бере `min(revealedAt, paused_at)`, тож тривалість не стрибає на час простою
-- **Сигнал раунду (будильник)** - шестерня зліва в хедері віджета (лише для модератора, `canControl`) розгортає inline-налаштування: «Сигнал через N хв» (3-20, дефолт 5; Enter фіксує значення й знімає фокус) і дзвіночок mute (звук за замовчуванням увімкнений). Налаштування спільні для кімнати - `room_state.alarm_minutes` / `alarm_muted` (міграція `018`, `null` = 5 хв і звук увімкнено), пише `roomStore.setAlarm()`; хелпери й синтез дзвінка - `app/utils/timerAlarm.ts`. Сигнал бачать і чують усі учасники
-  - Коли під час `voting` `elapsedMs` перетинає N, 2N чи 3N хвилин, увесь віджет блимає (`timer-alarm-blink`) і грає синтезований Web Audio дзвінок, не залежний від `sp-volume`: 1, 2 і 3 «дзеньки» відповідно, стільки ж блимань (`ALARM_MAX_BEEPS`). Від 4N сигналу немає. Таймер не зупиняється: він фіксує, скільки тривало обговорення задачі, тож сигнал лише нагадує про час
-  - Ручна пауза зсуває наступний сигнал на свою тривалість; reveal і новий раунд працюють як звичайно, `round_history` пишеться так само
-  - Спрацьовує лише на перетині порогу: після reload зі вже пройденим порогом сигналу немає; на паузі й після reveal не спрацьовує
+1. `room_state`: `round_started_at`, `paused_at` (nullable), `paused_elapsed_ms` (`supabase/migrations/006_room_state_timer.sql`)
+1. `elapsedMs = max(0, pivot - round_started_at - paused_elapsed_ms)`, where `pivot` = the moment of `reveal` (`Date.now()` frozen at the transition `phase → 'revealed'`), or `paused_at` when paused, or live `now` (one tick per second)
+1. **Controls** (`reset`/`pause`/`resume`/`±30s`) - only `showControls = canControl && phase==='voting'`, `canControl={isModerator}` in `[slug].tsx`
+   1. `reset` - full restart (`round_started_at=now()`, clears the pause)
+   1. `pause`/`resume` - `resume` adds the duration of the pause that just ended to `paused_elapsed_ms`
+   1. `±30s` (`adjustTimer`) - shifts `round_started_at`; for "+30s" the shift is capped (`min(cap, ...)`) to prevent moving the start into the future
+1. **1-hour limit** (`ROUND_TIMER_CAP_MS` in `app/utils/timerAlarm.ts`) - the displayed time does not grow beyond 1 hour; during `voting` the text becomes "Timer stopped after 1h 0m 0s", and the alarm no longer fires. According to `round_history` (May-October 2026), 92% of rounds are shorter than 45 minutes, and those longer than an hour are mostly rooms left overnight or for days after refinement. When the team returns, meaning `onlineCount` rises above 1, `[slug].tsx` calls `resetTimer(round_started_at)` if `isRoundTimerStale()` and the count starts from zero; a single participant in the room sees the stopped timer, while other `room_state` changes (Pause, ±30s, alarm settings) do not trigger a reset. The write occurs only if `round_started_at` is unchanged and `phase = 'voting'` (compare-and-set), so concurrent clients, manual Reset/±30s, and reveal between the check and the write are not overwritten. Paused time does not count toward the limit
+1. If `reveal()` occurs during a pause, `paused_elapsed_ms` is advanced to the moment of reveal and the displayed duration is frozen correctly; in the `revealed` phase, `Timer.tsx` uses `min(revealedAt, paused_at)`, so the duration does not jump by the idle time
+1. **Round alarm** - the gear on the left of the widget header (moderator only, `canControl`) expands inline settings: "Alarm after N min" (3-20, default 5; Enter commits the value and removes focus) and a mute bell (sound is on by default). Settings are shared across the room - `room_state.alarm_minutes` / `alarm_muted` (migration `018`, `null` = 5 minutes and sound on), written by `roomStore.setAlarm()`; helpers and bell synthesis are in `app/utils/timerAlarm.ts`. All participants see and hear the alarm
+   1. When `elapsedMs` crosses N, 2N or 3N minutes during `voting`, the entire widget flashes (`timer-alarm-blink`) and a synthesized Web Audio bell plays independently of `sp-volume`: 1, 2 and 3 chimes respectively, with the same number of flashes (`ALARM_MAX_BEEPS`). There is no alarm from 4N onward. The timer does not stop: it records how long the task discussion took, so the alarm only reminds participants of the time
+   1. A manual pause shifts the next alarm by its duration; reveal and a new round work as usual, and `round_history` is written as before
+   1. Fires only when crossing a threshold: there is no alarm after reload if the threshold has already passed; it does not fire while paused or after reveal
 
-**Б. Відлік перед розкриттям (hold-to-start, `CardsArea.tsx` + `app/hooks/useCountdown.ts`)** - опційний "хайп"-відлік із звуком перед тим, як модератор розкриє оцінки.
+**B. Reveal countdown (hold-to-start, `CardsArea.tsx` + `app/hooks/useCountdown.ts`)** - an optional "hype" countdown with sound before the moderator reveals estimates.
 
-- 3 режими (іконки в `.mui-icon-group`): **без звуку** (мовчазний фолбек 10с), **зі звуком** (`countdown-dry.mp3`, тривалість = довжина файлу), **з атмосферою** (спершу `please-vote.mp3`, після його завершення - `countdown-wet.mp3`)
-- **Активація - утримання 1.4с** (`pointerdown`/`keydown Enter-Space`), не коротке натискання (концепцію "коротким натисканням обрати режим за замовчуванням" прибрано в цій сесії). Скасовується на `pointerup`/`pointerleave`/`blur`, прив'язане до конкретного режиму, щоб втрата фокусу від сусідньої кнопки не скасовувала чуже утримання
-- Тонкий SVG-ореол навколо кнопки заповнюється синхронно з утриманням (`stroke-dashoffset`-transition = `HOLD_MS`)
-- По завершенню утримання: `onStartCountdown(mode)` → `broadcastCountdownStart` шле `{initiatorId, mode}` у `countdown:<roomId>` broadcast (`self:true`) → **усі** клієнти (включно з ініціатором) запускають свій локальний `useCountdown().startCountdown(mode, ...)`, синхронізовано звуковим файлом/фолбек-таймером
-- Лише колбек ініціатора викликає `roomStore.reveal()`, коли відлік природно завершується
-- Звук `decision-sound` грає при кожному reveal з консенсусом (перехід `voting → revealed`), незалежно від режиму countdown; у режимі "з атмосферою" по завершенню грає `ambience.mp3`, якщо консенсусу немає. Гучність усіх звуків керується слайдером у шапці (`sp-volume`)
-- Поки відлік триває, рамка `.mui-icon-group` не зникає - кнопки всередині заміняються центрованим лічильником; `revealPending`-прапорець ховає кнопки ще трохи довше, поки `phase` фактично не перейде в `'revealed'` (закриває гонку між локальним таймером і realtime round-trip)
-- Увесь блок - тільки для модератора (§11.1)
+1. 3 modes (icons in `.mui-icon-group`): **Countdown without sound** (silent 10s fallback), **Countdown with sound** (`countdown-dry.mp3`, duration = file length), **With ambience** (first `please-vote.mp3`, followed by `countdown-wet.mp3` after it finishes)
+1. **Activation - hold for 1.4s** (`pointerdown`/`keydown Enter-Space`), not a short press (the concept of "short press to select the default mode" was removed in this session). Cancelled on `pointerup`/`pointerleave`/`blur`, tied to the specific mode so focus loss from an adjacent button does not cancel another button's hold
+1. A thin SVG halo around the button fills in sync with the hold (`stroke-dashoffset` transition = `HOLD_MS`)
+1. On completion of the hold: `onStartCountdown(mode)` → `broadcastCountdownStart` sends `{initiatorId, mode}` to the `countdown:<roomId>` broadcast (`self:true`) → **all** clients (including the initiator) start their local `useCountdown().startCountdown(mode, ...)`, synchronized by the sound file/fallback timer
+1. Only the initiator's callback calls `roomStore.reveal()` when the countdown finishes naturally
+1. `decision-sound` plays on every reveal with consensus (transition `voting → revealed`), regardless of countdown mode; in "With ambience" mode, `ambience.mp3` plays at the end if there is no consensus. The header slider (`sp-volume`) controls the volume of all sounds
+1. While the countdown runs, the `.mui-icon-group` border remains visible - the buttons inside are replaced by a centered counter; the `revealPending` flag hides the buttons a little longer, until `phase` actually transitions to `'revealed'` (closes the race between the local timer and the realtime round-trip)
+1. The entire block is moderator-only (§11.1)
 
-### 11.7 Goal Clarity Score (`goal_clarity` пресет)
+### 11.7 Goal Clarity Score (`goal_clarity` preset)
 
-Окремий пресет для health-check питання "Наскільки чітко я розумію Sprint Goals?", а не для оцінки story points.
+A separate preset for a health-check question, not for estimating story points. The stored default is "Наскільки чітко я розумію Sprint Goals?"; its display depends on the locale ("How clearly do I understand the Sprint Goals?" in English).
 
-**Картки** - фіксована шкала `1,2,3,4,5` (`cards === defaultActive`, без `?`/`☕`/toggle - як `boolean`).
+**Cards** - fixed scale `1,2,3,4,5` (`cards === defaultActive`, no `?`/`☕`/toggle - like `boolean`).
 
-**Фіксоване питання** - `DeckPreset.defaultQuestion` (нове опційне поле в `app/utils/cardDecks.ts`, на відміну від moderator-typed `poll_question` у `voting`/`vote_question`). `setDeckPreset()` пише `poll_question: preset.defaultQuestion ?? null` - той самий `room_state.poll_question`/UI-шлях показу питання (`CardsArea.tsx`/`ResultsArea.tsx`), що й у poll-колод, але автоматично заповнений і не редагується голосуванням (лишається, доки моделятор не зміне пресет). `CardsArea.tsx` показує заголовок питання за самим фактом `pollQuestion` (`!!pollQuestion`), не лише для `pollMode`/`voteQuestionMode`.
+**Fixed question** - `DeckPreset.defaultQuestion` (a new optional field in `app/utils/cardDecks.ts`, unlike the moderator-typed `poll_question` in `voting`/`vote_question`). `setDeckPreset()` writes `poll_question: preset.defaultQuestion ?? null` - the same `room_state.poll_question`/UI display path for the question (`CardsArea.tsx`/`ResultsArea.tsx`) as poll decks, but populated automatically and not edited by voting (it remains until the moderator changes the preset). `CardsArea.tsx` shows the question heading whenever `pollQuestion` exists (`!!pollQuestion`), including outside `pollMode`/`voteQuestionMode`.
 
-**Не poll-колода** - `isPollPreset()` (`roundStats.ts`) навмисно НЕ включає `goal_clarity`: голосування/reveal/celebration/consensus/alignment-badge (`AlignmentCard`) працюють як для звичайного числового пресету. `isNumericPreset()` - включає, тож раунди потрапляють у `HistoryModal`/`AlignmentTrendsModal`/`room-json.mts` API нарівні зі scrum/fibonacci/hours (той самий `alignmentScore` - 0-100 spread-consensus, шкало-агностичний).
+**Not a poll deck** - `isPollPreset()` (`roundStats.ts`) deliberately does NOT include `goal_clarity`: voting/reveal/celebration/consensus/alignment badge (`AlignmentCard`) work as for an ordinary numeric preset. `isNumericPreset()` includes it, so rounds appear in `HistoryModal`/`AlignmentTrendsModal`/`room-json.mts` API alongside scrum/fibonacci/hours (the same `alignmentScore` - 0-100 spread-consensus, scale-agnostic).
 
-**Score circle після reveal** (`ResultsArea.tsx`, prop `goalClarityScore`) - замість PieChart/per-card average (пиріг зі "1,2,3,4,5" не інформативний для Likert-шкали) - кольорове коло з "сирим" середнім (`averageOf(votes)`, той самий `(сума голосів)/(кількість)`, напр. 6 учасників `3,4,5,4,5,4` → `25/6 = 4.2`):
-- `> 3.5` - зелений `#43a047`
-- `2.5 ≤ x ≤ 3.5` - жовтий `#fbc02d`
-- `< 2.5` - червоний `#e64a19`
+**Score circle after reveal** (`ResultsArea.tsx`, prop `goalClarityScore`) - instead of PieChart/per-card average (a pie with "1,2,3,4,5" is not informative for a Likert scale), a colored circle with the "raw" average (`averageOf(votes)`, the same `(sum of votes)/(count)`, e.g. 6 participants `3,4,5,4,5,4` → `25/6 = 4.2`):
+1. `> 3.5` - green `#43a047`
+1. `2.5 ≤ x ≤ 3.5` - yellow `#fbc02d`
+1. `< 2.5` - red `#e64a19`
 
-Пороги `3.5` / `2.5` - продуктове рішення власника, а не похідна з даних; у коді вони живуть як
-`GOAL_CLARITY_THRESHOLDS` (`app/utils/cardDecks.ts`) поруч із пресетом, і зсув межі означає зміну саме там.
+The `3.5` / `2.5` thresholds are the owner's product decision, not derived from data; in code they live as
+`GOAL_CLARITY_THRESHOLDS` (`app/utils/cardDecks.ts`) next to the preset, and changing a boundary means changing it there.
 
-При результаті `≤ 3.5` - підказка `results.goalClarityHint` ("переформулювати Sprint Goal або критерії DoD"). Той самий кольоровий triplet, що й `alignmentLevel`/`levelColor` у `AlignmentTrendsModal.tsx`.
+For a result of `≤ 3.5` - the `results.goalClarityHint` hint ("The goal isn't clear to the team - consider reformulating the Sprint Goal or the Definition of Done criteria"). The same color triplet as `alignmentLevel`/`levelColor` in `AlignmentTrendsModal.tsx`.
 
-### 11.8 Слот-машина (`SlotMachine.tsx`)
+### 11.8 Slot machine (`SlotMachine.tsx`)
 
-Лівий віджет кімнати перемикається кнопкою в хедері блоку (Timer ↔ SlotMachine), вибір - у `sp-side-widget` (`timer | slot`).
+The left room widget is switched with a button in the block header (Timer ↔ SlotMachine); the selection is stored in `sp-side-widget` (`timer | slot`).
 
-**Механіка** - 3 барабани, зважена випадковість (`utils/slotMachine.ts`; символи - tabler icon-id у `SLOT_SYMBOL_WEIGHTS`, рендеряться через `<AppIcon>`), 3 спіни на кожного гравця за раунд (`spinsPerRound`, скидаються за `round_started_at`). Джекпот = 3 однакові символи.
+**Mechanics** - 3 reels, weighted randomness (`utils/slotMachine.ts`; symbols are tabler icon IDs in `SLOT_SYMBOL_WEIGHTS`, rendered through `<AppIcon>`), 3 spins per player per round (`spinsPerRound`, reset by `round_started_at`). Jackpot = 3 identical symbols.
 
-**Гейтинг спіну** - `canSpinSlot` (`[slug].tsx`, рахується в рендері з `roleTagForShields`): для `PO`/`SM` завжди `true`; для решти ролей - лише коли `phase==='voting'`, гравець уже проголосував і є хоча б один, хто ще не проголосував. Слот - заняття "поки чекаєш інших", не альтернатива голосуванню. `SlotMachine.tsx` приймає `canSpin` поруч зі `spinsLeft` і показує `slot.voteFirst` (1.5с, без власної анімації), коли `spinsLeft > 0`, але `canSpin === false`.
+**Spin gating** - `canSpinSlot` (`[slug].tsx`, calculated during render from `roleTagForShields`): always `true` for `PO`/`SM`; for other roles only when `phase==='voting'`, the player has already voted, and at least one person has not yet voted. The slot is an activity "while waiting for others", not an alternative to voting. `SlotMachine.tsx` receives `canSpin` alongside `spinsLeft` and shows `slot.voteFirst` (1.5s, without its own animation) when `spinsLeft > 0` but `canSpin === false`.
 
-**Jam-анімація** - кнопка спіну лишається клікабельною при `canSpin === false` (`disabled` реагує тільки на `spinning`/`spinsLeft<=0`): клік запускає `triggerJam()` замість спіну - `.slot-window.is-jammed` на 400мс, `@keyframes slot-jam` сіпає `.slot-strip` на кілька px (стагер `animation-delay` по барабанах), імітуючи заклинювання важеля.
+**Jam animation** - the spin button remains clickable when `canSpin === false` (`disabled` responds only to `spinning`/`spinsLeft<=0`): a click calls `triggerJam()` instead of spinning - `.slot-window.is-jammed` for 400ms, `@keyframes slot-jam` jerks `.slot-strip` by a few px (staggered `animation-delay` across reels), simulating a jammed lever.
 
-**Трансляція стану** - хто крутить і хто виграв, видно всім через broadcast-канал `countdown:<roomId>` (не через `players`-таблицю):
-- `SlotMachine.tsx` кличе `onSpin`/`onSpinEnd` навколо анімації прокрутки (`REEL_DURATIONS_MS[2]+150` ≈ 2.45с)
-- `[slug].tsx` шле `slot-spin-start`/`slot-spin-end` з `{playerId}` і тримає `spinningPlayerIds: Set<string>` (safety-таймер 2.8с на випадок втраченого `spin-end`)
-- `slot-win` з `{playerId}` на 1.6с виставляє `slotWinnerId`
+**State broadcast** - everyone can see who is spinning and who won through the `countdown:<roomId>` broadcast channel (not through the `players` table):
+1. `SlotMachine.tsx` calls `onSpin`/`onSpinEnd` around the spin animation (`REEL_DURATIONS_MS[2]+150` ≈ 2.45s)
+1. `[slug].tsx` sends `slot-spin-start`/`slot-spin-end` with `{playerId}` and maintains `spinningPlayerIds: Set<string>` (a 2.8s safety timer in case `spin-end` is lost)
+1. `slot-win` with `{playerId}` sets `slotWinnerId` for 1.6s
 
-**Індикація в `PlayerRow.tsx`** (props `isSpinningSlot`/`isSlotWinner`) - єдиний видимий ефект джекпоту, без банера чи локального підсвічування самого слота. Кубик (`font-size: 1.125rem`, трохи менший за іконку модератора поруч) сидить у рядку з іменем за тим самим `AppTooltip`-патерном, що й `app:moderator` - колонка статусу голосу лишається незайманою. Кубик не обертається: поки триває спін, кожні 120мс перемикається грань (`tabler:dice-1`…`dice-6`, `DICE_FACES`/`diceFaceIndex`), імітуючи котіння в чашці; далі повертається дефолтна `dice-5`. При виграші ім'я і кубик разом блимають `.win-blink` (`@keyframes win-blink`, `animation-iteration-count: 3`).
+**Indicator in `PlayerRow.tsx`** (props `isSpinningSlot`/`isSlotWinner`) - the only visible jackpot effect, with no banner or local highlight on the slot itself. The die (`font-size: 1.125rem`, slightly smaller than the adjacent moderator icon) sits in the name row using the same `AppTooltip` pattern as `app:moderator` - the vote status column remains untouched. The die does not rotate: while the spin runs, its face changes every 120ms (`tabler:dice-1`…`dice-6`, `DICE_FACES`/`diceFaceIndex`), simulating rolling in a cup; it then returns to the default `dice-5`. On a win, the name and die flash together with `.win-blink` (`@keyframes win-blink`, `animation-iteration-count: 3`).
 
-### 11.9 Кола результатів і когорти (`resultCohorts.ts`)
+### 11.9 Result circles and cohorts (`resultCohorts.ts`)
 
-Після reveal `ResultsArea.tsx` малює коло (PieChart + середнє) на кожну враховану чіпами групу (п. 3).
-`groupResultVotes()` повертає групи `{ key, label, votes }` у порядку `ROLE_COHORTS`. Учасник без голосу не створює кола; до reveal голоси приховані, без голосів рольових кіл немає.
+After reveal, `ResultsArea.tsx` draws a circle (PieChart + average) for each group included by the chips (item 3).
+`groupResultVotes()` returns groups `{ key, label, votes }` in `ROLE_COHORTS` order. A participant without a vote does not create a circle; votes are hidden before reveal, and there are no role circles without votes.
 
-1. **Кастомних ролей немає:** legacy-shield `custom:*` рахується як «без ролі» (DEV). Для legacy-масиву
-   shields перша розпізнана вбудована роль визначає групу; без неї - DEV.
-2. **Кола:** `PieChart.tsx` використовує ECharts pie з `SVGRenderer` і явним `{ renderer: "svg" }`,
-   завантажується через `lazy()` у `ResultsArea`. Усі кола однакової ширини до 240 px, переносяться на нові
-   рядки й однаково звужуються до ширини контейнера; довгі підписи переносяться. Зміна ширини перемальовує
-   графік без перезавантаження. Один голос дає суцільне коло з підписом карти, кілька - сектори з підписами
-   й тією самою палітрою. `<ROLE>: <середнє>` видно одразу поза графіком. Під час завантаження чанка або його
-   збою лишається порожнє місце розміру кола без екранної помилки; ECharts не входить в entry-чанк.
-3. **Колода й чіпи кіл:** `ConfigureCardDeckModal` має групи чіпів DEV/BE/FE/SRE || QA/AQA/GQA || PO || SM
-   («Окремі кола результатів»). Група DEV чи QA без вибраних чіпів дає одне загальне коло, з вибраними - лише
-   їхні кола; PO/SM - коло лише з чіпом. Неврахований голос - червоний бейдж у списку, поза колами, підсумками й
-   `round_history`. Поле `text[]` (міграція `017`), check-констрейнт - міграція `021` (9 ролей). Старе налаштування не приховує голосів і не
-   робить `RoleBadge` червоним. `voting`, `vote_question`, `goal_clarity` зберігають бульбашки або бал ясності.
-4. **Історія, тренди, головна й нові поля API:** беруть сиру вбудовану роль через `cohortForShields()` і
-   `voteCohortFor()` (§11.3-11.4). Кастомні ролі лишаються поза рольовими трендами; гравці без ролі й ті,
-   хто вийшов, рахуються як DEV. Автоматичні кола не змінюють статистичних формул, пулу оцінювачів або
-   API; legacy-контракт API для agilecharts - `netlify/AGENTS.md`.
-5. **Консенсус:** `shouldCelebrate(votes, groups)` запускає салют і decision-sound, якщо хоча б одне
-   коло має ≥ 2 голоси й одну оцінку.
-6. **Узгодженість на екрані результатів** (`AlignmentCard`) рахується по автоматичних групах.
-7. **Попередній раунд** (`lastRound` snapshot) зберігає ключі, підписи й голоси груп на момент reveal.
+1. **No custom roles:** a legacy `custom:*` shield counts as "no role" (DEV). For a legacy shields array,
+   the first recognized built-in role determines the group; without one, DEV is used.
+2. **Circles:** `PieChart.tsx` uses ECharts pie with `SVGRenderer` and explicit `{ renderer: "svg" }`,
+   loaded through `lazy()` in `ResultsArea`. All circles have the same width up to 240 px, wrap onto new
+   rows and shrink equally to the container width; long labels wrap. A width change redraws
+   the chart without reloading. One vote produces a solid circle labeled with the card; multiple votes produce sectors with labels
+   and the same palette. `<ROLE>: <average>` is visible immediately outside the chart. While the chunk loads or if it
+   fails, an empty circle-sized space remains without an on-screen error; ECharts is not in the entry chunk.
+3. **Deck and circle chips:** `ConfigureCardDeckModal` has chip groups DEV/BE/FE/SRE || QA/AQA/GQA || PO || SM
+   ("Separate result circles"). A DEV or QA group with no selected chips produces one combined circle; with selected chips, only
+   their circles; PO/SM produce a circle only with a chip. An excluded vote has a red badge in the list and is outside the circles, totals and
+   `round_history`. The field is `text[]` (migration `017`), with a check constraint in migration `021` (9 roles). The old setting does not hide votes or
+   turn `RoleBadge` red. `voting`, `vote_question`, `goal_clarity` retain bubbles or the clarity score.
+4. **History, trends, home and new API fields:** use the raw built-in role via `cohortForShields()` and
+   `voteCohortFor()` (§11.3-11.4). Custom roles remain outside role trends; players without a role and those
+   who left count as DEV. Automatic circles do not change statistical formulas, the estimator pool or
+   the API; the legacy API contract for agilecharts is in `netlify/AGENTS.md`.
+5. **Consensus:** `shouldCelebrate(votes, groups)` triggers fireworks and decision-sound if at least one
+   circle has ≥ 2 votes and one estimate.
+6. **Alignment on the results screen** (`AlignmentCard`) is calculated across automatic groups.
+7. **Previous round** (`lastRound` snapshot) stores group keys, labels and votes at reveal.
 
-### 11.10 Фон кімнати (`RoomBackgroundModal.tsx`)
+### 11.10 Room background (`RoomBackgroundModal.tsx`)
 
-Авторизований модератор задає фонове зображення кімнати; його бачать усі учасники, оновлення приходить через Realtime-канал `rooms:<roomId>`.
+An authenticated moderator sets the room background image; all participants see it, and updates arrive through the `rooms:<roomId>` Realtime channel.
 
-- **Модалка:** пункт «Фон кімнати» в меню хедера. Вибір JPG/PNG/WebP до 10 МБ → рамка 16:9, у якій картинку можна тягнути (pointer events), масштабувати повзунком 1-3× або колесом, з клавіатури - стрілки та `+`/`-`. Картинка завжди покриває рамку (`clampFraming`). Повзунок «Непрозорість» (10-100%, дефолт 65%) показує результат одразу в прев'ю і зберігається окремо, без перезаливки картинки (`setBackgroundOpacity`). «Прибрати фон» знімає поточний фон
-- **Кадрування:** `framingSourceRect()` (`app/utils/backgroundImage.ts`) перераховує видиму частину рамки в пікселі оригіналу; `encodeBackground()` ріже її з оригінального `ImageBitmap` у WebP (якість 0.8) розміром до 1920×1080 без апскейлу. Декодування й WebP-кодування спільні з аватарками (`imageEncoding.ts`)
-- **Збереження:** Storage bucket `room-backgrounds`, фіксований об'єкт `<room_id>/background.webp` (upsert, без сиріт), далі `rooms.background_url` + `background_updated_at` (кеш-інвалідація `?v=`). Зняття фону спершу пише `background_url: null`, файл видаляється best-effort. Міграція `016`; без неї аплоад падає (`Bucket not found`), а кімнати відкриваються як звичайно (`resolveRoom` читає `select('*')`)
-- **Рендер:** inline `background-image` на корені сторінки кімнати - тінт `backgroundTint(opacity)` = `color-mix(var(--bg-app) (1 - opacity))` поверх картинки, `cover`, `fixed`. `backgroundDisplayUrl()` пропускає лише шлях за regex `^[A-Za-z0-9-]+/background\.webp$`, бо значення йде в CSS `url()`, а `rooms.id` може вставити будь-хто
-- **Доступ:** фон міняє, замінює й знімає будь-який авторизований модератор (`isModerator && user`); власника фону немає (міграція `020`). На сервері Storage-політики пускають запис, оновлення й видалення об'єкта будь-якому залогіненому користувачу, а тригер `rooms_guard_background` не дає анонімам змінити `background_url`, `background_opacity`, `background_updated_at` чи `background_owner_id`. Модераторство сервер не перевіряє: `players.is_moderator` пише будь-хто, як і для решти модераторських дій. Колонка `background_owner_id` лишилась лише для сумісності зі старими клієнтами
+1. **Modal:** the "Room background" item in the header menu. Select JPG/PNG/WebP up to 10 MB → a 16:9 frame in which the image can be dragged (pointer events), zoomed with a 1-3× slider or wheel, and controlled with keyboard arrows and `+`/`-`. The image always covers the frame (`clampFraming`). The "Opacity" slider (10-100%, default 65%) shows the result immediately in preview and is saved separately, without reuploading the image (`setBackgroundOpacity`). "Remove background" removes the current background
+1. **Cropping:** `framingSourceRect()` (`app/utils/backgroundImage.ts`) converts the visible portion of the frame to original-image pixels; `encodeBackground()` crops it from the original `ImageBitmap` to WebP (quality 0.8) at up to 1920×1080 without upscaling. Decoding and WebP encoding are shared with avatars (`imageEncoding.ts`)
+1. **Storage:** Storage bucket `room-backgrounds`, fixed object `<room_id>/background.webp` (upsert, no orphans), then `rooms.background_url` + `background_updated_at` (cache invalidation `?v=`). Removing the background first writes `background_url: null`; the file is deleted best-effort. Migration `016`; without it upload fails (`Bucket not found`), while rooms open as usual (`resolveRoom` reads `select('*')`)
+1. **Rendering:** inline `background-image` on the room page root - tint `backgroundTint(opacity)` = `color-mix(var(--bg-app) (1 - opacity))` over the image, `cover`, `fixed`. `backgroundDisplayUrl()` accepts only a path matching regex `^[A-Za-z0-9-]+/background\.webp$`, because the value goes into CSS `url()` and anyone can insert `rooms.id`
+1. **Access:** any authenticated moderator (`isModerator && user`) can set, replace and remove the background; there is no background owner (migration `020`). On the server, Storage policies allow any logged-in user to write, update and delete the object, while the `rooms_guard_background` trigger prevents anonymous users from changing `background_url`, `background_opacity`, `background_updated_at` or `background_owner_id`. The server does not verify moderator status: anyone can write `players.is_moderator`, as with other moderator actions. The `background_owner_id` column remains only for compatibility with older clients

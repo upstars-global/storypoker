@@ -1,32 +1,32 @@
-# Декомпозиція `[slug].vue`
+# Decompose `[slug].vue`
 
-- Status: Planned
-- Priority: P1
-- Ініційовано: 2026-06-24 (аудит)
-- Last reviewed: 2026-07-17
+1. Status: Planned
+2. Priority: P1
+3. Initiated: 2026-06-24 (audit)
+4. Last reviewed: 2026-07-17
 
-## Навіщо
+## Why
 
-`app/pages/[slug].vue` - ~600 рядків: route resolution, session restore, п'ять
-realtime-каналів, presence, snapshots, countdown, профілі і всі UI-actions в
-одному компоненті.
+`app/pages/[slug].vue` has ~600 lines: route resolution, session restore, five
+realtime channels, presence, snapshots, countdown, profiles, and all UI actions in
+one component.
 
-## Очікуваний результат
+## Expected outcome
 
-Сторінка кімнати - тонкий layout поверх composables з окремими зонами
-відповідальності; зміна `route.params.slug` обробляється коректно.
+The room page is a thin layout over composables with separate responsibilities;
+changes to `route.params.slug` are handled correctly.
 
-## Обсяг
+## Scope
 
-- Виділити `useRoomSession`, `useRoomRealtime`, `useRoundSnapshot`,
-  `useRoomActions`, `useCountdownBroadcast`.
-- Реагувати на зміну `route.params.slug` без повного перезавантаження.
+1. Extract `useRoomSession`, `useRoomRealtime`, `useRoundSnapshot`,
+   `useRoomActions`, and `useCountdownBroadcast`.
+2. React to changes in `route.params.slug` without a full reload.
 
-## Критерії завершення
+## Completion criteria
 
-- `[slug].vue` не тримає прямих підписок і бізнес-логіки.
-- Перехід між кімнатами через роутер перепідключає канали коректно.
+1. `[slug].vue` holds no direct subscriptions or business logic.
+2. Navigation between rooms through the router reconnects channels correctly.
 
-## Наступний крок
+## Next step
 
-Почати з `useRoomRealtime` - він найбільш ізольований.
+Start with `useRoomRealtime`, which is the most isolated.

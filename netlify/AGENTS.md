@@ -1,48 +1,47 @@
 # Netlify functions
 
-Read-only API поверх Supabase. Схема таблиць, з яких читає, - `supabase/AGENTS.md`;
-формули, продубльовані тут, - `app/utils/AGENTS.md`.
+Read-only API over Supabase. The schema of the tables it reads is in `supabase/AGENTS.md`;
+the formulas duplicated here are in `app/utils/AGENTS.md`.
 
-## Зовнішні інтеграції
+## External integrations
 
-
-`netlify/functions/room-json.mts` - read-only Netlify Function (`path: '/api/*'`, дефолтна `netlify/functions` без
-явного `[functions]` у `netlify.toml`):
-- `GET /api/<roomId|slug>.json` → `{room, rounds}` для однієї кімнати; поля раунду:
+`netlify/functions/room-json.mts` is a read-only Netlify Function (`path: '/api/*'`, the default `netlify/functions` without
+an explicit `[functions]` in `netlify.toml`):
+- `GET /api/<roomId|slug>.json` → `{room, rounds}` for one room; round fields:
   `id,date,week,deck,average,devAlignment,qaAlignment,voters,votes,alignments,roleVotes`
-- `GET /api/teams.json` → `{teams:[{room,rounds:[...]}]}` по **всіх** кімнатах у базі
+- `GET /api/teams.json` → `{teams:[{room,rounds:[...]}]}` for **all** rooms in the database
 
-**Legacy-контракт agilecharts:** `average`, `voters`, `devAlignment`, `qaAlignment`,
-`votes[{name,vote,cohort}]` і набір раундів збережені без змін. `votes` - per-player snapshot з
-`cohort: "DEV"|"QA"`; це свідомо збережений DEV/QA-спліт (`trendCohorts`): DEV = DEV/BE/FE/SRE, QA =
-QA/GQA/AQA. PO/SM/кастомні відсутні, якщо є голоси оцінювачів; без них усі голоси йдуть у DEV. Без ролі
-й ті, хто вийшов, - DEV. `voters` і `average` беруть той самий пул. Ці поля використовує drill-down в
-agilecharts; перехід споживача на нові поля робиться окремо. Імена не ширші за видимі учасникам кімнати
-дані, ендпоінт лишається token-gated.
+**Legacy agilecharts contract:** `average`, `voters`, `devAlignment`, `qaAlignment`,
+`votes[{name,vote,cohort}]` and the set of rounds are unchanged. `votes` is a per-player snapshot with
+`cohort: "DEV"|"QA"`; this is the intentionally retained DEV/QA split (`trendCohorts`): DEV = DEV/BE/FE/SRE, QA =
+QA/GQA/AQA. PO/SM/custom roles are excluded when estimator votes exist; otherwise all votes go to DEV. Those without a role
+and those who left are DEV. `voters` and `average` use the same pool. The agilecharts drill-down uses these fields;
+migrating the consumer to the new fields is separate work. Names expose no more than the data visible to room participants,
+and the endpoint remains token-gated.
 
-**Нові поля:** `alignments` - розріджений об’єкт з ключами DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM лише
-для ролей, що голосували; значення - ціле 0-100 або `null`, якщо менше двох голосів картами колоди без
-`?`/`☕`. `roleVotes` містить усі голоси зі стандартною когортою як `{name,vote,role}` у порядку
-snapshot, включно з PO/SM; кастомних ролей немає. Сира поточна роль береться з shields видимих гравців,
-без ролі й відсутні гравці - DEV. Збережений `result_cohorts` і автоматичні кастомні кола поточного
-раунду на API не впливають.
+**New fields:** `alignments` is a sparse object with keys DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM only
+for roles that voted; values are integers from 0-100 or `null` if fewer than two votes use deck cards other than
+`?`/`☕`. `roleVotes` contains all votes with a standard cohort as `{name,vote,role}` in snapshot order,
+including PO/SM; custom roles are excluded. The raw current role comes from visible players' shields;
+players without a role and absent players are DEV. Persisted `result_cohorts` and automatic custom circles for the current
+round do not affect the API.
 
-Захищено shared-secret: `Authorization: Bearer <STORYPOKER_API_TOKEN>` (env var, server-side only, БЕЗ `VITE_` префіксу
-- ставиться в Netlify site env, не в `/.env/`). Без заголовка чи з неправильним токеном - `401`; якщо
-`STORYPOKER_API_TOKEN` не заданий на сервері - `500` (`server misconfigured`). Той самий Bearer-патерн, що й
-`fe-weekly-report.post.ts` у agilecharts - саме agilecharts (`server/utils/storypokerFiles.ts`) додає цей заголовок на
-кожен запит.
+Protected by a shared secret: `Authorization: Bearer <STORYPOKER_API_TOKEN>` (env var, server-side only, NO `VITE_` prefix
+- set in Netlify site env, not in `/.env/`). A missing or incorrect token returns `401`; if
+`STORYPOKER_API_TOKEN` is unset on the server, it returns `500` (`server misconfigured`). The same Bearer pattern as
+`fe-weekly-report.post.ts` in agilecharts - agilecharts itself (`server/utils/storypokerFiles.ts`) adds this header to
+every request.
 
-Колода в `rounds` визначається автоматично (`isNumericPreset`:
-`scrum`/`fibonacci`/`hours`/`goal_clarity` + legacy `deck_preset=null`); poll-колоди
-(`voting`/`vote_question`) і нечислові (`tshirt`/`boolean`) виключені. Далі лишаються раунди з не-null
-`average` і хоча б одним не-null legacy-балом `devAlignment`/`qaAlignment`; додавання ролей цей фільтр
-не змінює. Читає `rooms`+`round_history`+`players` напряму через `@supabase/supabase-js` (той самий
-`VITE_SUPABASE_*`). `alignmentScore`/`averageOf`, фолбек колоди й визначення сирої ролі навмисно
-продубльовані з `app/utils/alignment.ts`/`roundStats.ts`/`resultCohorts.ts`: Netlify bundler не
-резолвить Vite alias `~/*`. Legacy-поділ для agilecharts лишається локально у функції; зміни спільних
-формул синхронізувати вручну. Споживач - `agilecharts` (сусідній репо, Nuxt), вкладка
-"Estimation Trends" (`app/components/team/TeamConsistencyTrends.vue`).
+The deck in `rounds` is determined automatically (`isNumericPreset`:
+`scrum`/`fibonacci`/`hours`/`goal_clarity` + legacy `deck_preset=null`); poll decks
+(`voting`/`vote_question`) and non-numeric decks (`tshirt`/`boolean`) are excluded. The remaining rounds must have a non-null
+`average` and at least one non-null legacy `devAlignment`/`qaAlignment` score; adding roles does not change this filter.
+Reads `rooms`+`round_history`+`players` directly through `@supabase/supabase-js` (the same
+`VITE_SUPABASE_*`). `alignmentScore`/`averageOf`, deck fallback and raw role determination are intentionally
+duplicated from `app/utils/alignment.ts`/`roundStats.ts`/`resultCohorts.ts`: the Netlify bundler does not
+resolve the Vite alias `~/*`. The legacy split for agilecharts remains local to the function; manually synchronize changes
+to shared formulas. The consumer is `agilecharts` (neighboring repo, Nuxt), the
+"Estimation Trends" tab (`app/components/team/TeamConsistencyTrends.vue`).
 
-Функція виходить разом із prod-білдом Netlify з `main`, окремого деплою не треба. Перевірка -
-`netlify api listSiteDeploys` (`commit_ref`, `available_functions`) і живий запит із Bearer-токеном.
+The function ships with the Netlify production build from `main`; no separate deployment is needed. Verify with
+`netlify api listSiteDeploys` (`commit_ref`, `available_functions`) and a live request with a Bearer token.

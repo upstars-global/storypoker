@@ -1,214 +1,218 @@
 # AGENTS.md
 
 Guidance for coding agents (Claude Code, Codex) working with this repository.
-`CLAUDE.md` - це import-shim (`@AGENTS.md`); єдине джерело правди - цей файл. `CLAUDE.md` чіпати лише при зміні
-схеми імпорту, symlink-ів між ними не робити.
+`CLAUDE.md` is an import shim (`@AGENTS.md`); this file is the single source of truth. Change `CLAUDE.md` only when
+changing the import scheme; do not create symlinks between them.
 
 ## Communication
-- **Language:** Ukrainian (українська мова)
-- **Тільки англійська:** `README.md`, commit messages, назви й описи PR, коментарі в PR та issues, коментарі в коді,
-  CI-артефакти. Українською лишається спілкування в чаті й внутрішня документація (`AGENTS.md`, `DESIGN.md`, `docs/`).
-- **Constraint:** `project_doc_max_bytes` обмежує проєктний ланцюг `AGENTS.md` від кореня до стартового cwd; домашній
-  файл Codex до цього бюджету не входить. `.codex/config.toml` задає 64 KiB (стандарт Codex - 32 KiB): недовірений
-  проєкт Codex не відкриває, тож цей config діє в кожній сесії. Ланцюжки перевіряй проти `project_doc_max_bytes` з
-  `.codex/config.toml`. При перевищенні ліміту Codex мовчки обрізає текст. `CLAUDE.md` інлайнить цей файл цілком,
-  тож кожен корінний байт - always-loaded. Деталь, що стосується лише одного каталогу, живе у файлі того каталогу
-  (див. Repository map), а не тут. Перед додаванням нової секції - винести наявну. Детальна продуктова
-  специфікація - `DESIGN.md`.
+- **Language:** Ukrainian (українська мова) in chat.
+- **English only:** project files (including `README.md`, `AGENTS.md`, `DESIGN.md`, and `docs/`), commit messages, PR
+  titles and descriptions, PR and issue comments, code comments, and CI artifacts.
+- **Constraint:** `project_doc_max_bytes` limits the project `AGENTS.md` chain from the root to the starting cwd; the
+  Codex home file does not count toward this budget. `.codex/config.toml` sets 64 KiB (the Codex default is 32 KiB):
+  Codex does not open an untrusted project, so this config applies in every session. Check chains against
+  `project_doc_max_bytes` in `.codex/config.toml`. Codex silently truncates text beyond the limit. `CLAUDE.md` inlines
+  this entire file, so every root byte is always loaded. Details specific to one directory belong in that directory's
+  file (see Repository map). Before adding a section, move an existing one out. The detailed product specification is
+  `DESIGN.md`.
 
 ## Workflow
-- **`main` захищений:** тільки PR зі squash-merge, прямий push заборонено й адмінам (`enforce_admins`); розв'язані
-  коментарі, strict-режим вимкнений (оновлювати гілку з `main` не обов'язково), approve не потрібен.
-  Required checks - це `name:` job-ів, а не job ids: `Lint` / `Typecheck` / `Unit tests` /
-  `Build` / `Public pages load`. E2E і Visual у CI немає: перед squash PR - зелений `pnpm run test:pre-squash`
-  локально (colima), squash без нього - лише за рішенням власника.
-- **Діаграми - тільки ECharts.** Перед роботою з графіками активуй skill `echarts`; деталі - `app/components/AGENTS.md`.
-- **Гілки:** план із сабагентами - одна гілка в основній теці, без git worktree і проміжних squash у `main`, один PR
-- **Темп:** у довгому плані комміть і пуш після кожної завершеної задачі, у паузі між сабагентами
+- **`main` is protected:** squash-merge PRs only, direct push is forbidden even for admins (`enforce_admins`); comments
+  must be resolved, strict mode is off (updating the branch from `main` is optional), approval is not required.
+  Required checks are job `name:` values, not job IDs: `Lint` / `Typecheck` / `Unit tests` /
+  `Build` / `Public pages load`. E2E and Visual are absent from CI: before squashing a PR, run a green
+  `pnpm run test:pre-squash` locally (colima); squashing without it requires the owner's decision.
+- **Charts use ECharts only.** Activate skill `echarts` before working on charts; details: `app/components/AGENTS.md`.
+- **Branches:** a plan with subagents uses one branch in the main directory, no git worktree or intermediate squash into
+  `main`, and one PR
+- **Pace:** for a long plan, commit and push after each completed task, during the pause between subagents
 
 ## Workflow sequences
-Назви - з `ls .claude/skills/`, вигаданих не викликати; `/code-review` і `/security-review` - слеш-команди, не skills.
-CI check = `pnpm run test:ci` - app-перевірки, обов'язкові перед завершенням задачі зі змінами в репозиторії.
-Після змін виклику авторев'ю або CI запускай `actionlint .github/workflows/*.y*ml`; пін спільного workflow -
-`.github/AGENTS.md`. Для read-only аудитів дотримуйся обмежень викликаного скіла.
-- **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
-  `web-debug`; тести - `vitest` і/або `web-debug`; фініш - `cr-request` →
+Names come from `ls .claude/skills/`; do not invoke invented names. `/code-review` and `/security-review` are
+slash commands, not skills. CI check = `pnpm run test:ci` - app checks required before completing a task with
+repository changes. After changes to the auto-review caller or CI, run `actionlint .github/workflows/*.y*ml`;
+the shared workflow pin is documented in `.github/AGENTS.md`. For read-only audits follow the invoked skill's
+restrictions.
+- **New feature:** `specify` → `plan-craft` → `implement`; as needed `typescript` · `echarts` ·
+  `web-debug`; tests: `vitest` and/or `web-debug`; finish: `cr-request` →
   `verify` → CI check
 - **Bug / regression:** `debugging` → `vitest` → `verify` → CI check
 - **Supabase (DB / Auth / RLS / Storage):** `vitest` → `/security-review` → CI check
 - **Refactoring:** `specify` → `vitest` → CI check
 - **Received code review:** `cr-received` → (fixes) → `verify` → CI check
 - **Prose (docs, README, UI copy, commits):** `dashfix` · `negafix`
-- **Закриття гілки:** `finalize`
+- **Branch closure:** `finalize`
 
 ## Project Overview
-**Story Poker** - Planning Poker для Agile-команд: кімнати, приховане голосування картами одного з 8 пресетів або
-кастомним піднабором, одночасне розкриття, історія раундів, room aliases, авторизація модераторів, профілі з аватарами.
+**Story Poker** is Planning Poker for Agile teams: rooms, hidden voting with cards from one of 8 presets or a custom
+subset, simultaneous reveal, round history, room aliases, moderator authentication, and profiles with avatars.
 
-Джерела контексту: `DESIGN.md` (дизайн + audit §10, механіки §11), `docs/roadmap.md` (індекс ініціатив у
-`docs/initiatives/`) і `docs/completed.md`, `docs/{plans,specs}/` і legacy `docs/superpowers/{plans,specs}/` (iter-плани
-і специфікації), `docs/tasks/` (разові операційні інструкції), `docs/audits/` (датовані знімки аудитів; індекс -
-`README.md` там само).
+Context sources: `DESIGN.md` (design + audit §10, mechanics §11), `docs/roadmap.md` (initiative index in
+`docs/initiatives/`) and `docs/completed.md`, `docs/{plans,specs}/` and legacy `docs/superpowers/{plans,specs}/`
+(iteration plans and specifications), `docs/tasks/` (one-off operational instructions), `docs/audits/` (dated audit
+snapshots; index in its `README.md`).
 
 ## Repository map
-Codex фіксує ланцюг `AGENTS.md` від кореня до стартового cwd на початку сесії.
-Claude Code підвантажує вкладені `CLAUDE.md`, які імпортують відповідні `AGENTS.md`,
-при читанні файлів каталогу. Перед редагуванням відкривай потрібні інструкції явно.
+Codex captures the `AGENTS.md` chain from the root to the starting cwd at the start of a session.
+Claude Code loads nested `CLAUDE.md` files importing their corresponding `AGENTS.md` files when reading files in a
+directory. Open the relevant instructions explicitly before editing.
 
-| Scope | Що всередині | Інструкції |
+| Scope | Contents | Instructions |
 | --- | --- | --- |
-| `app/` | React SPA; хаб зі scope map і інваріантами | `app/AGENTS.md` |
-| `app/assets/` | Tailwind v4 CSS-first config, міст токенів shadcn, MUI-класи, 3 палітри | `app/assets/AGENTS.md` |
-| `app/components/` | AppModal/AppTooltip/AppMenu, shadcn `ui/`, іконки, ECharts, слот | `app/components/AGENTS.md` |
-| `app/pages/` | маршрути, Realtime-підписки, reconciliation | `app/pages/AGENTS.md` |
+| `app/` | React SPA; hub with scope map and invariants | `app/AGENTS.md` |
+| `app/assets/` | Tailwind v4 CSS-first config, shadcn token bridge, MUI classes, 3 palettes | `app/assets/AGENTS.md` |
+| `app/components/` | AppModal/AppTooltip/AppMenu, shadcn `ui/`, icons, ECharts, slot | `app/components/AGENTS.md` |
+| `app/pages/` | routes, Realtime subscriptions, reconciliation | `app/pages/AGENTS.md` |
 | `app/stores/` | Zustand: auth/room/players/presence/profiles | `app/stores/AGENTS.md` |
-| `app/utils/` | колоди карт, shields, формули узгодженості | `app/utils/AGENTS.md` |
-| `supabase/` | схема таблиць, міграції, RLS, Storage-бакет | `supabase/AGENTS.md` |
-| `netlify/` | read-only `/api/*` функція, Bearer-токен | `netlify/AGENTS.md` |
-| `tests/` | Vitest unit + Playwright e2e і `visual` | `tests/AGENTS.md` |
-| `scripts/` | lifecycle hooks, skills (`\ <name>` - навмисно вимкнений), генератор іконок | `scripts/AGENTS.md` |
-| `.github/` | CI-воркфлоу, авторев'ю `auto-reviewer.yaml` | `.github/AGENTS.md` |
+| `app/utils/` | card decks, shields, alignment formulas | `app/utils/AGENTS.md` |
+| `supabase/` | table schema, migrations, RLS, Storage bucket | `supabase/AGENTS.md` |
+| `netlify/` | read-only `/api/*` function, Bearer token | `netlify/AGENTS.md` |
+| `tests/` | Vitest unit + Playwright e2e and `visual` | `tests/AGENTS.md` |
+| `scripts/` | lifecycle hooks, skills (`\ <name>` - intentionally disabled), icon generator | `scripts/AGENTS.md` |
+| `.github/` | CI workflows, `auto-reviewer.yaml` auto-review | `.github/AGENTS.md` |
 
-Решта: `public/_redirects` (`/* /index.html 200`, обов'язковий для SPA-роутингу
-на Netlify), `index.html` (head/meta + inline-скрипт теми), `test-results/` (gitignored артефакти).
+Other paths: `public/_redirects` (`/* /index.html 200`, required for SPA routing on Netlify), `index.html` (head/meta +
+inline theme script), `test-results/` (gitignored artifacts).
 
 ## Tech Stack
-- **Framework:** React 19 + Vite 8 (Rolldown bundler, `@vitejs/plugin-react`) SPA, функціональні компоненти `.tsx`;
-  код у `app/`, хуки - `app/hooks/`
+- **Framework:** React 19 + Vite 8 (Rolldown bundler, `@vitejs/plugin-react`) SPA, functional `.tsx` components;
+  code in `app/`, hooks in `app/hooks/`
 - **Routing:** `react-router@8` (declarative, `app/router.tsx`); **State:** Zustand 5; **i18n:** `i18next` +
-  `react-i18next`, локалі `app/i18n/locales/{uk,en}.json`
-- **Styling:** Tailwind v4 через `@tailwindcss/vite`, CSS-first config - `app/assets/css/main.css`
+  `react-i18next`, locales `app/i18n/locales/{uk,en}.json`
+- **Styling:** Tailwind v4 via `@tailwindcss/vite`, CSS-first config - `app/assets/css/main.css`
 - **Backend:** Supabase Postgres + Realtime + Presence + Auth
-- **PWA:** `vite-plugin-pwa` (Workbox, `prompt`) - manifest і `runtimeCaching` в `vite.config.ts` (не окремий
-  файл); нову версію застосовує `app/pwa.ts` за правилами `useAppUpdate` (прихована вкладка, простій, тост);
-  `skipWaiting: true` і `importScripts: ['sw-reload-clients.js']` (`public/`: новий worker при активації
-  перезавантажує вкладки, бо старий `autoUpdate`-бандл сам не перезавантажується) - тимчасово, прибрати
-  наступним релізом разом із винятком у `scripts/audit-icon-build.ts`;
-  splash `theme_color`/`background_color` = `#212121`, узгоджені з `<meta name="theme-color">` в `index.html`
-- **UI:** shadcn/ui (style `base-nova` на `@base-ui/react`) у `app/components/ui/`, локальні іконки через CSS mask
-  (`app/components/AGENTS.md`), ripple - власний хук `useRipple`, DiceBear, Roboto 300-700;
-  **Charts:** `echarts` через `echarts/core` і хук `useEChart`
-- **Node/pnpm:** Node >=24.15.0, pnpm >=12.14.0 (`packageManager` у `package.json`)
-- **TypeScript 7, пін точно `7.0.2`:** `scripts/icons/scan.ts` стоїть на нестабільному `typescript/unstable/*` - версію
-  піднімай лише з зеленим `icons:check`. Нативний `tsc` - optional-пакет `@typescript/typescript-<platform>`: install
-  без optional deps лишає без нього typecheck і сканер. Lint - `oxlint --type-aware` (`oxlint-tsgolint`), ESLint немає
+- **PWA:** `vite-plugin-pwa` (Workbox, `prompt`) - manifest and `runtimeCaching` in `vite.config.ts` (not a separate
+  file); `app/pwa.ts` applies the new version under `useAppUpdate` rules (hidden tab, idle time, toast);
+  `skipWaiting: true` and `importScripts: ['sw-reload-clients.js']` (`public/`: the new worker reloads tabs upon
+  activation because the old `autoUpdate` bundle does not reload itself) are temporary. Remove them in the next release
+  along with the exception in `scripts/audit-icon-build.ts`;
+  splash `theme_color`/`background_color` = `#212121`, aligned with `<meta name="theme-color">` in `index.html`
+- **UI:** shadcn/ui (style `base-nova` on `@base-ui/react`) in `app/components/ui/`, local icons via CSS mask
+  (`app/components/AGENTS.md`), ripple via custom `useRipple` hook, DiceBear, Roboto 300-700;
+  **Charts:** `echarts` via `echarts/core` and the `useEChart` hook
+- **Node/pnpm:** Node >=24.15.0, pnpm >=12.14.0 (`packageManager` in `package.json`)
+- **TypeScript 7, pin exactly `7.0.2`:** `scripts/icons/scan.ts` uses unstable `typescript/unstable/*`; upgrade only
+  with a green `icons:check`. Native `tsc` is the optional `@typescript/typescript-<platform>` package: installing
+  without optional deps leaves typecheck and the scanner without it. Lint uses `oxlint --type-aware`
+  (`oxlint-tsgolint`); there is no ESLint
 
 ## Common Commands
 
-Перед локальними перевірками запускай `sh scripts/check-local.sh`: wrapper
-перевіряє Node до виклику pnpm і задає `CI=1`, щоб auto-install не запускав
-видалення локальних скілів через postinstall. Змінюй версію Node до wrapper;
-не викликай його через pnpm, який може почати auto-install раніше за перевірку.
+Before local checks run `sh scripts/check-local.sh`: the wrapper checks Node before calling pnpm and sets `CI=1` so
+auto-install does not remove local skills via postinstall. Change the Node version before the wrapper; do not invoke
+it via pnpm, which can start auto-install before the check.
 
-`package.json` - джерело правди для повного списку скриптів. Тут лише неочевидне:
+`package.json` is the source of truth for the full script list. Only non-obvious details are listed here:
 
 ```bash
-pnpm install         # preinstall → scripts/setup.sh (створює .env/, .agents/, .claude/settings.json)
-                     # postinstall → scripts/skills.sh (мережевий skl-x add; skills-lock.json; у CI пропускається)
-pnpm run test:unit   # канонічний unit-run; `pnpm test` і `test:unit` - обидва `vitest run`
-pnpm run test:e2e:pages   # public pages load smoke (лише page-load; CI-job додає icon-delivery); локально - з
-                          # dummy VITE_SUPABASE_* з ci.yml, деталі `tests/AGENTS.md`
-pnpm run test:visual [<ref>]   # рендер <ref> (дефолт origin/main) - еталон для дерева; локально - у контейнері Playwright
-pnpm run test:pre-squash [<ref>]   # перед squash: локальний Supabase + e2e chromium/webkit + visual проти <ref>
-                                   # (дефолт merge-base з origin/main) у контейнері Playwright; звіти - test-results/pre-squash
-pnpm run test:ci     # app-частина CI: icons:check + lint + typecheck + test:unit + build + icons:audit-build
-                     # Python workflow fixtures запускаються окремо; команди - .github/AGENTS.md
-pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI сам збирає (--no-build вимикає). CLI дефолтить
-                     # контекст dev, збірка - production; deploy:prod пінить обидва через --context production
+pnpm install         # preinstall → scripts/setup.sh (creates .env/, .agents/, .claude/settings.json)
+                     # postinstall → scripts/skills.sh (network skl-x add; skills-lock.json; skipped in CI)
+pnpm run test:unit   # canonical unit run; both `pnpm test` and `test:unit` are `vitest run`
+pnpm run test:e2e:pages   # public pages load smoke (page-load only; CI job adds icon-delivery); locally use
+                          # dummy VITE_SUPABASE_* from ci.yml, details in `tests/AGENTS.md`
+pnpm run test:visual [<ref>]   # render <ref> (default origin/main) as the tree baseline; locally in a Playwright container
+pnpm run test:pre-squash [<ref>]   # before squash: local Supabase + e2e chromium/webkit + visual against <ref>
+                                   # (default merge-base with origin/main) in a Playwright container; reports in test-results/pre-squash
+pnpm run test:ci     # app portion of CI: icons:check + lint + typecheck + test:unit + build + icons:audit-build
+                     # Auto-review caller and CI changes also require actionlint; see .github/AGENTS.md
+pnpm run deploy:{stage,prod}   # Netlify alias / prod deploy; CLI builds by itself (--no-build disables it). CLI defaults
+                     # to dev context, build to production; deploy:prod pins both with --context production
 ```
-Stage і локальний запуск ходять в одну прод-базу Supabase: до злиття не запускай `deploy:stage` без рішення
-власника й не міняй схему чи RLS; ручні перевірки - на локальному preview (тестову кімнату створювати можна).
+Stage and local execution use the same production Supabase database: before merging, do not run `deploy:stage` without
+the owner's decision, and do not change the schema or RLS. Perform manual checks on local preview (creating a test room
+is allowed).
 
-CI - `.github/workflows/ci.yml`. Ціль - кожен job до ~2 хв (рішення власника 2026-10-26), `timeout-minutes` - 4;
-перевірку, що виходить за ціль, шардують або переносять у `scripts/pre-squash.sh`, а не піднімають timeout.
-На кожен run паралельні job ids `lint`/`typecheck` (`icons:check` + `typecheck`)/`unit`
-(`test:unit:coverage`)/ `build`/`page-load` (Playwright-проєкти `page-load` і `icon-delivery` з dummy
-Supabase-кредами на Google Chrome раннера через `PLAYWRIGHT_CHANNEL=chrome`: без apt, який зависав на
-повільному дзеркалі). E2E (лише старт Supabase ~90 с, apt для
-WebKit зависав) і Visual винесені з CI в локальний `test:pre-squash` (рішення власника 2026-10-27); Visual
-поки нестабільний, його збій - не дефект для рев'ю; деплою в CI немає. Прод збирає сам Netlify з репо
-(`netlify.toml`, `command = "pnpm run build"`) зі своїм site env; job `build` збирає `dist` лише для
-`icons:audit-build` і з placeholder-кредами, тож шипити його не можна.
-`.github/workflows/auto-reviewer.yaml` - не required авторев'ю PR від `so-upstars`: тонкий виклик спільного workflow
-`sentimony/github-workflows`; пін, гейт і запуск - `.github/AGENTS.md`.
+CI is `.github/workflows/ci.yml`. The target is each job within ~2 min (owner decision 2026-10-26),
+`timeout-minutes` is 4; shard a check that exceeds the target or move it to `scripts/pre-squash.sh` instead of
+raising the timeout. Each run has parallel job IDs `lint`/`typecheck` (`icons:check` + `typecheck`)/`unit`
+(`test:unit:coverage`)/ `build`/`page-load` (Playwright projects `page-load` and `icon-delivery` with dummy
+Supabase credentials on the runner's Google Chrome via `PLAYWRIGHT_CHANNEL=chrome`: no apt, which hung on a slow
+mirror). E2E (Supabase startup alone takes ~90 s, apt for WebKit hung) and Visual were moved from CI to local
+`test:pre-squash` (owner decision 2026-10-27); Visual is still unstable, and its failure is not a review defect;
+CI does not deploy. Netlify builds production itself from the repo (`netlify.toml`,
+`command = "pnpm run build"`) with its own site env; the `build` job builds `dist` only for `icons:audit-build`
+with placeholder credentials, so it must not be shipped. `.github/workflows/auto-reviewer.yaml` is non-required
+PR auto-review by `so-upstars`: a thin caller of the shared workflow in `sentimony/github-workflows`; the pin,
+gate, and invocation are in `.github/AGENTS.md`.
 
 ## Environment Setup
 `pnpm-lock.yaml` - committed (required for `pnpm install --frozen-lockfile`). Do NOT add it to `.gitignore`.
-Peer Vite-плагіна, який імпортує його віртуальний модуль (`virtual:pwa-register` → `workbox-window`), став прямою
-`devDependency`: pnpm peer-и не hoist-ить. Збірку як у CI відтворюй у чистому worktree з
-`pnpm install --frozen-lockfile --ignore-scripts`; `test:ci` там запускай з placeholder-кредами job `build`
-(`VITE_SUPABASE_URL=https://placeholder.supabase.co VITE_SUPABASE_KEY=placeholder`): без `.env/` `icons:audit-build`
-падає, бо клієнт Supabase вирізається з бандла.
+The Vite plugin's peer dependency became a direct `devDependency` because its virtual module imports it
+(`virtual:pwa-register` → `workbox-window`); pnpm does not hoist peers. Reproduce the CI build in a clean
+worktree with `pnpm install --frozen-lockfile --ignore-scripts`; run `test:ci` there with the `build` job's
+placeholder credentials (`VITE_SUPABASE_URL=https://placeholder.supabase.co VITE_SUPABASE_KEY=placeholder`):
+without `.env/` `icons:audit-build` fails because the Supabase client is stripped from the bundle.
 
-Усі env-файли - у `/.env/` (gitignored, окрім `*.example`). Vite читає через `envDir: '.env'` у `vite.config.ts`:
-`/.env/.env.local` (персональні override), `/.env/.env` (командні defaults), `/.env/.env.test` (креди тестового
-Supabase project для Playwright).
+All env files are in `/.env/` (gitignored except `*.example`). Vite reads them through `envDir: '.env'` in
+`vite.config.ts`: `/.env/.env.local` (personal overrides), `/.env/.env` (team defaults), `/.env/.env.test`
+(test Supabase project credentials for Playwright).
 
 ```bash
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_KEY=...        # publishable client key
-# SUPABASE_SECRET_KEY=...    # server-side only, БЕЗ VITE_ префіксу
+# SUPABASE_SECRET_KEY=...    # server-side only, WITHOUT VITE_ prefix
 ```
 
-Клієнтський код читає через `import.meta.env.VITE_*` (тільки `VITE_*` потрапляють у browser bundle).
+Client code reads through `import.meta.env.VITE_*` (only `VITE_*` enters the browser bundle).
 
 ## URL Schema
-- `/` - home + Recent Rooms; `/<roomId>` - кімната за 8-символьним id; `/<slug>` - alias (URL з id редиректиться)
+- `/` - home + Recent Rooms; `/<roomId>` - room by 8-character ID; `/<slug>` - alias (ID URL redirects)
 - `/login`, `/signup`, `/forgot-password`, `/reset-password` - auth routes; `/ffc` - Feature Flags console
 
-`isValidRoomSlug()` приймає 1-32 символи `[a-z0-9-]`, без дефісу на початку/кінці; `normalizeRoomSlug()` чистить
-рядок, але довжину не перевіряє. Нові top-level routes перетинаються з `[slug].tsx`; додавай явну сторінку або
-вводь префікс.
+`isValidRoomSlug()` accepts 1-32 characters `[a-z0-9-]`, without a leading or trailing hyphen; `normalizeRoomSlug()`
+cleans the string but does not check length. New top-level routes overlap with `[slug].tsx`; add an explicit page or
+introduce a prefix.
 
 ## LocalStorage
-| Ключ | Значення |
+| Key | Value |
 | --- | --- |
-| `storypoker_session_<roomId>` | `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms |
-| `sp-theme` / `sp-palette` | `light\|dark` / `classic\|cyberdeck\|matcha` - деталі `app/assets/AGENTS.md` |
-| `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
-| `sp-lang` | `uk \| en`; читається в `app/i18n.tsx`, пишеться `persistLocale()`. Дефолт - `uk` |
-| `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
-| `sp-volume` | `0`-`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
+| `storypoker_session_<roomId>` | `{ playerId, playerName, lastVisitedAt }` for auto-rejoin and Recent Rooms |
+| `sp-theme` / `sp-palette` | `light\|dark` / `classic\|cyberdeck\|matcha` - details in `app/assets/AGENTS.md` |
+| `sp-room-header-<urlParam>` | `{ roomName, playerName }` - seed for AppHeader to prevent header jumps on reload |
+| `sp-lang` | `uk \| en`; manual choice stored by `persistLocale()`. If no valid choice is saved, the initial language is `uk` (see `app/AGENTS.md`) |
+| `sp-side-widget` | `timer \| slot` - details in `app/components/AGENTS.md` |
+| `sp-volume` | `0`-`1`, volume for all sounds; default `0` (muted), unmute sets `0.1`. Written by `useSoundVolume()` |
 | `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
 
 ## Roles
 - **Player:** vote, rename self, set own shields, leave room, **toggle own moderator flag** (self-promote/demote -
-  доступно будь-кому, не лише поточному модератору); history/trends/theme/language/widget/slot - без ролевих обмежень
-- **Moderator (`is_moderator`, не потребує auth):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
-  start new round, poll question setup, configure deck, kick players, контролі таймера (reset/pause/resume/±30s),
-  будильник таймера (інтервал + mute для всієї кімнати) - усе гейтиться `isModerator` у
-  `CardsArea.tsx` і prop `canControl={isModerator}` у `Timer.tsx`, client-side only (RLS `using (true)`)
-- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players + set їхні shields.
-  Детальна матриця - `DESIGN.md` §11.1-11.2
-- **Shields:** `app/utils/shields.ts` - роль обирається з `PLAYER_ROLES` через `RolePicker.tsx` (JoinOverlay +
-  PlayerEditModal) на базі `RoleBadge.tsx` і пишеться в `players.shields` як один shield через `shieldForRoleTag()`;
-  кастомних ролей немає: legacy-shield `custom:*` усюди означає «без ролі» (DEV), окрім API (`netlify/AGENTS.md`).
-  `SHIELD_CATALOG` (role/focus/stack/qa/lead) лишився для лукапу, icon-picker прибрано. Сиру роль визначає
-  `voteCohortFor()` у
-  `app/utils/resultCohorts.ts`; без ролі й ті, хто вийшов, - DEV
+  available to anyone, including non-moderators); history/trends/theme/language/widget/slot have no role restrictions
+- **Moderator (`is_moderator`, no auth required):** reveal, reset votes, last-round toggle, countdown (silent/dry/wet),
+  start new round, poll question setup, configure deck, kick players, timer controls (reset/pause/resume/±30s), timer
+  alarm (interval + mute for the entire room) - all gated by `isModerator` in `CardsArea.tsx` and prop
+  `canControl={isModerator}` in `Timer.tsx`, client-side only (RLS `using (true)`)
+- **Authorized moderator (`isModerator && user`):** rename room, set slug/name, room background, rename other players +
+  set their shields. Detailed matrix: `DESIGN.md` §11.1-11.2
+- **Shields:** `app/utils/shields.ts` - role is selected from `PLAYER_ROLES` via `RolePicker.tsx` (JoinOverlay +
+  PlayerEditModal), based on `RoleBadge.tsx`, and written to `players.shields` as one shield via `shieldForRoleTag()`;
+  there are no custom roles: legacy shield `custom:*` means "no role" (DEV) everywhere except the API
+  (`netlify/AGENTS.md`). `SHIELD_CATALOG` (role/focus/stack/qa/lead) remains for lookup; the icon picker was removed.
+  `voteCohortFor()` in `app/utils/resultCohorts.ts` determines the raw role; players without a role and those who left
+  are DEV
 
-1. **Кола результатів:** чіпи - фільтр флоу команди, групи DEV/BE/FE/SRE || QA/AQA/GQA || PO || SM
-   (`resultKeyFor()`). Група DEV чи QA без вибраних чіпів - одне загальне коло, з вибраними - лише їхні кола;
-   PO/SM - коло лише з чіпом. Неврахований голос видно тільки в списку (червоний бейдж), він не входить у кола,
-   підсумки й `round_history`. Колоди `voting`/`vote_question`/`goal_clarity` чіпів не мають
-   (`usesResultChips()`), рахують усі голоси, кожна роль - окреме коло.
-   Порядок DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM. Розміри й контракт - `DESIGN.md` §11.9.
-2. **Налаштування кіл:** 9 чіпів у `ConfigureCardDeckModal`; Save пише підмножину в `room_state.result_cohorts`
-   (`[]` без чіпів; QA/GQA/AQA/PO/SM потребують міграції `021`). Невідомі значення ігноруються.
-3. **Статистика:** історія, тренди й головна беруть сиру вбудовану роль (legacy `custom:*` - DEV). Загальний бал - пул оцінювачів DEV/BE/FE/SRE/QA/GQA/AQA; без їхніх голосів - усі
-   голоси. Головна й тренди беруть числові раунди. Формули - `app/utils/AGENTS.md`, legacy-контракт API для
-   agilecharts - `netlify/AGENTS.md`.
-4. **Consensus:** салют + decision-sound, коли хоча б одне коло результатів одноголосне
-   з ≥ 2 голосами. Деталі - `app/utils/AGENTS.md`.
+1. **Result circles:** chips filter the team's flow, groups DEV/BE/FE/SRE || QA/AQA/GQA || PO || SM
+   (`resultKeyFor()`). A DEV or QA group with no selected chips has one shared circle; selected chips produce only their
+   circles; PO/SM have a circle only with a chip. An excluded vote is visible only in the list (red badge), and does not
+   enter circles, totals, or `round_history`. `voting`/`vote_question`/`goal_clarity` decks have no chips
+   (`usesResultChips()`), count all votes, and give each role a separate circle.
+   Order DEV, BE, FE, SRE, QA, GQA, AQA, PO, SM. Sizes and contract: `DESIGN.md` §11.9.
+2. **Circle settings:** 9 chips in `ConfigureCardDeckModal`; Save writes a subset to `room_state.result_cohorts`
+   (`[]` with no chips; QA/GQA/AQA/PO/SM require migration `021`). Unknown values are ignored.
+3. **Statistics:** history, trends, and home use the raw built-in role (legacy `custom:*` is DEV). Overall score uses
+   the estimator pool DEV/BE/FE/SRE/QA/GQA/AQA; without their votes it uses all votes. Home and trends use numeric
+   rounds. Formulas: `app/utils/AGENTS.md`; legacy API contract for agilecharts: `netlify/AGENTS.md`.
+4. **Consensus:** fireworks + decision-sound when at least one result circle is unanimous with ≥ 2 votes. Details:
+   `app/utils/AGENTS.md`.
 
 ## Code Style
-- Без коментарів у коді; імена мають пояснювати поведінку. 2 пробіли, без табів, один trailing newline
-- TypeScript скрізь: `.ts` у hooks/utils/stores, `.tsx` для компонентів і сторінок
-- Без wrapper-абстракцій, які тільки перейменовують функції
-- UI-тексти мають проходити через i18n, якщо компонент вже локалізований
-- `.vscode/settings.json` у репо навмисно: спільні налаштування VS Code для тіммейтів Scrum Office, щоб проєкт у всіх був налаштований однаково. Особисті на вигляд ключі в ньому - не дефект для рев'ю; змінювати лише за згодою команди
+- No code comments; names should explain behavior. 2 spaces, no tabs, one trailing newline
+- TypeScript throughout: `.ts` in hooks/utils/stores, `.tsx` for components and pages
+- No wrapper abstractions that only rename functions
+- UI text must go through i18n if the component is already localized
+- `.vscode/settings.json` is intentionally in the repo: shared VS Code settings for Scrum Office teammates so everyone
+  configures the project consistently. Personal-looking keys in it are not a review defect; change only with team consent
 
 ## Security
-- Не друкувати секрети або повні env values; у прикладах - placeholders
-- `SUPABASE_SECRET_KEY` / `sb_secret_...` і `STORYPOKER_API_TOKEN` - тільки server-side, ніколи в client bundle
-  (без `VITE_` префіксу; `STORYPOKER_API_TOKEN` ставиться в Netlify site env, не в `/.env/`)
+- Do not print secrets or full env values; use placeholders in examples
+- `SUPABASE_SECRET_KEY` / `sb_secret_...` and `STORYPOKER_API_TOKEN` are server-side only, never in the client bundle
+  (no `VITE_` prefix; `STORYPOKER_API_TOKEN` is set in Netlify site env, not in `/.env/`)
