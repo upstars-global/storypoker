@@ -89,7 +89,6 @@
     "joinRoom": "Join Room"
   },
   "cards": {
-    "goalClarityQuestion": "How clearly do I understand the Sprint Goals?",
     "reveal": "Reveal Estimates",
     "reset": "Reset Estimates",
     "undoReset": "Undo",

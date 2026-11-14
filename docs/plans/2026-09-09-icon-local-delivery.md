@@ -1,60 +1,60 @@
 # Icon Local Delivery Implementation Plan
 
-> **For agentic workers:** Use subagent-driven-development (recommended) or executing-plans to execute the plan task-by-task. Steps use numbered checkbox (`1. [ ]`) syntax for tracking.
+> **For agentic workers:** Use subagent-driven-development (recommended) or executing-plans to execute the plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Provide local data for all reachable icons without changing SVG rendering or feature flags.
+**Goal:** Забезпечити локальними даними всі досяжні іконки без зміни SVG-рендеру та фіче-флагів.
 
-**Architecture:** An explicit manifest of input names and a pure resolver define the subset for four flag combinations.
-A Node generator reads collections and creates committed JSON; the browser registers only this JSON before mount.
-Source checks, a runtime guard, and a production graph audit prevent missing icons or full collections from going unnoticed.
+**Architecture:** Явний manifest вхідних імен і чистий resolver визначають subset для чотирьох комбінацій
+флагів. Node-генератор читає колекції й створює committed JSON; браузер реєструє лише цей JSON до mount.
+Перевірки джерел, runtime guard і аудит production graph не дозволяють приховати пропущені іконки або повні колекції.
 
 **Tech Stack:** Vue 3.5, Vite 8, TypeScript, Node >=24.15.0, npm >=11.12.0, Iconify Vue 5, Vitest, Playwright.
 
 ## Global Constraints
 
-1. Specification: [icon-rendering-migration-design](../specs/2026-09-09-icon-rendering-migration-design.md).
-2. «При обох увімкнених флагах зберегти поточний пріоритет Lucide над rounded.» (When both flags are enabled, preserve the current precedence of Lucide over rounded.)
-3. «Браузер імпортує цей файл; імпорти `@iconify-json/*` та генератор залишаються поза browser graph.» (The browser imports this file; `@iconify-json/*` imports and the generator remain outside the browser graph.)
-4. «Production-міграція виконується лише після зафіксованого рішення за результатами A/B.» (Production migration takes place only after a decision based on the A/B results is recorded.)
-5. Preserve the AppIcon API, i18n, sizes, events, SVG, both flags, and all local `app:` SVGs.
-6. Legacy SHIELD_CATALOG is not a source of required UI icons; `custom:` denotes a role tag.
-7. Read `app/AGENTS.md`, `app/components/AGENTS.md`, `app/utils/AGENTS.md`, `tests/AGENTS.md`.
-8. Implement in an isolated worktree using `using-git-worktrees`; this plan does not create a worktree.
-9. Historical language rule: Write comments and commit messages in English; do not add new explanatory comments in code.
-10. Tests: `test-driven-development` + `vitest`; browser: `web-debug`; instructions: `maintaining-agent-context`.
-11. Before completion: `requesting-code-review`, `verification-before-completion`, `npm run test:ci`.
-12. Stage only the task files. Do not rewrite the unrelated commit `0207241` with electron-to-chromium: it enters
-  the branch squash merge with the other commits and is accepted as is.
+- Специфікація: [icon-rendering-migration-design](../specs/2026-09-09-icon-rendering-migration-design.md).
+- «При обох увімкнених флагах зберегти поточний пріоритет Lucide над rounded.»
+- «Браузер імпортує цей файл; імпорти `@iconify-json/*` та генератор залишаються поза browser graph.»
+- «Production-міграція виконується лише після зафіксованого рішення за результатами A/B.»
+- Зберегти API AppIcon, i18n, розміри, події, SVG, обидва флаги й усі локальні `app:` SVG.
+- Legacy SHIELD_CATALOG не є джерелом потрібних UI-іконок; `custom:` означає tag ролі.
+- Прочитати `app/AGENTS.md`, `app/components/AGENTS.md`, `app/utils/AGENTS.md`, `tests/AGENTS.md`.
+- Реалізацію виконувати в ізольованому worktree через `using-git-worktrees`; цей план не створює worktree.
+- Коментарі й commit messages англійською; нові пояснювальні коментарі в коді не додавати.
+- Тести: `test-driven-development` + `vitest`; браузер: `web-debug`; інструкції: `maintaining-agent-context`.
+- Перед фінішем `requesting-code-review`, `verification-before-completion`, `npm run test:ci`.
+- Stage лише файли задачі. Сторонній commit `0207241` з electron-to-chromium не переписувати: він потрапляє в
+  squash-merge гілки разом з іншими комітами і приймається як є.
 
-## Release Boundary and File Structure
+## Межа релізу та структура файлів
 
-This plan ends with working inline SVG delivered locally and is closed by its own checks
-(Tasks 1-6). The next independent stage is the [A/B plan](2026-09-09-icon-rendering-ab.md); its result may
-leave SVG unchanged and is not a condition for closing this plan.
+Цей план завершується працездатним inline SVG з локальною доставкою і закривається власними перевірками
+(Tasks 1-6). Наступний незалежний етап - [A/B-план](2026-09-09-icon-rendering-ab.md); його результат може
+залишити SVG незмінним і не є умовою закриття цього плану.
 
-| Files | Responsibility |
+| Файли | Відповідальність |
 | --- | --- |
-| `app/utils/iconResolver.ts`, existing `iconMap.ts` | pure remap and flag reading, respectively |
-| `app/utils/iconManifest.ts` | inputNames, dynamicBindings, four flagCases |
-| `scripts/icons/scan.ts` | Vue/TS AST inventory and binding coverage check |
-| `scripts/icons/subset.ts`, `scripts/generate-icons.ts` | full icon records and CLI generate/check |
-| `app/generated/iconCollections.json` | committed subset without Node code |
-| `app/lib/registerLocalIcons.ts` | registration of the subset and nine app SVGs |
-| `app/lib/iconPolicy.ts`, `AppIcon.vue`, `main.ts` | guard and initialization order |
-| `scripts/audit-icon-build.ts` | forbidden modules in sourcemap, raw/gzip report, entry chunk delta ≤ 25 KB gzip |
+| `app/utils/iconResolver.ts`, чинний `iconMap.ts` | чистий remap і читання флагів відповідно |
+| `app/utils/iconManifest.ts` | inputNames, dynamicBindings, чотири flagCases |
+| `scripts/icons/scan.ts` | AST-інвентаризація Vue/TS і перевірка binding coverage |
+| `scripts/icons/subset.ts`, `scripts/generate-icons.ts` | повні icon records і CLI generate/check |
+| `app/generated/iconCollections.json` | committed subset без Node-коду |
+| `app/lib/registerLocalIcons.ts` | реєстрація subset і дев’яти app SVG |
+| `app/lib/iconPolicy.ts`, `AppIcon.vue`, `main.ts` | guard і порядок ініціалізації |
+| `scripts/audit-icon-build.ts` | заборонені модулі в sourcemap, raw/gzip звіт, дельта entry chunk ≤ 25 KB gzip |
 | `tests/unit/utils/icon*.spec.ts`, `tests/unit/components/AppIcon.spec.ts` | resolver, manifest, subset, guard, |
-| | full manifest × 4 flagCases |
-| `package.json`, lockfile, CI, `tsconfig.node.json` | dependencies, Node scripts, and required checks |
+| | повний manifest × 4 flagCases |
+| `package.json`, lockfile, CI, `tsconfig.node.json` | залежності, Node scripts і required checks |
 
-## Task 1: Pure resolver without behavior changes
+## Task 1: Чистий resolver без зміни поведінки
 
 **Files:** Create `app/utils/iconResolver.ts`, `tests/unit/utils/iconResolver.spec.ts`;
 modify `app/utils/iconMap.ts`, `tsconfig.node.json`.
 
 **Interfaces:** `IconFlags = { iconsLucide: boolean; iconsRounded: boolean }`;
-`resolveIconName(name: string, flags: IconFlags): string`. The existing `mapIconName(name: string): string` is retained.
+`resolveIconName(name: string, flags: IconFlags): string`. Поточний `mapIconName(name: string): string` зберігається.
 
-1. [ ] Write the test below, including direct names and fallback:
+- [ ] Написати тест нижче, включно з прямими іменами й fallback:
 
 ```ts
 import { expect, it } from 'vitest'
@@ -75,9 +75,9 @@ it('keeps fallback and gives Lucide precedence', () => {
 })
 ```
 
-2. [ ] Run `npm run test:unit -- tests/unit/utils/iconResolver.spec.ts tests/unit/utils/slotMachine.spec.ts`.
-  The new test should fail because the module is missing; the existing suite should pass.
-3. [ ] Move MDI_TO_LUCIDE unchanged into iconResolver and implement this sequence:
+- [ ] Запустити `npm run test:unit -- tests/unit/utils/iconResolver.spec.ts tests/unit/utils/slotMachine.spec.ts`.
+  Новий тест має падати через відсутній модуль, існуючий suite має проходити.
+- [ ] Перенести незмінену MDI_TO_LUCIDE в iconResolver, реалізувати послідовність:
 
 ```ts
 export interface IconFlags { iconsLucide: boolean; iconsRounded: boolean }
@@ -90,17 +90,16 @@ export function resolveIconName(name: string, flags: IconFlags): string {
 }
 ```
 
-`MDI_TO_LUCIDE` here is the table moved from the existing `app/utils/iconMap.ts`, not a new map.
-Preserve useLucide/useRounded caching in iconMap and delegate to the resolver after reading the flags.
-Node ESM constraints: `iconResolver.ts` and `iconManifest.ts` have no extensionless value imports (type-only
-imports are allowed), Vite aliases, or browser dependencies; Node scripts do not import `iconMap.ts` or
-`~/configs/featureFlags`. The generator reads collection JSON through `createRequire` or `with { type: 'json' }`,
-and `allowImportingTsExtensions: true` in `tsconfig.node.json` permits `.ts` imports between Node scripts.
+`MDI_TO_LUCIDE` тут є перенесеною таблицею з чинного `app/utils/iconMap.ts`, не новою мапою.
+Зберегти кешування useLucide/useRounded в iconMap і делегувати resolver після читання флагів.
+Обмеження Node ESM: `iconResolver.ts` і `iconManifest.ts` не мають extensionless value-імпортів (type-only
+імпорти дозволені), Vite alias і browser dependencies; Node-скрипти не імпортують `iconMap.ts` та
+`~/configs/featureFlags`. Генератор читає JSON колекцій через `createRequire` або `with { type: 'json' }`,
+а `.ts`-імпорти між Node-скриптами дозволяє `allowImportingTsExtensions: true` у `tsconfig.node.json`.
+- [ ] Додати параметризований тест усіх чотирьох flagCases і повторити команду тестів та `npm run typecheck`.
+- [ ] Переглянути diff: таблиця і пріоритет без змін; commit `refactor: isolate icon name resolution`.
 
-4. [ ] Add a parameterized test for all four flagCases and repeat the test command and `npm run typecheck`.
-5. [ ] Review the diff: the table and precedence are unchanged; commit `refactor: isolate icon name resolution`.
-
-## Task 2: Manifest and independent source validation
+## Task 2: Manifest і незалежна перевірка джерел
 
 **Files:** Create `app/utils/iconManifest.ts`, `scripts/icons/scan.ts`,
 `tests/unit/utils/iconManifest.spec.ts`; modify `package.json`, `package-lock.json`, `tsconfig.node.json`.
@@ -112,7 +111,7 @@ and `allowImportingTsExtensions: true` in `tsconfig.node.json` permits `.ts` imp
 `validateIconUsage(usage: ReturnType<typeof scanIconUsage>, names: readonly string[],`
 `bindings: typeof dynamicBindings): string[]`.
 
-1. [ ] Write a negative scanner test without reading the manifest as its own oracle:
+- [ ] Написати негативний тест scanner без читання manifest як його власного oracle:
 
 ```ts
 import { expect, it } from 'vitest'
@@ -128,32 +127,32 @@ it('reports new literal and undeclared dynamic binding', () => {
 })
 ```
 
-2. [ ] Run `npm run test:unit -- tests/unit/utils/iconManifest.spec.ts tests/unit/utils/slotMachine.spec.ts`;
-  confirm that the new test FAILs.
-3. [ ] Add a direct devDependency on `@vue/compiler-sfc` compatible with the installed Vue; use the existing TypeScript.
-  Scan template AST attributes `icon`/`:icon`, script/scriptSetup, and TS through the compiler API;
-  ignore literals in comments. Names must match the full `prefix:name`, not a fragment such as `ic:round-`.
-4. [ ] Build the manifest from 53 actual AppIcon uses in 11 Vue files. Include values from all ternaries,
-  DICE_FACES, SLOT_SYMBOL_WEIGHTS, countdownModeOptions, and volumeIcon in inputNames.
-  Record each dynamic binding by file + normalized AST expression, without tying it to a line number.
-5. [ ] Exclude only generated files, the resolver internal table, and the SHIELD_CATALOG AST node;
-  continue scanning the rest of `shields.ts`. A new TS icon source must be detected without changing a file allowlist.
-  Do not move all legacy map values into the subset: outputNames = union resolver(inputNames, flagCases).
-6. [ ] Add tests for literal/binding drift, extra dynamicBindings entries, the full dice/slot set,
-  absence of legacy `simple-icons`/`game-icons`, and presence of `lucide:id-card` and `lucide:undo`.
-  Check dynamic values against actual AST array literals or functional tests of their consumers.
-7. [ ] Repeat the test command and typecheck; commit `feat: define and validate the local icon manifest`.
+- [ ] Запустити `npm run test:unit -- tests/unit/utils/iconManifest.spec.ts tests/unit/utils/slotMachine.spec.ts`;
+  підтвердити FAIL нового тесту.
+- [ ] Додати пряму devDependency `@vue/compiler-sfc`, сумісну з установленим Vue; використати наявний TypeScript.
+  Сканувати template AST атрибути `icon`/`:icon`, script/scriptSetup і TS через compiler API;
+  літерали в коментарях не враховувати. Імена мають відповідати повному `prefix:name`, не фрагменту `ic:round-`.
+- [ ] Скласти manifest із 53 фактичних AppIcon-використань у 11 Vue-файлах. Значення всіх тернарників,
+  DICE_FACES, SLOT_SYMBOL_WEIGHTS, countdownModeOptions і volumeIcon включити в inputNames.
+  Записати кожен dynamic binding за file + нормалізованим AST expression, без прив’язки до номера рядка.
+- [ ] Виключити тільки generated, внутрішню таблицю resolver і AST-вузол SHIELD_CATALOG;
+  решту `shields.ts` продовжувати сканувати. Нове джерело іконок у TS має виявлятися без зміни allowlist файлів.
+  Не переносити всі legacy map values в subset: outputNames = union resolver(inputNames, flagCases).
+- [ ] Додати тести literal/binding drift, зайвих записів dynamicBindings, повного dice/slot набору,
+  відсутності legacy `simple-icons`/`game-icons`, наявності `lucide:id-card` і `lucide:undo`.
+  Динамічні значення звіряти з реальними AST-літералами масивів або функціональними тестами їх споживачів.
+- [ ] Повторити команду тестів і typecheck; commit `feat: define and validate the local icon manifest`.
 
-## Task 3: Build-time subset with aliases and deterministic check
+## Task 3: Build-time subset з aliases і детермінованим check
 
 **Files:** Create `scripts/icons/subset.ts`, `scripts/generate-icons.ts`, `app/generated/iconCollections.json`,
 `tests/unit/utils/iconSubset.spec.ts`; modify `package.json`, `package-lock.json`, `tsconfig.node.json`.
 
 **Interfaces:** `buildCollections(sets: Record<string, IconifyJSON>, names: readonly string[]): IconifyJSON[]`;
-`serializeCollections(sets: IconifyJSON[]): string`. `IconifyJSON` is imported from the direct devDependency `@iconify/types`.
-CLI `node scripts/generate-icons.ts [--check]`: generate writes the file; check does not write and returns exit 1 on drift.
+`serializeCollections(sets: IconifyJSON[]): string`. `IconifyJSON` імпортується з прямої devDependency `@iconify/types`.
+CLI `node scripts/generate-icons.ts [--check]`: generate записує файл; check не пише й повертає exit 1 при дрейфі.
 
-1. [ ] Write an alias test using the real ic package:
+- [ ] Написати alias-тест, використавши реальний пакет ic:
 
 ```ts
 import { expect, it } from 'vitest'
@@ -167,17 +166,16 @@ it('includes only requested records and rejects unknown names', () => {
 })
 ```
 
-JSON is imported directly: `tsconfig.json` has `resolveJsonModule: true`, unit tests run under Vite, and
-`node:module` in `tests/unit/**` would break Typecheck (`types: ["vite/client"]`, without `node`).
-The alias case is required because the manifest actually contains lucide aliases `check-circle`, `user-circle`,
-`more-vertical`: take them from `@iconify-json/lucide`, compare with `getIconData`, and verify that the result contains
-the full body and inherited dimensions/transformations. Because of aliases, the subset is built through
-`getIconData`; direct copying of `icons[name]` is not used.
-
-2. [ ] Run `npm run test:unit -- tests/unit/utils/iconSubset.spec.ts tests/unit/utils/iconResolver.spec.ts`;
-  confirm that the new test FAILs.
-3. [ ] Add direct devDependencies `@iconify/utils`, `@iconify/types`, `@iconify-json/lucide`, `@iconify-json/tabler`.
-  Only the Node generator reads these dependencies. Select the data as follows:
+JSON імпортується напряму: `tsconfig.json` має `resolveJsonModule: true`, unit-тести працюють під Vite, а
+`node:module` в `tests/unit/**` зламав би Typecheck (`types: ["vite/client"]`, без `node`).
+Alias-випадок обов’язковий, бо manifest реально містить lucide-aliases `check-circle`, `user-circle`,
+`more-vertical`: узяти їх з `@iconify-json/lucide`, звірити з `getIconData` і перевірити, що результат містить
+повний body та успадковані dimensions/transformations. Саме через aliases subset будується через
+`getIconData`, а не через пряме копіювання `icons[name]`.
+- [ ] Запустити `npm run test:unit -- tests/unit/utils/iconSubset.spec.ts tests/unit/utils/iconResolver.spec.ts`;
+  підтвердити FAIL нового тесту.
+- [ ] Додати прямі devDependencies `@iconify/utils`, `@iconify/types`, `@iconify-json/lucide`, `@iconify-json/tabler`.
+  Залежності читаються тільки Node-генератором. Дані вибирати так:
 
 ```ts
 import { getIconData } from '@iconify/utils'
@@ -197,24 +195,24 @@ export function buildCollections(sets: Record<string, IconifyJSON>, names: reado
 }
 ```
 
-4. [ ] The CLI runs scan/validate, computes all resolvedNames, excludes `app:` from external packages, and
-  checks these names against registerAppIcons. Serialization: stable prefix/key order, JSON indent 2, newline.
-  `--check` compares the committed file bytes with the expected output; a missing file or unknown CLI flag yields exit 1.
-  `serializeCollections()` returns this exact format and has a stability test with reordered inputNames.
-5. [ ] Add scripts `icons:generate` and `icons:check`, and Node tsconfig includes `scripts/icons/**/*.ts`,
-  `scripts/generate-icons.ts`; run generate, check, and generate again, and confirm there is no new diff.
-6. [ ] Repeat the tests and typecheck; commit `feat: generate the offline icon subset at build time`.
+- [ ] CLI запускає scan/validate, обчислює всі resolvedNames, виключає `app:` з зовнішніх пакетів і
+  звіряє ці імена з registerAppIcons. Серіалізація: стабільний порядок prefixes/keys, JSON indent 2, newline.
+  `--check` порівнює байти committed файла з очікуваним; відсутній файл і невідомий прапорець CLI дають exit 1.
+  `serializeCollections()` повертає саме цей формат і має тест стабільності при переставлених inputNames.
+- [ ] Додати scripts `icons:generate` і `icons:check`, Node tsconfig include `scripts/icons/**/*.ts`,
+  `scripts/generate-icons.ts`; запустити generate, check і повторний generate, підтвердити відсутність нового diff.
+- [ ] Повторити тести й typecheck; commit `feat: generate the offline icon subset at build time`.
 
-## Task 4: Registration before mount and an explicit error for a missing icon
+## Task 4: Реєстрація до mount і явна помилка пропущеної іконки
 
 **Files:** Create `app/lib/registerLocalIcons.ts`, `app/lib/iconPolicy.ts`,
 `tests/unit/components/AppIcon.spec.ts`; modify `app/main.ts`, `app/components/AppIcon.vue`,
-`app/components/PlayerRow.vue`. The existing `registerAppIcons.ts` remains.
+`app/components/PlayerRow.vue`. Чинний `registerAppIcons.ts` зберігається.
 
 **Interfaces:** `registerLocalIcons(): void`; `installIconPolicy(): void`;
-`assertLocalIcon(name: string): void`. In dev/test, the guard throws `Missing local icon: <name>`.
+`assertLocalIcon(name: string): void`. У dev/test guard кидає `Missing local icon: <name>`.
 
-1. [ ] Write a test for actual local rendering without mocking Icon:
+- [ ] Написати тест реального локального рендеру, не підмінюючи Icon:
 
 ```ts
 import { expect, it } from 'vitest'
@@ -233,86 +231,85 @@ it('renders a direct Lucide icon from the registered subset', async () => {
 })
 ```
 
-`await nextTick()` is required: `<Icon>` from `@iconify/vue` enables rendering only in `onMounted`, so a synchronous
-`find('svg')` immediately after `mount` is empty even when the data is registered.
-
-2. [ ] Run `npm run test:unit -- tests/unit/components/AppIcon.spec.ts tests/unit/components/PlayerRow.spec.ts`;
-  confirm that the new test FAILs.
-3. [ ] registerLocalIcons registers generated collections via addCollection and calls registerAppIcons.
-  In main, replace the registerAppIcons call with registerLocalIcons, followed by installIconPolicy, then createApp/mount.
-4. [ ] In dev/test, call `_api.setFetch` with a function that records the attempt and returns a rejected Promise.
-  `_api` is an internal export of `@iconify/vue` without stability guarantees; the negative test below captures its
-  contract and will fail if the API changes after a package update.
-  The guard before Icon calls `iconLoaded(resolved)` and throws an error if data is missing. Leave global fetch unchanged.
-  Production retains the library’s current behavior; the check and browser tests guard against omissions.
-5. [ ] Add a negative mount test for the unknown `ic:missing-review-fixture`: expect an explicit error and zero
-  network transport calls; separately verify that the policy does not change globalThis.fetch.
-  Restore the Iconify transport after each test to avoid affecting other suites.
-6. [ ] Add a full manifest test in `tests/unit/utils/iconManifest.spec.ts`: after `registerLocalIcons()`,
-  expect `iconLoaded(resolveIconName(name, flags))` to be true for each `inputName × flagCases`. This replaces
-  the fixture as the coverage check for step 1; the fixture/contact sheet remain in the A/B plan.
-7. [ ] In PlayerRow, remove the import, loadIcons call, and obsolete comment above DICE_FACES; retain the array/animation.
-  In AppIcon, retain one root Icon, fallthrough attributes, and props.
-8. [ ] Run the AppIcon, PlayerRow, CardsArea, and SlotMachine suites and `npm run typecheck`;
+`await nextTick()` обов’язковий: `<Icon>` з `@iconify/vue` вмикає рендер лише в `onMounted`, тож синхронний
+`find('svg')` одразу після `mount` порожній навіть при зареєстрованих даних.
+- [ ] Запустити `npm run test:unit -- tests/unit/components/AppIcon.spec.ts tests/unit/components/PlayerRow.spec.ts`;
+  підтвердити FAIL нового тесту.
+- [ ] registerLocalIcons реєструє generated collections через addCollection і викликає registerAppIcons.
+  У main замінити виклик registerAppIcons на registerLocalIcons, далі installIconPolicy, далі createApp/mount.
+- [ ] У dev/test викликати `_api.setFetch` з функцією, що реєструє спробу і повертає rejected Promise.
+  `_api` - внутрішній експорт `@iconify/vue` без гарантій стабільності; його контракт фіксує негативний тест
+  нижче, який упаде при зміні API після оновлення пакета.
+  Guard перед Icon викликає `iconLoaded(resolved)` і кидає помилку, якщо даних немає. Глобальний fetch не змінювати.
+  Production лишає чинну поведінку бібліотеки; захист від пропусків забезпечують check і browser tests.
+- [ ] Додати негативний mount невідомого `ic:missing-review-fixture`: очікувати явну помилку й нуль
+  викликів мережевого transport; окремо перевірити, що policy не змінює globalThis.fetch.
+  Відновлювати Iconify transport після кожного тесту, щоб не впливати на інші suites.
+- [ ] Додати тест повного manifest у `tests/unit/utils/iconManifest.spec.ts`: після `registerLocalIcons()`
+  для кожного `inputName × flagCases` очікувати `iconLoaded(resolveIconName(name, flags))` true. Це заміняє
+  fixture як перевірку покриття кроку 1; fixture/contact sheet залишаються в A/B-плані.
+- [ ] У PlayerRow прибрати імпорт, виклик loadIcons і застарілий коментар над DICE_FACES, зберегти масив/анімацію.
+  У AppIcon зберегти один кореневий Icon, fallthrough attributes і props.
+- [ ] Прогнати AppIcon, PlayerRow, CardsArea, SlotMachine suites та `npm run typecheck`;
   commit `fix: render all application icons from local data`.
 
-## Task 5: Required checks, production graph, and current instructions
+## Task 5: Required checks, production graph і актуальні інструкції
 
 **Files:** Create `scripts/audit-icon-build.ts`; modify `package.json`, `tsconfig.node.json`,
 `.github/workflows/ci.yml`, `app/components/AGENTS.md`.
 
-**Interfaces:** CLI `node scripts/audit-icon-build.ts <dist-dir>` writes
-`test-results/icon-rendering/bundle.json` and exits 1 for a forbidden browser module.
-Report: `{ files: { path: string; rawBytes: number; gzipBytes: number }[], forbiddenSources: string[],`
+**Interfaces:** CLI `node scripts/audit-icon-build.ts <dist-dir>` пише
+`test-results/icon-rendering/bundle.json`, exit 1 для забороненого browser module.
+Звіт: `{ files: { path: string; rawBytes: number; gzipBytes: number }[], forbiddenSources: string[],`
 `entryChunk: { gzipBytes: number; baselineGzipBytes: number; deltaGzipBytes: number } }`.
 
-1. [ ] The build audit needs no unit seam: check the actual build sourcemaps already generated by Vite.
-  The script reads all JS/CSS artifacts, uses `node:zlib` for gzip, and reads module sources from `.map`; missing sourcemaps cause exit 1.
-  Forbid source paths for full `@iconify-json/*/icons.json`, `scripts/generate-icons.ts`, and `scripts/icons/`.
-  Allow the generated subset and brief mentions of the library name in a license.
-2. [ ] Budget: before step 1 begins, capture the baseline gzip entry chunk from `main` and save it to
-  `test-results/icon-rendering/bundle-baseline.json`; the audit calculates the delta and exits 1 if it is > 25 KB gzip.
-  If the threshold is exceeded, move the lucide collection into a separate chunk via `await import()` before mount only when
-  `iconsLucide` is enabled; ic/tabler remain in the entry chunk. Record the chunking decision in the report.
-3. [ ] Add `icons:audit-build`, add `icons:check` at the start of `test:ci`, and add a separate `npm run icons:check` step
-  in the `typecheck` job before vue-tsc; retain the job name `Typecheck`. Add an artifact audit after the build in the Build job.
-4. [ ] Using maintaining-agent-context, update only the icon section of `app/components/AGENTS.md`:
-  actual offline prefixes, 9 app SVGs including timer, the manifest path, generate/check, and the absence of legacy shields in the UI.
-  Keep it at ≤200 lines; leave the CLAUDE import shim unchanged.
-5. [ ] Run `npm run icons:check`, `npm run test:ci`, and `npm run icons:audit-build`.
-  Remove one entry from a temporary copy of the generated JSON and run the check against that copy through the
-  serializer/check unit test; expect a mismatch. Do not damage the committed file for a manual check.
-6. [ ] Review dependencies and the lockfile: required packages only; commit `ci: enforce the local icon contract`.
-7. [x] Type the harness: `tests/icon-rendering/tsconfig.json` extends the root config, adds `node` to `types`,
-  and redirects the `~`/`@` aliases to `app/`. It runs as the third step of `npm run typecheck`, so the `Typecheck` job picks it up
-  without changes to `ci.yml`. The only finding was that `countdownTimeout` in `useCountdown.ts` was typed as `number`, while
-  under `types: ["node"]` `setTimeout` returns `Timeout`; it was changed to `ReturnType<typeof setTimeout>`, a type-only change.
-8. [x] `deploy:prod` / `deploy:stage`: checked the CLI 26.2.0 and 27.5.2 sources - `--build` remains a hidden
-  deprecated option with `.default(true)`, so the build always runs and only `--no-build` disables it; explicit `--build`
-  prints a warning in both versions. The env context resolves at two levels: the CLI defaults to `dev`
-  (`getDefaultContext()` returns `production` only for `serve`), while the build step resolves again through
-  `@netlify/config` with a `production` default - except for sites with the `use_cached_site_info` feature flag, where
-  `siteInfo` from CLI resolution is reused along with the site-level env for the `dev` context (`api/site_info.js` puts
-  Envelope variables into `build_settings.env`, where `getUiEnv` reads them), although the build context itself remains
-  `production`. There is a third level: `deploy.js` updates `cachedConfig.env` only for an explicit non-`dev` context, while
-  `getEnvelopeEnv` fetches functions-scoped env with a default parameter of `dev`, so without the flag this path resolves
-  to `dev`. `deploy:prod` carries an explicit `--context production`, fixing the context at all levels; `CONTEXT` in env
-  is honored there too. The `options.context && !options.build` guard does not fire because `build` has `.default(true)`.
+- [ ] Для аудиту збірки unit seam не потрібний: перевіряти реальні build sourcemaps, які Vite вже генерує.
+  Скрипт читає всі JS/CSS artifacts, gzip через `node:zlib`, module sources з `.map`; відсутні sourcemaps дають exit 1.
+  Заборонити source paths повних `@iconify-json/*/icons.json`, `scripts/generate-icons.ts`, `scripts/icons/`.
+  Не забороняти generated subset або коротку згадку назви бібліотеки в ліцензії.
+- [ ] Бюджет: до початку кроку 1 зняти baseline gzip entry chunk з `main` і зберегти в
+  `test-results/icon-rendering/bundle-baseline.json`; аудит рахує дельту і дає exit 1, якщо вона > 25 KB gzip.
+  Якщо поріг перевищено, lucide-колекцію винести в окремий chunk через `await import()` до mount лише при
+  увімкненому `iconsLucide`; ic/tabler залишаються в entry chunk. Рішення про chunking записати в звіт.
+- [ ] Додати `icons:audit-build`, `icons:check` на початок `test:ci`, окремий крок `npm run icons:check`
+  у job `typecheck` перед vue-tsc; зберегти job name `Typecheck`. У job Build після build додати artifact audit.
+- [ ] Через maintaining-agent-context оновити тільки секцію іконок `app/components/AGENTS.md`:
+  реальні offline prefixes, 9 app SVG включно з timer, шлях manifest, generate/check і відсутність legacy шилдів у UI.
+  Залишити ≤200 рядків; CLAUDE import-shim не змінювати.
+- [ ] Запустити `npm run icons:check`, `npm run test:ci`, `npm run icons:audit-build`.
+  У тимчасовій копії generated JSON прибрати один запис і виконати check проти цієї копії через unit-тест
+  serializer/check; очікувати mismatch. Не псувати committed файл для ручної перевірки.
+- [ ] Переглянути залежності й lockfile: тільки потрібні пакети; commit `ci: enforce the local icon contract`.
+- [x] Типізувати harness: `tests/icon-rendering/tsconfig.json` розширює кореневий конфіг, додає `node` до `types`
+  і перенацілює aliases `~`/`@` на `app/`. Прогін третім кроком `npm run typecheck`, тож job `Typecheck` бере його
+  без змін у `ci.yml`. Єдина знахідка - `countdownTimeout` в `useCountdown.ts` був типізований як `number`, а під
+  `types: ["node"]` `setTimeout` повертає `Timeout`; замінено на `ReturnType<typeof setTimeout>`, зміна суто типова.
+- [x] `deploy:prod` / `deploy:stage`: перевірено джерела CLI 26.2.0 і 27.5.2 - `--build` лишився прихованою
+  deprecated-опцією з `.default(true)`, тобто збірка йде завжди, а вимикає її лише `--no-build`; явний `--build`
+  в обох версіях друкує warning. Контекст env резолвиться на двох рівнях: CLI дефолтить `dev`
+  (`getDefaultContext()` віддає `production` лише для `serve`), а крок збірки перерезолвлює через
+  `@netlify/config` з дефолтом `production` - крім сайтів із feature flag `use_cached_site_info`, де
+  переюзається `siteInfo` з CLI-резолву разом із site-level env контексту `dev` (`api/site_info.js` кладе
+  Envelope-змінні в `build_settings.env`, звідки їх бере `getUiEnv`), хоча сам контекст збірки лишається
+  `production`. Є й третій рівень: `deploy.js` оновлює `cachedConfig.env` лише за явного не-`dev` контексту, а
+  functions-scoped env тягне `getEnvelopeEnv` з дефолтом параметра `dev`, тож без прапорця цей шлях резолвиться
+  на `dev`. `deploy:prod` несе явний `--context production`, що фіксує контекст на всіх рівнях; `CONTEXT` в env
+  шанується там само. Guard `options.context && !options.build` не спрацьовує, бо `build` має `.default(true)`.
 
-## Task 6: Browser and visual verification of step 1
+## Task 6: Браузерна й візуальна перевірка кроку 1
 
 **Files:** Create `tests/e2e/icon-delivery.spec.ts`; modify `playwright.config.ts`,
 `package.json`, `.github/workflows/ci.yml`.
 
-**Interfaces:** a separate Playwright project `icon-delivery`, without Supabase secrets, with testMatch for only the new file;
-locally, `npm run test:e2e:icons` runs this project. Exclude it from the chromium/webkit projects to
-avoid duplication. In CI, the Public pages load job makes one call to
-`playwright test --project page-load --project icon-delivery` instead of two separate runs.
+**Interfaces:** окремий Playwright project `icon-delivery`, без Supabase secrets, testMatch тільки нового файла;
+локально `npm run test:e2e:icons` запускає цей project. Виключити його з chromium/webkit projects, щоб
+уникнути дублювання. У CI job Public pages load виконує один виклик
+`playwright test --project page-load --project icon-delivery` замість двох окремих запусків.
 
-1. [ ] Write a test that intercepts all three public Iconify hosts before navigation, aborts them,
-  records attempts, and checks that `attempts` is empty after the icons become visible. Check `/`, `/login`, `/ffc`,
-  and the volume popup on the home page for each of the four FEATURE_FLAGS combinations in a new context.
-  Use the existing `data-testid=volume-button`; after clicking, wait for volume-slider.
+- [ ] Написати тест, який перехоплює всі три публічні Iconify hosts до navigation, abort-ить їх,
+  збирає attempts і перевіряє `attempts` порожнім після видимості іконок. Перевірити `/`, `/login`, `/ffc`
+  і volume popup на головній для кожної з чотирьох комбінацій FEATURE_FLAGS у новому контексті.
+  Використати існуючий `data-testid=volume-button`; після кліку дочекатися volume-slider.
 
 ```ts
 import { expect, test } from '@playwright/test'
@@ -340,45 +337,43 @@ for (const iconsLucide of [false, true]) {
 }
 ```
 
-Additional route/cold-cache cases use the same initialization before navigation;
-each Playwright test receives an independent context.
+Додаткові route/cold-cache випадки використовують ту саму ініціалізацію до navigation;
+кожний Playwright test отримує незалежний контекст.
+- [ ] Перевірити на production preview: `npm run test:e2e:icons`; у наявному job Public pages load замінити
+  команду на `playwright test --project page-load --project icon-delivery` з його dummy Supabase env,
+  без перейменування required job і без звернень до живої кімнати.
+- [ ] Візуальна перевірка: Playwright screenshots `/`, `/login`, `/ffc` до (з `main`) і після змін у
+  `test-results/icon-rendering/screenshots/`; порівняти вручну, розбіжності в іконках - блокер. Повне
+  покриття manifest дає Vitest-тест Task 4; fixture/contact sheet/offline room - у A/B-плані, не тут.
+- [ ] Зберегти звіт локальної доставки, screenshots і baseline bundle в test-results/icon-rendering;
+  виконати `npm run test:ci`, `npm run icons:audit-build`, `npm run test:e2e:icons`.
+- [ ] Запросити code review, усунути підтверджені зауваження; commit `test: verify offline icon delivery`.
+  Інтеграцію гілки виконувати через finishing-a-development-branch; прямий push у main заборонений.
 
-2. [ ] Verify on production preview: `npm run test:e2e:icons`; in the existing Public pages load job, replace
-  the command with `playwright test --project page-load --project icon-delivery` using its dummy Supabase env,
-  without renaming the required job or accessing a live room.
-3. [ ] Visual verification: save Playwright screenshots of `/`, `/login`, `/ffc` before (from `main`) and after the changes in
-  `test-results/icon-rendering/screenshots/`; compare manually, with icon differences treated as blockers. The Vitest test in Task 4
-  provides full manifest coverage; fixture/contact sheet/offline room are in the A/B plan, not here.
-4. [ ] Save the local delivery report, screenshots, and baseline bundle in test-results/icon-rendering;
-  run `npm run test:ci`, `npm run icons:audit-build`, `npm run test:e2e:icons`.
-5. [ ] Request code review and address confirmed findings; commit `test: verify offline icon delivery`.
-  Integrate the branch through finishing-a-development-branch; direct push to main is prohibited.
-
-## Task 7: Volume slider in theme colors without hover highlighting
+## Task 7: Слайдер гучності на кольорах теми без ховер-підсвітки
 
 **Files:** modify `app/assets/css/main.css`, `app/components/AppHeader.vue`.
 
-**Interfaces:** `.mui-slider` renders with `appearance: none`, so explicit rules draw the track and thumb
-for both engines. The fill is passed in the `--fill` CSS variable from the component: `:style="{ '--fill': volumePercent + '%' }"`.
+**Interfaces:** `.mui-slider` рендериться з `appearance: none`, тож доріжку і повзунок малюють явні правила
+для обох рушіїв. Заповнення їде у CSS-змінній `--fill` з компонента: `:style="{ '--fill': volumePercent + '%' }"`.
 
-1. [x] Remove reliance on `accent-color`: by itself it colors only the fill and thumb, while Chromium
-  still draws its own hover highlight on the native thumb, which the variable does not affect.
-2. [x] WebKit: `::-webkit-slider-runnable-track` gets a `linear-gradient` with two stops at `--fill`
-  (WebKit has no native filled portion), and `::-webkit-slider-thumb` gets `appearance: none` and `--primary`.
-3. [x] Gecko: `::-moz-range-track` uses `--border-input`, and `::-moz-range-progress` and `::-moz-range-thumb`
-  use `--primary`. No rule has a hover state, so the color stays the same on hover.
-4. [x] Chromium verification: a pixel-by-pixel diff of the control before and during hover on production preview showed 0 changed
-  pixels out of 12,400; the control diff of two idle screenshots was also 0; the rig was described as «риг роздільний»
-  (the rig is separable). Measured after joining
-  a room through JoinOverlay, without bypassing the overlay. On the dev server the diff shows ~1620 pixels, but this is
-  the volume popup opening animation, not hover: measure on preview after `document.getAnimations()`.
-5. [x] Gecko verification: manual Firefox check on `/core-platform`, 2026-09-09 - the track, fill, and thumb
-  use theme colors, and hover does not change them.
-6. [x] Colors were checked in all six palette and theme combinations: each produces its own `--primary` shade.
+- [x] Прибрати покладання на `accent-color`: сам по собі він фарбує лише заливку й повзунок, а Chromium
+  усе одно малює власну ховер-підсвітку нативного повзунка, і змінна на неї не впливає.
+- [x] WebKit: `::-webkit-slider-runnable-track` отримує `linear-gradient` з двох стопів на `--fill`
+  (нативної заповненої частини в WebKit немає), `::-webkit-slider-thumb` - `appearance: none` і `--primary`.
+- [x] Gecko: `::-moz-range-track` на `--border-input`, `::-moz-range-progress` і `::-moz-range-thumb`
+  на `--primary`. Жодне правило не має ховер-стану, тож колір при наведенні незмінний.
+- [x] Перевірка Chromium: попіксельний diff контрола до і під час ховера на production preview - 0 змінених
+  пікселів з 12 400; контрольний diff двох idle-знімків теж 0, тобто риг роздільний. Заміряно після входу
+  в кімнату через JoinOverlay, без обходу оверлея. На dev-сервері diff показує ~1620 пікселів, але це
+  анімація відкриття попапу гучності, а не ховер: вимірювати треба на preview після `document.getAnimations()`.
+- [x] Перевірка Gecko: Firefox на `/core-platform` вручну, 2026-09-09 - доріжка, заповнення і повзунок
+  беруть кольори теми, ховер їх не змінює.
+- [x] Кольори перевірені у всіх шести комбінаціях палітри й теми: кожна дає власний відтінок `--primary`.
 
-## Plan self-check
+## Самоперевірка плану
 
-1. Resolver/flags: Task 1. Reachable manifest and drift: Task 2. Alias-safe subset: Task 3.
-2. Registration/fallback guard/full manifest × flagCases: Task 4. CI, 25 KB gzip bundle budget, AGENTS: Task 5.
-3. Browser/visual: Task 6 with its own tests; plan closure does not depend on the A/B plan. Artifacts have paths.
-4. The plan does not perform the mask migration or claim that the fixture already exists.
+- Resolver/flags: Task 1. Reachable manifest і дрейф: Task 2. Alias-safe subset: Task 3.
+- Реєстрація/fallback guard/повний manifest × flagCases: Task 4. CI, bundle-бюджет 25 KB gzip, AGENTS: Task 5.
+- Browser/visual: Task 6 власними тестами; закриття плану не залежить від A/B-плану. Артефакти мають шляхи.
+- План не виконує міграцію mask і не стверджує наявності fixture, якої ще немає.

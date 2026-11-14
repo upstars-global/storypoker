@@ -223,55 +223,6 @@ afterEach(() => {
   localStorage.clear()
 })
 
-describe('Goal Clarity question localization', () => {
-  const stored = 'Наскільки чітко я розумію Sprint Goals?'
-  const english = 'How clearly do I understand the Sprint Goals?'
-
-  afterEach(async () => { await i18n.changeLanguage('uk') })
-
-  it('translates active and last round independently of stored state as the client language changes', async () => {
-    await i18n.changeLanguage('en')
-    const goal = fakeState({ deck_preset: 'goal_clarity', poll_question: stored })
-    await mountRoom({ state: goal })
-    expect(lastProps(CardsArea).pollQuestion).toBe(english)
-    const castVote = vi.fn().mockResolvedValue(undefined)
-    usePlayersStore.setState({ castVote })
-    await act(async () => { lastProps(CardsArea).onVote('3') })
-    expect(castVote).toHaveBeenCalledWith('me', '3')
-    expect(useRoomStore.getState().roomState?.poll_question).toBe(stored)
-    await act(async () => { useRoomStore.setState({ roomState: { ...goal, phase: 'revealed' } }) })
-    expect(lastRoundViewProps().pollQuestion).toBe(english)
-    await act(async () => { useRoomStore.setState({ roomState: fakeState({ deck_preset: 'voting', poll_question: stored }) }) })
-    expect(lastProps(CardsArea).pollQuestion).toBe(stored)
-    expect(lastRoundViewProps().pollQuestion).toBe(english)
-    await act(async () => { await i18n.changeLanguage('uk') })
-    expect(lastRoundViewProps().pollQuestion).toBe(stored)
-    expect(useRoomStore.getState().roomState?.poll_question).toBe(stored)
-  })
-
-  it('keeps a non-Goal Clarity last round verbatim when the current preset changes to Goal Clarity', async () => {
-    await i18n.changeLanguage('en')
-    const prior = fakeState({ deck_preset: 'voting', poll_question: stored })
-    await mountRoom({ state: prior })
-    await act(async () => { useRoomStore.setState({ roomState: { ...prior, phase: 'revealed' } }) })
-    await act(async () => { useRoomStore.setState({ roomState: fakeState({ deck_preset: 'goal_clarity', poll_question: stored }) }) })
-    expect(lastProps(CardsArea).pollQuestion).toBe(english)
-    expect(lastRoundViewProps().pollQuestion).toBe(stored)
-  })
-
-  it.each([
-    ['goal_clarity', 'Custom question'],
-    ['goal_clarity', `${stored} `],
-    ['goal_clarity', stored.toLowerCase()],
-    ['goal_clarity', ''],
-    ['voting', stored],
-  ] as const)('preserves the question for %s with value %s', async (deck, question) => {
-    await i18n.changeLanguage('en')
-    await mountRoom({ state: fakeState({ deck_preset: deck, poll_question: question }) })
-    expect(lastProps(CardsArea).pollQuestion).toBe(question)
-  })
-})
-
 describe('room page session restore', () => {
   it('a Vue-format session from localStorage returns the player under the same playerId', async () => {
     const vuePlayer = fakePlayer('vue-p7', ['qa'], null, { name: 'Vue Player' })

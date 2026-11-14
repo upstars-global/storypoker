@@ -1,12 +1,12 @@
 import type { Locator, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 
-const JOIN_ROOM = 'Join Room'
-const PLAYER_MENU_FOR = 'Player menu: '
-const EDIT_PLAYER = 'Edit'
-const SAVE = 'Save'
-const KICK_PLAYER = 'Kick Player'
-const KICK_CONFIRM = 'Kick'
+const JOIN_ROOM = 'Приєднатись'
+const PLAYER_MENU_FOR = 'Меню гравця: '
+const EDIT_PLAYER = 'Редагувати'
+const SAVE = 'Зберегти'
+const KICK_PLAYER = 'Вилучити гравця'
+const KICK_CONFIRM = 'Вилучити'
 
 export class RoomPage {
   constructor(private readonly page: Page) {}

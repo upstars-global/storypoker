@@ -1,33 +1,33 @@
-# Custom avatar image upload
+# Завантаження власної картинки для аватарки
 
-**Date:** 2026-08-02
-**Status:** implemented (with hardening after two review rounds - see "Hardening migrations")
+**Дата:** 2026-08-02
+**Статус:** реалізовано (з хардьонінгом за підсумками двох раундів ревʼю - див. «Захисні міграції»)
 
-## Context
+## Контекст
 
-Avatars are currently generated through DiceBear (`useDylanAvatar.ts`): three styles (`bottts`, `dylan`, `miniavs`) plus a seed, stored in `user_profiles (avatar_style, avatar_seed)`. Players without auth receive an avatar with seed = name. Authenticated users choose a style and cycle the seed in `UserSettingsModal.vue`. There are no custom images.
+Аватарки зараз генеруються через DiceBear (`useDylanAvatar.ts`): три стилі (`bottts`, `dylan`, `miniavs`) + seed, збережені в `user_profiles (avatar_style, avatar_seed)`. Гравці без auth отримують аватар за seed = ім'я. Авторизовані користувачі обирають стиль і "перегортають" seed в `UserSettingsModal.vue`. Кастомних зображень немає.
 
-## Goal
+## Мета
 
-Allow an authenticated user to upload a custom image as an avatar, with client-side cropping and compression, storage in Supabase Storage, and synchronization through the existing `user_profiles` Realtime channel.
+Дати авторизованому користувачу можливість завантажити власну картинку як аватар - з клієнтським кропом/стисненням, зберіганням у Supabase Storage і синхронізацією через існуючий Realtime-канал `user_profiles`.
 
-## Constraints and decisions
+## Обмеження та рішення
 
-| Question | Decision |
+| Питання | Рішення |
 |---|---|
-| Who can upload | Only authenticated users (`user`), as with other profile settings |
-| Storage | Supabase Storage, bucket `avatars`, public read |
-| File path | `<user_id>/avatar.webp` is fixed; upload uses `upsert: true`, so the old file is overwritten without orphans |
-| Format and size | The client accepts `image/png`, `image/jpeg`, `image/webp` up to 5 MB; canvas center-crops to a square, downscales to 256×256, and converts to WebP (quality 0.85); the result is usually < 50 KB |
-| DB schema | `user_profiles.avatar_url text` (nullable) stores the **relative path** `<user_id>/avatar.webp`. It does not store an absolute URL; the client constructs that through `getPublicUrl()`. A non-empty `avatar_url` indicates a custom avatar, while `avatar_style` always remains the last DiceBear style |
-| Cache invalidation | `?v=<updated_at>` is appended to the URL; the Realtime event updates `updated_at`, and all clients re-render `<img>` |
-| Offline state (grayscale) | Custom avatars use CSS `filter: grayscale(1)` in place of a DiceBear parameter |
-| Fallback | If `avatar_url` is empty, render DiceBear using `avatar_seed` and the stored `avatar_style` |
-| Removal | The "Прибрати картинку" ("Remove image") button in the modal sets `avatar_url: null` and calls best-effort `storage.remove()`; `avatar_style` is untouched, so the previous DiceBear style is restored automatically |
+| Хто може | Тільки авторизовані користувачі (`user`), як і решта налаштувань профілю |
+| Де зберігати | Supabase Storage, bucket `avatars`, public read |
+| Шлях файлу | `<user_id>/avatar.webp` - фіксований, upload з `upsert: true`, тому старий файл перезаписується без сиріт |
+| Формат/розмір | Клієнт приймає `image/png`, `image/jpeg`, `image/webp` до 5 MB; canvas робить center-crop до квадрата, downscale до 256×256, конвертує у WebP (quality 0.85) - результат зазвичай < 50 KB |
+| Схема БД | `user_profiles.avatar_url text` (nullable) зберігає **відносний шлях** `<user_id>/avatar.webp` (не абсолютний URL - його клієнт збирає через `getPublicUrl()`); кастомність визначається непорожнім `avatar_url`, а `avatar_style` завжди лишається останнім DiceBear-стилем |
+| Кеш-інвалідація | До URL додається `?v=<updated_at>` - Realtime-подія оновлює `updated_at`, всі клієнти перерендерюють `<img>` |
+| Offline-стан (grayscale) | Для custom-аватарів - CSS `filter: grayscale(1)` замість DiceBear-параметра |
+| Fallback | Якщо `avatar_url` порожній - рендер DiceBear за `avatar_seed` і збереженим `avatar_style` |
+| Видалення | Кнопка "Прибрати картинку" в модалці: `avatar_url: null` + best-effort `storage.remove()`; `avatar_style` не чіпався, тому попередній DiceBear-стиль відновлюється автоматично |
 
-## Database changes
+## Зміни в БД
 
-Migration `011_user_profiles_avatar_url.sql`:
+Міграція `011_user_profiles_avatar_url.sql`:
 
 ```sql
 alter table user_profiles add column if not exists avatar_url text;
@@ -36,7 +36,7 @@ insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
 
--- read: public (bucket is already public); write/delete: only the user's own auth.uid() folder
+-- read: public (bucket і так public); write/delete: тільки власна тека auth.uid()
 create policy "avatar owner write" on storage.objects
   for insert with check (
     bucket_id = 'avatars'
@@ -54,26 +54,26 @@ create policy "avatar owner delete" on storage.objects
   );
 ```
 
-(`do $$ ... exception when duplicate_object $$` wrappers, as in the existing migrations.)
+(Обгортки `do $$ ... exception when duplicate_object $$` - як у наявних міграціях.)
 
-Unlike the other tables (public RLS), storage policies are tied to `auth.uid()` from the start: upload is available only to authenticated users, and only to their own folder. This does not change the client logic: anonymous players do not have access to custom avatars.
+На відміну від решти таблиць (public RLS), storage-політики одразу прив'язані до `auth.uid()` - upload доступний лише авторизованим, і лише у власну теку. Це не змінює клієнтської логіки: анонімні гравці до кастомних аватарів доступу і не мають.
 
-## Hardening migrations (following review)
+## Захисні міграції (за підсумками ревʼю)
 
-1. `012_avatars_storage_hardening.sql` - SELECT policy on `storage.objects` (storage-api performs upsert/delete through `returning`) plus server-side bucket limits: `file_size_limit = 5242880`, `allowed_mime_types = image/png,image/jpeg,image/webp`.
-2. `013_avatars_fixed_object_name.sql` - all four policies narrowed from "own folder" to the single object `name = auth.uid()::text || '/avatar.webp'`, so the bucket cannot be used as free hosting.
-3. `014_user_profiles_ownership.sql` - insert/update on `user_profiles` only `to authenticated` for the user's own row (`auth.uid() = user_id`), select remains public; normalize legacy `avatar_style = 'custom'` to `'bottts'`.
-4. `015_avatar_url_relative_path.sql` - `avatar_url` changed from an absolute URL to a relative path and pinned by a check constraint to the exact `user_id || '/avatar.webp'` (an absolute URL would also pass for another `*.supabase.co` project); `avatar_style` restricted by a check constraint to `bottts | dylan | miniavs`.
+- `012_avatars_storage_hardening.sql` - SELECT-політика на `storage.objects` (storage-api робить upsert/delete через `returning`) + серверні ліміти бакета: `file_size_limit = 5242880`, `allowed_mime_types = image/png,image/jpeg,image/webp`.
+- `013_avatars_fixed_object_name.sql` - усі чотири політики звужено з «своя тека» до єдиного об'єкта `name = auth.uid()::text || '/avatar.webp'`, щоб бакет не був безкоштовним хостингом.
+- `014_user_profiles_ownership.sql` - insert/update на `user_profiles` лише `to authenticated` для власного рядка (`auth.uid() = user_id`), select лишається public; нормалізація legacy `avatar_style = 'custom'` → `'bottts'`.
+- `015_avatar_url_relative_path.sql` - `avatar_url` переведено з абсолютного URL на відносний шлях і запінено check-констрейнтом до точного `user_id || '/avatar.webp'` (абсолютний URL проходив би й для чужого `*.supabase.co` проєкту); `avatar_style` обмежено check-констрейнтом до `bottts | dylan | miniavs`.
 
-## Failure contract (non-atomic upload → upsert)
+## Контракт відмов (неатомарність upload → upsert)
 
-The "storage upload → profile upsert" pair is not atomic. This is a deliberate trade-off for a fixed path: policies `013` require an exact object name, and versioned names would break them.
+Пара «storage upload → profile upsert» не атомарна, і це усвідомлений trade-off на користь фіксованого шляху (політики `013` вимагають точного імені об'єкта, версійовані імена їх зламали б):
 
-1. Upload failure: the profile is not written, the user sees `errorUploadFailed`, and can retry from the same modal.
-2. Upsert failure after a successful upload: the orphaned object temporarily does not match the profile; the pending blob remains in the modal, and another Save uploads it again and writes the profile (covered by the test "recovers by re-uploading when the profile write fails after a successful upload"). No broken `<img>` appears because clients render only what is in `avatar_url`.
-3. Removing an avatar writes the profile (`avatar_url: null`) first, and `storage.remove()` is best-effort: the next upload overwrites the orphaned object. The reverse order would leave every client with a broken `avatar_url`.
+- Падіння upload - профіль не пишеться, користувач бачить `errorUploadFailed`, retry з тієї ж модалки.
+- Падіння upsert після успішного upload - осиротілий об'єкт тимчасово не збігається з профілем; pending blob зберігається в модалці, повторний Save знову завантажує і дописує профіль (закріплено тестом «recovers by re-uploading when the profile write fails after a successful upload»). Битого `<img>` не виникає - клієнти рендерять лише те, що в `avatar_url`.
+- Зняття аватарки пише профіль (`avatar_url: null`) першим, а `storage.remove()` - best-effort: осиротілий об'єкт перезапишеться наступним upload, тоді як зворотний порядок лишав би всім клієнтам битий `avatar_url`.
 
-## New modules
+## Нові модулі
 
 ### `app/utils/avatarImage.ts`
 
@@ -86,9 +86,9 @@ export function isAcceptedImageType(file: File): boolean
 export async function processAvatarImage(file: File): Promise<Blob>
 ```
 
-`processAvatarImage`: `createImageBitmap(file)` → center-crop to a square → draw on `OffscreenCanvas`/`<canvas>` 256×256 → `convertToBlob({ type: 'image/webp', quality: 0.85 })`. Throws `Error('file-too-large' | 'unsupported-type' | 'decode-failed')`; the modal maps the codes to i18n messages.
+`processAvatarImage`: `createImageBitmap(file)` → center-crop до квадрата → малювання на `OffscreenCanvas`/`<canvas>` 256×256 → `convertToBlob({ type: 'image/webp', quality: 0.85 })`. Кидає `Error('file-too-large' | 'unsupported-type' | 'decode-failed')` - модалка мапить коди на i18n-повідомлення.
 
-### `profiles.ts` store extension
+### Розширення `profiles.ts` store
 
 ```ts
 export interface UserProfile {
@@ -98,50 +98,50 @@ export interface UserProfile {
   avatar_url: string | null
 }
 
-async function uploadAvatar(userId: string, blob: Blob): Promise<string> // → object path `<user_id>/avatar.webp`
+async function uploadAvatar(userId: string, blob: Blob): Promise<string> // → шлях об'єкта `<user_id>/avatar.webp`
 async function removeAvatar(userId: string): Promise<void>
 ```
 
-1. `uploadAvatar`: ``storage.from('avatars').upload(`${userId}/avatar.webp`, blob, { upsert: true, contentType: 'image/webp' })`` → returns the same relative path that is written to `avatar_url`. The modal writes the profile through the existing `upsert()` (style + url together, one write).
-2. `removeAvatar`: `storage.from('avatars').remove([...])`; the modal also updates the profile.
-3. All `select` calls in `fetchOne`/`fetchMany` are extended with `avatar_url`.
+- `uploadAvatar`: `storage.from('avatars').upload(`${userId}/avatar.webp`, blob, { upsert: true, contentType: 'image/webp' })` → повертає той самий відносний шлях, який і записується в `avatar_url`. Профіль пише модалка через існуючий `upsert()` (стиль + url разом, один запис).
+- `removeAvatar`: `storage.from('avatars').remove([...])`; профіль знову ж оновлює модалка.
+- Усі `select` в `fetchOne`/`fetchMany` розширюються на `avatar_url`.
 
-### Shared rendering helper
+### Спільний рендер-хелпер
 
-`avatarSrcFor(profile, fallbackSeed, grayscale)` is added to `useDylanAvatar.ts` (not a new file): if `profile?.avatar_url` is non-empty, `avatarDisplayUrl(path, updated_at)` resolves the path to a public URL through `getSupabase().storage.from('avatars').getPublicUrl()` and appends `?v=<updated_at>`, while `cssGrayscale` is returned for the CSS filter. Otherwise, use the current DiceBear logic based on `avatar_seed`/`avatar_style`. It is used in three rendering locations: `PlayerRow.vue`, `AppHeader.vue`, and the preview in `UserSettingsModal.vue`.
+`avatarSrcFor(profile, fallbackSeed, grayscale)` - додається в `useDylanAvatar.ts` (не новий файл): якщо `profile?.avatar_url` непорожній → `avatarDisplayUrl(path, updated_at)` резолвить шлях у public URL через `getSupabase().storage.from('avatars').getPublicUrl()` і додає `?v=<updated_at>`, `cssGrayscale` віддається для CSS-фільтра; інакше - поточна DiceBear-логіка за `avatar_seed`/`avatar_style`. Використовується у трьох місцях рендеру: `PlayerRow.vue`, `AppHeader.vue`, прев'ю в `UserSettingsModal.vue`.
 
 ## UI: UserSettingsModal
 
-1. A fourth button, `{{ $t('userSettings.styleCustom') }}`, is added to the style row (`Robots | Dylan | Miniavs`).
-2. When custom is selected, the following appears in place of the prev/next arrows:
-   1. A preview (the current `avatar_url` or the `ic:baseline-add-a-photo` placeholder).
-   2. A hidden `<input type="file" :accept="AVATAR_ACCEPT">`, triggered by clicking the preview or the "Обрати файл" ("Choose file") button.
-   3. The "Прибрати картинку" ("Remove image") button (`mui-btn-text`), if a url exists.
-3. The selected file is processed through `processAvatarImage` immediately (preview from `URL.createObjectURL(blob)`); upload to Storage happens only on "Save".
-4. "Save" for custom: `uploadAvatar()` → `upsert({ avatar_style: <unchanged DiceBear style>, avatar_url, avatar_seed })` (the seed and style are retained for fallback and restoration).
-5. Processing/upload errors use the modal's existing `error` block.
+- До ряду стилів (`Robots | Dylan | Miniavs`) додається четверта кнопка `{{ $t('userSettings.styleCustom') }}`.
+- При виборі custom замість prev/next-стрілок показується:
+  - прев'ю (поточний `avatar_url` або плейсхолдер `ic:baseline-add-a-photo`)
+  - прихований `<input type="file" :accept="AVATAR_ACCEPT">`, тригер - клік по прев'ю або кнопка "Обрати файл"
+  - кнопка "Прибрати картинку" (`mui-btn-text`), якщо url є
+- Обраний файл проганяється через `processAvatarImage` одразу (прев'ю з `URL.createObjectURL(blob)`), upload у Storage - тільки по "Save".
+- "Save" при custom: `uploadAvatar()` → `upsert({ avatar_style: <незмінний DiceBear-стиль>, avatar_url, avatar_seed })` (seed і стиль зберігаються для fallback/відновлення).
+- Помилки процесингу/upload - через існуючий `error`-блок модалки.
 
-## Rendering
+## Рендеринг
 
-1. `PlayerRow.vue` / `AppHeader.vue`: `avatarDataUri(...)` calls are replaced with `avatarSrcFor(...)`; a custom offline player's `<img>` gets `style="filter: grayscale(1)"`.
-2. Anonymous players remain unchanged (DiceBear based on name).
+- `PlayerRow.vue` / `AppHeader.vue`: `avatarDataUri(...)` виклики замінюються на `avatarSrcFor(...)`; для custom offline-гравця на `<img>` вішається `style="filter: grayscale(1)"`.
+- Анонімні гравці - без змін (DiceBear за ім'ям).
 
 ## i18n
 
-New keys in `uk.json`/`en.json` (`userSettings.*`): `styleCustom`, `chooseFile`, `removeImage`, `errorFileTooLarge`, `errorUnsupportedType`, `errorDecodeFailed`, `errorUploadFailed`.
+Нові ключі в `uk.json`/`en.json` (`userSettings.*`): `styleCustom`, `chooseFile`, `removeImage`, `errorFileTooLarge`, `errorUnsupportedType`, `errorDecodeFailed`, `errorUploadFailed`.
 
-## Out of scope
+## Що НЕ входить
 
-1. Manual crop editor (drag/zoom); only automatic center-crop is included.
-2. Avatars for unauthenticated players.
-3. Image moderation/NSFW filtering.
-4. Migration of existing DiceBear avatars.
+- Ручний кроп-редактор (drag/zoom) - тільки автоматичний center-crop
+- Аватарки для неавторизованих гравців
+- Модерація/NSFW-фільтрація зображень
+- Міграція існуючих DiceBear-аватарів
 
-## Success criteria
+## Критерії успіху
 
-1. An authenticated user uploads PNG/JPEG/WebP up to 5 MB and sees their avatar in the header and player list; other room participants see it without reloading (Realtime).
-2. A subsequent upload replaces the file (without accumulation in Storage); the cache is invalidated through `?v=`.
-3. "Прибрати картинку" ("Remove image") restores the DiceBear avatar.
-4. An offline custom avatar is grayscale.
-5. An anonymous client cannot write to the `avatars` bucket (RLS).
-6. `npm run test:ci` is green.
+- Авторизований користувач завантажує PNG/JPEG/WebP до 5 MB → бачить свій аватар у хедері та списку гравців; інші учасники кімнати бачать його без перезавантаження (Realtime)
+- Повторне завантаження замінює файл (без накопичення у Storage), кеш інвалідовано через `?v=`
+- "Прибрати картинку" повертає DiceBear-аватар
+- Offline custom-аватар - у grayscale
+- Анонімний клієнт не може писати в bucket `avatars` (RLS)
+- `npm run test:ci` зелений

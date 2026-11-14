@@ -24,8 +24,7 @@ No separate files: `app/hooks/` (`use*` hooks), `app/lib/` (`supabase-instance`,
    tests inject a mock through `setSupabase(mock)`.
 3. UI text goes through i18n (`i18next` + `react-i18next`, `useTranslation()`) if the component is already localized.
    `app/i18n.tsx` initializes synchronously and sets `html lang`; `main.tsx` imports `~/i18n` before rendering.
-   Initialization uses a valid saved `sp-lang`, otherwise the first supported browser language (`navigator.languages`,
-   or `navigator.language` when the list is missing or empty), otherwise `en`; automatic selection is not persisted.
+   Initialization uses a valid saved `sp-lang`, otherwise `uk`; the default is not persisted.
    Interpolation uses single braces `{name}` (`interpolation.prefix/suffix`), as in the old locales;
    the i18next defaults `{{name}}` are not substituted here.
 4. Lint uses `oxlint --type-aware` (`.oxlintrc.json`): `typescript/no-floating-promises` and `react/rules-of-hooks` are

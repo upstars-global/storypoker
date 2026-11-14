@@ -1,66 +1,81 @@
-# Consensus: confetti, decision sound, and volume
+# Консенсус: салют, звук рішення і гучність
 
-**Date:** 2026-09-08
-**Status:** implemented (plan: `docs/plans/2026-09-08-consensus-celebration.md`)
-**Source:** owner-approved wording (2026-09-08) + `AGENTS.md` §Roles/Consensus, `DESIGN.md` §11.7, §11.9
+**Дата:** 2026-09-08
+**Статус:** реалізовано (план - `docs/plans/2026-09-08-consensus-celebration.md`)
+**Джерело:** затверджене формулювання власника (2026-09-08) + `AGENTS.md` §Roles/Consensus, `DESIGN.md` §11.7, §11.9
 
-## Context
+## Контекст
 
-The consensus rule is already described in `AGENTS.md:137-139` and partially implemented, but the code differs from the description in four places. All findings were verified on the `frontend-audit-remediation` branch:
+Правило консенсусу вже описане в `AGENTS.md:137-139` і частково реалізоване, але код розходиться з описом у
+чотирьох місцях. Усе перевірено на гілці `frontend-audit-remediation`:
 
-1. **Confetti does not work at all without roles.** The live `<ResultsArea>` (`[slug].vue:757-763`) receives `:grouped-votes="groupedVoteCounts"`, and `groupedVoteCounts` (`[slug].vue:223-238`) returns `null` when no QA player has voted. `celebrate` (`ResultsArea.vue:75`) is `shouldCelebrateGroupedVotes(props.groupedVotes)`, and that function returns `false` for `null`. A room without QA roles therefore never sees confetti, although `isConsensus` (sound) is calculated correctly for the same state.
-2. **The «мінімум два» ("at least two") threshold does not apply in grouped mode.** `getUnanimousVote` considers even `{ '8': 1 }` unanimous, so 3 DEV players with differing votes + 1 QA player produce confetti. This contradicts both the owner's wording and the adjacent invariant in `DESIGN.md:418` (a `round_history` row is written only when `votes.length >= 2`).
-3. **Two predicates represent one concept.** `isConsensus` (`[slug].vue:200-206`) has its own non-grouped branch with `>= 2`; `celebrate` handles only grouped votes. Sound and confetti can diverge and already do so (the first point).
-4. **Sound is tied to the countdown.** `decisionAudio` plays only in `finishCountdown` and only when `currentMode === 'wet'` (`useCountdown.ts:70-83`). A manual reveal without a countdown produces no sound on consensus.
+- **Салют без ролей не працює взагалі.** Живий `<ResultsArea>` (`[slug].vue:757-763`) отримує
+  `:grouped-votes="groupedVoteCounts"`, а `groupedVoteCounts` (`[slug].vue:223-238`) повертає `null`, коли жоден
+  QA-гравець не проголосував. `celebrate` (`ResultsArea.vue:75`) - це
+  `shouldCelebrateGroupedVotes(props.groupedVotes)`, а та функція на `null` віддає `false`. Тобто кімната без
+  QA-ролей ніколи не бачить конфеті, хоч `isConsensus` (звук) для того самого стану рахується коректно.
+- **Поріг «мінімум два» не діє в grouped-режимі.** `getUnanimousVote` вважає одноголосним і `{ '8': 1 }`, тож
+  3 різнобійні DEV + 1 QA дають салют. Це суперечить і формулюванню власника, і сусідньому інваріанту
+  `DESIGN.md:418` (рядок `round_history` пишеться лише при `votes.length >= 2`).
+- **Два предикати на одне поняття.** `isConsensus` (`[slug].vue:200-206`) має власну не-grouped гілку з `>= 2`,
+  `celebrate` - лише grouped. Звук і конфеті можуть розійтися; фактично вже розходяться (перший пункт).
+- **Звук прив'язаний до countdown.** `decisionAudio` грає тільки в `finishCountdown` і тільки при
+  `currentMode === 'wet'` (`useCountdown.ts:70-83`). При ручному reveal без countdown консенсус беззвучний.
 
-There is no volume control: no `HTMLAudioElement.volume` is set, and the `SlotMachine` tick has a hardcoded `gain 0.045` (`SlotMachine.vue:50`).
+Гучності немає ніде: жоден `HTMLAudioElement.volume` не виставляється, `SlotMachine` тік має захардкоджений
+`gain 0.045` (`SlotMachine.vue:50`).
 
-## Goal
+## Мета
 
-Use one definition of consensus to control confetti and sound consistently, with a threshold of «щонайменше два голоси» ("at least two votes"); play the «Рішення прийнято» ("Decision made") sound on every reveal with consensus. Playback is not limited to the end of a countdown «з атмосферою» ("with ambience"). Give users volume control for all application sounds.
+Одне визначення консенсусу, яке однаково керує салютом і звуком, з порогом «щонайменше два голоси»; звук
+«Рішення прийнято» на кожному reveal з консенсусом, а не лише в кінці countdown «з атмосферою»; користувацький
+контроль гучності для всіх звуків застосунку.
 
-## Consensus rule (approved)
+## Правило консенсусу (затверджене)
 
-1. **Without QA grouping:** all submitted votes are identical **and** there are ≥ 2 votes.
-2. **With QA grouping:** at least one group (DEV or QA) has exactly one unique estimate **and** ≥ 2 votes in that group. The other group is unrestricted: its votes may differ, it may contain one vote, or it may be empty.
+- **Без QA-розщеплення:** усі подані голоси однакові **і** їх ≥ 2.
+- **З QA-розщепленням:** щонайменше одна з груп (DEV або QA) має рівно одну унікальну оцінку **і** ≥ 2 голоси в
+  цій групі. Друга група не обмежується - вона може бути різнобійною, одноосібною або порожньою.
 
-One consequence deserves explicit mention: a lone QA vote (`qa: { '8': 1 }`) no longer triggers confetti by itself, but a room with 3 DEV + 1 QA celebrates if the DEV votes are unanimous.
+Наслідок, який варто назвати явно: QA-одинак (`qa: { '8': 1 }`) більше не тригерить салют сам по собі, але
+кімната 3 DEV + 1 QA святкує, якщо DEV одноголосні.
 
-## Constraints and decisions
+## Обмеження та рішення
 
-| Question | Decision |
+| Питання | Рішення |
 | --- | --- |
-| One predicate | `shouldCelebrateGroupedVotes(grouped)` is replaced by `shouldCelebrate(votes, grouped)` in `app/utils/resultCelebration.ts`. Both consumers (`isConsensus` in `[slug].vue`, `celebrate` in `ResultsArea.vue`) call it; the `>= 2` branch inside `isConsensus` is removed. `ResultsArea` already accepts both props, so the signature change adds no prop |
-| Threshold ≥ 2 | Inside `getUnanimousVote`, a single entry with `count > 0` qualifies only if `count >= 2`. This covers both `{ '8': 1 }` in a group and a single-vote reveal without roles |
-| Confetti without QA | As a consequence of the new predicate, when `grouped === null` the decision comes from `votes`, so `<ResultsArea>` without QA players finally shows confetti. No separate template changes are needed |
-| Sound on reveal (one source) | `decisionAudio` is removed from `finishCountdown`; in wet mode the end of the countdown plays only `ambience`, and only when there is no consensus. The phase watcher in `[slug].vue:317` plays the decision sound when `phase === 'revealed' && prev === 'voting'` through a new `playDecision()` export from `useCountdown` |
-| Cost of this decision | With a wet countdown and consensus, the sound now comes on the phase change (after the reveal Realtime round trip) instead of exactly at timer zero. The delay is normally tens of milliseconds; the alternative (leaving sound in `finishCountdown` and adding another trigger) causes double playback for the initiator |
-| Reveal on reload | The `prev === 'voting'` guard is required: the phase watcher also fires on `undefined → 'revealed'` during the first `fetchInitialData`; without the guard, entering an already revealed room would play the sound on page load |
-| Autoplay policy | `play()` from a Realtime callback is not a user gesture. The call is wrapped in `.catch(() => {})`; clients entering through auto-rejoin without any click remain silent. This is acceptable and cannot be addressed without a separate «увімкнути звук» ("enable sound") prompt (out of scope) |
-| Volume state | `sp-volume` in localStorage, a number from `0` to `1`, default `1` (no behavior change for existing users). Follow the `sp-lang` pattern: read on initialization, write on change, and wrap storage access in `try/catch` |
-| Composable | `app/composables/useSoundVolume.ts` with a module-level `ref` (shared state across multiple calls, as in `sp-theme`) and `setVolume(v)`. Three consumers: `useCountdown` (5 `HTMLAudioElement` instances), `SlotMachine.playTick`, and the slider itself; the abstraction is justified |
-| Applying volume to sound | `useCountdown` sets `.volume` when creating elements in `onMounted` and in `watch(volume)`, so changes also affect already loaded elements. `SlotMachine.playTick` multiplies the existing `gain 0.045` by the current value, preserving the tick's relative quietness |
-| Slider placement | A speaker icon in the `AppHeader` header **outside** both `role="menu"` dropdowns, with a popover containing `<input type="range">`. It cannot go inside a menu: `useMenuKeyboard` intercepts `ArrowUp`/`ArrowDown` for item navigation, and the ARIA `menu` model does not permit a `slider` as content. A separate settings modal is rejected as excessive for one control |
-| Slider accessibility | `aria-label` via i18n (`header.volume`), values `0`-`100` in steps of `5`, native `<input type="range">` (keyboard and screen reader work without additional code) |
-| `AGENTS.md` limit | The root file is exactly 150 lines, and the LocalStorage table needs a `sp-volume` row. To compensate, the Consensus rule detail (links to implementation files) moves to `app/utils/AGENTS.md` (36 lines, limit 200), and the root bullet is shortened so that the net increase is ≤ 0 |
+| Один предикат | `shouldCelebrateGroupedVotes(grouped)` заміняється на `shouldCelebrate(votes, grouped)` в `app/utils/resultCelebration.ts`. Обидва споживачі (`isConsensus` у `[slug].vue`, `celebrate` у `ResultsArea.vue`) викликають його; власна `>= 2`-гілка в `isConsensus` видаляється. `ResultsArea` уже приймає обидва пропси, тож зміна сигнатури не додає проп |
+| Поріг ≥ 2 | Всередині `getUnanimousVote`: єдиний запис з `count > 0` зараховується, лише якщо `count >= 2`. Це закриває і `{ '8': 1 }` у групі, і одноосібний reveal без ролей |
+| Салют без QA | Наслідок нового предиката: при `grouped === null` рішення береться з `votes`, тож `<ResultsArea>` без QA-гравців нарешті показує конфеті. Окремих змін у шаблоні не потрібно |
+| Звук на reveal (одне джерело) | `decisionAudio` прибирається з `finishCountdown`; у wet-режимі кінець countdown грає лише `ambience`, і лише коли консенсусу немає. Рішення озвучує watcher фази в `[slug].vue:317` при `phase === 'revealed' && prev === 'voting'` через новий експорт `playDecision()` з `useCountdown` |
+| Ціна цього рішення | При wet-countdown з консенсусом звук тепер приходить на зміні фази (після Realtime-раундтріпу reveal), а не рівно на нулі таймера. Затримка - десятки мілісекунд у нормі; альтернатива (лишити звук у `finishCountdown` і додати ще один тригер) дає подвійне відтворення на ініціаторі |
+| Reveal при перезавантаженні | Гард `prev === 'voting'` обов'язковий: watcher фази спрацьовує і на `undefined → 'revealed'` під час першого `fetchInitialData`, інакше вхід у вже розкриту кімнату грав би звук на завантаженні сторінки |
+| Autoplay-політика | `play()` з Realtime-колбека не є user gesture. Виклик обгортається `.catch(() => {})`; клієнти, що зайшли авто-rejoin без жодного кліку, лишаються беззвучними - це прийнятно і не лікується без окремого «увімкнути звук» промпта (поза скоупом) |
+| Стан гучності | `sp-volume` у localStorage, число `0`-`1`, дефолт `1` (нульова зміна поведінки для наявних користувачів). Патерн - як `sp-lang`: читання при ініціалізації, запис при зміні, `try/catch` навколо storage |
+| Composable | `app/composables/useSoundVolume.ts` з модуль-рівневим `ref` (спільний стан для кількох викликів, як `sp-theme`) і `setVolume(v)`. Три споживачі: `useCountdown` (5 `HTMLAudioElement`), `SlotMachine.playTick`, сам слайдер - абстракція виправдана |
+| Застосування до звуку | `useCountdown` виставляє `.volume` при створенні елементів в `onMounted` і в `watch(volume)`, щоб зміна діяла і на вже завантажені елементи. `SlotMachine.playTick` множить наявний `gain 0.045` на поточне значення, зберігаючи відносну тихість тіку |
+| Розміщення слайдера | Іконка-динамік у шапці `AppHeader` **поза** обома `role="menu"` дропдаунами, з поповером, що містить `<input type="range">`. Всередину меню класти не можна: `useMenuKeyboard` перехоплює `ArrowUp`/`ArrowDown` для навігації пунктами, а ARIA-модель `menu` не допускає `slider` як вміст. Альтернатива - окрема модалка налаштувань - відкидається як надмір для одного контролу |
+| Доступність слайдера | `aria-label` через i18n (`header.volume`), значення `0`-`100` з кроком `5`, нативний `<input type="range">` (клавіатура й скрінрідер працюють без додаткового коду) |
+| Ліміт `AGENTS.md` | Кореневий файл - рівно 150 рядків, а таблиця LocalStorage потребує рядка `sp-volume`. Компенсація: деталь правила Consensus (посилання на файли реалізації) переїжджає в `app/utils/AGENTS.md` (36 рядків, ліміт 200), кореневий буллет скорочується так, щоб чистий приріст був ≤ 0 |
 
-## Out of scope
+## Поза скоупом
 
-1. **Global mute toggle** - the slider at `0` covers the case; a separate toggle requires a request.
-2. **«увімкнути звук» ("enable sound") prompt for clients without a user gesture** - a separate task if autoplay blocking becomes a real complaint.
-3. **Separate volume for countdown / slot / decision** - one shared level; splitting it is YAGNI.
-4. **Volume synchronization across devices** - a local setting; it does not write to Supabase.
-5. **Changes to the sound files themselves** and countdown modes (`silent`/`dry`/`wet`) - they remain unchanged.
+- **Глобальний mute-тумблер** - слайдер на `0` покриває кейс; окремий перемикач - лише за запитом.
+- **Промпт «увімкнути звук» для клієнтів без user gesture** - окрема задача, якщо autoplay-блокування стане
+  реальною скаргою.
+- **Гучність окремо для countdown / слоту / рішення** - один спільний рівень; поділ - YAGNI.
+- **Синхронізація гучності між пристроями** - локальне налаштування, не пише в Supabase.
+- **Зміна самих звукових файлів** і режимів countdown (`silent`/`dry`/`wet`) - не чіпаються.
 
-## Test strategy
+## Тестова стратегія
 
-| Change | Seam | Check |
+| Зміна | Шов | Перевірка |
 | --- | --- | --- |
-| Predicate | unit | `tests/unit/utils/resultCelebration.spec.ts`: the existing 8 cases remain green (all `true` cases have ≥ 2); new cases: `{ general: { '5': 2, '8': 1 }, qa: { '8': 1 } }` → `false`, `{ general: {}, qa: { '8': 1 } }` → `false`, non-grouped `{ '5': 1 }` → `false`, `{ '5': 2 }` → `true` |
-| Confetti without QA | unit | `tests/unit/components/ResultsArea.spec.ts`: `:grouped-votes="null"` + `votes={ '5': 3 }` renders `.celebration-layer` |
-| Sound on reveal | none | typecheck + manual scenario: reveal without countdown on consensus → sound; wet countdown without consensus → `ambience`; reload into a revealed room → silence |
-| Volume state | unit | `tests/unit/composables/useSoundVolume.spec.ts`: default `1` without a storage write, `setVolume(0.4)` writes `sp-volume`, a corrupted value reads as `1` |
-| Applying volume | unit | `useCountdown` spec with mocked `Audio`: `.volume` equals the current value after `onMounted` and after `setVolume` |
-| Slider | e2e | `page-load.spec.ts`: on `/` the slider is keyboard accessible, has an accessible name, and changes write `sp-volume` |
+| Предикат | unit | `tests/unit/utils/resultCelebration.spec.ts`: наявні 8 кейсів лишаються зеленими (всі `true`-кейси мають ≥ 2); нові - `{ general: { '5': 2, '8': 1 }, qa: { '8': 1 } }` → `false`, `{ general: {}, qa: { '8': 1 } }` → `false`, не-grouped `{ '5': 1 }` → `false`, `{ '5': 2 }` → `true` |
+| Салют без QA | unit | `tests/unit/components/ResultsArea.spec.ts`: `:grouped-votes="null"` + `votes={ '5': 3 }` рендерить `.celebration-layer` |
+| Звук на reveal | немає | typecheck + ручний сценарій: reveal без countdown при консенсусі → звук; wet-countdown без консенсусу → `ambience`; перезавантаження в розкриту кімнату → тиша |
+| Гучність - стан | unit | `tests/unit/composables/useSoundVolume.spec.ts`: дефолт `1` без запису в storage, `setVolume(0.4)` пише `sp-volume`, зіпсоване значення читається як `1` |
+| Гучність - застосування | unit | `useCountdown` спека з мокнутим `Audio`: `.volume` дорівнює поточному значенню після `onMounted` і після `setVolume` |
+| Слайдер | e2e | `page-load.spec.ts`: на `/` слайдер досяжний з клавіатури, має accessible name, зміна пише `sp-volume` |
 
-Finish with `npm run test:ci`, then `npm run test:e2e:pages`.
+Фініш - `npm run test:ci`, потім `npm run test:e2e:pages`.
