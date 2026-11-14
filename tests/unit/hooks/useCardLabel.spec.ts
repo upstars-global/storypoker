@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import { i18n, persistLocale } from '~/i18n'
 import { useCardLabel } from '~/hooks/useCardLabel'
@@ -6,6 +6,10 @@ import uk from '~/i18n/locales/uk.json'
 import en from '~/i18n/locales/en.json'
 
 describe('useCardLabel', () => {
+  beforeEach(async () => {
+    await act(() => persistLocale('uk'))
+  })
+
   afterEach(async () => {
     await act(() => persistLocale('uk'))
     localStorage.clear()

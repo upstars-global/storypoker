@@ -32,7 +32,7 @@ import { backgroundDisplayUrl, useRoomStore, type ResolvedRoom, type RoomBackgro
 import type { Player, RoomState } from '~/stores/types'
 import { alignmentScore } from '~/utils/alignment'
 import { backgroundTint } from '~/utils/backgroundImage'
-import { DEFAULT_PRESET_ID, activeCardsForDeck } from '~/utils/cardDecks'
+import { DEFAULT_PRESET_ID, activeCardsForDeck, getDeck } from '~/utils/cardDecks'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { shouldCelebrate } from '~/utils/resultCelebration'
 import { usesResultChips } from '~/utils/roundStats'
@@ -117,6 +117,11 @@ async function fetchInitialData(roomId: string) {
 
 export default function RoomPage() {
   const { t } = useTranslation()
+  function displayQuestion(preset: string | null, question: string | null): string | null {
+    return preset === 'goal_clarity' && question === getDeck('goal_clarity').defaultQuestion
+      ? t('cards.goalClarityQuestion')
+      : question
+  }
   const navigate = useNavigate()
   const location = useLocation()
   const params = useParams()
@@ -860,7 +865,7 @@ export default function RoomPage() {
               countdownRunning={countdownRunning}
               pollMode={roomState.deck_preset === 'voting'}
               voteQuestionMode={roomState.deck_preset === 'vote_question'}
-              pollQuestion={roomState.poll_question ?? null}
+              pollQuestion={displayQuestion(roomState.deck_preset, roomState.poll_question ?? null)}
               hasLastRound={!!lastRound}
               showLastRound={roomState.phase === 'voting' && showLastRound}
               lastRoundView={roomState.phase === 'revealed'
@@ -869,7 +874,7 @@ export default function RoomPage() {
                       votes={voteCounts}
                       groups={resultGroups}
                       showNewRound={false}
-                      pollQuestion={roomState.poll_question ?? null}
+                      pollQuestion={displayQuestion(roomState.deck_preset, roomState.poll_question ?? null)}
                       disableCelebration={isPollDeck}
                       showAlignment={!isPollDeck}
                       activeCards={activeCards}
@@ -881,7 +886,7 @@ export default function RoomPage() {
                   votes={lastRound.votes}
                   groups={lastRound.groups}
                   showNewRound={false}
-                  pollQuestion={lastRound.pollQuestion}
+                  pollQuestion={displayQuestion(lastRound.deckPreset, lastRound.pollQuestion)}
                   disableCelebration
                   showAlignment={!lastRound.isVotingDeck}
                   activeCards={lastRound.activeCards}

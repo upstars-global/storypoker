@@ -367,6 +367,8 @@ describe('roomStore actions', () => {
     setSupabase(asSupabase({ from: () => ({ update }) }))
     useRoomStore.setState({ roomId: 'r1' })
     await state().setDeckPreset('goal_clarity')
+    await state().setDeckPreset('goal_clarity')
+    expect(update).toHaveBeenCalledTimes(2)
     expect(update).toHaveBeenCalledWith({
       deck_preset: 'goal_clarity',
       active_cards: ['1', '2', '3', '4', '5'],

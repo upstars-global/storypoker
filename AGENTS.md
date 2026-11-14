@@ -166,7 +166,7 @@ VITE_SUPABASE_KEY=...        # publishable client key
 | `storypoker_session_<roomId>` | `{ playerId, playerName, lastVisitedAt }` для auto-rejoin і Recent Rooms |
 | `sp-theme` / `sp-palette` | `light\|dark` / `classic\|cyberdeck\|matcha` - деталі `app/assets/AGENTS.md` |
 | `sp-room-header-<urlParam>` | `{ roomName, playerName }` - сід для AppHeader, щоб хедер не стрибав при релоаді |
-| `sp-lang` | `uk \| en`; читається в `app/i18n.tsx`, пишеться `persistLocale()`. Дефолт - `uk` |
+| `sp-lang` | `uk \| en`; читається в `app/i18n.tsx`, пишеться `persistLocale()`. Без збереженого вибору - мови браузера, запасний варіант - `en` |
 | `sp-side-widget` | `timer \| slot` - деталі `app/components/AGENTS.md` |
 | `sp-volume` | `0`-`1`, гучність усіх звуків; дефолт `0` (muted), unmute дає `0.1`. Пише `useSoundVolume()` |
 | `FEATURE_FLAGS` | `/ffc` override: `countdownEnabled`, `iconsLucide`, `iconsRounded`, `example` - `app/configs/` |
