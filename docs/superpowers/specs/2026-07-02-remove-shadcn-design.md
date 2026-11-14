@@ -1,95 +1,95 @@
-# Видалення shadcn-vue та залежностей
+# Remove shadcn-vue and Dependencies
 
-**Дата:** 2026-07-02
-**Статус:** затверджено
+**Date:** 2026-07-02
+**Status:** approved
 
-## Контекст
+## Context
 
-shadcn-vue і reka-ui використовуються виключно як headless-примітиви для чотирьох UI-патернів: Dialog, Tooltip, Select, DropdownMenu. Жодного shadcn UI-компонента (`app/components/ui/`) не встановлено. Усі CSS класи для замінників вже визначені у `main.css`. Залежності додають вагу бандлу, конфліктують із токенами системи дизайну і не дають жодної переваги понад рідні браузерні API.
+shadcn-vue and reka-ui are used exclusively as headless primitives for four UI patterns: Dialog, Tooltip, Select, and DropdownMenu. No shadcn UI components (`app/components/ui/`) are installed. All CSS classes for the replacements are already defined in `main.css`. The dependencies add bundle weight, conflict with design system tokens, and offer no advantage over native browser APIs.
 
-## Мета
+## Goal
 
-Видалити 7 npm-пакетів без жодної регресії у поведінці або зовнішньому вигляді UI.
+Remove 7 npm packages without any regression in UI behavior or appearance.
 
-## Залежності до видалення
+## Dependencies to Remove
 
-| Пакет | Поточне використання |
+| Package | Current usage |
 |---|---|
-| `reka-ui` | Dialog, Tooltip, Select, DropdownMenu примітиви - 13 файлів |
-| `shadcn-vue` | `@import` у `main.css`, CLI-генератор |
-| `class-variance-authority` | тільки `app/lib/utils.ts` - ніхто не імпортує |
-| `clsx` | тільки `app/lib/utils.ts` |
-| `tailwind-merge` | тільки `app/lib/utils.ts` |
-| `tw-animate-css` | `@import` у `main.css` - не використовується |
-| `@lucide/vue` | жодних прямих imports; назви іконок у `iconMap.ts` резолвляться через Iconify API |
+| `reka-ui` | Dialog, Tooltip, Select, DropdownMenu primitives - 13 files |
+| `shadcn-vue` | `@import` in `main.css`, CLI generator |
+| `class-variance-authority` | only `app/lib/utils.ts` - nobody imports it |
+| `clsx` | only `app/lib/utils.ts` |
+| `tailwind-merge` | only `app/lib/utils.ts` |
+| `tw-animate-css` | `@import` in `main.css` - unused |
+| `@lucide/vue` | no direct imports; icon names in `iconMap.ts` resolve through the Iconify API |
 
-Команда видалення:
+Removal command:
 ```bash
 npm remove reka-ui shadcn-vue class-variance-authority clsx tailwind-merge tw-animate-css @lucide/vue
 ```
 
-## Нові компоненти
+## New Components
 
 ### AppModal.vue
 
-**Розташування:** `app/components/AppModal.vue`
+**Location:** `app/components/AppModal.vue`
 
 **Props:**
-- `open: boolean` - керує видимістю
+1. `open: boolean` - controls visibility
 
 **Emits:**
-- `close` - закриття (ESC, клік на backdrop)
+1. `close` - closing (ESC, backdrop click)
 
 **Slots:**
-- `default` - вміст модалки (кожна модалка сама задає `.mui-modal-paper`)
+1. `default` - modal content (each modal supplies its own `.mui-modal-paper`)
 
-**Поведінка:**
-- `<dialog>` отримує клас `mui-modal-overlay` (fixed overlay з flex-centering) - так само як `DialogOverlay` зараз
-- `watch(open, val => val ? dialogEl.showModal() : dialogEl.close())`
-- ESC: `@cancel.prevent="$emit('close')"`
-- Клік на backdrop: `@click.self="$emit('close')"` на `<dialog>` - спрацьовує лише якщо target є самим `<dialog>` (область поза `.mui-modal-paper`)
-- `@pointerdown.stop` залишається на `.mui-modal-paper` у кожній модалці (запобігає bubbling)
-- Не додає власного `.mui-modal-paper` - він залишається у кожній модалці як зараз
+**Behavior:**
+1. `<dialog>` receives the `mui-modal-overlay` class (fixed overlay with flex centering), as `DialogOverlay` does now
+2. `watch(open, val => val ? dialogEl.showModal() : dialogEl.close())`
+3. ESC: `@cancel.prevent="$emit('close')"`
+4. Backdrop click: `@click.self="$emit('close')"` on `<dialog>` - fires only if the target is `<dialog>` itself (the area outside `.mui-modal-paper`)
+5. `@pointerdown.stop` remains on `.mui-modal-paper` in each modal (prevents bubbling)
+6. It does not add its own `.mui-modal-paper`; that remains in each modal as it does now
 
-**Чому native `<dialog>`:** вбудований focus trap, ESC, backdrop, aria-modal - безкоштовно. Підтримка 96%+.
+**Why native `<dialog>`:** built-in focus trap, ESC, backdrop, and aria-modal come for free. Support is 96%+.
 
 ### AppTooltip.vue
 
-**Розташування:** `app/components/AppTooltip.vue`
+**Location:** `app/components/AppTooltip.vue`
 
 **Props:**
-- `side?: 'top' | 'bottom' | 'left' | 'right'` - default `'top'`
-- `sideOffset?: number` - default `6` (px)
+1. `side?: 'top' | 'bottom' | 'left' | 'right'` - default `'top'`
+2. `sideOffset?: number` - default `6` (px)
 
 **Slots:**
-- `#trigger` - елемент-тригер (рендериться через `as-child` паттерн або обгортку)
-- `#content` - вміст тултіпу
+1. `#trigger` - trigger element (rendered using the `as-child` pattern or a wrapper)
+2. `#content` - tooltip content
 
-**Поведінка:**
-- Показ: `mouseenter` / `focusin` на тригері
-- Приховання: `mouseleave` / `focusout` на тригері
-- Позиціонування: `position: absolute` відносно `position: relative` обгортки
-- Клас `.mui-tooltip-content` на контенті (вже існує у `main.css`)
-- `pointer-events: none` на тултіпі
+**Behavior:**
+1. Show: `mouseenter` / `focusin` on the trigger
+2. Hide: `mouseleave` / `focusout` on the trigger
+3. Positioning: `position: absolute` relative to a `position: relative` wrapper
+4. The `.mui-tooltip-content` class on the content (already exists in `main.css`)
+5. `pointer-events: none` on the tooltip
 
 ### useClickOutside.ts
 
-**Розташування:** `app/composables/useClickOutside.ts`
+**Location:** `app/composables/useClickOutside.ts`
 
-**Сигнатура:**
+**Signature:**
 ```ts
 function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): void
 ```
 
-**Поведінка:** `addEventListener('mousedown', cb, true)` на `document` у `onMounted`, cleanup у `onUnmounted`. Викликає `handler` якщо клік не всередині `target.value`.
+**Behavior:** `addEventListener('mousedown', cb, true)` on `document` in `onMounted`, cleanup in `onUnmounted`. Calls `handler` if the click is outside `target.value`.
 
-## Карта замінників
+## Replacement Map
 
-### Dialog → AppModal (8 файлів)
+### Dialog → AppModal (8 files)
 
-Файли: `AuthModal.vue`, `ConfigureCardDeckModal.vue`, `HistoryModal.vue`, `JoinOverlay.vue`, `PlayerEditModal.vue`, `UserSettingsModal.vue`, `AlignmentTrendsModal.vue`, `pages/[slug].vue`
+Files: `AuthModal.vue`, `ConfigureCardDeckModal.vue`, `HistoryModal.vue`, `JoinOverlay.vue`, `PlayerEditModal.vue`, `UserSettingsModal.vue`, `AlignmentTrendsModal.vue`, `pages/[slug].vue`
 
-**Патерн до:**
+**Pattern before:**
 ```vue
 <DialogRoot default-open @update:open="(open) => { if (!open) emit('close') }">
   <DialogPortal>
@@ -104,7 +104,7 @@ function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): 
 </DialogRoot>
 ```
 
-**Патерн після:**
+**Pattern after:**
 ```vue
 <AppModal :open="true" @close="emit('close')">
   <div class="mui-modal-paper" @pointerdown.stop>
@@ -115,11 +115,11 @@ function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): 
 </AppModal>
 ```
 
-### Tooltip → AppTooltip (5 файлів)
+### Tooltip → AppTooltip (5 files)
 
-Файли: `CardsArea.vue`, `Timer.vue`, `PlayerRow.vue`, `JoinOverlay.vue`, `PlayerEditModal.vue`
+Files: `CardsArea.vue`, `Timer.vue`, `PlayerRow.vue`, `JoinOverlay.vue`, `PlayerEditModal.vue`
 
-**Патерн до:**
+**Pattern before:**
 ```vue
 <TooltipRoot>
   <TooltipTrigger as-child>
@@ -133,7 +133,7 @@ function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): 
 </TooltipRoot>
 ```
 
-**Патерн після:**
+**Pattern after:**
 ```vue
 <AppTooltip side="top" :side-offset="6">
   <template #trigger>
@@ -143,37 +143,37 @@ function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): 
 </AppTooltip>
 ```
 
-### Select → native (1 файл)
+### Select → native (1 file)
 
-Файл: `ConfigureCardDeckModal.vue`
+File: `ConfigureCardDeckModal.vue`
 
-`SelectRoot/Trigger/Value/Portal/Content/Viewport/Item/ItemText` → `<select class="mui-input" v-model="…">` з `<option v-for>`. Значення - прості рядки (DeckPresetId), кастомний рендеринг не потрібен.
+`SelectRoot/Trigger/Value/Portal/Content/Viewport/Item/ItemText` → `<select class="mui-input" v-model="…">` with `<option v-for>`. Values are simple strings (DeckPresetId); custom rendering is unnecessary.
 
-### DropdownMenu → inline v-if (1 файл)
+### DropdownMenu → inline v-if (1 file)
 
-Файл: `AppHeader.vue`
+File: `AppHeader.vue`
 
-`DropdownMenuRoot/Trigger/Portal/Content/Item/CheckboxItem/Separator` → `v-if="menuOpen"` + `useClickOutside`. CSS класи `.mui-menu`, `.mui-menu-item`, `.mui-divider` вже є. `menuOpen = ref(false)`.
+`DropdownMenuRoot/Trigger/Portal/Content/Item/CheckboxItem/Separator` → `v-if="menuOpen"` + `useClickOutside`. The CSS classes `.mui-menu`, `.mui-menu-item`, and `.mui-divider` already exist. `menuOpen = ref(false)`.
 
-### TooltipProvider → видалити (App.vue)
+### TooltipProvider → remove (App.vue)
 
-Прибрати `import { TooltipProvider }`, прибрати обгортку `<TooltipProvider>` - залишити тільки `<RouterView />`.
+Remove `import { TooltipProvider }` and the `<TooltipProvider>` wrapper, leaving only `<RouterView />`.
 
-## Файли до видалення
+## Files to Remove
 
-- `app/lib/utils.ts` - `cn()` ніде не використовується
-- `components.json` - shadcn CLI конфіг
+1. `app/lib/utils.ts` - `cn()` is unused
+2. `components.json` - shadcn CLI config
 
-## Зміни в CSS (main.css)
+## CSS Changes (main.css)
 
-**Видалити:**
-- `@import "shadcn-vue/tailwind.css"`
-- `@import "tw-animate-css"`
-- Весь блок `@theme inline { ... }` (shadcn-токени)
-- Shadcn `:root { --background: oklch... }` блок
-- Shadcn `html[data-theme='dark'] { --background: oklch... }` блок
+**Remove:**
+1. `@import "shadcn-vue/tailwind.css"`
+2. `@import "tw-animate-css"`
+3. The entire `@theme inline { ... }` block (shadcn tokens)
+4. The shadcn `:root { --background: oklch... }` block
+5. The shadcn `html[data-theme='dark'] { --background: oklch... }` block
 
-**Виправити `@layer base`** - замінити shadcn applies на прямий CSS:
+**Fix `@layer base`** - replace shadcn applies with direct CSS:
 ```css
 @layer base {
   *,
@@ -185,18 +185,18 @@ function useClickOutside(target: Ref<HTMLElement | null>, handler: () => void): 
 }
 ```
 
-## Зміни в CLAUDE.md та README.md
+## Changes to CLAUDE.md and README.md
 
-- `CLAUDE.md` - прибрати абзац про shadcn-vue з секції Components; прибрати `reka-ui` з переліку UI-бібліотек; додати `AppModal`, `AppTooltip`, `useClickOutside` як власні примітиви
-- `README.md` - прибрати рядок `* [Reka UI](https://reka-ui.com)` з секції Used
+1. `CLAUDE.md` - remove the shadcn-vue paragraph from the Components section; remove `reka-ui` from the UI library list; add `AppModal`, `AppTooltip`, and `useClickOutside` as custom primitives
+2. `README.md` - remove the line `* [Reka UI](https://reka-ui.com)` from the Used section
 
-## Критерії успіху
+## Success Criteria
 
-- `npm run typecheck` без помилок
-- `npm test` без регресій
-- `npm run build` без помилок
-- Всі 7 пакетів відсутні у `node_modules` і `package.json`
-- Модалки відкриваються/закриваються, ESC і backdrop клік працюють
-- Тултіпи показуються при hover/focus
-- Дропдаун у AppHeader відкривається і закривається кліком поза
-- Select у ConfigureCardDeckModal перемикає пресети
+1. `npm run typecheck` completes without errors
+2. `npm test` passes without regressions
+3. `npm run build` completes without errors
+4. All 7 packages are absent from `node_modules` and `package.json`
+5. Modals open and close; ESC and backdrop clicks work
+6. Tooltips appear on hover/focus
+7. The dropdown in AppHeader opens and closes on an outside click
+8. Select in ConfigureCardDeckModal switches presets

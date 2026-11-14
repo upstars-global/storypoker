@@ -1,46 +1,48 @@
 # Frontend Audit Remediation Implementation Plan
 
 > **For agentic workers:** Use subagent-driven-development (recommended) or executing-plans to execute the plan
-> task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> task-by-task. Steps use numbered checkbox (`1. [ ]`) syntax for tracking.
 
-**Goal:** Закрити 11 знахідок аудиту `docs/audits/2026-09-07-frontend-design-audit.md` (reduced-motion, `lang`,
-landmarks, accessible names, skip-link, повернення фокуса, меню зі стрілками, видимий провал голосу, пороги Goal
-Clarity, тумблер `/ffc`, `<title>` кімнати).
+**Goal:** Resolve 11 findings from the audit `docs/audits/2026-09-07-frontend-design-audit.md` (reduced-motion, `lang`,
+landmarks, accessible names, skip-link, focus restoration, arrow-key menus, a visible vote failure, Goal
+Clarity thresholds, the `/ffc` toggle, the room `<title>`).
 
-**Architecture:** Точкові зміни в наявних файлах без нових абстракцій, окрім одного composable
-`useMenuKeyboard` (три вживання). Глобальні правила (reduced-motion, skip-link) живуть у `main.css` і `App.vue`;
-повернення фокуса - один раз в `AppModal`; решта - у компонентах, на які вказує аудит.
+**Architecture:** Make targeted changes in existing files, with one new composable,
+`useMenuKeyboard` (used in three places). Global rules (reduced-motion, skip-link) live in `main.css` and `App.vue`;
+restore focus once in `AppModal`; put the rest in the components identified by the audit.
 
 **Spec:** `docs/specs/2026-09-08-frontend-audit-remediation-design.md`
 
-**Tech Stack:** Vue 3.5 `<script setup lang="ts">`, Tailwind v4, vue-i18n 11, Vitest + happy-dom 20 (є
-`showModal`/`close`/`matchMedia`), Playwright (проєкт `page-load`, без Supabase). Нових залежностей немає.
+**Tech Stack:** Vue 3.5 `<script setup lang="ts">`, Tailwind v4, vue-i18n 11, Vitest + happy-dom 20 (provides
+`showModal`/`close`/`matchMedia`), Playwright (`page-load` project, without Supabase). No new dependencies.
 
 ## Global Constraints
 
-- Після кожної задачі: `npm run typecheck && npm run test:unit`; фініш - `npm run test:ci` і
+1. After each task: `npm run typecheck && npm run test:unit`; finish with `npm run test:ci` and
   `npm run test:e2e:pages`
-- 2 пробіли, без табів, один trailing newline; без коментарів у коді
-- Кожен новий UI-рядок - у `app/i18n/locales/uk.json` **і** `en.json`
-- Commit messages, коментарі в коді, назви тестів - англійською; документація в `docs/` - українською
-- Коміт на задачу під час виконання; гілка зливається в `main` через squash-merge
-- `git add` лише файли з блоку **Files** задачі; ніколи `git add -A`
-- Секрети й env-значення не друкувати
+2. 2 spaces, no tabs, one trailing newline; no code comments
+3. Every new UI string goes in `app/i18n/locales/uk.json` **and** `en.json`
+4. At the time of this plan, commit messages, code comments, and test names were in English; documentation in `docs/` was in Ukrainian
+5. Commit each task during execution; squash-merge the branch into `main`
+6. Use `git add` only for files in the task’s **Files** block; never use `git add -A`
+7. Do not print secrets or environment values
 
 ---
 
-### Task 1: Reduced motion - CSS і слот (F-1)
+### Task 1: Reduced motion - CSS and slot machine (F-1)
 
 **Files:**
-- Modify: `app/assets/css/main.css` (додати блок наприкінці файлу)
-- Modify: `app/components/SlotMachine.vue:130-159`
-- Test: `tests/unit/components/SlotMachine.spec.ts` (новий)
+1. Modify: `app/assets/css/main.css` (add a block at the end of the file)
+2. Modify: `app/components/SlotMachine.vue:130-159`
+3. Test: `tests/unit/components/SlotMachine.spec.ts` (new)
 
 **Interfaces:**
-- Consumes: `spinReels`, `isJackpot`, `buildReelStrip` з `~/utils/slotMachine` (уже є)
-- Produces: нічого для інших задач
+1. Consumes: `spinReels`, `isJackpot`, `buildReelStrip` from `~/utils/slotMachine` (already available)
+2. Produces: nothing for other tasks
 
-- [ ] **Step 1.1: Write the failing test**
+<!-- Separate lists. -->
+
+1. [ ] **Step 1.1: Write the failing test**
 
 `tests/unit/components/SlotMachine.spec.ts`:
 
@@ -104,14 +106,14 @@ describe('SlotMachine under prefers-reduced-motion', () => {
 })
 ```
 
-- [ ] **Step 1.2: Run test to verify it fails**
+2. [ ] **Step 1.2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/components/SlotMachine.spec.ts`
-Expected: FAIL - перший тест: `expected 12 to have length 1` (strip будується завжди).
+Expected: FAIL - first test: `expected 12 to have length 1` (the strip is always built).
 
-- [ ] **Step 1.3: Implement reduced-motion path in `SlotMachine.vue`**
+3. [ ] **Step 1.3: Implement reduced-motion path in `SlotMachine.vue`**
 
-Замінити функцію `spin()` (`SlotMachine.vue:130-159`) на:
+Replace the `spin()` function (`SlotMachine.vue:130-159`) with:
 
 ```ts
 function prefersReducedMotion() {
@@ -157,10 +159,10 @@ async function spin() {
 }
 ```
 
-- [ ] **Step 1.4: Add the global reduced-motion block to `main.css`**
+4. [ ] **Step 1.4: Add the global reduced-motion block to `main.css`**
 
-Дописати в самий кінець `app/assets/css/main.css` (після блоку `:root[data-theme-transition] * { … }`,
-поза `@layer`):
+Append to the end of `app/assets/css/main.css` (after the `:root[data-theme-transition] * { … }` block,
+outside `@layer`):
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -178,18 +180,18 @@ async function spin() {
 }
 ```
 
-Scoped-клас `.celebration-layer` з `ResultsArea.vue` збігається з глобальним селектором: scoped додає атрибут,
-клас лишається.
+The scoped `.celebration-layer` class from `ResultsArea.vue` matches the global selector: scoped adds an attribute,
+and the class remains.
 
-- [ ] **Step 1.5: Run tests to verify they pass**
+5. [ ] **Step 1.5: Run tests to verify they pass**
 
 Run: `npx vitest run tests/unit/components/SlotMachine.spec.ts tests/unit/utils/slotMachine.spec.ts`
-Expected: PASS (обидва файли).
+Expected: PASS (both files).
 
 Run: `rg -c 'prefers-reduced-motion' app/assets/css/main.css`
 Expected: `1`
 
-- [ ] **Step 1.6: Commit**
+6. [ ] **Step 1.6: Commit**
 
 ```bash
 git add app/assets/css/main.css app/components/SlotMachine.vue tests/unit/components/SlotMachine.spec.ts
@@ -198,16 +200,18 @@ git commit -m "feat: respect prefers-reduced-motion in CSS and slot machine"
 
 ---
 
-### Task 2: `lang` документа слідує за локаллю (F-2)
+### Task 2: Document `lang` follows the locale (F-2)
 
 **Files:**
-- Modify: `app/i18n.ts`
-- Test: `tests/unit/i18n.spec.ts` (новий)
+1. Modify: `app/i18n.ts`
+2. Test: `tests/unit/i18n.spec.ts` (new)
 
 **Interfaces:**
-- Produces: `persistLocale(code: string): void` (уже експортована; тепер також ставить `document.documentElement.lang`)
+1. Produces: `persistLocale(code: string): void` (already exported; now also sets `document.documentElement.lang`)
 
-- [ ] **Step 2.1: Write the failing test**
+<!-- Separate lists. -->
+
+1. [ ] **Step 2.1: Write the failing test**
 
 `tests/unit/i18n.spec.ts`:
 
@@ -242,14 +246,14 @@ describe('i18n document language', () => {
 })
 ```
 
-- [ ] **Step 2.2: Run test to verify it fails**
+2. [ ] **Step 2.2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/i18n.spec.ts`
-Expected: FAIL - `expected 'uk' to be 'en'` у першому й третьому тестах.
+Expected: FAIL - `expected 'uk' to be 'en'` in the first and third tests.
 
-- [ ] **Step 2.3: Implement**
+3. [ ] **Step 2.3: Implement**
 
-Замінити вміст `app/i18n.ts` на:
+Replace the contents of `app/i18n.ts` with:
 
 ```ts
 import { createI18n } from 'vue-i18n'
@@ -288,14 +292,14 @@ export const i18n = createI18n({
 })
 ```
 
-`index.html` не змінюється: `lang="uk"` лишається дефолтом до завантаження JS.
+`index.html` stays unchanged: `lang="uk"` remains the default until JS loads.
 
-- [ ] **Step 2.4: Run tests to verify they pass**
+4. [ ] **Step 2.4: Run tests to verify they pass**
 
 Run: `npx vitest run tests/unit/i18n.spec.ts tests/unit/composables/useTheme.spec.ts`
 Expected: PASS.
 
-- [ ] **Step 2.5: Commit**
+5. [ ] **Step 2.5: Commit**
 
 ```bash
 git add app/i18n.ts tests/unit/i18n.spec.ts
@@ -304,20 +308,20 @@ git commit -m "fix: keep html lang in sync with the active locale"
 
 ---
 
-### Task 3: `<main>`, `<h1>` і `<title>` кімнати (F-3, F-11)
+### Task 3: Room `<main>`, `<h1>` and `<title>` (F-3, F-11)
 
 **Files:**
-- Modify: `app/pages/[slug].vue:632-677` (шаблон) і скрипт після `headerSeed` (`:88`)
-- Modify: `app/components/AppHeader.vue:130-132`
+1. Modify: `app/pages/[slug].vue:632-677` (template) and script after `headerSeed` (`:88`)
+2. Modify: `app/components/AppHeader.vue:130-132`
 
 **Interfaces:**
-- Produces: `main#main[tabindex="-1"]` на маршруті кімнати (ціль для Task 4)
+1. Produces: `main#main[tabindex="-1"]` on the room route (target for Task 4)
 
-Тестового шва немає: `[slug].vue` тягне Supabase, Realtime і router. Перевірка - typecheck + ручний сценарій.
+There is no test seam: `[slug].vue` pulls in Supabase, Realtime and the router. Verify with typecheck and a manual scenario.
 
-- [ ] **Step 3.1: Turn the room name into `<h1>` in `AppHeader.vue`**
+1. [ ] **Step 3.1: Turn the room name into `<h1>` in `AppHeader.vue`**
 
-У `AppHeader.vue:130-132` замінити:
+In `AppHeader.vue:130-132`, replace:
 
 ```html
     <template v-if="roomName">
@@ -325,7 +329,7 @@ git commit -m "fix: keep html lang in sync with the active locale"
     </template>
 ```
 
-на:
+with:
 
 ```html
     <h1
@@ -336,17 +340,17 @@ git commit -m "fix: keep html lang in sync with the active locale"
     </h1>
 ```
 
-Tailwind preflight скидає `h1` на `font-size: inherit; font-weight: inherit; margin: 0`, тож вигляд не зміниться.
+Tailwind preflight resets `h1` to `font-size: inherit; font-weight: inherit; margin: 0`, so its appearance will stay the same.
 
-- [ ] **Step 3.2: Wrap the room layout in `<main>` and add `<main>` to the not-found branch**
+2. [ ] **Step 3.2: Wrap the room layout in `<main>` and add `<main>` to the not-found branch**
 
-У `[slug].vue:677` замінити відкривальний тег
+In `[slug].vue:677`, replace the opening tag
 
 ```html
     <div class="flex flex-1 flex-col md:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto">
 ```
 
-на
+with
 
 ```html
     <main
@@ -356,9 +360,9 @@ Tailwind preflight скидає `h1` на `font-size: inherit; font-weight: inhe
     >
 ```
 
-і відповідний закривальний `</div>` (той, що йде одразу перед `<JoinOverlay`, `:768`) на `</main>`.
+and replace the corresponding closing `</div>` (immediately before `<JoinOverlay`, `:768`) with `</main>`.
 
-У not-found-гілці (`:633-635`) замінити
+In the not-found branch (`:633-635`), replace
 
 ```html
   <div
@@ -367,7 +371,7 @@ Tailwind preflight скидає `h1` на `font-size: inherit; font-weight: inhe
   >
 ```
 
-на
+with
 
 ```html
   <main
@@ -378,11 +382,11 @@ Tailwind preflight скидає `h1` на `font-size: inherit; font-weight: inhe
   >
 ```
 
-і закривальний `</div>` цієї гілки (`:653`, перед `<div v-else`) на `</main>`.
+and replace the closing `</div>` of that branch (`:653`, before `<div v-else`) with `</main>`.
 
-- [ ] **Step 3.3: Set `document.title` from the room name**
+3. [ ] **Step 3.3: Set `document.title` from the room name**
 
-У скрипті `[slug].vue` одразу після `const headerSeed = ref<…>(readHeaderSeed())` (`:88`) додати:
+In the `[slug].vue` script, immediately after `const headerSeed = ref<…>(readHeaderSeed())` (`:88`), add:
 
 ```ts
 const roomTitle = computed(() => currentRoomName.value ?? currentSlug.value ?? headerSeed.value.roomName)
@@ -392,25 +396,27 @@ watch([() => route.path, roomTitle, notFound], ([, name, missing]) => {
 }, { immediate: true, flush: 'post' })
 ```
 
-`currentSlug`/`currentRoomName` оголошені раніше (`:82-83`), `notFound` - `:69`. `flush: 'post'` потрібен, бо
-`router.afterEach` спрацьовує синхронно під час `router.replace('/<slug>')` і ставить `'Story Poker'`;
-post-flush watcher виконується після нього і виграє.
+`currentSlug`/`currentRoomName` are declared earlier (`:82-83`), and `notFound` at `:69`. `flush: 'post'` is needed because
+`router.afterEach` runs synchronously during `router.replace('/<slug>')` and sets `'Story Poker'`;
+the post-flush watcher runs after it and takes precedence.
 
-- [ ] **Step 3.4: Typecheck and lint**
+4. [ ] **Step 3.4: Typecheck and lint**
 
 Run: `npm run typecheck && npm run lint`
-Expected: без помилок.
+Expected: no errors.
 
-- [ ] **Step 3.5: Manual check**
+5. [ ] **Step 3.5: Manual check**
 
-Run: `npm run dev`, відкрити будь-яку кімнату за id (`/<8 символів>`), яка має slug.
+Run: `npm run dev`, open any room with a slug by id (`/<8 characters>`).
 
-1. Вкладка браузера показує `<назва кімнати> | Story Poker` навіть після редиректу на slug.
-2. У DevTools → Accessibility tree: один landmark `main`, один `heading level 1` з назвою кімнати.
-3. Перейти на `/` - заголовок вкладки `Home | Story Poker`.
-4. Відкрити `/nope-nope-nope` - є `<main>`, заголовок вкладки `Story Poker`.
+1. The browser tab shows `<room name> | Story Poker` even after redirecting to the slug.
+2. In DevTools → Accessibility tree: one `main` landmark and one `heading level 1` with the room name.
+3. Navigate to `/` - the tab title is `Home | Story Poker`.
+4. Open `/nope-nope-nope` - there is a `<main>`, and the tab title is `Story Poker`.
 
-- [ ] **Step 3.6: Commit**
+<!-- Separate lists. -->
+
+6. [ ] **Step 3.6: Commit**
 
 ```bash
 git add "app/pages/[slug].vue" app/components/AppHeader.vue
@@ -422,18 +428,20 @@ git commit -m "feat: add main landmark, h1 and document title to the room page"
 ### Task 4: Skip-link (F-5)
 
 **Files:**
-- Modify: `app/App.vue`
-- Modify: `app/pages/index.vue:150`, `app/pages/login.vue:60`, `app/pages/signup.vue:62`,
+1. Modify: `app/App.vue`
+2. Modify: `app/pages/index.vue:150`, `app/pages/login.vue:60`, `app/pages/signup.vue:62`,
   `app/pages/forgot-password.vue:59`, `app/pages/reset-password.vue:79`, `app/pages/ffc.vue:69`
-- Modify: `app/i18n/locales/uk.json`, `app/i18n/locales/en.json` (ключ `common.skipToContent`)
-- Test: `tests/e2e/page-load.spec.ts`
+3. Modify: `app/i18n/locales/uk.json`, `app/i18n/locales/en.json` (key `common.skipToContent`)
+4. Test: `tests/e2e/page-load.spec.ts`
 
 **Interfaces:**
-- Consumes: `main#main[tabindex="-1"]` з Task 3 (кімната)
+1. Consumes: `main#main[tabindex="-1"]` from Task 3 (room)
 
-- [ ] **Step 4.1: Write the failing e2e test**
+<!-- Separate lists. -->
 
-Дописати в кінець `tests/e2e/page-load.spec.ts`:
+1. [ ] **Step 4.1: Write the failing e2e test**
+
+Append to `tests/e2e/page-load.spec.ts`:
 
 ```ts
 test('skip link moves focus to main content', async ({ page }) => {
@@ -446,22 +454,22 @@ test('skip link moves focus to main content', async ({ page }) => {
 })
 ```
 
-Маршрут `/login` обрано навмисно: `/` у `onMounted` фокусує поле імені (`index.vue:44`), тож перший Tab там
-не потрапив би на skip-link.
+The `/login` route is intentional: `/` focuses the name field in `onMounted` (`index.vue:44`), so the first Tab
+would not reach the skip link there.
 
-- [ ] **Step 4.2: Run the e2e test to verify it fails**
+2. [ ] **Step 4.2: Run the e2e test to verify it fails**
 
 Run: `npx playwright test --project=page-load -g "skip link"`
-Expected: FAIL - `a[href="#main"]` не знайдено.
+Expected: FAIL - `a[href="#main"]` is not found.
 
-- [ ] **Step 4.3: Add i18n key**
+3. [ ] **Step 4.3: Add i18n key**
 
-В `en.json` у блок `"common"` після `"confirmPassword"` додати `"skipToContent": "Skip to main content"`;
-в `uk.json` - `"skipToContent": "Перейти до основного вмісту"`.
+In `en.json`, add `"skipToContent": "Skip to main content"` to the `"common"` block after `"confirmPassword"`;
+in `uk.json`, add `"skipToContent": "Перейти до основного вмісту"`.
 
-- [ ] **Step 4.4: Add the link to `App.vue`**
+4. [ ] **Step 4.4: Add the link to `App.vue`**
 
-Замінити шаблон `App.vue` на:
+Replace the `App.vue` template with:
 
 ```html
 <template>
@@ -478,18 +486,18 @@ Expected: FAIL - `a[href="#main"]` не знайдено.
 </template>
 ```
 
-- [ ] **Step 4.5: Add `id="main" tabindex="-1"` to the other six `<main>` elements**
+5. [ ] **Step 4.5: Add `id="main" tabindex="-1"` to the other six `<main>` elements**
 
-У кожному з файлів нижче додати до тега `<main` атрибути `id="main"` і `tabindex="-1"`, а до класів - `outline-none`:
+In each file below, add `id="main"` and `tabindex="-1"` to the `<main` tag and add `outline-none` to its classes:
 
-- `app/pages/index.vue:150`
-- `app/pages/login.vue:60`
-- `app/pages/signup.vue:62`
-- `app/pages/forgot-password.vue:59`
-- `app/pages/reset-password.vue:79`
-- `app/pages/ffc.vue:69`
+1. `app/pages/index.vue:150`
+2. `app/pages/login.vue:60`
+3. `app/pages/signup.vue:62`
+4. `app/pages/forgot-password.vue:59`
+5. `app/pages/reset-password.vue:79`
+6. `app/pages/ffc.vue:69`
 
-Приклад для `login.vue`:
+Example for `login.vue`:
 
 ```html
     <main
@@ -499,15 +507,15 @@ Expected: FAIL - `a[href="#main"]` не знайдено.
     >
 ```
 
-- [ ] **Step 4.6: Run e2e and unit**
+6. [ ] **Step 4.6: Run e2e and unit**
 
 Run: `npx playwright test --project=page-load`
-Expected: PASS (усі public routes + skip link).
+Expected: PASS (all public routes + skip link).
 
 Run: `npm run typecheck && npm run test:unit`
 Expected: PASS.
 
-- [ ] **Step 4.7: Commit**
+7. [ ] **Step 4.7: Commit**
 
 ```bash
 git add app/App.vue app/pages/index.vue app/pages/login.vue app/pages/signup.vue \
@@ -518,23 +526,25 @@ git commit -m "feat: add skip link and focusable main landmarks"
 
 ---
 
-### Task 5: Accessible names для трьох icon-only кнопок (F-4)
+### Task 5: Accessible names for three icon-only buttons (F-4)
 
 **Files:**
-- Modify: `app/components/CardsArea.vue:283-312`
-- Modify: `app/components/PlayerRow.vue:290-296`
-- Modify: `app/i18n/locales/uk.json`, `app/i18n/locales/en.json` (ключ `players.menuFor`)
-- Test: `tests/unit/components/PlayerRow.spec.ts`, `tests/unit/components/CardsArea.spec.ts` (новий)
+1. Modify: `app/components/CardsArea.vue:283-312`
+2. Modify: `app/components/PlayerRow.vue:290-296`
+3. Modify: `app/i18n/locales/uk.json`, `app/i18n/locales/en.json` (key `players.menuFor`)
+4. Test: `tests/unit/components/PlayerRow.spec.ts`, `tests/unit/components/CardsArea.spec.ts` (new)
 
-- [ ] **Step 5.1: Write the failing tests**
+<!-- Separate lists. -->
 
-У `tests/unit/components/PlayerRow.spec.ts` замінити `messages: { en: {} }` на:
+1. [ ] **Step 5.1: Write the failing tests**
+
+In `tests/unit/components/PlayerRow.spec.ts`, replace `messages: { en: {} }` with:
 
 ```ts
   messages: { en: { players: { menuFor: 'Player menu: {name}' } } },
 ```
 
-і додати новий `describe` наприкінці файлу:
+and add a new `describe` at the end of the file:
 
 ```ts
 describe('PlayerRow menu button name', () => {
@@ -545,7 +555,7 @@ describe('PlayerRow menu button name', () => {
 })
 ```
 
-Новий `tests/unit/components/CardsArea.spec.ts`:
+New `tests/unit/components/CardsArea.spec.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest'
@@ -602,19 +612,19 @@ describe('CardsArea moderator icon buttons', () => {
 })
 ```
 
-- [ ] **Step 5.2: Run tests to verify they fail**
+2. [ ] **Step 5.2: Run tests to verify they fail**
 
 Run: `npx vitest run tests/unit/components/PlayerRow.spec.ts tests/unit/components/CardsArea.spec.ts`
-Expected: FAIL - `aria-label` undefined; `[data-testid="last-round-button"]` не знайдено.
+Expected: FAIL - `aria-label` undefined; `[data-testid="last-round-button"]` is not found.
 
-- [ ] **Step 5.3: Add i18n key**
+3. [ ] **Step 5.3: Add i18n key**
 
-`en.json`, блок `"players"`, після `"kickPlayer"`: `"menuFor": "Player menu: {name}"`.
-`uk.json`, там само: `"menuFor": "Меню гравця: {name}"`.
+`en.json`, `"players"` block, after `"kickPlayer"`: `"menuFor": "Player menu: {name}"`.
+`uk.json`, in the same place: `"menuFor": "Меню гравця: {name}"`.
 
-- [ ] **Step 5.4: Add names in `CardsArea.vue`**
+4. [ ] **Step 5.4: Add names in `CardsArea.vue`**
 
-Кнопка `toggleLastRound` (`:283-289`) - додати три атрибути:
+Add three attributes to the `toggleLastRound` button (`:283-289`):
 
 ```html
             <button
@@ -629,19 +639,19 @@ Expected: FAIL - `aria-label` undefined; `[data-testid="last-round-button"]` н�
             >
 ```
 
-Кнопка reset (`:305-312`) - додати `:aria-label="$t('cards.reset')"` перед `data-testid="reset-button"`.
+For the reset button (`:305-312`), add `:aria-label="$t('cards.reset')"` before `data-testid="reset-button"`.
 
-- [ ] **Step 5.5: Add name in `PlayerRow.vue`**
+5. [ ] **Step 5.5: Add name in `PlayerRow.vue`**
 
-Кнопка меню (`:290-296`) - додати `:aria-label="$t('players.menuFor', { name: player.name })"` перед
+For the menu button (`:290-296`), add `:aria-label="$t('players.menuFor', { name: player.name })"` before
 `:aria-expanded="menuOpen"`.
 
-- [ ] **Step 5.6: Run tests to verify they pass**
+6. [ ] **Step 5.6: Run tests to verify they pass**
 
 Run: `npx vitest run tests/unit/components`
 Expected: PASS.
 
-- [ ] **Step 5.7: Commit**
+7. [ ] **Step 5.7: Commit**
 
 ```bash
 git add app/components/CardsArea.vue app/components/PlayerRow.vue \
@@ -652,15 +662,17 @@ git commit -m "fix: give icon-only room controls accessible names"
 
 ---
 
-### Task 6: `AppModal` повертає фокус на тригер (F-6)
+### Task 6: `AppModal` returns focus to the trigger (F-6)
 
 **Files:**
-- Modify: `app/components/AppModal.vue:1-33`
-- Test: `tests/unit/components/AppModal.spec.ts`
+1. Modify: `app/components/AppModal.vue:1-33`
+2. Test: `tests/unit/components/AppModal.spec.ts`
 
-- [ ] **Step 6.1: Write the failing tests**
+<!-- Separate lists. -->
 
-Додати в `AppModal.spec.ts` імпорт `nextTick` з `vue` і новий `describe`:
+1. [ ] **Step 6.1: Write the failing tests**
+
+Add an import of `nextTick` from `vue` and a new `describe` to `AppModal.spec.ts`:
 
 ```ts
 import { nextTick } from 'vue'
@@ -696,14 +708,14 @@ describe('AppModal focus return', () => {
 })
 ```
 
-- [ ] **Step 6.2: Run tests to verify they fail**
+2. [ ] **Step 6.2: Run tests to verify they fail**
 
 Run: `npx vitest run tests/unit/components/AppModal.spec.ts`
-Expected: FAIL - `document.activeElement` це `<body>`, а не тригер.
+Expected: FAIL - `document.activeElement` is `<body>` instead of the trigger.
 
-- [ ] **Step 6.3: Implement**
+3. [ ] **Step 6.3: Implement**
 
-Замінити `<script setup>` в `AppModal.vue` на:
+Replace `<script setup>` in `AppModal.vue` with:
 
 ```ts
 import { ref, watch, nextTick, onBeforeUnmount } from 'vue'
@@ -755,14 +767,14 @@ function onOverlayClick() {
 }
 ```
 
-Шаблон не змінюється.
+The template remains unchanged.
 
-- [ ] **Step 6.4: Run tests to verify they pass**
+4. [ ] **Step 6.4: Run tests to verify they pass**
 
 Run: `npx vitest run tests/unit/components/AppModal.spec.ts tests/unit/components/UserSettingsModal.spec.ts`
 Expected: PASS.
 
-- [ ] **Step 6.5: Commit**
+5. [ ] **Step 6.5: Commit**
 
 ```bash
 git add app/components/AppModal.vue tests/unit/components/AppModal.spec.ts
@@ -771,19 +783,19 @@ git commit -m "fix: return focus to the opener when AppModal closes"
 
 ---
 
-### Task 7: Тумблер `/ffc` з клавіатури (F-10)
+### Task 7: Keyboard operation of the `/ffc` switch (F-10)
 
 **Files:**
-- Modify: `app/pages/ffc.vue:79-90`
-- Modify: `app/assets/css/main.css:943-947` (`.mui-switch input`) + нове правило фокуса
-- Test: `tests/e2e/page-load.spec.ts`
+1. Modify: `app/pages/ffc.vue:79-90`
+2. Modify: `app/assets/css/main.css:943-947` (`.mui-switch input`) + a new focus rule
+3. Test: `tests/e2e/page-load.spec.ts`
 
-Unit-шва немає: `ffc.vue` ініціалізує auth store у `onMounted`. `/ffc` уже в проєкті `page-load` без Supabase,
-тож перевірка - e2e.
+There is no unit test seam: `ffc.vue` initializes the auth store in `onMounted`. `/ffc` is already in the `page-load`
+project without Supabase, so the test is e2e.
 
-- [ ] **Step 7.1: Write the failing e2e test**
+1. [ ] **Step 7.1: Write the failing e2e test**
 
-Дописати в `tests/e2e/page-load.spec.ts`:
+Append to `tests/e2e/page-load.spec.ts`:
 
 ```ts
 test('feature flag switch toggles from the keyboard', async ({ page }) => {
@@ -800,18 +812,18 @@ test('feature flag switch toggles from the keyboard', async ({ page }) => {
 })
 ```
 
-- [ ] **Step 7.2: Run the e2e test to verify it fails**
+2. [ ] **Step 7.2: Run the e2e test to verify it fails**
 
-Tab від `#ffc-iconsRounded` до `#ffc-example` доводить саме Tab-досяжність, яку аудит називає дефектом;
-`locator.focus()` на самій цілі спрацював би і на недосяжному елементі. Між цими двома картками інших фокусованих
-елементів немає.
+Tab from `#ffc-iconsRounded` to `#ffc-example` proves Tab reachability, which the audit identifies as a defect;
+`locator.focus()` on the target itself would also work on an unreachable element. There are no other focusable
+elements between these two cards.
 
 Run: `npx playwright test --project=page-load -g "feature flag switch"`
-Expected: FAIL - `toBeFocused` (input має `width: 0; height: 0`, або `toBeChecked` після Space).
+Expected: FAIL - `toBeFocused` (the input has `width: 0; height: 0`, or `toBeChecked` after Space).
 
-- [ ] **Step 7.3: Rewrite the switch markup in `ffc.vue`**
+3. [ ] **Step 7.3: Rewrite the switch markup in `ffc.vue`**
 
-Замінити `ffc.vue:79-90`:
+Replace `ffc.vue:79-90`:
 
 ```html
               <span
@@ -829,7 +841,7 @@ Expected: FAIL - `toBeFocused` (input має `width: 0; height: 0`, або `toBe
               </span>
 ```
 
-на:
+with:
 
 ```html
               <label
@@ -849,12 +861,12 @@ Expected: FAIL - `toBeFocused` (input має `width: 0; height: 0`, або `toBe
               </label>
 ```
 
-`<input>` має лишатися першим сиблінгом: правила `input:checked + .track` і `input:checked ~ .thumb` у
-`main.css:967-975` на цьому тримаються.
+`<input>` must remain the first sibling: the `input:checked + .track` and `input:checked ~ .thumb` rules in
+`main.css:967-975` depend on it.
 
-- [ ] **Step 7.4: Make the input focusable in `main.css`**
+4. [ ] **Step 7.4: Make the input focusable in `main.css`**
 
-Правило `.mui-switch input` (`main.css:943-947`) лишити як є; одразу після нього додати:
+Leave the `.mui-switch input` rule (`main.css:943-947`) unchanged; immediately after it, add:
 
 ```css
   label.mui-switch input {
@@ -871,11 +883,11 @@ Expected: FAIL - `toBeFocused` (input має `width: 0; height: 0`, або `toBe
   }
 ```
 
-Селектор навмисно звужений до `label.mui-switch`: `PlayerRow.vue:327-336` тримає декоративний `.mui-switch` у
-`<span>` усередині `role="menuitem"`, і якби його `<input>` став клікабельним на весь тумблер, клік нативно
-перемикав би `checked` до того, як `toggleModerator` дійде через Supabase.
+The selector is intentionally scoped to `label.mui-switch`: `PlayerRow.vue:327-336` has a decorative `.mui-switch` in
+a `<span>` inside `role="menuitem"`. If its `<input>` became clickable across the entire switch, a click would natively
+toggle `checked` before `toggleModerator` completes through Supabase.
 
-- [ ] **Step 7.5: Run e2e and unit**
+5. [ ] **Step 7.5: Run e2e and unit**
 
 Run: `npx playwright test --project=page-load`
 Expected: PASS.
@@ -883,7 +895,7 @@ Expected: PASS.
 Run: `npm run typecheck && npm run test:unit`
 Expected: PASS.
 
-- [ ] **Step 7.6: Commit**
+6. [ ] **Step 7.6: Commit**
 
 ```bash
 git add app/pages/ffc.vue app/assets/css/main.css tests/e2e/page-load.spec.ts
@@ -892,34 +904,34 @@ git commit -m "fix: make feature flag switches native keyboard-operable checkbox
 
 ---
 
-### Task 8: Видимий провал голосу й редагування (F-8)
+### Task 8: Visible vote and edit failures (F-8)
 
 **Files:**
-- Modify: `app/pages/[slug].vue:443-453` (`handleVote`), `:545-556` (`handleSaveEdit`), шаблон після `<CardsArea …/>`
-- Modify: `app/i18n/locales/uk.json`, `app/i18n/locales/en.json` (ключі `room.voteFailed`, `room.saveFailed`)
+1. Modify: `app/pages/[slug].vue:443-453` (`handleVote`), `:545-556` (`handleSaveEdit`), template after `<CardsArea …/>`
+2. Modify: `app/i18n/locales/uk.json`, `app/i18n/locales/en.json` (keys `room.voteFailed`, `room.saveFailed`)
 
-Тестового шва немає (сторінка тягне Supabase). Перевірка - typecheck + ручний сценарій. Повний шар сповіщень
-з retry - ініціатива `docs/initiatives/error-handling.md`, тут не будується.
+There is no test seam (the page depends on Supabase). Verify with typecheck and a manual scenario. The full notification layer
+with retry is covered by `docs/initiatives/error-handling.md` and is out of scope here.
 
-- [ ] **Step 8.1: Add i18n keys**
+1. [ ] **Step 8.1: Add i18n keys**
 
-`en.json`, блок `"room"`, після `"notFoundBackHome"`:
+`en.json`, the `"room"` block, after `"notFoundBackHome"`:
 
 ```json
     "voteFailed": "Your vote was not saved. Check the connection and try again.",
     "saveFailed": "Changes were not saved. Check the connection and try again."
 ```
 
-`uk.json`, там само:
+`uk.json`, in the same place:
 
 ```json
     "voteFailed": "Голос не збережено. Перевір з'єднання і спробуй ще раз.",
     "saveFailed": "Зміни не збережено. Перевір з'єднання і спробуй ще раз."
 ```
 
-- [ ] **Step 8.2: Add the status state and handlers**
+2. [ ] **Step 8.2: Add the status state and handlers**
 
-У скрипті `[slug].vue` після `const showLastRound = ref(false)` (`:95`) додати:
+In the `[slug].vue` script, add after `const showLastRound = ref(false)` (`:95`):
 
 ```ts
 const actionNotice = ref<string | null>(null)
@@ -932,9 +944,9 @@ function showActionNotice(message: string) {
 }
 ```
 
-У наявний `onUnmounted` (`:334`, той, що знімає канали) додати рядок `clearTimeout(actionNoticeTimer)`.
+Add `clearTimeout(actionNoticeTimer)` to the existing `onUnmounted` (`:334`, the one that removes channels).
 
-Замінити `handleVote` (`:443-453`) на:
+Replace `handleVote` (`:443-453`) with:
 
 ```ts
 async function handleVote(card: string) {
@@ -950,7 +962,7 @@ async function handleVote(card: string) {
 }
 ```
 
-Замінити `handleSaveEdit` (`:545-556`) на:
+Replace `handleSaveEdit` (`:545-556`) with:
 
 ```ts
 async function handleSaveEdit(payload: { name: string; shields: string[] }) {
@@ -968,11 +980,11 @@ async function handleSaveEdit(payload: { name: string; shields: string[] }) {
 }
 ```
 
-`t` уже деструктуровано з `useI18n()` (`:97`).
+`t` is already destructured from `useI18n()` (`:97`).
 
-- [ ] **Step 8.3: Render the live region**
+3. [ ] **Step 8.3: Render the live region**
 
-У шаблоні одразу після закривального `/>` компонента `<CardsArea … />` (`:766`) додати:
+In the template, add immediately after the closing `/>` of `<CardsArea … />` (`:766`):
 
 ```html
         <p
@@ -985,18 +997,18 @@ async function handleSaveEdit(payload: { name: string; shields: string[] }) {
         </p>
 ```
 
-Контейнер присутній завжди (порожній, поки помилки немає): live-region оголошує зміни лише якщо існував до них.
+The container is always present (empty until an error occurs): the live region announces changes only if it existed before them.
 
-- [ ] **Step 8.4: Typecheck, lint, manual check**
+4. [ ] **Step 8.4: Typecheck, lint, manual check**
 
 Run: `npm run typecheck && npm run lint`
-Expected: без помилок.
+Expected: no errors.
 
-Manual: `npm run dev`, зайти в кімнату, у DevTools → Network увімкнути Offline, клікнути карту.
-Очікувано: карта на мить підсвічується, повертається, під сіткою з'являється текст `room.voteFailed`, зникає
-через 5 с. У DevTools → Accessibility текст оголошується як `status`.
+Manual: run `npm run dev`, enter a room, enable Offline in DevTools → Network, and click a card.
+Expected: the card briefly highlights and reverts; the `room.voteFailed` text appears below the grid and disappears
+after 5 seconds. In DevTools → Accessibility, the text is announced as `status`.
 
-- [ ] **Step 8.5: Commit**
+5. [ ] **Step 8.5: Commit**
 
 ```bash
 git add "app/pages/[slug].vue" app/i18n/locales/uk.json app/i18n/locales/en.json
@@ -1005,16 +1017,16 @@ git commit -m "feat: announce failed vote and player edit in a live region"
 
 ---
 
-### Task 9: Меню зі стрілками через `useMenuKeyboard` (F-7)
+### Task 9: Arrow-key menus using `useMenuKeyboard` (F-7)
 
 **Files:**
-- Create: `app/composables/useMenuKeyboard.ts`
-- Modify: `app/components/PlayerRow.vue:50-58, 285-312` і всі 5 `tabindex="0"` у пунктах
-- Modify: `app/components/AppHeader.vue:88-106, 136-162, 212-248` і всі 10 `tabindex="0"` у пунктах
-- Test: `tests/unit/composables/useMenuKeyboard.spec.ts` (новий), `tests/unit/components/PlayerRow.spec.ts`
+1. Create: `app/composables/useMenuKeyboard.ts`
+2. Modify: `app/components/PlayerRow.vue:50-58, 285-312` and all 5 `tabindex="0"` attributes on items
+3. Modify: `app/components/AppHeader.vue:88-106, 136-162, 212-248` and all 10 `tabindex="0"` attributes on items
+4. Test: `tests/unit/composables/useMenuKeyboard.spec.ts` (new), `tests/unit/components/PlayerRow.spec.ts`
 
 **Interfaces:**
-- Produces:
+1. Produces:
 
 ```ts
 export function useMenuKeyboard(open: Ref<boolean>, trigger: Ref<HTMLElement | null>): {
@@ -1023,10 +1035,10 @@ export function useMenuKeyboard(open: Ref<boolean>, trigger: Ref<HTMLElement | n
 }
 ```
 
-  `menuEl` прив'язується до `<ul role="menu">`, `trigger` - до кнопки-тригера. При `open → true` фокус іде на
-  перший `[role^="menuitem"]`; при `open → false` - назад на `trigger`. `onKeydown` вішається на `<ul>`.
+  `menuEl` is bound to `<ul role="menu">` and `trigger` to the trigger button. When `open → true`, focus moves to
+  the first `[role^="menuitem"]`; when `open → false`, it returns to `trigger`. Attach `onKeydown` to `<ul>`.
 
-- [ ] **Step 9.1: Write the failing composable test**
+1. [ ] **Step 9.1: Write the failing composable test**
 
 `tests/unit/composables/useMenuKeyboard.spec.ts`:
 
@@ -1132,12 +1144,12 @@ describe('useMenuKeyboard', () => {
 })
 ```
 
-- [ ] **Step 9.2: Run test to verify it fails**
+2. [ ] **Step 9.2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/composables/useMenuKeyboard.spec.ts`
 Expected: FAIL - `Cannot find module '~/composables/useMenuKeyboard'`.
 
-- [ ] **Step 9.3: Implement the composable**
+3. [ ] **Step 9.3: Implement the composable**
 
 `app/composables/useMenuKeyboard.ts`:
 
@@ -1204,19 +1216,19 @@ export function useMenuKeyboard(open: Ref<boolean>, trigger: Ref<HTMLElement | n
 }
 ```
 
-Два watcher-и навмисно: відкриття - `flush: 'post'`, бо `<ul v-if>` з'являється лише після рендера; закриття -
-pre-flush, бо тоді `<ul>` ще в DOM і `contains(document.activeElement)` розрізняє закриття з клавіатури або
-вибором пункту (фокус усередині меню, повертаємо на тригер) від `useClickOutside` (фокус уже деінде, не чіпаємо).
-Без цієї перевірки клік у поле вводу при відкритому меню викрадав би фокус назад на кнопку.
+The two watchers are intentional: opening uses `flush: 'post'` because `<ul v-if>` appears only after rendering; closing uses
+pre-flush because `<ul>` is still in the DOM and `contains(document.activeElement)` distinguishes keyboard or item-selection
+closure (focus is inside the menu, so return it to the trigger) from `useClickOutside` (focus is already elsewhere, so leave it).
+Without this check, clicking an input while the menu is open would steal focus back to the button.
 
-- [ ] **Step 9.4: Run composable test to verify it passes**
+4. [ ] **Step 9.4: Run composable test to verify it passes**
 
 Run: `npx vitest run tests/unit/composables/useMenuKeyboard.spec.ts`
 Expected: PASS.
 
-- [ ] **Step 9.5: Extend `PlayerRow.spec.ts` with an arrow-key expectation**
+5. [ ] **Step 9.5: Extend `PlayerRow.spec.ts` with an arrow-key expectation**
 
-Додати в `describe('PlayerRow menu keyboard support')`:
+Add to `describe('PlayerRow menu keyboard support')`:
 
 ```ts
   it('moves focus between items with ArrowDown', async () => {
@@ -1230,11 +1242,11 @@ Expected: PASS.
 ```
 
 Run: `npx vitest run tests/unit/components/PlayerRow.spec.ts`
-Expected: FAIL на новому тесті (фокус на `body`).
+Expected: FAIL on the new test (focus is on `body`).
 
-- [ ] **Step 9.6: Wire `PlayerRow.vue`**
+6. [ ] **Step 9.6: Wire `PlayerRow.vue`**
 
-Скрипт: замінити `PlayerRow.vue:51-58`
+Script: replace `PlayerRow.vue:51-58`
 
 ```ts
 const menuRef = ref<HTMLElement | null>(null)
@@ -1247,7 +1259,7 @@ function activateMenuItem(e: KeyboardEvent) {
 }
 ```
 
-на
+with
 
 ```ts
 const menuRef = ref<HTMLElement | null>(null)
@@ -1257,9 +1269,9 @@ useClickOutside(menuRef, () => { menuOpen.value = false })
 const { menuEl: menuListRef, onKeydown: onMenuKeydown } = useMenuKeyboard(menuOpen, menuButtonRef)
 ```
 
-і додати імпорт `import { useMenuKeyboard } from '~/composables/useMenuKeyboard'`.
+and add the import `import { useMenuKeyboard } from '~/composables/useMenuKeyboard'`.
 
-Шаблон: на кнопці меню (`:290`) додати `ref="menuButtonRef"`; на `<ul>` (`:305-312`) замінити
+Template: add `ref="menuButtonRef"` to the menu button (`:290`); replace the `<ul>` (`:305-312`)
 
 ```html
       <ul
@@ -1273,7 +1285,7 @@ const { menuEl: menuListRef, onKeydown: onMenuKeydown } = useMenuKeyboard(menuOp
       >
 ```
 
-на
+with
 
 ```html
       <ul
@@ -1286,11 +1298,11 @@ const { menuEl: menuListRef, onKeydown: onMenuKeydown } = useMenuKeyboard(menuOp
       >
 ```
 
-У всіх 5 `<li role="menuitem" tabindex="0">` цього файлу замінити `tabindex="0"` на `tabindex="-1"`.
+Replace `tabindex="0"` with `tabindex="-1"` on all 5 `<li role="menuitem" tabindex="0">` elements in this file.
 
-- [ ] **Step 9.7: Wire both menus in `AppHeader.vue`**
+7. [ ] **Step 9.7: Wire both menus in `AppHeader.vue`**
 
-Скрипт: замінити `AppHeader.vue:88-106`
+Script: replace `AppHeader.vue:88-106`
 
 ```ts
 const menuRef = ref<HTMLElement | null>(null)
@@ -1312,7 +1324,7 @@ function activateMenuItem(e: KeyboardEvent) {
 }
 ```
 
-на
+with
 
 ```ts
 const menuRef = ref<HTMLElement | null>(null)
@@ -1333,33 +1345,35 @@ function pickPalette(id: PaletteId) {
 }
 ```
 
-і додати імпорт `import { useMenuKeyboard } from '~/composables/useMenuKeyboard'`.
+and add the import `import { useMenuKeyboard } from '~/composables/useMenuKeyboard'`.
 
-Шаблон:
+Template:
 
-- кнопка палітри (`:141`, `data-testid="palette-menu-button"`) - додати `ref="paletteButtonRef"`;
-- `<ul>` палітри (`:155-162`) - додати `ref="paletteListRef"`, три `@keydown.*` замінити на
+1. palette button (`:141`, `data-testid="palette-menu-button"`): add `ref="paletteButtonRef"`;
+2. palette `<ul>` (`:155-162`): add `ref="paletteListRef"` and replace the three `@keydown.*` handlers with
   `@keydown="onPaletteKeydown"`;
-- кнопка акаунта (`:217`, `data-testid="account-menu-button"`) - додати `ref="menuButtonRef"`;
-- `<ul>` акаунта (`:241-248`) - додати `ref="menuListRef"`, три `@keydown.*` замінити на `@keydown="onMenuKeydown"`;
-- обгортки `:139` і `:214` лишають `@keydown.escape.stop`, бо вони закривають меню, коли фокус на кнопці;
-- усі 10 `tabindex="0"` на `<li role="menuitem*">` → `tabindex="-1"`.
+3. account button (`:217`, `data-testid="account-menu-button"`): add `ref="menuButtonRef"`;
+4. account `<ul>` (`:241-248`): add `ref="menuListRef"` and replace the three `@keydown.*` handlers with `@keydown="onMenuKeydown"`;
+5. wrappers `:139` and `:214` keep `@keydown.escape.stop`, because they close menus when focus is on the button;
+6. change all 10 `tabindex="0"` on `<li role="menuitem*">` to `tabindex="-1"`.
 
-- [ ] **Step 9.8: Run tests**
+<!-- Separate lists. -->
+
+8. [ ] **Step 9.8: Run tests**
 
 Run: `npx vitest run tests/unit/components tests/unit/composables`
-Expected: PASS, включно з наявними Enter/Space/Escape-тестами `PlayerRow`.
+Expected: PASS, including existing `PlayerRow` Enter/Space/Escape tests.
 
 Run: `npm run typecheck && npm run lint`
-Expected: без помилок.
+Expected: no errors.
 
-- [ ] **Step 9.9: Manual check**
+9. [ ] **Step 9.9: Manual check**
 
-`npm run dev`, кімната: Tab до кнопки палітри, Enter - фокус на першому пункті; стрілки циклічно; Escape повертає
-фокус на кнопку; Tab з відкритого меню виходить із нього. Те саме для меню акаунта і меню гравця. Вибір пункту
-«Історія раундів» відкриває модалку, після закриття фокус повертається на кнопку акаунта (Task 6 + цей крок).
+Run `npm run dev` and enter a room: Tab to the palette button, then press Enter to focus the first item; arrow keys wrap; Escape returns
+focus to the button; Tab exits the open menu. Repeat for the account and player menus. Selecting
+«Історія раундів» (Round history) opens a modal; after it closes, focus returns to the account button (Task 6 + this step).
 
-- [ ] **Step 9.10: Commit**
+10. [ ] **Step 9.10: Commit**
 
 ```bash
 git add app/composables/useMenuKeyboard.ts app/components/PlayerRow.vue app/components/AppHeader.vue \
@@ -1369,17 +1383,19 @@ git commit -m "feat: arrow-key navigation and focus return for role=menu dropdow
 
 ---
 
-### Task 10: Іменовані пороги Goal Clarity (F-9)
+### Task 10: Named Goal Clarity thresholds (F-9)
 
 **Files:**
-- Modify: `app/utils/cardDecks.ts` (після `DECK_PRESETS`)
-- Modify: `app/components/ResultsArea.vue:7, 50-61`
-- Modify: `DESIGN.md` §11.7 (після списку порогів, рядок ~468)
-- Test: `tests/unit/utils/cardDecks.spec.ts`
+1. Modify: `app/utils/cardDecks.ts` (after `DECK_PRESETS`)
+2. Modify: `app/components/ResultsArea.vue:7, 50-61`
+3. Modify: `DESIGN.md` §11.7 (after the thresholds list, line ~468)
+4. Test: `tests/unit/utils/cardDecks.spec.ts`
 
-- [ ] **Step 10.1: Write the failing test**
+<!-- Separate lists. -->
 
-Додати в `describe('cardDecks')`:
+1. [ ] **Step 10.1: Write the failing test**
+
+Add to `describe('cardDecks')`:
 
 ```ts
   it('exposes the goal clarity thresholds as named constants', () => {
@@ -1387,26 +1403,26 @@ git commit -m "feat: arrow-key navigation and focus return for role=menu dropdow
   })
 ```
 
-і розширити імпорт: `import { getDeck, GOAL_CLARITY_THRESHOLDS } from '~/utils/cardDecks'`.
+and extend the import: `import { getDeck, GOAL_CLARITY_THRESHOLDS } from '~/utils/cardDecks'`.
 
-- [ ] **Step 10.2: Run test to verify it fails**
+2. [ ] **Step 10.2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/utils/cardDecks.spec.ts`
-Expected: FAIL - `GOAL_CLARITY_THRESHOLDS` не експортовано.
+Expected: FAIL - `GOAL_CLARITY_THRESHOLDS` is not exported.
 
-- [ ] **Step 10.3: Add the constants**
+3. [ ] **Step 10.3: Add the constants**
 
-У `app/utils/cardDecks.ts` після масиву `DECK_PRESETS` (перед `VOTING_BASE_CARDS`) додати:
+In `app/utils/cardDecks.ts`, add after the `DECK_PRESETS` array (before `VOTING_BASE_CARDS`):
 
 ```ts
 export const GOAL_CLARITY_THRESHOLDS = { clear: 3.5, unclear: 2.5 } as const
 ```
 
-- [ ] **Step 10.4: Use them in `ResultsArea.vue`**
+4. [ ] **Step 10.4: Use them in `ResultsArea.vue`**
 
-Додати імпорт після рядка 7: `import { GOAL_CLARITY_THRESHOLDS } from '~/utils/cardDecks'`.
+Add the import after line 7: `import { GOAL_CLARITY_THRESHOLDS } from '~/utils/cardDecks'`.
 
-Замінити `:50-61`:
+Replace `:50-61`:
 
 ```ts
 const goalClarityScoreColor = computed(() => {
@@ -1423,21 +1439,21 @@ const showGoalClarityHint = computed(() => {
 })
 ```
 
-- [ ] **Step 10.5: Document the origin in `DESIGN.md` §11.7**
+5. [ ] **Step 10.5: Document the origin in `DESIGN.md` §11.7**
 
-Після рядка `- \`< 2.5\` - червоний \`#e64a19\`` додати абзац:
+After the line `- \`< 2.5\` - червоний \`#e64a19\`` (red), add the paragraph:
 
 ```markdown
-Пороги `3.5` / `2.5` - продуктове рішення власника, а не похідна з даних; у коді вони живуть як
-`GOAL_CLARITY_THRESHOLDS` (`app/utils/cardDecks.ts`) поруч із пресетом, і зсув межі означає зміну саме там.
+The `3.5` / `2.5` thresholds are the owner's product decision and are not derived from data. In code, they live as
+`GOAL_CLARITY_THRESHOLDS` (`app/utils/cardDecks.ts`) beside the preset; change them there when shifting a boundary.
 ```
 
-- [ ] **Step 10.6: Run tests**
+6. [ ] **Step 10.6: Run tests**
 
 Run: `npx vitest run tests/unit/utils/cardDecks.spec.ts && npm run typecheck`
 Expected: PASS.
 
-- [ ] **Step 10.7: Commit**
+7. [ ] **Step 10.7: Commit**
 
 ```bash
 git add app/utils/cardDecks.ts app/components/ResultsArea.vue DESIGN.md tests/unit/utils/cardDecks.spec.ts
@@ -1446,22 +1462,24 @@ git commit -m "refactor: name the goal clarity thresholds"
 
 ---
 
-### Task 11: Фінальна верифікація й закриття аудиту
+### Task 11: Final verification and audit closure
 
 **Files:**
-- Modify: `docs/audits/2026-09-07-frontend-design-audit.md` (шапка)
-- Modify: `docs/specs/2026-09-08-frontend-audit-remediation-design.md` (статус)
+1. Modify: `docs/audits/2026-09-07-frontend-design-audit.md` (header)
+2. Modify: `docs/specs/2026-09-08-frontend-audit-remediation-design.md` (status)
 
-- [ ] **Step 11.1: Run the CI check and page-load e2e**
+<!-- Separate lists. -->
+
+1. [ ] **Step 11.1: Run the CI check and page-load e2e**
 
 ```bash
 npm run test:ci
 npm run test:e2e:pages
 ```
 
-Expected: обидва зелені.
+Expected: both pass.
 
-- [ ] **Step 11.2: Re-run the audit's static checks**
+2. [ ] **Step 11.2: Re-run the audit's static checks**
 
 ```bash
 rg -c 'prefers-reduced-motion' app/assets/css/main.css
@@ -1472,24 +1490,24 @@ rg -n 'ArrowDown' app/composables/useMenuKeyboard.ts
 rg -n 'role="status"' "app/pages/[slug].vue"
 ```
 
-Expected: `1`; один рядок; `8` (7 сторінок + not-found-гілка кімнати); три `aria-label`; один хіт; один хіт.
+Expected: `1`; one line; `8` (7 pages + the room not-found branch); three `aria-label` entries; one hit; one hit.
 
-- [ ] **Step 11.3: Mark the audit as remediated**
+3. [ ] **Step 11.3: Mark the audit as remediated**
 
-У шапку `docs/audits/2026-09-07-frontend-design-audit.md` після рядка `- Перший аудит проєкту: …` додати:
+In the header of `docs/audits/2026-09-07-frontend-design-audit.md`, after the line `- Перший аудит проєкту: …` (first project audit), add:
 
 ```markdown
-- Статус: F-1…F-11 закриті планом `docs/plans/2026-09-08-frontend-audit-remediation.md` (2026-09-08);
-  відкритими лишаються runtime-пункти з секції «Не перевірено»
+- Status: F-1…F-11 are closed by `docs/plans/2026-09-08-frontend-audit-remediation.md` (2026-09-08);
+  runtime items in the «Не перевірено» (Not checked) section remain open
 ```
 
-У спеці змінити `**Статус:** проєкт` на `**Статус:** реалізовано`.
+In the spec, change `**Статус:** проєкт` (Status: draft) to `**Статус:** реалізовано` (Status: implemented).
 
-- [ ] **Step 11.4: Commit**
+4. [ ] **Step 11.4: Commit**
 
 ```bash
 git add docs/audits/2026-09-07-frontend-design-audit.md docs/specs/2026-09-08-frontend-audit-remediation-design.md
 git commit -m "docs: mark frontend audit findings as remediated"
 ```
 
-Далі - `finishing-a-development-branch`: PR у `main`, squash-merge після зелених `test` / `page-load`.
+Next, use `finishing-a-development-branch`: open a PR into `main` and squash-merge after `test` / `page-load` pass.

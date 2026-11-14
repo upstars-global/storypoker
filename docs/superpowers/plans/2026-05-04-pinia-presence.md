@@ -1827,16 +1827,16 @@ Replace the existing tree with:
 app/
 ├── app.vue
 ├── pages/
-│   ├── index.vue          # Головна (створення кімнати)
-│   └── [slug].vue         # Кімната (URL: /<roomId>, без /room/)
+│   ├── index.vue          # Home (room creation)
+│   └── [slug].vue         # Room (URL: /<roomId>, without /room/)
 ├── components/            # AppHeader, CardsArea, PlayersList, ConnectionBanner, ...
 ├── composables/           # useTheme, useDylanAvatar (auth/room/players → stores)
 ├── stores/                # auth, room, players, presence (Pinia)
 ├── plugins/               # supabase, vWave, clickOutside
 ├── lib/                   # supabase-instance (singleton getter)
 └── utils/                 # roomId (8-char ID), relativeTime
-assets/css/main.css        # MUI-like класи
-supabase/migrations/       # SQL міграції (001 initial, 002 drop is_online)
+assets/css/main.css        # MUI-like classes
+supabase/migrations/       # SQL migrations (001 initial, 002 drop is_online)
 ```
 
 - [ ] **Step 3: Confirm CLAUDE.md still ≤ 200 lines**

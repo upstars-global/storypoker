@@ -1,63 +1,63 @@
-# Локальна доставка іконок і перевірка міграції inline SVG → CSS mask
+# Local icon delivery and inline SVG to CSS mask migration verification
 
-**Дата:** 2026-09-09
-**Статус:** реалізовано. Локальна доставка завершена: усі іконки рендеряться з закомічених даних без мережевих
-запитів. A/B рендеру виконано - чистий mask провалив візуальний поріг (`app:town-hall` втрачає прапор), тож
-обрано **mixed**: CSS mask для монохромних, inline SVG для кольорових винятків. Окремий план інтеграції згорнуто
-в цю гілку: mixed зібрано й виміряно на production-графі (-5 423 B gzip JS+CSS, `@iconify/vue` прибрано з
-бандла). Пороги й заміри - [аудит 2026-09-09](../audits/2026-09-09-icon-rendering-ab.md),
-план - [A/B рендеру](../plans/2026-09-09-icon-rendering-ab.md).
-**Джерело:** заміри в браузері на `localhost:5173` (storypoker) і `localhost:3000` (agilecharts, після логіну)
-2026-09-09 + `app/components/AGENTS.md` §Іконки
+**Date:** 2026-09-09
+**Status:** Implemented. Local delivery is complete: all icons render from committed data without network
+requests. The rendering A/B test is complete - pure mask failed the visual threshold (`app:town-hall` loses its flag), so
+**mixed** was selected: CSS mask for monochrome icons and inline SVG for color exceptions. The separate integration plan was folded
+into this branch: mixed was built and measured on the production graph (-5 423 B gzip JS+CSS, `@iconify/vue` removed from
+bundle). Thresholds and measurements: [2026-09-09 audit](../audits/2026-09-09-icon-rendering-ab.md),
+plan: [rendering A/B](../plans/2026-09-09-icon-rendering-ab.md).
+**Source:** Browser measurements on `localhost:5173` (storypoker) and `localhost:3000` (agilecharts, after login)
+on 2026-09-09 + `app/components/AGENTS.md` §Іконки (Icons)
 
-## Контекст
+## Context
 
-Зараз кожна іконка рендериться як inline `<svg>` через `<Icon>` з `@iconify/vue` (`AppIcon.vue`). Заміри
-показали дві окремі проблеми: вагу розмітки і зовнішню мережеву залежність.
+Each icon currently renders as an inline `<svg>` through `<Icon>` from `@iconify/vue` (`AppIcon.vue`). Measurements
+showed two separate problems: markup weight and an external network dependency.
 
-### Заміри storypoker (dev, viewport 1440×900)
+### storypoker measurements (dev, viewport 1440×900)
 
-| Сторінка | inline `<svg>` | байтів SVG у DOM | середній розмір | DOM-вузлів |
+| Page | inline `<svg>` | SVG bytes in DOM | average size | DOM nodes |
 | --- | --- | --- | --- | --- |
 | `/` (home) | 5 | 2 752 B | 550 B | 63 |
-| кімната, 1 гравець | 19 | 10 380 B | 546 B (max 851 B) | 213 |
-| кімната, 8 гравців | 33 (18 унікальних) | 17 688 B | 536 B | 325 |
+| room, 1 player | 19 | 10 380 B | 546 B (max 851 B) | 213 |
+| room, 8 players | 33 (18 unique) | 17 688 B | 536 B | 325 |
 
-Це попередні dev-заміри різних станів UI; колонка DOM-вузлів описує сторінку, а не лише іконки.
-`outerHTML` вимірює серіалізовану розмітку, а не мережевий трафік чи пам’ять DOM. У SPA кожен екземпляр
-створює власні SVG-елементи, проте дані тієї самої іконки можуть повторно використовуватися з кешу Iconify.
-Повторення `<path>` не означає повторного завантаження його даних.
+These are preliminary dev measurements of different UI states; the DOM node column describes the page, not only icons.
+`outerHTML` measures serialized markup, not network traffic or DOM memory. In the SPA each instance
+creates its own SVG elements, but data for the same icon may be reused from the Iconify cache.
+Repeating `<path>` does not mean its data is downloaded again.
 
-### Основний сценарій: `/core-platform`
+### Main scenario: `/core-platform`
 
-Два прогони Chromium у чистих контекстах, dev, viewport 1440×900. У кімнаті 15 гравців; стан до приєднання,
-з відкритим запрошенням. Гравця для аудиту не створювали. Обидва прогони дали однакові результати:
+Two Chromium runs in clean contexts, dev, viewport 1440×900. The room has 15 players; the state is before joining,
+with the invitation open. No player was created for the audit. Both runs produced identical results:
 
-- 27 SVG-іконок, 10 унікальних за `viewBox` + вмістом; частоти: 14, 3, 3 і сім одиничних.
-- 17 430 B `outerHTML` у UTF-8, 57 DOM-елементів іконок, 428 елементів усього документа.
-- 3 запити до `api.iconify.design`: група `ic:round-account-circle/close/dark-mode/palette/volume-down`,
-  `tabler:dice-1` ... `dice-6`, група `ic:round-casino/check-circle`.
+1. 27 SVG icons, 10 unique by `viewBox` + content; frequencies: 14, 3, 3 and seven single occurrences.
+2. 17 430 B of `outerHTML` in UTF-8, 57 icon DOM elements, 428 elements in the whole document.
+3. 3 requests to `api.iconify.design`: group `ic:round-account-circle/close/dark-mode/palette/volume-down`,
+   `tabler:dice-1` ... `dice-6`, group `ic:round-casino/check-circle`.
 
-Для тих самих SVG розраховано span з поточними класами, стилями й розмірами та по одному CSS-правилу з SVG
-data URI на унікальну іконку плюс спільне правило маски:
+For the same SVGs, a span was calculated with the current classes, styles and dimensions, with one CSS rule containing an SVG
+data URI per unique icon plus a shared mask rule:
 
-| Метрика | Поточний SVG | Розрахунковий span + mask |
+| Metric | Current SVG | Estimated span + mask |
 | --- | ---: | ---: |
-| Розмітка іконок | 17 430 B | 4 668 B |
-| CSS лише 10 іконок цього знімка | не вимірюється тут | 6 153 B |
-| DOM-елементи іконок | 57 | 27 |
+| Icon markup | 17 430 B | 4 668 B |
+| CSS for only the 10 icons in this snapshot | not measured here | 6 153 B |
+| Icon DOM elements | 57 | 27 |
 
-Оцінка дає приблизно 73% скорочення розмітки та 30 елементів менше (приблизно 7% сторінки).
-Це розрахунок представлення, а не виконана міграція, перевірка візуалу чи замір paint.
-Суму розмітки й CSS цього знімка не використовуємо як порівняння вартості A/B: статичний B міститиме
-правила всього manifest, а A після кроку 1 міститиме локальні SVG-дані у JS.
-Порівнювати треба окремо DOM сторінки та повні production JS/CSS обох варіантів, включно з даними й runtime.
-Якщо B залишає JSON поряд із CSS, ця дубльована вага також входить у його бюджет.
-Універсального порога вигоди на кшталт 1,5-2 повторень немає: він залежить від SVG, кодування, класів і стиснення.
+The estimate gives approximately 73% less markup and 30 fewer elements (approximately 7% of the page).
+This is a representation estimate, not a completed migration, visual check or paint measurement.
+The sum of markup and CSS in this snapshot is not used as an A/B cost comparison: static B will contain
+rules for the entire manifest, while A after step 1 will contain local SVG data in JS.
+Compare the page DOM and complete production JS/CSS for both variants separately, including data and runtime.
+If B keeps JSON alongside CSS, that duplicated weight also counts toward its budget.
+There is no universal benefit threshold such as 1.5-2 repetitions: it depends on SVG, encoding, classes and compression.
 
-### Зовнішні запити до Iconify API
+### External requests to the Iconify API
 
-У попередньому сценарії входу в кімнату спостерігали **6** запитів на `api.iconify.design`:
+In the earlier room-entry scenario, **6** requests to `api.iconify.design` were observed:
 
 ```
 ic.json?icons=round-account-circle,round-dark-mode,round-palette,round-volume-down
@@ -69,338 +69,288 @@ ic.json?icons=round-fast-forward,round-fast-rewind,round-more-vert,round-pause,r
 lucide.json?icons=undo
 ```
 
-Це прямо суперечить `app/components/AGENTS.md:14`, який називає `ic` «єдиною offline-колекцією».
-`@iconify-json/ic` **встановлений** (`package.json:30`), але `addCollection` викликається лише для префікса `app`
-(`app/lib/registerAppIcons.ts:36`); сам `ic` не імпортується в `app/` ніде. Наслідки:
+This directly contradicts `app/components/AGENTS.md:14`, which calls `ic` «єдиною offline-колекцією» ("the only offline collection").
+`@iconify-json/ic` **is installed** (`package.json:30`), but `addCollection` is called only for the `app` prefix
+(`app/lib/registerAppIcons.ts:36`); `ic` itself is not imported anywhere in `app/`. Consequences:
 
-- іконки з’являються після мережевої відповіді; layout shift залежить від зарезервованих розмірів і потребує заміру;
-- офлайн є ризик відсутності некешованих іконок: `runtimeCaching` у `vite.config.ts` покриває лише Google Fonts,
-  а Iconify JSON не входить у precache app shell. `autoUpdate` керує оновленням service worker;
-- залежність від сторонього CDN у рантаймі продакшену;
-- пакет `ic` містить і `baseline-*`, і `round-*`; обидва шляхи потребують локальної реєстрації;
-- `loadIcons` імпортується у `PlayerRow.vue:3`, а викликається біля `DICE_FACES` (рядок 67 на цьому checkout).
-  Це явний асинхронний prefetch для dice.
+1. Icons appear after the network response; layout shift depends on reserved dimensions and needs measurement.
+2. Offline, uncached icons may be missing: `runtimeCaching` in `vite.config.ts` covers only Google Fonts,
+   and Iconify JSON is not in the app shell precache. `autoUpdate` controls service worker updates.
+3. A third-party CDN dependency in the production runtime.
+4. The `ic` package contains both `baseline-*` and `round-*`; both paths require local registration.
+5. `loadIcons` is imported in `PlayerRow.vue:3` and called near `DICE_FACES` (line 67 in this checkout).
+   This is an explicit asynchronous prefetch for dice.
 
-Кількість запитів залежить від UI, кешу й batching. Їх перелік не доводить послідовних залежних round-trip’ів.
+The number of requests depends on the UI, cache and batching. Their list does not prove sequential dependent round trips.
 
-### Референс: agilecharts (`@nuxt/icon`, CSS mask mode)
+### Reference: agilecharts (`@nuxt/icon`, CSS mask mode)
 
-Це одноразовий діагностичний знімок іншого checkout, без вимоги доступу до нього для реалізації або CI.
+This is a one-time diagnostic snapshot of another checkout, with no requirement to access it for implementation or CI.
 
-Після логіну (креди з `agilecharts/.env/.env.local`, `DEV_USER`/`DEV_PASS`):
+After login (credentials from `agilecharts/.env/.env.local`, `DEV_USER`/`DEV_PASS`):
 
-Повторна перевірка у двох чистих контекстах після входу; `/teammates` відкривали жорсткою навігацією після `/`:
+A repeat check in two clean contexts after login; `/teammates` was opened by hard navigation after `/`:
 
-| Сторінка | span-іконок | байтів розмітки іконок | запитів даних іконок |
+| Page | span icons | icon markup bytes | icon data requests |
 | --- | ---: | ---: | --- |
-| `/` | 157 | 16 798 B | 9 до власного API |
-| `/teammates` | 2 452 | 282 776 B | 3 до власного API |
+| `/` | 157 | 16 798 B | 9 to its own API |
+| `/teammates` | 2 452 | 282 776 B | 3 to its own API |
 
-Окремий замір, наданий у рев’ю, оцінює CSS-правила головної agilecharts у 47 KB для 53 унікальних іконок.
-У цій сесії CSS-байти не перевимірювалися; спосіб серіалізації та сирий артефакт не надані.
-Ця оцінка не входить до колонки `outerHTML` і не є вагою майбутнього B у storypoker.
+A separate measurement provided in review estimates the CSS rules for the agilecharts home page at 47 KB for 53 unique icons.
+CSS bytes were not remeasured in this session; the serialization method and raw artifact were not provided.
+This estimate is not included in the `outerHTML` column and is not the weight of the future B in storypoker.
 
-Розмітка одного екземпляра:
+Markup for one instance:
 
 ```html
 <span class="iconify i-lucide:sun" aria-hidden="true" style="font-size:16px;"></span>
 ```
 
-SVG міститься у спільному CSS-правилі `mask-image: url("data:image/svg+xml,…")`.
-Agilecharts завантажує дані через `/api/_nuxt_icon/*`. Відсутність прямих звернень браузера до публічного
-Iconify API не означає відсутності мережі; серверні звернення цим аудитом не вимірювалися.
-CSS mask сам по собі не забезпечує офлайн-роботу.
+The SVG is in a shared CSS rule `mask-image: url("data:image/svg+xml,…")`.
+Agilecharts loads data through `/api/_nuxt_icon/*`. The absence of direct browser calls to the public
+Iconify API does not mean there is no network; server-side calls were not measured in this audit.
+CSS mask alone does not provide offline operation.
 
-**Два застереження щодо переносності цього референсу:**
+**Two portability caveats for this reference:**
 
-- **SSR не переноситься.** Іконки присутні в SSR-документі `/login` (8 × `mask-image` у вбудованому CSS), але це
-  властивість Nuxt/SSR, а не режиму рендеру. storypoker - Vite SPA; іконок у первинному документі не буде за
-  будь-якого режиму. Це не аргумент за міграцію.
-- **Механізм інший, ніж Tailwind-плагін.** `@nuxt/icon` не використовує Tailwind: у трейсі видно
-  `@nuxt/icon/dist/runtime/components/css.js` + `@iconify/utils/lib/css/icon.js` - правило `mask-image`
-  інжектується **в рантаймі** для унікальної іконки. Це один зі способів підтримати динамічний біндинг;
-  для скінченного набору також придатна статична генерація CSS (див. §Рішення, крок 2).
+1. **SSR does not transfer.** Icons are present in the SSR document `/login` (8 × `mask-image` in inline CSS), but this
+   is a property of Nuxt/SSR, not the render mode. storypoker is a Vite SPA; icons will not be in the initial document under
+   any mode. This is not an argument for migration.
+2. **The mechanism differs from a Tailwind plugin.** `@nuxt/icon` does not use Tailwind: the trace shows
+   `@nuxt/icon/dist/runtime/components/css.js` + `@iconify/utils/lib/css/icon.js` - a `mask-image` rule
+   is injected **at runtime** for each unique icon. This is one way to support dynamic binding;
+   static CSS generation is also suitable for a finite set (see §Decision, step 2).
 
-Масштаб повторів залежить від сторінки й стану кімнати. `/core-platform` уже має вимірюваний потенціал
-скорочення DOM. Остаточний висновок щодо SVG/span має враховувати A/B-тестування на однаковому стані
-storypoker. Порівняння двох різних dev-застосунків не ізолює швидкість рендерера.
+The scale of repetition depends on the page and room state. `/core-platform` already has measurable potential
+for DOM reduction. The final SVG/span conclusion must account for A/B testing with the same storypoker state.
+Comparing two different dev applications does not isolate renderer speed.
 
-## Мета
+## Goal
 
-Прибрати рантайм-залежність від `api.iconify.design`, зменшити вагу розмітки й кількість DOM-вузлів на іконку,
-зберігши поточний API компонента (`<AppIcon icon="ic:baseline-close" />`) і обидва фіче-флаги.
+Remove the runtime dependency on `api.iconify.design`, reduce markup weight and DOM nodes per icon,
+while preserving the current component API (`<AppIcon icon="ic:baseline-close" />`) and both feature flags.
 
-## Обсяг
+## Scope
 
-53 використання `<AppIcon>` у 11 Vue-файлах (`rg` лише по `*.vue`; приклад в AGENTS.md виключено).
-Використовувані колекції за замірами репозиторію:
+53 uses of `<AppIcon>` in 11 Vue files (`rg` only over `*.vue`; the example in AGENTS.md is excluded).
+Collections in use according to repository measurements:
 
-| Колекція | Унікальних іконок | Звідки |
+| Collection | Unique icons | Source |
 | --- | --- | --- |
-| `lucide` | 44 значення map + прямі імена | **цільовий пак**, також `lucide:undo` і `lucide:id-card` |
-| `ic` | baseline + rounded | поточний дефолт і fallback-імена поза map |
-| `tabler` | ~13 | слот-машина, картки, дайси |
-| `app` | 9 | локальні SVG, уже офлайн |
+| `lucide` | 44 map values + direct names | **target pack**, also `lucide:undo` and `lucide:id-card` |
+| `ic` | baseline + rounded | current default and fallback names outside the map |
+| `tabler` | ~13 | slot machine, cards, dice |
+| `app` | 9 | local SVGs, already offline |
 
-Точну кількість і вагу визначає manifest реально досяжних вхідних імен `AppIcon` та їх remap для всіх флагів.
-Попередня оцінка близько 160 іконок не враховувала повний rounded-набір і не є бюджетом.
+The exact count and weight are determined by the manifest of actually reachable `AppIcon` input names and their remapping across all flags.
+The earlier estimate of about 160 icons did not account for the full rounded set and is not a budget.
 
-`simple-icons` і `game-icons` лишилися в legacy `SHIELD_CATALOG`. Поточний `PlayerRow` отримує текстову роль
-через `roleTagForShields`, а `RoleBadge` показує tag. `shieldForRoleTag()` повертає ID або `custom:<tag>`;
-`custom:` тут не є префіксом колекції іконок. Ці legacy колекції виключено з міграції поточного UI.
+`simple-icons` and `game-icons` remain in the legacy `SHIELD_CATALOG`. The current `PlayerRow` obtains a text role
+through `roleTagForShields`, and `RoleBadge` displays the tag. `shieldForRoleTag()` returns an ID or `custom:<tag>`;
+`custom:` is not an icon collection prefix here. These legacy collections are excluded from the current UI migration.
 
-### Цільовий пак - `lucide`
+### Target pack - `lucide`
 
-**Продуктовий намір: більшість іконок переходить на `lucide`.** `MDI_TO_LUCIDE` (`iconMap.ts`) містить
-44 відповідники; покриття досяжного UI визначає manifest. Прапорець `iconsLucide` зараз `enabled: false`
-(`app/configs/featureFlags.ts:14-16`) - тобто пак уже підготовлений, але не активований.
+**Product intent: most icons move to `lucide`.** `MDI_TO_LUCIDE` (`iconMap.ts`) contains
+44 mappings; the manifest determines coverage of the reachable UI. The `iconsLucide` flag is currently `enabled: false`
+(`app/configs/featureFlags.ts:14-16`) - the pack is prepared but not enabled.
 
-Наслідки для кроку 1, які треба врахувати явно:
+Consequences for step 1 that must be addressed explicitly:
 
-- **`lucide` - пріоритетна колекція для локальної реєстрації**, включно з прямими використаннями поза map.
-- **`ic` не можна прибрати навіть після повного переходу.** 9 використовуваних іконок не мають запису в
-  `MDI_TO_LUCIDE` і за поточною логікою `mapIconName()` падають у fallback на raw-ім’я:
-  `ic:baseline-add-a-photo`, `ic:baseline-casino`, `ic:baseline-check`, `ic:baseline-language`,
-  `ic:baseline-palette`, `ic:baseline-timer`, `ic:baseline-trending-down`, `ic:baseline-trending-flat`,
-  `ic:baseline-trending-up`. Обидві колекції потрібні для поточних флагів; навіть доповнення map не прибере
-  `ic` зі шляху з вимкненим Lucide. Зміна цього контракту є окремою продуктовою задачею.
-- **Поки `iconsLucide` вимкнений, локально потрібні обидва набори** - інакше вмикання прапорця знову піде в
-  мережу. Це та сама вимога «обидва варіанти», що й для `iconsRounded`.
-- Якщо ухвалюється рішення зробити `lucide` дефолтом (прапорець → `true` або видалення розгалуження), це
-  окрема продуктова зміна поза обсягом цієї спеки; спека лише гарантує, що обидва шляхи працюють офлайн.
+1. **`lucide` is the priority collection for local registration**, including direct uses outside the map.
+2. **`ic` cannot be removed even after a full transition.** 9 icons in use have no entry in
+   `MDI_TO_LUCIDE` and, under the current `mapIconName()` logic, fall back to the raw name:
+   `ic:baseline-add-a-photo`, `ic:baseline-casino`, `ic:baseline-check`, `ic:baseline-language`,
+   `ic:baseline-palette`, `ic:baseline-timer`, `ic:baseline-trending-down`, `ic:baseline-trending-flat`,
+   `ic:baseline-trending-up`. Both collections are needed for the current flags; even adding to the map will not remove
+   `ic` from the path with Lucide disabled. Changing this contract is a separate product task.
+3. **While `iconsLucide` is disabled, both sets are needed locally** - otherwise enabling the flag will go to
+   the network again. This is the same requirement «обидва варіанти» ("both variants") as for `iconsRounded`.
+4. If the decision is made to make `lucide` the default (flag → `true` or removing the branch), this is
+   a separate product change outside this spec's scope; the spec only guarantees that both paths work offline.
 
-## Рішення
+## Decision
 
-### Крок 1 (обов’язковий, окремий від решти): усунути мережу
+### Step 1 (mandatory, separate from the rest): eliminate network requests
 
-Незалежно від подальшого вибору режиму рендеру, всі колекції треба доставляти локально:
+Regardless of the subsequent rendering mode, deliver all collections locally:
 
-- додати build-залежності `@iconify-json/lucide` і `@iconify-json/tabler` (`@iconify-json/ic` уже є);
-- зібрати manifest із досяжних літералів, скінченних динамічних наборів і результатів `mapIconName()` для
-  всіх чотирьох комбінацій флагів; включити fallback та прямі імена;
-- відібрати дані **під час збірки**, зберігши потрібні aliases/батьківські дані й розміри або розв’язавши
-  їх у повні записи. Runtime-фільтрація повного імпортованого JSON не гарантує малого бандла;
-- зареєструвати subset `lucide`, `ic`, `tabler` через `addCollection` до mount, зберігши локальну `app`;
-- перевірити production артефакт на відсутність повних колекцій, записати raw/gzip JS/CSS до і після;
-- **бюджет і chunking:** generated JSON реєструється синхронно з `main.ts` і потрапляє в entry chunk. Приріст
-  entry chunk обмежено **25 KB gzip** відносно baseline до кроку 1. Якщо стелю перевищено, дані `lucide`
-  виносяться в окремий chunk і підвантажуються через `await import()` до mount лише при увімкненому
-  `iconsLucide`; `ic` і `tabler` лишаються в entry chunk. Рішення фіксується в звіті аудиту збірки;
-- прибрати імпорт і виклик `loadIcons` з `PlayerRow.vue` разом із застарілим коментарем над `DICE_FACES`;
-  сам масив і механіку анімації зберегти;
-- у тому самому PR оновити `app/components/AGENTS.md`: фактична локальна доставка, 9 `app`-іконок
-  включно з `timer`, актуальні колекції та правило підтримки manifest. Зараз документ помилково називає `ic`
-  offline-колекцією. Оновлення виконати через `maintaining-agent-context`.
+1. Add the build dependencies `@iconify-json/lucide` and `@iconify-json/tabler` (`@iconify-json/ic` is already present).
+2. Build a manifest from reachable literals, finite dynamic sets, and the results of `mapIconName()` for all four flag combinations; include the fallback and direct names.
+3. Select data **at build time**, retaining required aliases, parent data, and dimensions or resolving them into complete records. Runtime filtering of the full imported JSON does not guarantee a small bundle.
+4. Register the `lucide`, `ic`, and `tabler` subsets via `addCollection` before mount, retaining the local `app` collection.
+5. Check the production artifact for full collections and record raw/gzip JS/CSS before and after.
+6. **Budget and chunking:** generated JSON is registered synchronously from `main.ts` and enters the entry chunk. The entry chunk increase is limited to **25 KB gzip** relative to the baseline before step 1. If the limit is exceeded, move `lucide` data to a separate chunk and load it with `await import()` before mount only when `iconsLucide` is enabled; `ic` and `tabler` remain in the entry chunk. Record the decision in the build audit report.
+7. Remove the `loadIcons` import and call from `PlayerRow.vue`, along with the obsolete comment above `DICE_FACES`; preserve the array and animation behavior.
+8. In the same PR, update `app/components/AGENTS.md`: actual local delivery, 9 `app` icons including `timer`, current collections, and the manifest maintenance rule. The document currently incorrectly calls `ic` an offline collection. Make the update through `maintaining-agent-context`.
 
-Це усуває зовнішнє завантаження даних іконок. Вплив на час появи іконок і CLS перевіряється замірами.
+This eliminates external icon data loading. Measure the effect on icon appearance time and CLS.
 
-Крок 1 закривається без fixture кімнати та harness: повноту manifest доводить Vitest-тест, який після
-реєстрації subset перевіряє `iconLoaded()` для кожного вхідного імені в усіх чотирьох комбінаціях флагів,
-а відсутність мережі - браузерний тест публічних сторінок з блокуванням провайдерів. Fixture, contact sheet
-і офлайн-перевірка кімнати належать A/B-плану.
+Step 1 can be completed without a room fixture and harness: a Vitest test proves manifest completeness by checking `iconLoaded()` for every input name in all four flag combinations after subset registration, and a browser test of public pages with providers blocked verifies the absence of network requests. The fixture, contact sheet, and offline room check belong to the A/B plan.
 
-**Важливо для `iconsRounded`:** флаг ремапить у `ic:round-*`, тож у локальний набір мають потрапити **обидва**
-варіанти кожної `ic`-іконки (`baseline-` і `round-`), інакше флаг знову піде в мережу. Те саме для `iconsLucide`
-і `MDI_TO_LUCIDE`.
+**Important for `iconsRounded`:** the flag remaps to `ic:round-*`, so the local set must contain **both** variants of each `ic` icon (`baseline-` and `round-`); otherwise the flag will trigger network requests again. The same applies to `iconsLucide` and `MDI_TO_LUCIDE`.
 
-### Механізм subset і перевірка дрейфу
+### Subset mechanism and drift detection
 
-У кроці 1 створити такі артефакти; їх поки немає в репозиторії:
+Create the following artifacts in step 1; they do not yet exist in the repository:
 
-- `app/utils/iconManifest.ts`: явний типізований список `inputNames: readonly string[]` для досяжних
-  вхідних імен і перелік скінченних динамічних наборів. Сортування й дедуплікація детерміновані.
-  Карта Lucide залишається окремою; будувати subset з усіх її значень, включно з legacy, не потрібно.
-- Чистий resolver `resolveIconName(name, { iconsLucide, iconsRounded })` з поточною логікою remap;
-  `mapIconName()` лишається публічною функцією, що читає кешовані флаги та делегує resolver.
-  Generator і тести використовують resolver без browser state. Поведінка API та пріоритет флагів зберігаються.
-- Node-скрипт `scripts/generate-icons.ts`: додати пряму devDependency `@iconify/utils`, читати JSON
-  колекцій тільки в Node, застосувати resolver до inputNames для чотирьох комбінацій флагів, згрупувати
-  унікальні результати за префіксом. Для кожного імені використати `getIconData()` з Iconify utils,
-  отримати повні дані з aliases, розмірами й трансформаціями; відсутні записи завершують генерацію помилкою.
-  Локальні `app:` перевіряти проти чинної реєстрації; їхній raw-SVG шлях зберігається.
-- Генерувати committed `app/generated/iconCollections.json` лише з потрібними повними записами.
-  Браузер імпортує цей файл; імпорти `@iconify-json/*` та генератор залишаються поза browser graph.
-  Команда `icons:generate` оновлює файл; `icons:check` генерує в пам’яті та порівнює з committed результатом.
-  `icons:check` додати до `test:ci` і чинного required job Typecheck, щоб CI не покладався на npm lifecycle.
-- Початковий manifest скласти з фактичних споживачів. Для автоматичної перевірки додати сканування AST:
-  `@vue/compiler-sfc` як пряма devDependency для Vue template/script і TypeScript compiler API для TS.
-  Шукати повні icon-літерали в `app/**/*.vue` та `app/**/*.ts`; generated, legacy `SHIELD_CATALOG`
-  та внутрішні літерали resolver мають явні вузькі винятки з причинами.
-  Літерал поза inputNames або mapped outputs завершує check помилкою.
-- Для кожного динамічного `:icon` вести перелік джерела та допустимих значень; новий динамічний binding
-  без запису завершує check помилкою. Значення dice/slot/volume/theme/password перевіряти окремими тестами
-  проти реальних масивів і функцій. AST-сканер не доводить довільний runtime data flow.
-  Додати негативні тести: новий literal, новий binding, пропущений fallback і відсутній alias.
+1. `app/utils/iconManifest.ts`: an explicit typed `inputNames: readonly string[]` list of reachable input names and a list of finite dynamic sets. Sorting and deduplication are deterministic. The Lucide map remains separate; building the subset from all its values, including legacy values, is unnecessary.
+2. A pure resolver `resolveIconName(name, { iconsLucide, iconsRounded })` with the current remap logic; `mapIconName()` remains the public function that reads cached flags and delegates to the resolver. The generator and tests use the resolver without browser state. API behavior and flag precedence are preserved.
+3. Node script `scripts/generate-icons.ts`: add `@iconify/utils` as a direct devDependency, read collection JSON only in Node, apply the resolver to inputNames for four flag combinations, and group unique results by prefix. For each name, use `getIconData()` from Iconify utils to obtain complete data with aliases, dimensions, and transformations; missing entries fail generation. Check local `app:` icons against the current registration; preserve their raw-SVG path.
+4. Generate committed `app/generated/iconCollections.json` containing only the required complete records. The browser imports this file; `@iconify-json/*` imports and the generator remain outside the browser graph. `icons:generate` updates the file; `icons:check` generates it in memory and compares it with the committed result. Add `icons:check` to `test:ci` and the existing required Typecheck job so CI does not rely on npm lifecycle.
+5. Build the initial manifest from actual consumers. Add AST scanning for automatic verification: `@vue/compiler-sfc` as a direct devDependency for Vue template/script and the TypeScript compiler API for TS. Search for complete icon literals in `app/**/*.vue` and `app/**/*.ts`; generated content, legacy `SHIELD_CATALOG`, and internal resolver literals have explicit narrow exceptions with reasons. A literal outside inputNames or mapped outputs fails the check.
+6. Maintain a list of the source and allowed values for each dynamic `:icon`; a new dynamic binding without an entry fails the check. Check dice/slot/volume/theme/password values in separate tests against actual arrays and functions. The AST scanner does not prove arbitrary runtime data flow. Add negative tests for a new literal, a new binding, a missing fallback, and a missing alias.
 
-Це визначає механізм до plan-crafting; сам план деталізує файли й команди. Імпорт повної колекції є ризиком
-збільшення бандла, але її розмір на диску не дорівнює гарантованому production transfer size.
+This defines the mechanism before plan-crafting; the plan itself will detail files and commands. Importing a full collection risks increasing the bundle, but its disk size does not equal a guaranteed production transfer size.
 
-### Запобіжник від API fallback
+### Guard against API fallback
 
-У dev/test до mount встановити для Iconify `_api.setFetch` контрольований transport, який не робить мережевих
-запитів, реєструє спробу та повертає rejected Promise. Це адресна заміна fetch Iconify, не глобального fetch
-застосунку; порожній список `addAPIProvider.resources` не використовувати як неперевірений спосіб вимкнення API.
-Оскільки бібліотека може перехопити transport error, окремо перевіряти локальну наявність resolved-імені
-в AppIcon до рендеру: у dev/test пропуск має давати явну помилку з назвою іконки.
-Негативний тест із навмисно невідомим ім’ям має підтвердити діагностику і нуль мережевих запитів.
-У production тестувати всі провайдери з блокуванням адрес і перевіркою видимого результату.
+In dev/test, install a controlled transport for Iconify `_api.setFetch` before mount that makes no network requests, records attempts, and returns a rejected Promise. This replaces Iconify's fetch specifically, not the application's global fetch; do not use an empty `addAPIProvider.resources` list as an unverified way to disable the API. Since the library may catch transport errors, also check local availability of the resolved name in AppIcon before rendering: in dev/test, a missing icon must produce an explicit error naming the icon. A negative test with a deliberately unknown name must confirm the diagnostic and zero network requests. In production, test all providers with their addresses blocked and verify the visible result.
 
-### Крок 2: кандидат CSS mask
+### Step 2: CSS mask candidate
 
-Встановлений `@iconify/vue@5.0.1` підтримує `<Icon mode="mask">`: це пілот із мінімальною зміною props
-для перевірки маскування. Його `--svg` data URI та стилі повторюються в кожному span
-(`node_modules/@iconify/vue/dist/iconify.js`, функція рендеру).
-Цей пілот позначається B0; він не перевіряє економію спільних CSS-правил і не замінює основний B.
+The installed `@iconify/vue@5.0.1` supports `<Icon mode="mask">`: this is a pilot with minimal props changes to test masking. Its `--svg` data URI and styles are repeated in each span (`node_modules/@iconify/vue/dist/iconify.js`, render function). This pilot is designated B0; it does not test savings from shared CSS rules and does not replace the main B candidate.
 
-Динамічні props, dice/slot, volume/theme/password і фіче-флаги мають скінченні набори значень.
-Статична генерація CSS сумісна з ними: manifest може породжувати повні класи для сканера Tailwind,
-`@source inline()` або готовий CSS. `mapIconName()` і API споживачів зберігаються.
-Див. [Tailwind: явне включення класів](https://tailwindcss.com/docs/detecting-classes-in-source-files#safelisting-specific-utilities)
-та [Iconify для Tailwind 4](https://iconify.design/docs/usage/css/tailwind/tailwind4/).
+Dynamic props, dice/slot, volume/theme/password, and feature flags have finite sets of values. Static CSS generation is compatible with them: the manifest can generate complete classes for the Tailwind scanner, `@source inline()`, or ready-made CSS. `mapIconName()` and the consumer API are preserved. See [Tailwind: explicitly including classes](https://tailwindcss.com/docs/detecting-classes-in-source-files#safelisting-specific-utilities) and [Iconify for Tailwind 4](https://iconify.design/docs/usage/css/tailwind/tailwind4/).
 
-Перший кандидат для A/B використовує CSS, згенерований під час збірки з того самого manifest.
-Runtime-інжекція через Iconify utils залишається альтернативою за наявності конкретної потреби;
-вона додає генерацію правил у браузері, кеш унікальних правил і власний код підтримки.
-Твердження про обов’язковий власний хелпер або відсутність придатних плагінів не є передумовою рішення.
+The first A/B candidate uses CSS generated at build time from the same manifest. Runtime injection through Iconify utils remains an alternative when there is a specific need; it adds browser-side rule generation, a cache of unique rules, and custom maintenance code. A mandatory custom helper or the absence of suitable plugins is not a premise of the decision.
 
-### Обмеження CSS mask
+### CSS mask constraints
 
-- Маска використовує один колір через `background-color: currentColor`. Перевірити всі досяжні іконки,
-  включно з `app`, на кольори, прозорість і пропорції. Аудит legacy бренд-шилдів для поточного UI не потрібний.
-- Зберегти розміри, baseline, класи, стилі, обробники, `aria-hidden` та інші атрибути споживачів.
-- Статичний CSS має бути доступний до першого paint іконок. Для runtime-варіанта правила мають реєструватися
-  до paint; припущення про один готовий CSS-бандл до нього не застосовується.
-- Багатоколірні або несумісні іконки можуть залишитися inline SVG. Змішаний режим потребує явного списку
-  винятків і тих самих перевірок, що й основний кандидат.
+1. The mask uses one color via `background-color: currentColor`. Check all reachable icons, including `app`, for colors, transparency, and proportions. An audit of legacy brand shields is unnecessary for the current UI.
+2. Preserve dimensions, baseline, classes, styles, handlers, `aria-hidden`, and other consumer attributes.
+3. Static CSS must be available before the first paint of icons. For the runtime variant, rules must be registered before paint; the assumption of one ready CSS bundle does not apply to it.
+4. Multicolor or incompatible icons may remain inline SVG. Mixed mode requires an explicit exception list and the same checks as the main candidate.
 
-## Обов’язкове A/B-тестування перед висновком SVG/span
+## Mandatory A/B testing before the SVG/span conclusion
 
-**A:** локальні дані + поточний inline SVG після кроку 1.
+**A:** local data + current inline SVG after step 1.
 
-**B:** той самий набір локальних іконок + span/CSS mask.
+**B:** the same set of local icons + span/CSS mask.
 
-Обидва варіанти збираються для production з однаковим кодом поза доставкою й рендером іконок.
-Порівняння поточного CDN-SVG з локальним mask не ізолює ефект способу рендеру.
+Both variants use production builds with identical code outside icon delivery and rendering.
+Comparing the current CDN SVG with a local mask does not isolate the effect of the rendering method.
 
-### Протокол
+### Protocol
 
-Основні метрики: кількість DOM-елементів, розмітка сторінки, повні production JS/CSS (raw/gzip і transfer)
-та запити даних іконок. Часові метрики є перевіркою регресій, а не обов’язковою демонстрацією прискорення.
-Наданий у рев’ю синтетичний insert+layout для N=27: медіани 1,20 мс для SVG і 0,75 мс для mask.
-Очікуваний ефект у цьому вузькому тесті близько 0,45 мс; перенесення його на повний рендер не доведене.
-Тест не містив Vue/Iconify runtime і растеризації; скрипт та trace не надано, тут його не відтворювали.
-Показники N=500/2000 не є підставою оптимізувати кімнату з 27 іконками.
+Primary metrics: DOM element count, page markup, complete production JS/CSS (raw/gzip and transfer),
+and icon data requests. Timing metrics check for regressions; they need not demonstrate a speedup.
+The synthetic insert+layout test supplied in review for N=27 reported medians of 1.20 ms for SVG and 0.75 ms for mask.
+The expected effect in this narrow test is approximately 0.45 ms; its applicability to a full render is unproven.
+The test did not include Vue/Iconify runtime or rasterization; its script and trace were not supplied, and it was not reproduced here.
+The N=500/2000 figures do not justify optimizing a room with 27 icons.
 
-0. Аналітична оцінка без harness: детерміновані метрики A і B обчислюються з manifest і знімка
-   `/core-platform`. Кількість елементів і байти розмітки B виводяться з кількості екземплярів; CSS B -
-   `getIconsCSS()` над subset у Node; JS A - з аудиту збірки після кроку 1. Якщо B не перетинає пороги
-   з §Правило рішення, експеримент закривається на цьому кроці зі звітом, harness не будується.
-1. Створити fixture і harness за секцією нижче. Зафіксувати стан `/core-platform`: 15 гравців,
-   ролі, голоси, UI, флаги, тема, палітра та viewport; стани до входу, учасника й модератора.
-2. Запускати production preview в однаковому браузері, на одному пристрої, з однаковими CPU/network settings.
-   Задокументувати версії, налаштування й стан service worker. Dev/HMR виміри лишаються діагностичними.
-3. Окремо перевірити cold load в чистому контексті та warm load з однаково прогрітим кешем для A і B.
-   Почати з 5 пар A/B після прогріву сервера; цього достатньо для детермінованих метрик DOM/артефактів і
-   перевірки мережі. Часові дані цієї малої вибірки подавати як діагностику з розкидом, без p95-висновків.
-4. Зняти основні метрики, час до появи всіх очікуваних іконок, CLS і час однакових локальних UI-оновлень
-   (гучність, тема, поява контролів). Врахувати весь CSS manifest B і весь subset JSON/runtime A;
-   DOM-байти не додавати до network transfer. Окремо показати спільні та специфічні для варіанта chunks.
-   Готовність mask має враховувати застосоване правило і видимий результат; наявності span недостатньо.
-5. За регресії або потреби заявляти прискорення виконати розширений прогін з Chrome trace для
-   scripting/style/layout/paint і растеризації, щонайменше 20 пар A/B, медіаною, p95 та розкидом.
-   Перед прогоном записати практично значущий поріг і допустимі регресії для цільового пристрою.
-   Якщо різниця співмірна з шумом, завершити з висновком про відсутність доведеного прискорення;
-   не нарощувати експеримент заради субмілісекундного виграшу. Без trace висновків про paint не робити.
-6. Перевірити візуальну відповідність і офлайн-сценарії та записати висновок з посиланням на артефакти.
+0. Analytical estimate without a harness: calculate deterministic metrics for A and B from the manifest and a
+   `/core-platform` snapshot. Derive B's element count and markup bytes from the instance count; calculate B's CSS
+   using `getIconsCSS()` on the subset in Node; obtain A's JS from the build audit after step 1. If B does not meet
+   the thresholds in the Decision rule section, close the experiment at this step with a report; do not build a harness.
+1. Create the fixture and harness described below. Fix the `/core-platform` state: 15 players, roles, votes, UI,
+   flags, theme, palette and viewport; cover pre-join, participant and moderator states.
+2. Run production preview in the same browser, on the same device, with identical CPU/network settings.
+   Document versions, settings and service worker state. Dev/HMR measurements remain diagnostic.
+3. Check cold load in a clean context and warm load with equally warmed caches for A and B separately.
+   Start with 5 A/B pairs after warming the server; this is sufficient for deterministic DOM/artifact metrics and
+   network checks. Present timing data from this small sample as diagnostic with spread, without p95 conclusions.
+4. Capture primary metrics, time until all expected icons appear, CLS and the time for identical local UI updates
+   (volume, theme, controls appearing). Account for all of B's CSS manifest and all of A's subset JSON/runtime;
+   do not add DOM bytes to network transfer. Show shared and variant-specific chunks separately.
+   Mask readiness must account for the applied rule and visible result; the presence of a span is insufficient.
+5. If there is a regression or a need to claim a speedup, run an extended test with Chrome trace for
+   scripting/style/layout/paint and rasterization, at least 20 A/B pairs, median, p95 and spread.
+   Before the run, record a practically significant threshold and acceptable regressions for the target device.
+   If the difference is comparable to noise, conclude that no speedup was proven; do not expand the experiment
+   for a sub-millisecond gain. Do not draw conclusions about paint without a trace.
+6. Check visual parity and offline scenarios, and record the conclusion with links to artifacts.
 
-### Fixture, візуал і перевірка артефакта
+### Fixture, visuals and artifact verification
 
-Готової fixture кімнати з 15 гравцями й visual suite зараз немає. `tests/fixtures/room.ts` забезпечує cleanup
-створених Supabase-кімнат, а не незмінні дані. Створення fixture є передумовою експерименту, окремою задачею плану:
+There is currently no ready-made fixture for a room with 15 players or visual suite. `tests/fixtures/room.ts` provides
+cleanup of created Supabase rooms, rather than immutable data. Creating a fixture is a prerequisite for the experiment
+and a separate plan task:
 
-- Додати `tests/fixtures/data/icon-room.json`: синтетичні ID/імена, 15 гравців із розподілом ролей з аудиту,
-  фіксовані room settings, час і голоси. Реальні персональні дані й креди не копіювати.
-- Додати тестовий entry/harness, що монтує реальні компоненти кімнати з цією fixture і Pinia state;
-  підмінити джерело room/auth/realtime на тестовій межі до mount. Живі Supabase-запити заборонити.
-  Harness збирати в production-режимі однаково для A/B, окремим тестовим entry без маршруту в deploy-збірці.
-  Smoke звіряє склад/кількість іконок вихідного стану і контролі ролей; таймери, випадковість та анімації фіксуються.
-- Через Playwright знімати однакові області UI до/після, light/dark × три палітри та стани ролей;
-  зробити контактний аркуш усіх resolved-іконок manifest для чотирьох комбінацій флагів.
-  Додати assertions розмірів, видимості, доступних атрибутів; baseline і diff зображень переглянути вручну,
-  щоб допустимі відмінності растеризації не маскували пропущені/зсунуті іконки.
-- Усі screenshot, trace, JSON-метрики й звіт складати в `test-results/icon-rendering/`.
-  У висновку перелічити перевірені стани та прийняті візуальні відмінності.
-- `icons:check` порівнює точні множини generated-імен із manifest. Для production збірки скрипт аудиту
-  перевіряє module graph/sourcemap: browser graph не містить повних `@iconify-json/*/icons.json`,
-  генератора або Node-залежностей. Контрольні невикористані іконки мають бути відсутні в generated subset.
-  Звіт містить кількість записів/правил, raw/gzip кожного JS/CSS chunk і суму завантажених chunks для A/B.
-  Самого пошуку рядка назви колекції в мінімізованому JS недостатньо.
+1. Add `tests/fixtures/data/icon-room.json`: synthetic IDs/names, 15 players with the role distribution from the audit,
+   fixed room settings, time and votes. Do not copy real personal data or credentials.
+2. Add a test entry/harness that mounts real room components with this fixture and Pinia state;
+   substitute the room/auth/realtime source at the test boundary before mount. Block live Supabase requests.
+   Build the harness in production mode identically for A/B, as a separate test entry without a route in the deploy build.
+   The smoke test checks the initial state's icon composition/count and role controls; timers, randomness and animations are fixed.
+3. Use Playwright to capture identical UI regions before/after, light/dark × three palettes and role states;
+   create a contact sheet of all resolved manifest icons for four flag combinations.
+   Add assertions for dimensions, visibility and accessible attributes; manually review the baseline and image diff
+   so acceptable rasterization differences do not mask missing or shifted icons.
+4. Store all screenshots, traces, JSON metrics and the report in `test-results/icon-rendering/`.
+   List the tested states and accepted visual differences in the conclusion.
+5. `icons:check` compares the exact sets of generated names with the manifest. For the production build, the audit script
+   checks the module graph/sourcemap: the browser graph contains no complete `@iconify-json/*/icons.json` files,
+   generator or Node dependencies. Control unused icons must be absent from the generated subset.
+   The report includes the number of entries/rules, raw/gzip for each JS/CSS chunk and the total loaded chunks for A/B.
+   Searching the minified JS for a collection name alone is insufficient.
 
-### Правило рішення
+### Decision rule
 
-Фінальний висновок має явно спиратися на результати A/B, окремо оцінюючи завантаження, рендер і DOM.
-Дозволені результати: залишити inline SVG, перейти на mask або прийняти змішаний режим.
-Міграція може бути обґрунтована компактнішим DOM без помітного прискорення лише з явним описом цього
-компромісу, відсутності неприйнятних регресій та вартості підтримки. До результатів експерименту mask є
-кандидатом.
+The final conclusion must explicitly rely on the A/B results, assessing loading, rendering and DOM separately.
+Allowed outcomes: retain inline SVG, switch to mask or adopt a mixed mode.
+A migration may be justified by a more compact DOM without a noticeable speedup only with an explicit account of this
+tradeoff, the absence of unacceptable regressions and maintenance cost. Until the experiment produces results, mask is
+a candidate.
 
-Пороги задано до прогонів і однакові для аналітичної оцінки та harness. B обирається лише якщо виконано всі:
+Thresholds are set before the runs and are the same for the analytical estimate and the harness. B is selected only if all are met:
 
-| Метрика | Поріг |
+| Metric | Threshold |
 | --- | --- |
-| Повний gzip JS+CSS для B | ≤ gzip A + 10 KB |
-| DOM-елементи іконок на `/core-platform` | скорочення ≥ 25 (з 57 до ≤ 32) |
-| Візуальні відхилення після ручного перегляду contact sheet | 0 неприйнятих |
-| Медіана ready proxy у harness | регресія ≤ 1 мс |
-| Запити до провайдерів іконок | 0 в обох варіантах |
+| Complete gzip JS+CSS for B | ≤ gzip A + 10 KB |
+| Icon DOM elements on `/core-platform` | reduction ≥ 25 (from 57 to ≤ 32) |
+| Visual deviations after manual contact sheet review | 0 unaccepted |
+| Median ready proxy in the harness | regression ≤ 1 ms |
+| Requests to icon providers | 0 in both variants |
 
-Різниця часових метрик до 1 мс не є аргументом ні за, ні проти. Змішаний режим оцінюється за тими самими
-порогами з явним списком винятків.
+A timing difference of up to 1 ms is an argument neither for nor against. A mixed mode is assessed against the same
+thresholds with an explicit list of exceptions.
 
-## Критерії приймання
+## Acceptance criteria
 
-### Локальна доставка
+### Local delivery
 
-- Повний manifest перевіряється незалежно від `MDI_TO_LUCIDE`: кожне досяжне вхідне ім’я після remap має
-  локальні дані для всіх чотирьох комбінацій флагів. Покрити fallback, прямий Lucide, dice/slot, rounded і `app`.
-  Врахувати кешування значень флагів у модулі: ізолювати кожну комбінацію під час тестів.
-  При обох увімкнених флагах зберегти поточний пріоритет Lucide над rounded.
-- У чистих браузерних контекстах нуль запитів до `api.iconify.design`, `api.simplesvg.com`, `api.unisvg.com`
-  та інших налаштованих провайдерів іконок. Перевіряти через `page.on('request')` і з блокуванням цих адрес;
-  усі очікувані іконки мають залишатися видимими.
-- У кроці 1 браузером покрити `/`, `/login`, `/ffc` і volume popup. Fixture `/core-platform`, стани
-  учасника/модератора та приховані до взаємодії контролі перевіряються в A/B-плані.
-- Офлайн PWA перевіряється в A/B-плані на production preview harness після встановлення service worker.
-  Стабільна fixture даних потрібна, щоб недоступність Supabase не маскувала поведінку іконок.
-  Окремий тест блокування провайдерів у чистому контексті виключає залежність від кешу Iconify.
-- Vitest-тест повного manifest проходить: `iconLoaded()` істинний для кожного вхідного імені після remap у
-  всіх чотирьох комбінаціях флагів; це основний доказ повноти кроку 1.
-- Візуал `/`, `/login`, `/ffc` збережений у light/dark і трьох палітрах за Playwright-скріншотами до і після;
-  ручний перегляд зафіксовано в звіті. Кімната перевіряється візуально в A/B-плані.
-- Production артефакт містить тільки потрібний subset за аудитом sourcemap; приріст entry chunk ≤ 25 KB gzip.
-- `npm run test:ci` проходить.
+1. The complete manifest is checked independently of `MDI_TO_LUCIDE`: every reachable input name after remap has
+   local data for all four flag combinations. Cover fallback, direct Lucide, dice/slot, rounded and `app`.
+   Account for flag values cached in the module: isolate each combination in tests.
+   When both flags are enabled, preserve the current Lucide priority over rounded.
+2. In clean browser contexts, zero requests go to `api.iconify.design`, `api.simplesvg.com`, `api.unisvg.com`
+   and other configured icon providers. Check with `page.on('request')` and by blocking these addresses;
+   all expected icons must remain visible.
+3. In step 1, cover `/`, `/login`, `/ffc` and the volume popup in the browser. The `/core-platform` fixture,
+   participant/moderator states and controls hidden until interaction are checked in the A/B plan.
+4. Offline PWA is checked in the A/B plan on the production preview harness after service worker installation.
+   A stable data fixture is needed so Supabase unavailability does not mask icon behavior.
+   A separate provider-blocking test in a clean context rules out reliance on the Iconify cache.
+5. The full manifest Vitest test passes: `iconLoaded()` is true for every input name after remap in
+   all four flag combinations; this is the primary evidence of step 1 completeness.
+6. Visuals for `/`, `/login`, `/ffc` are preserved in light/dark and three palettes according to Playwright screenshots
+   before and after; manual review is recorded in the report. The room is visually checked in the A/B plan.
+7. The production artifact contains only the required subset according to the sourcemap audit; entry chunk growth ≤ 25 KB gzip.
+8. `npm run test:ci` passes.
 
-### Рішення про рендер
+### Rendering decision
 
-- Є відтворюваний A/B-звіт за протоколом вище з висновком і посиланнями на артефакти.
-- Економія розмітки враховує CSS-правила; мережеві та часові метрики наведено окремо.
-- Динамічні стани, обидва флаги та `app`-іконки проходять функціональні й візуальні перевірки.
-- Production-міграція виконується лише після зафіксованого рішення за результатами A/B.
+1. A reproducible A/B report follows the protocol above and includes a conclusion and links to artifacts.
+2. Markup savings account for CSS rules; network and timing metrics are presented separately.
+3. Dynamic states, both flags and `app` icons pass functional and visual checks.
+4. Production migration takes place only after the decision based on A/B results is recorded.
 
-## Порядок робіт і ризики
+## Work order and risks
 
-1. Реалізувати локальну доставку окремим PR за планом кроку 1, перевірити повноту manifest і бюджет бандла.
-2. Виконати аналітичну оцінку A/B за порогами; за негативного результату записати рішення й зупинитися.
-3. Інакше зафіксувати production baseline A і fixture `/core-platform`, підготувати B, виконати A/B і записати
-   рішення; після цього планувати міграцію за потреби.
+1. Implement local delivery in a separate PR under the step 1 plan, check manifest completeness and the bundle budget.
+2. Perform the analytical A/B estimate against the thresholds; if the result is negative, record the decision and stop.
+3. Otherwise record production baseline A and the `/core-platform` fixture, prepare B, perform A/B and record
+   the decision; then plan migration if needed.
 
-Основні ризики: неповний manifest при додаванні іконок, випадкове включення цілих колекцій у бандл,
-різний стан кімнати/кешу між прогонами, візуальні відмінності масок і додатковий runtime-код.
-Їх покривають перевірка manifest, аудит production артефакта, fixtures, протокол A/B і візуальні перевірки.
+The main risks are an incomplete manifest when icons are added, accidental inclusion of entire collections in the bundle,
+different room/cache state between runs, visual differences in masks and additional runtime code.
+Manifest checks, production artifact audits, fixtures, the A/B protocol and visual checks cover these risks.
 
-## Що лишається поза обсягом
+## Out of scope
 
-- Зміна дефолтного паку, видалення фіче-флагів або зміна контракту `mapIconName()`.
-- Повернення іконок legacy шилдів у UI.
-- Міграція Nuxt/SSR або зміни первинного HTML Vite SPA.
-- Діаграми, зокрема SVG у `PieChart.vue`; їхній шлях визначає `app/components/AGENTS.md` (ECharts).
+1. Changing the default pack, removing feature flags or changing the `mapIconName()` contract.
+2. Returning legacy shield icons to the UI.
+3. Nuxt/SSR migration or changes to the initial HTML of the Vite SPA.
+4. Charts, including SVG in `PieChart.vue`; `app/components/AGENTS.md` determines their path (ECharts).
