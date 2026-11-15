@@ -18,7 +18,6 @@ npx -y --prefer-online skl-x add sentimony/agentic-workflow -s \
   cross-cr \
   cr-received \
   finalize \
-  session-learnings \
   -a codex claude-code -y -m sm
 
 # SENTIMONY SKILLS https://github.com/sentimony/skills
@@ -51,6 +50,7 @@ npx -y --prefer-online skl-x add sentimony/skills -s \
   gh-switch \
   secret-hygiene \
   \ skill-crafting \
+  session-learnings \
   -a codex claude-code -y -m sm
 
 # LOCAL SKILLS

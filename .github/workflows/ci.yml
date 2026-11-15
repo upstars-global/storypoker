@@ -29,8 +29,8 @@ jobs:
 
       - name: Install probe skills
         run: |
-          npx -y --prefer-online skl-x@0.4.12 add sentimony/skills -s scope-triage doc-preview plan-crafting plan-execution plan-orchestration worktree-isolation parallel-agents tdd review-request cross-review review-resolution debugging web-debug webapp-debugger verification-gate branch-finish commit-all gh-switch frontend-crafting vitest typescript echarts prose-crafting dashfix negafix agent-instructions secret-hygiene skill-crafting -a codex claude-code -y -m sm
-          npx -y --prefer-online skl-x@0.4.12 add sentimony/agentic-workflow -s specify plan-craft implement verify cr-request cr-received finalize session-learnings -a codex claude-code -y -m sm
+          npx -y --prefer-online skl-x@0.4.12 add sentimony/skills -s scope-triage doc-preview plan-crafting plan-execution plan-orchestration worktree-isolation parallel-agents tdd review-request cross-review review-resolution debugging web-debug webapp-debugger verification-gate branch-finish commit-all gh-switch frontend-crafting vitest typescript echarts prose-crafting dashfix negafix agent-instructions secret-hygiene skill-crafting session-learnings -a codex claude-code -y -m sm
+          npx -y --prefer-online skl-x@0.4.12 add sentimony/agentic-workflow -s specify plan-craft implement verify cr-request cr-received finalize -a codex claude-code -y -m sm
 
       - name: Check probe skills
         run: |
