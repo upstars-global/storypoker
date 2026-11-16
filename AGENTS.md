@@ -32,9 +32,9 @@ CI check = `pnpm run test:ci` - app-перевірки, обов'язкові п
 Після змін виклику авторев'ю або CI запускай `actionlint .github/workflows/*.y*ml`; пін спільного workflow -
 `.github/AGENTS.md`. Для read-only аудитів дотримуйся обмежень викликаного скіла.
 - **New feature:** `specify` → `plan-craft` → `implement`; за потреби `typescript` · `echarts` ·
-  `web-debug`; тести - `vitest` і/або `web-debug`; фініш - `cr-request` →
+  `playwright-debug`; тести - `vitest` і/або `playwright-debug`; фініш - `cr-request` →
   `verify` → CI check
-- **Bug / regression:** `debugging` → `vitest` → `verify` → CI check
+- **Bug / regression:** `debug` → `vitest` → `verify` → CI check
 - **Supabase (DB / Auth / RLS / Storage):** `vitest` → `/security-review` → CI check
 - **Refactoring:** `specify` → `vitest` → CI check
 - **Received code review:** `cr-received` → (fixes) → `verify` → CI check
