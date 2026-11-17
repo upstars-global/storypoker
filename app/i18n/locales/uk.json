@@ -142,7 +142,8 @@
     "waiting": "Очікування питання від модератора…",
     "answerPlaceholder": "Відповідь {n}",
     "addAnswer": "Додати варіант",
-    "removeAnswer": "Прибрати варіант"
+    "removeAnswer": "Прибрати варіант",
+    "multipleAnswers": "Можна обрати декілька відповідей"
   },
   "players": {
     "title": "Гравці",
@@ -180,6 +181,7 @@
     "voteHiddenInResults": "голос не показується в результатах"
   },
   "results": {
+    "voters": "Учасників, що проголосували: {count}",
     "general": "DEV",
     "alignment": "Узгодженість",
     "goalClarityHint": "Мета незрозуміла команді - варто переформулювати Sprint Goal або критерії Definition of Done"

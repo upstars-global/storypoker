@@ -229,6 +229,15 @@ const ALL_CHIPS = ['DEV', 'BE', 'FE', 'SRE', 'QA', 'AQA', 'GQA', 'PO', 'SM']
 const nine = ['sm', 'po', 'aqa', 'gqa', 'qa', 'sre', 'fe', 'be', 'dev'].map(role => ({ shields: [role], vote: '3' }))
 
 describe('groupResultVotes', () => {
+  it('counts each answer of a multi-answer vote once', () => {
+    expect(groupResultVotes([
+      { shields: ['dev'], vote: 'Option A\nOption B' },
+      { shields: ['dev'], vote: 'Option A' },
+    ], null)).toEqual([
+      { key: 'DEV', label: 'DEV', votes: { 'Option A': 2, 'Option B': 1 } },
+    ])
+  })
+
   it.each([null, undefined, []])('shows only the DEV and QA umbrella circles with no chips (%s)', selected => {
     expect(groupResultVotes(nine, selected)).toEqual([
       { key: 'DEV', label: 'DEV', votes: { '3': 4 } },

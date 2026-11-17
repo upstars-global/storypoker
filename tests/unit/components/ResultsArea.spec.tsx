@@ -4,6 +4,7 @@ import { getInstanceByDom, use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import ResultsArea from '~/components/ResultsArea'
 import type { ResultGroup } from '~/utils/resultCohorts'
+import { i18n } from '~/i18n'
 
 function mountResults(props: {
   votes: Record<string, number>
@@ -214,6 +215,23 @@ describe('ResultsArea pie chart', () => {
     view.rerender(<ResultsArea showNewRound={false} votes={{ '3': 2, '5': 1 }} goalClarityScore />)
     expect(pieCharts(view.container)).toHaveLength(0)
     expect(view.container.querySelector('.rounded-full')?.textContent).toBe('3.7')
+  })
+
+  it('shows the voter count above multi-answer bubbles', () => {
+    const view = render(<ResultsArea showNewRound={false} votes={{ A: 2, B: 2, C: 1 }} activeCards={['A', 'B', 'C']} disableCelebration voterCount={3} />)
+    expect(screen.getByTestId('poll-voter-count').textContent).toBe(i18n.t('results.voters', { count: 3 }))
+    expect(i18n.getFixedT('uk')('results.voters', { count: 3 })).toBe('Учасників, що проголосували: 3')
+    expect(i18n.getFixedT('en')('results.voters', { count: 3 })).toBe('Voters: 3')
+    const counts = [...view.container.querySelectorAll('.text-primary.font-medium')].map(el => el.textContent)
+    expect(counts).toEqual(['2', '2', '1'])
+    const sizes = [...view.container.querySelectorAll<HTMLElement>('.rounded-full')].map(el => el.style.width)
+    expect(sizes[0]).toBe(sizes[1])
+    expect(parseFloat(sizes[0]!)).toBeGreaterThan(parseFloat(sizes[2]!))
+  })
+
+  it('has no voter count without the multi-answer mode', () => {
+    render(<ResultsArea showNewRound={false} votes={{ A: 2 }} activeCards={['A']} disableCelebration />)
+    expect(screen.queryByTestId('poll-voter-count')).toBeNull()
   })
 
   it('keeps a square placeholder and the cohort label while the chunk loads', async () => {

@@ -33,6 +33,7 @@ import type { Player, RoomState } from '~/stores/types'
 import { alignmentScore } from '~/utils/alignment'
 import { backgroundTint } from '~/utils/backgroundImage'
 import { DEFAULT_PRESET_ID, activeCardsForDeck } from '~/utils/cardDecks'
+import { countVoters, splitVote, toggleAnswer } from '~/utils/pollAnswers'
 import { touchRecentRoom } from '~/utils/recentRooms'
 import { shouldCelebrate } from '~/utils/resultCelebration'
 import { usesResultChips } from '~/utils/roundStats'
@@ -43,6 +44,8 @@ import { isRoundTimerStale, type AlarmSettings } from '~/utils/timerAlarm'
 
 interface LastRoundSnapshot {
   votes: Record<string, number>
+  pollMultiple: boolean
+  voterCount: number
   groups: ResultGroup[] | null
   playerVotes: { id: string; name: string; vote: string }[]
   pollQuestion: string | null
@@ -249,13 +252,16 @@ export default function RoomPage() {
   const resetUndoAvailable = !!resetSnapshot && !showLastRound
 
   const isPollDeck = roomState?.deck_preset === 'voting' || roomState?.deck_preset === 'vote_question'
+  const pollMultiple = roomState?.deck_preset === 'vote_question' && !!roomState.poll_multiple
+  const voterCount = countVoters(visiblePlayers.map(p => p.vote))
 
   const resultCohorts = roomState?.result_cohorts
   const excludedVoters = !usesResultChips(roomState?.deck_preset) ? [] : visiblePlayers.filter(p => p.vote && resultKeyFor(p.shields, resultCohorts) === null)
   const hiddenVotePlayerIds = new Set(excludedVoters.map(p => p.id))
   const voteCounts: Record<string, number> = roomState
     ? visiblePlayers.reduce<Record<string, number>>((acc, p) => {
-        if (p.vote && !hiddenVotePlayerIds.has(p.id)) acc[p.vote] = (acc[p.vote] ?? 0) + 1
+        if (!p.vote || hiddenVotePlayerIds.has(p.id)) return acc
+        for (const answer of splitVote(p.vote)) acc[answer] = (acc[answer] ?? 0) + 1
         return acc
       }, {})
     : {}
@@ -299,6 +305,8 @@ export default function RoomPage() {
   function lastRoundSnapshot(): LastRoundSnapshot {
     return {
       votes: { ...voteCounts },
+      pollMultiple,
+      voterCount,
       groups: resultGroups?.map(group => ({ key: group.key, label: group.label, votes: { ...group.votes } })) ?? null,
       playerVotes: visiblePlayers
         .filter(p => p.vote !== null)
@@ -596,7 +604,11 @@ export default function RoomPage() {
     const pollDeck = state?.deck_preset === 'voting' || state?.deck_preset === 'vote_question'
     if (pollDeck && !state?.poll_question) return
     const players = usePlayersStore.getState()
-    const next = players.voteOf(playerId) === card ? null : card
+    const current = players.voteOf(playerId)
+    const multiple = state?.deck_preset === 'vote_question' && !!state.poll_multiple
+    const next = multiple
+      ? toggleAnswer(current, card, state.active_cards ?? [])
+      : current === card ? null : card
     try {
       await players.castVote(playerId, next)
     } catch {
@@ -690,11 +702,12 @@ export default function RoomPage() {
     await useRoomStore.getState().setAlarm(settings).catch(error => console.error('[timer] alarm settings save failed:', error))
   }
 
-  async function handleStartVoteQuestion(question: string, answers: string[]) {
+  async function handleStartVoteQuestion(question: string, answers: string[], multiple: boolean) {
     const room = useRoomStore.getState()
     await Promise.all([
       room.setPollQuestion(question),
       room.saveCardDeck(answers),
+      room.setPollMultiple(multiple),
     ])
   }
 
@@ -851,7 +864,7 @@ export default function RoomPage() {
               revealed={roomState.phase === 'revealed'}
               lastRoundFits={(roomState.phase === 'revealed' ? resultGroups.length : (lastRound?.groups?.length ?? 0)) <= MAX_FITTED_RESULT_CIRCLES}
               activeCards={activeCards}
-              selectedVote={currentPlayer ? voteOf(currentPlayer.id) : null}
+              selectedVotes={currentPlayer ? splitVote(voteOf(currentPlayer.id) ?? '').filter(Boolean) : []}
               isModerator={isModerator}
               hasVotes={hasVotes}
               canReset={canReset}
@@ -861,6 +874,7 @@ export default function RoomPage() {
               pollMode={roomState.deck_preset === 'voting'}
               voteQuestionMode={roomState.deck_preset === 'vote_question'}
               pollQuestion={roomState.poll_question ?? null}
+              pollMultiple={pollMultiple}
               hasLastRound={!!lastRound}
               showLastRound={roomState.phase === 'voting' && showLastRound}
               lastRoundView={roomState.phase === 'revealed'
@@ -874,6 +888,7 @@ export default function RoomPage() {
                       showAlignment={!isPollDeck}
                       activeCards={activeCards}
                       goalClarityScore={roomState.deck_preset === 'goal_clarity'}
+                      voterCount={pollMultiple ? voterCount : null}
                     />
                   )
                 : lastRound && (
@@ -886,6 +901,7 @@ export default function RoomPage() {
                   showAlignment={!lastRound.isVotingDeck}
                   activeCards={lastRound.activeCards}
                   goalClarityScore={lastRound.deckPreset === 'goal_clarity'}
+                  voterCount={lastRound.pollMultiple ? lastRound.voterCount : null}
                 />
               )}
               onVote={card => void handleVote(card)}
@@ -894,7 +910,7 @@ export default function RoomPage() {
               onReset={() => void handleResetToggle()}
               onStartCountdown={broadcastCountdownStart}
               onSetPollQuestion={question => void useRoomStore.getState().setPollQuestion(question)}
-              onStartVoteQuestion={(question, answers) => void handleStartVoteQuestion(question, answers)}
+              onStartVoteQuestion={(question, answers, multiple) => void handleStartVoteQuestion(question, answers, multiple)}
               onToggleLastRound={() => setShowLastRound(value => !value)}
             />
           )}

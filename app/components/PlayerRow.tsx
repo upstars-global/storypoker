@@ -7,6 +7,7 @@ import RoleBadge from '~/components/RoleBadge'
 import { useCardLabel } from '~/hooks/useCardLabel'
 import { useDylanAvatar } from '~/hooks/useDylanAvatar'
 import { useProfilesStore } from '~/stores/profiles'
+import { splitVote } from '~/utils/pollAnswers'
 import { roleTagForShields } from '~/utils/shields'
 
 export interface PlayerRowPlayer {
@@ -91,8 +92,12 @@ export default function PlayerRow({
   const playerAvatar = avatarSrcFor(profile, player.name, !player.is_online)
 
   function voteLabel(vote: string) {
-    const label = cardLabel(vote)
-    return truncateVotes && label.length > 8 ? label.slice(0, 8) : label
+    return splitVote(vote)
+      .map(answer => {
+        const label = cardLabel(answer)
+        return truncateVotes && label.length > 8 ? label.slice(0, 8) : label
+      })
+      .join(', ')
   }
 
   function voteValue(vote: string) {

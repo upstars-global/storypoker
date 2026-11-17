@@ -502,6 +502,112 @@ describe('room page reset undo', () => {
   })
 })
 
+describe('room page multi-answer poll', () => {
+  const deck = ['Option A', 'Option B', 'Option C']
+  const multiState = (overrides: Partial<RoomState> = {}) => fakeState({
+    deck_preset: 'vote_question', active_cards: deck, poll_question: 'Where?', poll_multiple: true, ...overrides,
+  })
+  const multiVoters = [
+    { ...me, vote: 'Option A\nOption B' },
+    fakePlayer('alice', ['dev'], 'Option A'),
+    fakePlayer('bob', ['qa'], 'Option B\nOption C'),
+  ]
+
+  async function vote(players: Player[], state: RoomState, card: string) {
+    await mountRoom({ players, state })
+    const castVote = vi.fn().mockResolvedValue(undefined)
+    usePlayersStore.setState({ castVote })
+    await act(async () => { lastProps(CardsArea).onVote(card) })
+    return castVote
+  }
+
+  it('adds an answer in deck order in the multi-answer mode', async () => {
+    const castVote = await vote([{ ...me, vote: 'Option C' }], multiState({ phase: 'voting' }), 'Option A')
+    expect(castVote).toHaveBeenCalledWith('me', 'Option A\nOption C')
+  })
+
+  it('removes only the clicked answer and clears the vote after the last one', async () => {
+    const castVote = await vote([{ ...me, vote: 'Option A\nOption C' }], multiState({ phase: 'voting' }), 'Option C')
+    expect(castVote).toHaveBeenCalledWith('me', 'Option A')
+    cleanup()
+    const cleared = await vote([{ ...me, vote: 'Option A' }], multiState({ phase: 'voting' }), 'Option A')
+    expect(cleared).toHaveBeenCalledWith('me', null)
+  })
+
+  it('keeps one answer per player without the multi-answer mode', async () => {
+    const castVote = await vote([{ ...me, vote: 'Option C' }], multiState({ phase: 'voting', poll_multiple: false }), 'Option A')
+    expect(castVote).toHaveBeenCalledWith('me', 'Option A')
+  })
+
+  it('passes the multi-answer mode and every selected answer to the cards', async () => {
+    await mountRoom({ players: multiVoters, state: multiState({ phase: 'voting' }) })
+    expect(lastProps(CardsArea)).toMatchObject({ pollMultiple: true, selectedVotes: ['Option A', 'Option B'] })
+  })
+
+  it('writes the multi-answer mode when the vote question starts', async () => {
+    await mountRoom({ players: [me], state: fakeState({ phase: 'voting', deck_preset: 'vote_question', active_cards: deck }) })
+    const room = {
+      setPollQuestion: vi.fn().mockResolvedValue(undefined),
+      saveCardDeck: vi.fn().mockResolvedValue(undefined),
+      setPollMultiple: vi.fn().mockResolvedValue(undefined),
+    }
+    useRoomStore.setState(room)
+    await act(async () => { lastProps(CardsArea).onStartVoteQuestion('Where?', ['Kyiv', 'Lviv'], true) })
+    expect(room.setPollQuestion).toHaveBeenCalledWith('Where?')
+    expect(room.saveCardDeck).toHaveBeenCalledWith(['Kyiv', 'Lviv'])
+    expect(room.setPollMultiple).toHaveBeenCalledWith(true)
+  })
+
+  it('counts each answer and the voters after reveal', async () => {
+    await mountRoom({ players: [...multiVoters, fakePlayer('dave', ['fe'], null)], state: multiState({ phase: 'revealed' }) })
+    expect(lastProps(ResultsArea)).toMatchObject({
+      votes: { 'Option A': 2, 'Option B': 2, 'Option C': 1 },
+      voterCount: 3,
+    })
+  })
+
+  it('shows no voter count without the multi-answer mode', async () => {
+    await mountRoom({ players: multiVoters, state: multiState({ phase: 'revealed', poll_multiple: false }) })
+    expect(lastProps(ResultsArea).voterCount).toBeNull()
+  })
+
+  it('keeps the counts and the voter count in the previous round view', async () => {
+    await mountRoom({ players: multiVoters, state: multiState({ phase: 'voting' }) })
+    await act(async () => { useRoomStore.setState({ roomState: multiState({ phase: 'revealed' }) }) })
+    await act(async () => {
+      usePlayersStore.setState({ players: multiVoters.map(p => ({ ...p, vote: null })) })
+      useRoomStore.setState({ roomState: multiState({ phase: 'voting', poll_question: null, poll_multiple: false }) })
+    })
+    await act(async () => { lastProps(CardsArea).onToggleLastRound() })
+    expect(lastRoundViewProps()).toMatchObject({
+      votes: { 'Option A': 2, 'Option B': 2, 'Option C': 1 },
+      voterCount: 3,
+    })
+  })
+
+  it('restores every answer after a reset undo', async () => {
+    const players = [...multiVoters, fakePlayer('dave', ['fe'], null)]
+    await mountRoom({ players, state: multiState({ phase: 'voting' }) })
+    const resetVotes = vi.fn().mockResolvedValue(undefined)
+    const restoreVotes = vi.fn().mockResolvedValue(undefined)
+    useRoomStore.setState({ resetVotes, restoreVotes })
+    await act(async () => { lastProps(CardsArea).onReset() })
+    await act(async () => { lastProps(CardsArea).onReset() })
+    expect(restoreVotes).toHaveBeenCalledWith({ me: 'Option A\nOption B', alice: 'Option A', bob: 'Option B\nOption C' })
+  })
+
+  it('lets a DEV player with several answers spin until the last answer is removed', async () => {
+    localStorage.setItem('sp-side-widget', 'slot')
+    const players = [...multiVoters, fakePlayer('dave', ['fe'], null)]
+    await mountRoom({ players, state: multiState({ phase: 'voting' }) })
+    expect(lastProps(SlotMachine).canSpin).toBe(true)
+    await act(async () => {
+      usePlayersStore.setState({ players: players.map(p => (p.id === 'me' ? { ...p, vote: null } : p)) })
+    })
+    expect(lastProps(SlotMachine).canSpin).toBe(false)
+  })
+})
+
 describe('room page results', () => {
   it('shows only the DEV and QA umbrella circles without chips and leaves PO and SM uncounted', async () => {
     const roles = ['sm', 'gqa', 'be', 'qa', 'sre', 'dev', 'aqa', 'fe', 'po']

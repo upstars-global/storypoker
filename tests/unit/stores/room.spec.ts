@@ -340,6 +340,23 @@ describe('roomStore actions', () => {
     expect(typeof stateCall?.arg.round_started_at).toBe('string')
     expect(stateCall?.arg.paused_at).toBeNull()
     expect(stateCall?.arg.paused_elapsed_ms).toBe(0)
+    expect(stateCall?.arg.poll_multiple).toBe(false)
+  })
+
+  it('setPollMultiple(value) writes poll_multiple', async () => {
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) })
+    setSupabase(asSupabase({ from: () => ({ update }) }))
+    useRoomStore.setState({ roomId: 'r1' })
+    await state().setPollMultiple(true)
+    expect(update).toHaveBeenCalledWith({ poll_multiple: true })
+  })
+
+  it('setPollMultiple() throws the Supabase error', async () => {
+    const error = new Error('missing column')
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error }) })
+    setSupabase(asSupabase({ from: () => ({ update }) }))
+    useRoomStore.setState({ roomId: 'r1' })
+    await expect(state().setPollMultiple(true)).rejects.toBe(error)
   })
 
   it('saveCardDeck(cards) sends update with active_cards', async () => {
@@ -359,6 +376,7 @@ describe('roomStore actions', () => {
       deck_preset: 'boolean',
       active_cards: ['True', 'False', '?', '☕'],
       poll_question: null,
+      poll_multiple: false,
     })
   })
 
@@ -371,6 +389,7 @@ describe('roomStore actions', () => {
       deck_preset: 'goal_clarity',
       active_cards: ['1', '2', '3', '4', '5'],
       poll_question: 'Наскільки чітко я розумію Sprint Goals?',
+      poll_multiple: false,
     })
   })
 })

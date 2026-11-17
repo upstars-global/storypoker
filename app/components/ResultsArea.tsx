@@ -17,6 +17,7 @@ type ResultsAreaProps = {
   activeCards?: string[]
   playerVotes?: { name: string; vote: string }[]
   goalClarityScore?: boolean
+  voterCount?: number | null
   onStartNewRound?: () => void
 }
 
@@ -55,6 +56,7 @@ export default function ResultsArea({
   activeCards,
   playerVotes,
   goalClarityScore,
+  voterCount,
   onStartNewRound,
 }: ResultsAreaProps) {
   const { t } = useTranslation()
@@ -216,6 +218,14 @@ export default function ResultsArea({
         >
           {pollQuestion}
         </h3>
+      )}
+      {votingBubbles && typeof voterCount === 'number' && (
+        <p
+          className="text-center text-mui-body text-muted"
+          data-testid="poll-voter-count"
+        >
+          {t('results.voters', { count: voterCount })}
+        </p>
       )}
       {charts()}
       {!!playerVotes?.length && (

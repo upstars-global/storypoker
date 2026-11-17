@@ -9,7 +9,7 @@ import { useRipple } from '~/hooks/useRipple'
 
 type CardsAreaProps = {
   activeCards: string[]
-  selectedVote: string | null
+  selectedVotes: readonly string[]
   isModerator: boolean
   hasVotes: boolean
   canReset: boolean
@@ -19,6 +19,7 @@ type CardsAreaProps = {
   pollMode: boolean
   voteQuestionMode: boolean
   pollQuestion: string | null
+  pollMultiple: boolean
   hasLastRound?: boolean
   showLastRound?: boolean
   lastRoundView?: ReactNode
@@ -30,7 +31,7 @@ type CardsAreaProps = {
   onReset: () => void
   onStartCountdown: (mode: CountdownMode) => void
   onSetPollQuestion: (question: string) => void
-  onStartVoteQuestion: (question: string, answers: string[]) => void
+  onStartVoteQuestion: (question: string, answers: string[], multiple: boolean) => void
   onToggleLastRound: () => void
 }
 
@@ -106,7 +107,7 @@ export function ResultsLayer({ visible, fits, children }: { visible: boolean; fi
 
 export default function CardsArea({
   activeCards,
-  selectedVote,
+  selectedVotes,
   isModerator,
   hasVotes,
   canReset,
@@ -116,6 +117,7 @@ export default function CardsArea({
   pollMode,
   voteQuestionMode,
   pollQuestion,
+  pollMultiple,
   hasLastRound,
   showLastRound,
   lastRoundView,
@@ -136,6 +138,7 @@ export default function CardsArea({
   const canVote = !(pollMode || voteQuestionMode) || !!pollQuestion
   const [questionDraft, setQuestionDraft] = useState('')
   const [answerDrafts, setAnswerDrafts] = useState<string[]>(['', ''])
+  const [multipleDraft, setMultipleDraft] = useState(false)
   const focusAnswer = useRef<number | null>(null)
   const answerInputs = useRef<(HTMLInputElement | null)[]>([])
   const [holdingMode, setHoldingMode] = useState<CountdownMode | null>(null)
@@ -154,6 +157,7 @@ export default function CardsArea({
     if (!pollQuestion) {
       setQuestionDraft('')
       setAnswerDrafts(['', ''])
+      setMultipleDraft(false)
     }
   }
 
@@ -196,7 +200,7 @@ export default function CardsArea({
     const question = questionDraft.trim()
     const answers = answerDrafts.map(a => a.trim()).filter(Boolean)
     if (!question || answers.length < 2) return
-    onStartVoteQuestion(question, answers)
+    onStartVoteQuestion(question, answers, multipleDraft)
   }
 
   function vqCardStyle(card: string): CSSProperties | undefined {
@@ -252,12 +256,22 @@ export default function CardsArea({
   function pollSection() {
     if (pollQuestion) {
       return (
-        <h3
-          className="text-center text-mui-h2 font-bold text-primary"
-          data-testid="poll-question"
-        >
-          {pollQuestion}
-        </h3>
+        <>
+          <h3
+            className="text-center text-mui-h2 font-bold text-primary"
+            data-testid="poll-question"
+          >
+            {pollQuestion}
+          </h3>
+          {voteQuestionMode && pollMultiple && (
+            <p
+              className="mt-2 text-center text-mui-body text-muted"
+              data-testid="poll-multiple-hint"
+            >
+              {t('poll.multipleAnswers')}
+            </p>
+          )}
+        </>
       )
     }
     if (voteQuestionMode && isModerator) {
@@ -320,6 +334,18 @@ export default function CardsArea({
               {t('poll.addAnswer')}
             </Button>
           )}
+          <label className="flex items-center justify-center gap-2 text-mui-body cursor-pointer select-none">
+            <input
+              id="poll-multiple"
+              type="checkbox"
+              name="poll-multiple"
+              className="size-4 accent-primary cursor-pointer"
+              checked={multipleDraft}
+              data-testid="poll-multiple-checkbox"
+              onChange={event => setMultipleDraft(event.target.checked)}
+            />
+            {t('poll.multipleAnswers')}
+          </label>
           <div className="flex justify-center mt-5">
             <Button
               ref={ripple}
@@ -395,10 +421,10 @@ export default function CardsArea({
               <button
                 ref={ripple}
                 type="button"
-                className={selectedVote === card ? 'mui-card is-selected' : 'mui-card'}
+                className={selectedVotes.includes(card) ? 'mui-card is-selected' : 'mui-card'}
                 data-testid="vote-card"
                 data-value={card}
-                aria-pressed={selectedVote === card}
+                aria-pressed={selectedVotes.includes(card)}
                 disabled={!canVote}
                 onClick={() => onVote(card)}
               >
