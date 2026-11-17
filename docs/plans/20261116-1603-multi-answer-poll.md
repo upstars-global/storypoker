@@ -300,8 +300,10 @@ update `startNewRound`/`setDeckPreset` без `poll_multiple: false`)
 ## Execution record
 
 ```text
-Base: unset
-Task 1: pending
+Base: 124648822fc5a662f640a9caea3a85ec1715aeeb   Root: /Users/axl/work/github/storypoker   Branch: feat/multi-answer-poll
+Commits: allowed
+Initial dirty state: none
+Task 1: done - pnpm vitest run tests/unit/stores/room.spec.ts -> 41 passed; pnpm run typecheck -> exit 0 (6 min)
 Task 2: pending
 Task 3: pending
 Task 4: pending

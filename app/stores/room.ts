@@ -43,6 +43,7 @@ interface RoomStoreState {
   saveCardDeck: (cards: string[]) => Promise<void>
   setDeckPreset: (presetId: DeckPresetId) => Promise<void>
   setPollQuestion: (question: string | null) => Promise<void>
+  setPollMultiple: (multiple: boolean) => Promise<void>
   setResultCohorts: (cohorts: string[]) => Promise<void>
   setAlarm: (settings: { minutes?: number; muted?: boolean }) => Promise<void>
   create: () => Promise<string>
@@ -145,6 +146,7 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
       paused_at: null,
       paused_elapsed_ms: 0,
       poll_question: null,
+      poll_multiple: false,
     }
     if (preset === 'vote_question') {
       stateUpdate.active_cards = getDeck('vote_question').defaultActive
@@ -247,7 +249,12 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
     const preset = getDeck(presetId)
     await getSupabase()
       .from('room_state')
-      .update({ deck_preset: presetId, active_cards: preset.defaultActive, poll_question: preset.defaultQuestion ?? null })
+      .update({
+        deck_preset: presetId,
+        active_cards: preset.defaultActive,
+        poll_question: preset.defaultQuestion ?? null,
+        poll_multiple: false,
+      })
       .eq('room_id', roomId)
   }
 
@@ -279,6 +286,16 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
       .from('room_state')
       .update({ poll_question: value })
       .eq('room_id', roomId)
+  }
+
+  async function setPollMultiple(multiple: boolean) {
+    const { roomId } = get()
+    if (!roomId) return
+    const { error } = await getSupabase()
+      .from('room_state')
+      .update({ poll_multiple: multiple })
+      .eq('room_id', roomId)
+    if (error) throw error
   }
 
   function generateRoomId(): string {
@@ -380,6 +397,7 @@ export const useRoomStore = createStore<RoomStoreState>()((set, get) => {
     saveCardDeck,
     setDeckPreset,
     setPollQuestion,
+    setPollMultiple,
     setResultCohorts,
     setAlarm,
     create,

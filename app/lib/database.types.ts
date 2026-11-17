@@ -67,6 +67,7 @@ export type Database = {
           paused_at: string | null
           paused_elapsed_ms: number
           phase: string
+          poll_multiple: boolean
           poll_question: string | null
           result_cohorts: string[] | null
           room_id: string
@@ -80,6 +81,7 @@ export type Database = {
           paused_at?: string | null
           paused_elapsed_ms?: number
           phase?: string
+          poll_multiple?: boolean
           poll_question?: string | null
           result_cohorts?: string[] | null
           room_id: string
@@ -93,6 +95,7 @@ export type Database = {
           paused_at?: string | null
           paused_elapsed_ms?: number
           phase?: string
+          poll_multiple?: boolean
           poll_question?: string | null
           result_cohorts?: string[] | null
           room_id?: string
