@@ -304,7 +304,7 @@ Base: 124648822fc5a662f640a9caea3a85ec1715aeeb   Root: /Users/axl/work/github/st
 Commits: allowed
 Initial dirty state: none
 Task 1: done - pnpm vitest run tests/unit/stores/room.spec.ts -> 41 passed; pnpm run typecheck -> exit 0 (6 min)
-Task 2: pending
+Task 2: done - pnpm vitest run tests/unit/utils/pollAnswers.spec.ts -> 8 passed (3 min)
 Task 3: pending
 Task 4: pending
 Task 5: pending
