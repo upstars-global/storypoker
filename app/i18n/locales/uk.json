@@ -142,7 +142,8 @@
     "waiting": "Очікування питання від модератора…",
     "answerPlaceholder": "Відповідь {n}",
     "addAnswer": "Додати варіант",
-    "removeAnswer": "Прибрати варіант"
+    "removeAnswer": "Прибрати варіант",
+    "multipleAnswers": "Можна обрати декілька відповідей"
   },
   "players": {
     "title": "Гравці",

@@ -11,7 +11,7 @@ type CardsAreaProps = ComponentProps<typeof CardsArea>
 function mountCards(overrides: Partial<CardsAreaProps> = {}) {
   const props: CardsAreaProps = {
     activeCards: ['1', '2', '3'],
-    selectedVote: null,
+    selectedVotes: [],
     isModerator: true,
     hasVotes: true,
     canReset: true,
@@ -20,6 +20,7 @@ function mountCards(overrides: Partial<CardsAreaProps> = {}) {
     pollMode: false,
     voteQuestionMode: false,
     pollQuestion: null,
+    pollMultiple: false,
     hasLastRound: true,
     showLastRound: false,
     onVote: vi.fn(),
@@ -78,9 +79,66 @@ describe('CardsArea moderator icon buttons', () => {
   })
 })
 
+describe('CardsArea multi-answer poll', () => {
+  const voteQuestion = { voteQuestionMode: true, activeCards: ['Option A', 'Option B', 'Option C'] }
+
+  function fillQuestion() {
+    fireEvent.change(screen.getByTestId('poll-question-input'), { target: { value: 'Where?' } })
+    fireEvent.change(screen.getByPlaceholderText(i18n.t('poll.answerPlaceholder', { n: 1 })), { target: { value: 'Kyiv' } })
+    fireEvent.change(screen.getByPlaceholderText(i18n.t('poll.answerPlaceholder', { n: 2 })), { target: { value: 'Lviv' } })
+  }
+
+  it('offers an unchecked multiple-answers checkbox to the moderator before the vote question starts', () => {
+    mountCards(voteQuestion)
+    const checkbox = screen.getByTestId('poll-multiple-checkbox') as HTMLInputElement
+    expect(checkbox.checked).toBe(false)
+    expect(screen.getByLabelText(i18n.t('poll.multipleAnswers'))).toBe(checkbox)
+  })
+
+  it('passes the checkbox state when the vote question starts', () => {
+    const { props } = mountCards(voteQuestion)
+    fillQuestion()
+    fireEvent.click(screen.getByTestId('poll-multiple-checkbox'))
+    fireEvent.click(screen.getByTestId('poll-start-button'))
+    expect(props.onStartVoteQuestion).toHaveBeenCalledWith('Where?', ['Kyiv', 'Lviv'], true)
+  })
+
+  it('starts a single-answer vote question when the checkbox stays off', () => {
+    const { props } = mountCards(voteQuestion)
+    fillQuestion()
+    fireEvent.click(screen.getByTestId('poll-start-button'))
+    expect(props.onStartVoteQuestion).toHaveBeenCalledWith('Where?', ['Kyiv', 'Lviv'], false)
+  })
+
+  it.each([
+    ['a non-moderator', { ...voteQuestion, isModerator: false }],
+    ['the Y/N poll deck', { pollMode: true }],
+    ['a started question', { ...voteQuestion, pollQuestion: 'Where?' }],
+  ])('has no multiple-answers checkbox for %s', (_name, overrides) => {
+    mountCards(overrides)
+    expect(screen.queryByTestId('poll-multiple-checkbox')).toBeNull()
+  })
+
+  it('shows the multiple-answers hint under a started question', () => {
+    mountCards({ ...voteQuestion, pollQuestion: 'Where?', pollMultiple: true })
+    expect(screen.getByTestId('poll-multiple-hint').textContent).toBe(i18n.t('poll.multipleAnswers'))
+  })
+
+  it('has no hint for a single-answer question', () => {
+    mountCards({ ...voteQuestion, pollQuestion: 'Where?' })
+    expect(screen.queryByTestId('poll-multiple-hint')).toBeNull()
+  })
+
+  it('marks every selected answer', () => {
+    mountCards({ ...voteQuestion, pollQuestion: 'Where?', pollMultiple: true, selectedVotes: ['Option A', 'Option C'] })
+    const pressed = screen.getAllByTestId('vote-card').map(card => card.getAttribute('aria-pressed'))
+    expect(pressed).toEqual(['true', 'false', 'true'])
+  })
+})
+
 describe('CardsArea voting', () => {
   it('marks the selected card and votes on click', () => {
-    const { props } = mountCards({ selectedVote: '2' })
+    const { props } = mountCards({ selectedVotes: ['2'] })
     const cards = screen.getAllByTestId('vote-card')
     expect(cards.map(card => card.getAttribute('data-value'))).toEqual(['1', '2', '3'])
     expect(cards[1]!.classList.contains('is-selected')).toBe(true)
