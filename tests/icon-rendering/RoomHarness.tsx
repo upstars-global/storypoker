@@ -126,7 +126,7 @@ export default function RoomHarness() {
         <div data-testid="cards-column" className="flex-1 flex flex-col items-center justify-start">
           <CardsArea
             activeCards={activeCards}
-            selectedVote={null}
+            selectedVotes={[]}
             isModerator={isModerator}
             hasVotes={false}
             canReset={false}
@@ -135,6 +135,7 @@ export default function RoomHarness() {
             pollMode={false}
             voteQuestionMode={false}
             pollQuestion={null}
+            pollMultiple={false}
             hasLastRound={false}
             onVote={noop}
             onReveal={noop}
