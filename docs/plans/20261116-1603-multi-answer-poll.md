@@ -309,7 +309,7 @@ Task 3: done - pnpm vitest run tests/unit/utils/resultCohorts.spec.ts -> 51 pass
 Task 4: done - pnpm vitest run tests/unit/components/CardsArea.spec.tsx -> 32 passed (7 min)
 Task 5: done - pnpm vitest run tests/unit/pages/roomPage.spec.tsx -> 60 passed; on HEAD page code 7 of 10 new tests fail, 3 guard unchanged behavior (14 min)
 Task 6: done - pnpm vitest run tests/unit/components/ResultsArea.spec.tsx tests/unit/components/PlayerRow.spec.tsx -> 44 passed (9 min)
-Task 7: pending
+Task 7: done - sh scripts/check-local.sh (pnpm run test:ci) -> exit 0, 655 tests passed (4 min)
 Ruling: Task 5 tests written after the page edit, RED proven by running them against the HEAD page - same evidence as test-first - none
 Ruling: tests/icon-rendering/RoomHarness.tsx updated for the new CardsArea props (outside Task 5 Files) - typecheck covers the harness - none
 ```
