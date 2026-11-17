@@ -1,3 +1,4 @@
+import { splitVote } from './pollAnswers'
 import { roleTagForShields } from './shields'
 
 export const RESULT_COHORTS: readonly string[] = ['DEV', 'BE', 'FE', 'SRE']
@@ -143,7 +144,7 @@ export function groupResultVotes(
       bucket = Object.create(null) as VoteCounts
       buckets.set(key, bucket)
     }
-    bucket[player.vote] = (bucket[player.vote] ?? 0) + 1
+    for (const answer of splitVote(player.vote)) bucket[answer] = (bucket[answer] ?? 0) + 1
   }
   return [...buckets]
     .filter(([, votes]) => Object.keys(votes).length > 0)
