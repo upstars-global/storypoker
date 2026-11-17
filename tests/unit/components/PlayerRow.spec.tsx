@@ -201,6 +201,22 @@ describe('PlayerRow row', () => {
     } })
     expect(screen.getByText('Definite')).toBeTruthy()
   })
+
+  it('lists every answer of a multi-answer vote after reveal', () => {
+    renderRow({ phase: 'revealed', truncateVotes: true, player: {
+      id: 'p1', name: 'Alice', is_moderator: false, vote: 'Option Long1\nB', is_online: true,
+      user_id: null, shields: [], votePending: false,
+    } })
+    expect(screen.getByText('Option L, B')).toBeTruthy()
+  })
+
+  it('shows a voted status for a multi-answer vote while voting', () => {
+    renderRow({ phase: 'voting', player: {
+      id: 'p1', name: 'Alice', is_moderator: false, vote: 'A\nB', is_online: true,
+      user_id: null, shields: [], votePending: false,
+    } })
+    expect(document.querySelector('[data-voted="true"]')).toBeTruthy()
+  })
 })
 
 describe('PlayerRow status announcements', () => {

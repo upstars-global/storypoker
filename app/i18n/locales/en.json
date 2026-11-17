@@ -181,6 +181,7 @@
     "voteHiddenInResults": "vote is hidden from results"
   },
   "results": {
+    "voters": "Voters: {count}",
     "general": "DEV",
     "alignment": "Alignment",
     "goalClarityHint": "The goal isn't clear to the team - consider reformulating the Sprint Goal or the Definition of Done criteria"

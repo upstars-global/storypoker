@@ -181,6 +181,7 @@
     "voteHiddenInResults": "голос не показується в результатах"
   },
   "results": {
+    "voters": "Учасників, що проголосували: {count}",
     "general": "DEV",
     "alignment": "Узгодженість",
     "goalClarityHint": "Мета незрозуміла команді - варто переформулювати Sprint Goal або критерії Definition of Done"

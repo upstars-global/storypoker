@@ -308,6 +308,6 @@ Task 2: done - pnpm vitest run tests/unit/utils/pollAnswers.spec.ts -> 8 passed 
 Task 3: done - pnpm vitest run tests/unit/utils/resultCohorts.spec.ts -> 51 passed (2 min)
 Task 4: done - pnpm vitest run tests/unit/components/CardsArea.spec.tsx -> 32 passed (7 min)
 Task 5: pending
-Task 6: pending
+Task 6: done - pnpm vitest run tests/unit/components/ResultsArea.spec.tsx tests/unit/components/PlayerRow.spec.tsx -> 44 passed (9 min)
 Task 7: pending
 ```
